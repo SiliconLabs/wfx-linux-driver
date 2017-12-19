@@ -45,8 +45,8 @@ In case you already have a cross-compilation environment for your patform, pleas
 To prepare a new module compilation (this is valid for any new module), you need to:
 ## Create a new build directory and cd in this directory
 ```Bash
-mkdir /home/pi/build_dir
-cd    /home/pi/build_dir
+mkdir /home/pi/rebuild
+cd    /home/pi/rebuild
 BUILD_DIR=$(pwd)
 ```
 > NB: We'll use '$BUILD_DIR' in the rest of this doc to refer to the folder you've created to recompile kernel modules.
