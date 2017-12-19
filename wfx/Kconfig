@@ -1,0 +1,30 @@
+config WFX
+	tristate "WFX WLAN support"
+	depends on MAC80211 && CFG80211
+	help
+	  This is a driver for the Silicon Laboratories WLAN chipsets.
+	  It supports: WFx chipsets. 
+	  This option just enables the driver core, see below for
+	  specific bus support.
+
+if WFX
+
+config WFX_WLAN_SDIO
+	tristate "Support WFX platforms"
+	depends on WFX && MMC
+	help
+	  Enable support for the WFX connected via an SDIO bus.
+
+config WFX_WLAN_SPI
+	tristate "Support SPI platforms"
+	depends on WFX && SPI
+	help
+	  Enables support for the WFX connected via a SPI bus.
+
+config WF200_TESTMODE
+	bool "Testmode pipe"
+	depends on WFX && NL80211_TESTMODE
+	help
+	  Enables support for the WFX test mode.
+
+endif
