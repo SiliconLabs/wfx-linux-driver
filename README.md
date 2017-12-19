@@ -170,28 +170,36 @@ Before using the WFX driver on your setup, you need to compile it for your platf
 We describe this process below, considering that the Raspberry Pi preparation for kernel module compilation described above has been completed.
 
 You need to:
-## Clone the wfx driver source code from https://github.com/SiliconLabs/WFX-driver.
+## Clone the wfx firmware and PDS files from https://github.com/SiliconLabs/wfx_firmware.
 ```Bash
-cd $BUILD_DIR
-mkdir drivers/net/wireless/silabs_sources
-cd    drivers/net/wireless/silabs_sources
-git clone https://<username>@stash.silabs.com/scm/whifer_software/wfx_linux_driver_production.git
-cd    drivers/net/wireless
-cp -r silabs_sources/  .
+cd /home/pi
+git clone https://github.com/SiliconLabs/wfx_firmware wfx_firmware
 ```
 
-## Unzip the WFX driver
+## Create symbolic links to the FW and PDS files under /lib/firmware
+The driver looks for the following files at startup:
+* /lib/firmware/wfm_wf200.sec (secured firmware)
+* /lib/firmware/pds_wf200.json (PDS configuration)
+The name of the firmware file under git is suffixed with the 'keyset' value, a two-digit value corresponding to the part.
+To make it easier to manage versions, it's recommended to create symbolic links to the files in the git folder using:
 ```Bash
-cd $BUILD_DIR
-unzip $WFX_GIT_HASH.zip
+sudo ln -sf /home/pi/wfx_firmware/wfx/wfm_wf200_A0.sec /lib/firmware/wfm_wf200.sec
+sudo ln -sf /home/pi/wfx_firmware/pds/pds_default.json /lib/firmware/pds_wf200.json
 ```
 
-## Move the WFX driver source code under $BUILD_DIR/drivers/net/wireless
+## Clone the wfx driver source code from https://github.com/SiliconLabs/wfx_linux_driver_code.
 ```Bash
-cp  --recursive $BUILD_DIR/$WFX_GIT_HASH/*  $BUILD_DIR/drivers/net/wireless/siliconlabs/wfx
+cd /home/pi
+git clone https://github.com/SiliconLabs/wfx_linux_driver_code siliconlabs
 ```
 
-## Adding our new module to the Kbuild configuration
+## Create a symbolic link to the WFX driver source code under $BUILD_DIR/drivers/net/wireless
+Using a symbolic link you can easily compile the WFX driver for any flavor of Linux without duplicating the source code.
+```Bash
+ln -s /home/pi/siliconlabs  $BUILD_DIR/drivers/net/wireless/siliconlabs
+```
+
+## Adding the new module to the Kbuild configuration
 Add the following lines near the end of $BUILD_DIR/drivers/net/wireless/Kconfig using
 ```Bash
 cd $BUILD_DIR
@@ -203,7 +211,7 @@ Add:
 source "drivers/net/wireless/siliconlabs/wfx/Kconfig"
 ```
 
-## Adding our new module files to the make process
+## Adding the new module files to the make process
 Add the following lines at the end of $BUILD_DIR/drivers/net/wireless/Makefile using
 ```Bash
 cd $BUILD_DIR
@@ -223,21 +231,21 @@ nano arch/arm/configs/my_defconfig
 Add
 ```Makefile
 #Silabs WF200 WFM200 WF250
-CONFIG_WFX=y
-CONFIG_WFX_WLAN_SPI=y
-CONFIG_WFX_WLAN_SDIO=y
+CONFIG_WFX=m
+CONFIG_WFX_WLAN_SPI=m
+CONFIG_WFX_WLAN_SDIO=m
 CONFIG_WF200_STA_DEBUG=y
 CONFIG_WF200_WSM_DEBUG=y
-CONFIG_WF200_TESTMODE=y
+# CONFIG_WF200_TESTMODE is not set
 ```
 
-## Reconfigure to take into account our changes in my_defconfig
+## Reconfigure to take into account the changes in my_defconfig
 ```Bash
 cd $BUILD_DIR
 make my_defconfig
 ```
 
-## Prepare for modules compilation with our changes
+## Prepare for modules compilation with the changes
 ```Bash
 cd $BUILD_DIR
 make modules_prepare
@@ -246,16 +254,7 @@ make modules_prepare
 > Just download it from this repository and execute it once in your BUILD_DIR
 
 ------------------------------------------------------------------
-# Compiling the WFX module
-```Bash
-cd $BUILD_DIR
-make SUBDIRS=drivers/net/wireless/siliconlabs/wfx
-```
-### Check:
-The corresponding .ko files are created under $BUILD_DIR/drivers/net/wireless/siliconlabs/wfx
-
-------------------------------------------------------------------
-# Prepare module installation
+# Set the kernel release as required
 Update the nano include/config/kernel.release file to match your $KERNEL_VERSION. This is required to have the new module files copied to the correct folder.
 ```Bash
 cd $BUILD_DIR
@@ -267,6 +266,15 @@ uname -r > include/config/kernel.release
 cd $BUILD_DIR
 cat  include/config/kernel.release
 ```
+
+------------------------------------------------------------------
+# Compiling the WFX module
+```Bash
+cd $BUILD_DIR
+make SUBDIRS=drivers/net/wireless/siliconlabs/wfx
+```
+### Check:
+The corresponding .ko files are created under $BUILD_DIR/drivers/net/wireless/siliconlabs/wfx
 
 ------------------------------------------------------------------
 # Installing the WFX module
@@ -286,6 +294,7 @@ This is to allow our new module to be 'probed'
 ```Bash
 sudo depmod -a
 ```
+
 ### Check:
 ```Bash
 sudo modinfo wfx_wlan_spi
