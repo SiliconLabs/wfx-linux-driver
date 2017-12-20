@@ -7,7 +7,10 @@ Original implementation based on Raspberry Pi drivers in a raspbian distribution
 Evolutions of raspbian distributions are listed in http://downloads.raspberrypi.org/raspbian/release_notes.txt
 
 ------------------------------------------------------------------
-# STARTING FROM SCRATCH with a blank SD card
+# Building the driver, the Raspberry PI example
+
+------------------------------------------------------------------
+# Starting from scratch with a blank SD card
 First create a SD card with the raspbian version you are interested in from http://downloads.raspberrypi.org/raspbian/images
 
 *Since Linux device tree implementation has been completed as from kernel 4.4, we recommend using kernel 4.4 and above.*
