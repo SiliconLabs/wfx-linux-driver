@@ -131,14 +131,13 @@ void wfx_multicast_start_work(struct work_struct *work);
 void wfx_multicast_stop_work(struct work_struct *work);
 void wfx_mcast_timeout(unsigned long arg);
 
-#if(CONFIG_NL80211_TESTMODE == 1)
-#undef   CONFIG_WF200_TESTMODE
-#else
+#ifndef   CONFIG_NL80211_TESTMODE
+#undef    CONFIG_WF200_TESTMODE
 #endif /* CONFIG_NL80211_TESTMODE */
 
-
-#ifdef CONFIG_WF200_TESTMODE 
+#ifdef    CONFIG_WF200_TESTMODE
 #include "testmode/include/prv_testmode.h"
 #endif /* CONFIG_WF200_TESTMODE */
+
 
 #endif
