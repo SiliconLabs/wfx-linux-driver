@@ -30,10 +30,10 @@ struct wfx_common;
 struct wfx_suspend_state;
 
 struct wfx_pm_state {
-	struct wfx_suspend_state *suspend_state;
-	struct timer_list stay_awake;
-	struct platform_device *pm_dev;
-	spinlock_t lock; /* Protect access */
+    struct wfx_suspend_state *suspend_state;
+    struct timer_list stay_awake;
+    struct platform_device *pm_dev;
+    spinlock_t lock; /* Protect access */
 };
 
 /*========================================================================*/
@@ -41,17 +41,17 @@ struct wfx_pm_state {
 /*========================================================================*/
 #ifdef CONFIG_PM
 int wfx_pm_init(struct wfx_pm_state *pm,
-		    struct wfx_common *priv);
+        struct wfx_common *priv);
 void wfx_pm_deinit(struct wfx_pm_state *pm);
 int wfx_wow_suspend(struct ieee80211_hw *hw,
-		       struct cfg80211_wowlan *wowlan);
+        struct cfg80211_wowlan *wowlan);
 int wfx_wow_resume(struct ieee80211_hw *hw);
 int wfx_can_suspend(struct wfx_common *priv);
 void wfx_pm_stay_awake(struct wfx_pm_state *pm,
-			  unsigned long tmo);
+        unsigned long tmo);
 #else
 static inline void wfx_pm_stay_awake(struct wfx_pm_state *pm,
-					unsigned long tmo) {
+        unsigned long tmo) {
 }
 #endif
 #endif

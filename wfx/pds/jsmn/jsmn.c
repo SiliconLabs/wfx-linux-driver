@@ -1,6 +1,5 @@
 #include "jsmn.h"
 
-
 /**
  * Allocates a fresh unused token from the token pull.
  */
@@ -230,7 +229,7 @@ int jsmn_parse(jsmn_parser *parser, const char *js, size_t len,
 #endif
 				break;
 			case '\"':
-            case '\'':
+			case '\'':
 				r = jsmn_parse_string(parser, js, len, tokens, num_tokens,c);
 				if (r < 0) return r;
 				count++;

@@ -23,14 +23,14 @@
 
 
 /*========================================================================*/
-/*                 Standard Linux Headers             		              */
+/*                 Standard Linux Headers                                 */
 /*========================================================================*/
 #include <linux/vmalloc.h>
 #include <linux/sched.h>
 #include <linux/firmware.h>
 
 /*========================================================================*/
-/*                 Local Header files             			              */
+/*                 Local Header files                                     */
 /*========================================================================*/
 #include "wfx.h"
 #include "fwio.h"
@@ -93,30 +93,30 @@ void stop_timer(void)
 
 static int wfx_load_firmware_core(struct wfx_common *priv)
 {
-	int ret;
-	const char *fw_path;
-	const struct firmware *firmware = NULL;
-	const struct firmware *bootloader = NULL;
+    int ret;
+    const char *fw_path;
+    const struct firmware *firmware = NULL;
+    const struct firmware *bootloader = NULL;
 
-	switch (priv->hw_revision) {
-	case WF200_HW_REV:
+    switch (priv->hw_revision) {
+    case WF200_HW_REV:
         fw_path =  FIRMWARE_WF200_SEC;
 
         if (!priv->pds_path)
             priv->pds_path = PDS_FILE_WF200;
         break;
-	default:
-		pr_err("Invalid silicon revision %d.\n", priv->hw_revision);
-		return -EINVAL;
-	}
+    default:
+        pr_err("Invalid silicon revision %d.\n", priv->hw_revision);
+        return -EINVAL;
+    }
 
-	/* Load a firmware file */
-	ret = request_firmware(&firmware, fw_path, priv->pdev);
-	if (ret) {
-		pr_err("Can't load firmware file %s.\n", fw_path);
-		goto error;
-	}
-	if (priv->hw_revision==WF200_HW_REV){
+    /* Load a firmware file */
+    ret = request_firmware(&firmware, fw_path, priv->pdev);
+    if (ret) {
+        pr_err("Can't load firmware file %s.\n", fw_path);
+        goto error;
+    }
+    if (priv->hw_revision==WF200_HW_REV){
 
         ret = wfx_secure_load_firmware_file(priv,(uint8_t *)firmware->data,firmware->size);
         goto end;
@@ -124,11 +124,11 @@ static int wfx_load_firmware_core(struct wfx_common *priv)
 
 error:
 end:
-	if (firmware)
-		release_firmware(firmware);
-	if (bootloader)
-		release_firmware(bootloader);
-	return ret;
+    if (firmware)
+        release_firmware(firmware);
+    if (bootloader)
+        release_firmware(bootloader);
+    return ret;
 }
 
 #undef APB_WRITE
@@ -138,158 +138,158 @@ end:
 
 int wfx_load_firmware(struct wfx_common *priv)
 {
-	int ret;
-	HiCtrlReg_t Control_reg;
-	HiCfgReg_t Config_reg;
+    int ret;
+    HiCtrlReg_t Control_reg;
+    HiCfgReg_t Config_reg;
 
-	/* Init before HW detection */
-	priv->hw_revision = -1; /*No HW detected yet*/
+    /* Init before HW detection */
+    priv->hw_revision = -1; /*No HW detected yet*/
 
-	/* define default Config_register */
-	/* this setting matches the chip reset values */
-	/* It could be interesting to start with a write */
-	/* to change parameters affecting the 1st read */
-	Config_reg.U32ConfigReg=0;
-	Config_reg.hif.AccessMode = DIRECT_MODE;
-	Config_reg.hif.CpuClkDis = CPU_CLK_DISABLE;
-	Config_reg.hif.CpuRst = CPU_RESET;
-	Config_reg.hif.ClkPosedge = DOUT_NEG_EDGE;
+    /* define default Config_register */
+    /* this setting matches the chip reset values */
+    /* It could be interesting to start with a write */
+    /* to change parameters affecting the 1st read */
+    Config_reg.U32ConfigReg=0;
+    Config_reg.hif.AccessMode = DIRECT_MODE;
+    Config_reg.hif.CpuClkDis = CPU_CLK_DISABLE;
+    Config_reg.hif.CpuRst = CPU_RESET;
+    Config_reg.hif.ClkPosedge = DOUT_NEG_EDGE;
 
-	/* we must start with a write of the clock polarity.
-	 * Read can be compromised if clock is too fast. */
-	if (priv->hif_clkedge) {
-		/* Enable posedge on Dout  intended to be used  in 50Mhz SDIO */
-		Config_reg.hif.ClkPosedge = DOUT_POS_EDGE;
-	}
+    /* we must start with a write of the clock polarity.
+     * Read can be compromised if clock is too fast. */
+    if (priv->hif_clkedge) {
+        /* Enable posedge on Dout  intended to be used  in 50Mhz SDIO */
+        Config_reg.hif.ClkPosedge = DOUT_POS_EDGE;
+    }
 
-	ret = config_reg_write(priv, Config_reg);
-	if (ret < 0) {
-		pr_err("Can't write config register.\n");
-		ret = -EIO;
-		goto out;
-	}
+    ret = config_reg_write(priv, Config_reg);
+    if (ret < 0) {
+        pr_err("Can't write config register.\n");
+        ret = -EIO;
+        goto out;
+    }
 
     /* Read back HIF config register */
     /* Note that it is normal it may be different from the written value */
-	ret = config_reg_read(priv, &Config_reg);
-	if (ret < 0) {
-		pr_err("ERROR READING CONFIG number error=%i , value = %x \n", ret,
-		       Config_reg.U32ConfigReg);
-		ret = -EIO;
-		goto out;
-	}
+    ret = config_reg_read(priv, &Config_reg);
+    if (ret < 0) {
+        pr_err("ERROR READING CONFIG number error=%i , value = %x \n", ret,
+               Config_reg.U32ConfigReg);
+        ret = -EIO;
+        goto out;
+    }
 
-	if (Config_reg.U32ConfigReg == 0 || Config_reg.U32ConfigReg == 0xffffffff) {
-		pr_err("Bad config register value (0x%08x)\n", Config_reg.U32ConfigReg);
-		ret = -EIO;
-		goto out;
-	}
+    if (Config_reg.U32ConfigReg == 0 || Config_reg.U32ConfigReg == 0xffffffff) {
+        pr_err("Bad config register value (0x%08x)\n", Config_reg.U32ConfigReg);
+        ret = -EIO;
+        goto out;
+    }
 
 
-	priv->hw_type = Config_reg.hif.DeviceId.hw_type;
-	priv->hw_revision = Config_reg.hif.DeviceId.hw_major;
+    priv->hw_type = Config_reg.hif.DeviceId.hw_type;
+    priv->hw_revision = Config_reg.hif.DeviceId.hw_major;
 
-	switch (priv->hw_revision) {
-	case WF200_HW_REV:
-		pr_info("WF200 silicon detected.\n");
-		break;
-	default:
-		pr_err("Unsupported silicon major revision %d.\n",
-		       priv->hw_revision);
-		ret = -ENOTSUPP;
-		goto out;
-	}
+    switch (priv->hw_revision) {
+    case WF200_HW_REV:
+        pr_info("WF200 silicon detected.\n");
+        break;
+    default:
+        pr_err("Unsupported silicon major revision %d.\n",
+               priv->hw_revision);
+        ret = -ENOTSUPP;
+        goto out;
+    }
 
-	switch (priv->hw_revision) {
-	case WF200_HW_REV:
+    switch (priv->hw_revision) {
+    case WF200_HW_REV:
 
-		/* XO tuning prior boot */
+        /* XO tuning prior boot */
         ret = wfx_reg_write_32(priv, WF200_SET_GEN_R_W_REG_ID, 0x07138775);
         ret = wfx_reg_write_32(priv, WF200_SET_GEN_R_W_REG_ID, 0x08330013);
         ret = wfx_reg_write_32(priv, WF200_SET_GEN_R_W_REG_ID, 0x098c8c14);
         ret = wfx_reg_write_32(priv, WF200_SET_GEN_R_W_REG_ID, 0x0B42AC44);
-		break;
-	}
+        break;
+    }
 
-	/* Set wakeup bit in device
-	 * (no need to read it first because only the wakeup bit can be written) */
-	Control_reg.U16CtrlReg = 0;
-	Control_reg.b.WlanWup = WLAN_WAKEUP;
-	ret = control_reg_write(priv, Control_reg);
-	if (ret < 0) {
-		pr_err("set_wakeup: can't write control register.\n");
-		goto out;
-	}
+    /* Set wakeup bit in device
+     * (no need to read it first because only the wakeup bit can be written) */
+    Control_reg.U16CtrlReg = 0;
+    Control_reg.b.WlanWup = WLAN_WAKEUP;
+    ret = control_reg_write(priv, Control_reg);
+    if (ret < 0) {
+        pr_err("set_wakeup: can't write control register.\n");
+        goto out;
+    }
 
-	/* Wait for wakeup, Init Timer */
+    /* Wait for wakeup, Init Timer */
     setup_timer(&fwio_timer, timer_expiration_cb, 0);
 
     start_timer(WAKEUP_TIMEOUT);
     do {
-    	ret = control_reg_read(priv, &Control_reg);
-    	if (ret < 0) {
-    		pr_err("wait_for_wakeup: can't read control register.\n");
-    		goto out;
-    	}
-    	if(!timer_pending(&fwio_timer)) {
-    		pr_err("Timeout detected while device wakeup (waiting for %d ms)\n",WAKEUP_TIMEOUT);
-    		goto out;
-    	}
+        ret = control_reg_read(priv, &Control_reg);
+        if (ret < 0) {
+            pr_err("wait_for_wakeup: can't read control register.\n");
+            goto out;
+        }
+        if(!timer_pending(&fwio_timer)) {
+            pr_err("Timeout detected while device wakeup (waiting for %d ms)\n",WAKEUP_TIMEOUT);
+            goto out;
+        }
     } while(!(Control_reg.b.WlanRdy));
     pr_info("WLAN device is ready.\n");
     stop_timer();
 
 
     /* Checking for direct access mode */
-	ret = config_reg_read(priv, &Config_reg);
-	if (ret < 0) {
-		pr_err("Can't read config register.\n");
-		goto out;
-	}
-	if ( Config_reg.hif.AccessMode == QUEUE_MODE ) {
-		pr_err("Device is already in QUEUE mode!\n");
-			ret = -EINVAL;
-			goto out;
-	}
+    ret = config_reg_read(priv, &Config_reg);
+    if (ret < 0) {
+        pr_err("Can't read config register.\n");
+        goto out;
+    }
+    if ( Config_reg.hif.AccessMode == QUEUE_MODE ) {
+        pr_err("Device is already in QUEUE mode!\n");
+            ret = -EINVAL;
+            goto out;
+    }
 
-	/* Load firmware */
-	ret = wfx_load_firmware_core(priv);
+    /* Load firmware */
+    ret = wfx_load_firmware_core(priv);
 
-	if (ret < 0) {
-		pr_err("Firmware load error.\n");
-		goto out;
-	}
+    if (ret < 0) {
+        pr_err("Firmware load error.\n");
+        goto out;
+    }
 
-	/* Enable interrupt signaling */
-	priv->hwbus_ops->lock(priv->hwbus_priv);
-	ret = __wfx_irq_enable(priv, 1);
-	priv->hwbus_ops->unlock(priv->hwbus_priv);
-	if (ret < 0) {
-		goto unsubscribe;
-	}
+    /* Enable interrupt signaling */
+    priv->hwbus_ops->lock(priv->hwbus_priv);
+    ret = __wfx_irq_enable(priv, 1);
+    priv->hwbus_ops->unlock(priv->hwbus_priv);
+    if (ret < 0) {
+        goto unsubscribe;
+    }
 
-	/* Configure device for MESSAGE MODE */
-	ret = config_reg_read(priv, &Config_reg);
-	if (ret < 0) {
-		pr_err("Can't read config register.\n");
-		goto unsubscribe;
-	}
-	Config_reg.hif.AccessMode = QUEUE_MODE;
-	ret = config_reg_write(priv, Config_reg);
-	if (ret < 0) {
-		pr_err("Can't write config register.\n");
-		goto unsubscribe;
-	}
+    /* Configure device for MESSAGE MODE */
+    ret = config_reg_read(priv, &Config_reg);
+    if (ret < 0) {
+        pr_err("Can't read config register.\n");
+        goto unsubscribe;
+    }
+    Config_reg.hif.AccessMode = QUEUE_MODE;
+    ret = config_reg_write(priv, Config_reg);
+    if (ret < 0) {
+        pr_err("Can't write config register.\n");
+        goto unsubscribe;
+    }
 
-	mdelay(10);
-	
+    mdelay(10);
+
 out:
-	return ret;
+    return ret;
 
 unsubscribe:
-	/* Disable interrupt signaling */
-	priv->hwbus_ops->lock(priv->hwbus_priv);
-	ret = __wfx_irq_enable(priv, 0);
-	priv->hwbus_ops->unlock(priv->hwbus_priv);
-	return ret;
+    /* Disable interrupt signaling */
+    priv->hwbus_ops->lock(priv->hwbus_priv);
+    ret = __wfx_irq_enable(priv, 0);
+    priv->hwbus_ops->unlock(priv->hwbus_priv);
+    return ret;
 }

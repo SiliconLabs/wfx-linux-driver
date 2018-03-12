@@ -28,14 +28,14 @@
 struct hwbus_priv;
 
 struct hwbus_ops {
-	int (*hwbus_memcpy_fromio)(struct hwbus_priv *self, unsigned int addr,
-					void *dst, int count);
-	int (*hwbus_memcpy_toio)(struct hwbus_priv *self, unsigned int addr,
-					const void *src, int count);
-	void (*lock)(struct hwbus_priv *self);
-	void (*unlock)(struct hwbus_priv *self);
-	size_t (*align_size)(struct hwbus_priv *self, size_t size);
-	int (*power_mgmt)(struct hwbus_priv *self, bool suspend);
+    int (*hwbus_memcpy_fromio)(struct hwbus_priv *self, unsigned int addr,
+                    void *dst, int count);
+    int (*hwbus_memcpy_toio)(struct hwbus_priv *self, unsigned int addr,
+                    const void *src, int count);
+    void (*lock)(struct hwbus_priv *self);
+    void (*unlock)(struct hwbus_priv *self);
+    size_t (*align_size)(struct hwbus_priv *self, size_t size);
+    int (*power_mgmt)(struct hwbus_priv *self, bool suspend);
 };
 
 /*========================================================================*/

@@ -15,7 +15,7 @@
 #define PRV_TESTMODE_H_
 
 /*========================================================================*/
-/*                 Standard Linux Headers             					  */
+/*                 Standard Linux Headers                                 */
 /*========================================================================*/
 #include "net/mac80211.h"
 
@@ -24,10 +24,10 @@
 /*************************/
 
 int wfx_testmode_command(struct ieee80211_hw *hw,
-		struct ieee80211_vif *vif,
-			    void *data, int len);
+        struct ieee80211_vif *vif,
+                void *data, int len);
 int wfx_testmode_reply(struct wiphy *wiphy,
-				const void *data, int len);
+                const void *data, int len);
 
 int wfx_testmode_hif(struct ieee80211_hw *hw,struct nlattr **p_tb);
 int wfx_testmode_bs(struct ieee80211_hw *hw,struct nlattr **p_tb);

@@ -13,7 +13,7 @@
  
 
 /*========================================================================*/
-/*                 Standard Linux Headers             					  */
+/*                 Standard Linux Headers                                 */
 /*========================================================================*/
 #include <net/netlink.h>
 #include <net/genetlink.h>
@@ -21,7 +21,7 @@
 #include "net/mac80211.h"
 
 /*========================================================================*/
-/*                 Local Header files             					      */
+/*                 Local Header files                                     */
 /*========================================================================*/
 #include "include/wfx_testmode.h"
 #include "include/prv_testmode.h"
@@ -64,66 +64,66 @@ static bool l_b_hif_pm_enable = true;
 /*========================================================================*/
 int wfx_testmode_hif(struct ieee80211_hw *hw,struct nlattr **p_tb)
 {
-	switch (nla_get_u32(p_tb[WFX_TM_ATTR_CMD])) {
+    switch (nla_get_u32(p_tb[WFX_TM_ATTR_CMD])) {
 
-	case WFX_TM_CMD_HIF_ENABLE:
-	{
-		// Should not be called.
-		l_b_hif_pm_enable = !l_b_hif_pm_enable;
-	}
+    case WFX_TM_CMD_HIF_ENABLE:
+    {
+        // Should not be called.
+        l_b_hif_pm_enable = !l_b_hif_pm_enable;
+    }
 
-	case WFX_TM_CMD_HIF_FLUSH:
-	{
-		int ret;
-		struct sk_buff *skb = cfg80211_testmode_alloc_reply_skb(hw->wiphy,
-				sizeof(hif_log)*l_ui16_hif_buffer_set);
+    case WFX_TM_CMD_HIF_FLUSH:
+    {
+        int ret;
+        struct sk_buff *skb = cfg80211_testmode_alloc_reply_skb(hw->wiphy,
+                sizeof(hif_log)*l_ui16_hif_buffer_set);
 
-		if (!skb)
-			return -ENOMEM;
+        if (!skb)
+            return -ENOMEM;
 
-		hif_buffer_flush(skb);
+        hif_buffer_flush(skb);
 
-		ret = cfg80211_testmode_reply(skb);
+        ret = cfg80211_testmode_reply(skb);
 
         if(ret != 0)
-        	pr_err("ret = %d\n",ret);
-		break;
-	}
-	default:
-		printk("Spi testmode\n");
-		break;
-	}
-	return 0;
+            pr_err("ret = %d\n",ret);
+        break;
+    }
+    default:
+        printk("Spi testmode\n");
+        break;
+    }
+    return 0;
 };
 
 void hif_buffer_add(u16 id)
 {
-	struct timespec now  ;
+    struct timespec now  ;
 
-	getnstimeofday(&now);
+    getnstimeofday(&now);
 
-	if(false == l_b_hif_pm_enable ||
-		TM_HIF_BUFFER_LEN == l_ui16_hif_buffer_set)
-	{
-		return;
-	}
+    if(false == l_b_hif_pm_enable ||
+        TM_HIF_BUFFER_LEN == l_ui16_hif_buffer_set)
+    {
+        return;
+    }
 
-	l_as_hif_buffer[l_ui16_hif_buffer_set].cmdid = id;
-	l_as_hif_buffer[l_ui16_hif_buffer_set].tv_sec= now.tv_sec;
-	l_as_hif_buffer[l_ui16_hif_buffer_set].tv_nsec= now.tv_nsec;
-	l_ui16_hif_buffer_set++;
+    l_as_hif_buffer[l_ui16_hif_buffer_set].cmdid = id;
+    l_as_hif_buffer[l_ui16_hif_buffer_set].tv_sec= now.tv_sec;
+    l_as_hif_buffer[l_ui16_hif_buffer_set].tv_nsec= now.tv_nsec;
+    l_ui16_hif_buffer_set++;
 }
 
 void hif_buffer_flush(struct sk_buff *skb)
 {
-	uint16_t ui16_nbDataToFlush = l_ui16_hif_buffer_set - l_ui16_hif_buffer_get;
+    uint16_t ui16_nbDataToFlush = l_ui16_hif_buffer_set - l_ui16_hif_buffer_get;
 
 
-	nla_put_u32(skb, WFX_TM_ATTR_HIF_NB_LOGS, ui16_nbDataToFlush);
-	nla_put(skb, WFX_TM_ATTR_HIF_DATA,
-			ui16_nbDataToFlush * sizeof(hif_log),
-			&(l_as_hif_buffer[l_ui16_hif_buffer_get]));
+    nla_put_u32(skb, WFX_TM_ATTR_HIF_NB_LOGS, ui16_nbDataToFlush);
+    nla_put(skb, WFX_TM_ATTR_HIF_DATA,
+            ui16_nbDataToFlush * sizeof(hif_log),
+            &(l_as_hif_buffer[l_ui16_hif_buffer_get]));
 
-	l_ui16_hif_buffer_set = 0;
-	l_ui16_hif_buffer_get = l_ui16_hif_buffer_set;
+    l_ui16_hif_buffer_set = 0;
+    l_ui16_hif_buffer_get = l_ui16_hif_buffer_set;
 }

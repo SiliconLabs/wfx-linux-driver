@@ -65,8 +65,8 @@
 
 ///@{
 /// NCP Upload State machine
-#define    NCP_READY            0x87654321
-#define    NCP_INFO_READY       0xBD53EF99
+#define    NCP_READY              0x87654321
+#define    NCP_INFO_READY         0xBD53EF99
 #define    NCP_DOWNLOAD_PENDING   0xABCDDCBA
 #define    NCP_AUTH_OK            0xD4C64A99
 #define    NCP_PUB_KEY_RDY        0x7AB41D19
@@ -95,6 +95,13 @@
 #define READY_TIMEOUT                   50
 #define AUTH_TIMEOUT                    50
 #define FIFO_READY_TIMEOUT              50
+
+//Secure Boot Errors Messages
+#define INVALID_SEC_TYPE                5
+#define SIG_VERIF_FAILED                15
+#define AES_CTRL_KEY                    16
+#define ECC_PUB_KEY                     17
+#define MAC_KEY                         24
 
 /**
  * Download Control Area structure
@@ -129,7 +136,7 @@ typedef struct sb_download_cntl_s
     ret = wfx_reg_read_32(priv, (reg), &(val)); \
     if (ret < 0) \
         goto error;
-#define GET_ADDR(expr) (uint32_t)(&(expr))
+#define GET_ADDR(expr) (uintptr_t)(&(expr))
 
 
 /*--------------------------------------------------------------------------*
@@ -391,20 +398,32 @@ error:
     /*
      * Dump Error information
      */
-    pr_info("[SecureBoot] state : %x\n",val32);
+    pr_info("[SecureBoot]: state : %x\n",val32);
     wfx_sram_read_32(priv, WF200_MSG_ID, &val32);
-    pr_info("[SecureBoot] reported msg id = %x\n",val32);
+
+    pr_info("[SecureBoot]: reported id = %x\n",val32);
     wfx_sram_read_32(priv, WF200_ERROR_ID, &val32);
+
     switch (val32) {
-		case 5:
-			pr_info("[SecureBoot] reported error id (%x) = Invalid Section Type (may be caused by a wrong encryption)\n",val32);
-			break;
-		default:
-			pr_info("[SecureBoot] reported error id = %x\n",val32);
-			break;
-	}
-
-
+        case INVALID_SEC_TYPE:
+            pr_info("[SecureBoot]: reported error id (%x) = Invalid Section Type (may be caused by a wrong encryption)\n",val32);
+            break;
+        case SIG_VERIF_FAILED:
+            pr_info("[SecureBoot]: reported error id (%x) = Signature Verification Failed \n",val32);
+            break;
+        case AES_CTRL_KEY:
+            pr_info("[SecureBoot]: reported error id (%x) = AES Control Key Not Initialized \n",val32);
+            break;
+        case ECC_PUB_KEY:
+            pr_info("[SecureBoot]: reported error id (%x) = ECC Public Key Not Initialized \n",val32);
+            break;
+        case MAC_KEY:
+            pr_info("[SecureBoot]: reported error id (%x) = MAC Key Not Initialized \n",val32);
+            break;
+        default:
+            pr_info("[SecureBoot]: reported error id = %x\n",val32);
+            break;
+    }
     return ret;
 }
 

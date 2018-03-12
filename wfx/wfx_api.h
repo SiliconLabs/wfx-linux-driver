@@ -29,8 +29,144 @@
 typedef __le16 __les16;
 typedef __le32 __les32;
 
-#define WSM_HI_CONFIGURATION_REQ_ID                     0x09
-#define WSM_HI_CONFIGURATION_CNF_ID                     0x09
+#ifndef HI_GENERIC_API
+
+#define HI_CONTROL_GPIO_REQ_ID                          0x26
+#define HI_CONTROL_GPIO_CNF_ID                          0x26
+#define HI_ERROR_IND_ID                                 0xe4
+#define HI_STARTUP_IND_ID                               0xe1
+#define HI_GENERIC_IND_ID                               0xe3
+#define HI_CONFIGURATION_REQ_ID                         0x09
+#define HI_CONFIGURATION_CNF_ID                         0x09
+#define HI_SET_SL_MAC_KEY_REQ_ID                        0x27
+#define HI_SET_SL_MAC_KEY_CNF_ID                        0x27
+#define HI_SL_EXCHANGE_PUB_KEYS_REQ_ID                  0x28
+#define HI_SL_EXCHANGE_PUB_KEYS_CNF_ID                  0x28
+#define HI_SL_CONFIGURE_REQ_ID                          0x29
+#define HI_SL_CONFIGURE_CNF_ID                          0x29
+
+/**************************************************/
+
+#define API_DATA_SIZE_124                               124       
+#define API_OPN_SIZE                                    14        
+#define API_UID_SIZE                                    8         
+#define API_MAC_ADDR0_SIZE                              6         
+#define API_MAC_ADDR1_SIZE                              6         
+#define API_RESERVED2_SIZE                              8         
+#define API_FIRMWARE_LABEL_SIZE                         128       
+#define API_PDS_DATA_SIZE                               1         
+#define API_KEY_VALUE_SIZE                              32        
+#define API_HOST_PUB_KEY_SIZE                           32        
+#define API_HOST_PUB_KEY_MAC_SIZE                       64        
+#define API_NCP_PUB_KEY_SIZE                            32        
+#define API_NCP_PUB_KEY_MAC_SIZE                        64        
+#define API_ENCR_BMP_SIZE                               32        
+#define API_NCP_ENCR_BMP_SIZE                           32        
+#define API_NB_RX_BY_RATE_SIZE                          22        
+#define API_PER_SIZE                                    22        
+#define API_SNR_SIZE                                    22        
+#define API_RSSI_SIZE                                   22        
+#define API_RAWDATA_SIZE                                1         
+
+/**************************************************/
+
+typedef enum hi_generic_indication_id_e {
+        HI_GENERIC_INDICATION_ID_RAW               = 0x0,         /*Byte stream type*/
+        HI_GENERIC_INDICATION_ID_STRING            = 0x1,         /*String*/        
+        HI_GENERIC_INDICATION_ID_RX_STATS          = 0x2          /*Rx statistics structure*/
+} HiGenericIndicationId_t;
+
+typedef enum hi_fw_type_e {
+        HI_FW_TYPE_ETF                             = 0x0,         /*ETF Firmware*/  
+        HI_FW_TYPE_WFM                             = 0x1,         /*WLAN Full MAC (WFM)*/
+        HI_FW_TYPE_WSM                             = 0x2,         /*WLAN Split MAC (WSM)*/
+        HI_FW_TYPE_HI_TEST                         = 0x3,         /*HI Test Firmware*/
+        HI_FW_TYPE_PLATFORM_TEST                   = 0x4          /*Platform Test Firmware */
+} HiFwType_t;
+
+typedef enum hi_gen_req_e {
+        HI_GEN_REQ_TRACE_CONTROL_REQ_ID            = 0x0,
+        HI_GEN_REQ_HI_LOOPBACK_TEST_REQ_ID         = 0x1
+} HiGenReq_t;
+
+typedef enum hi_gpio_error_e {
+        HI_GPIO_ERROR_0                            = 0x0,         /*Undefined GPIO_ID*/
+        HI_GPIO_ERROR_1                            = 0x1,         /*GPIO_ID not configured in gpio mode (gpio_enabled =0)*/
+        HI_GPIO_ERROR_2                            = 0x2          /*Toggle not possible while in tristate*/
+} HiGpioError_t;
+
+typedef enum hi_gpio_mode_e {
+        HI_GPIO_MODE_D0                            = 0x0,         /*drive 0*/       
+        HI_GPIO_MODE_D1                            = 0x1,         /*drive 1*/       
+        HI_GPIO_MODE_OD0                           = 0x2,         /*open drain 0*/  
+        HI_GPIO_MODE_OD1                           = 0x3,         /*open drain 1*/  
+        HI_GPIO_MODE_TRISTATE                      = 0x4,         /*Tristate*/      
+        HI_GPIO_MODE_TOGGLE                        = 0x5,         /*Toggle*/        
+        HI_GPIO_MODE_READ                          = 0x6          /*Read*/          
+} HiGpioMode_t;
+
+typedef enum hi_gpio_status_e {
+        HI_GPIO_STATUS_OK                          = 0x0,         /*command is OK*/ 
+        HI_GPIO_STATUS_WARN                        = 0x1,         /*Warning*/       
+        HI_GPIO_STATUS_ERR                         = 0x2          /*Error*/         
+} HiGpioStatus_t;
+
+typedef enum sl_configure_ind_status_e {
+        SL_CONFIGURE_IND_STATUS_PUB_KEY_RDY        = 0x2d         /*Force invalidating session key */
+} SlConfigureIndStatus_t;
+
+typedef enum sl_configure_skey_invld_e {
+        SL_CONFIGURE_SKEY_INVLD_INVALIDATE         = 0x87         /*Force invalidating session key */
+} SlConfigureSkeyInvld_t;
+
+typedef enum sl_mac_key_dest_e {
+        SL_MAC_KEY_DEST_OTP                        = 0x78,        /*Key will be stored in OTP*/
+        SL_MAC_KEY_DEST_RAM                        = 0x87         /*Key will be stored in RAM*/
+} SlMacKeyDest_t;
+
+typedef enum sl_mac_key_status_e {
+        SL_MAC_KEY_STATUS_SUCCESS                  = 0x5a,        /*Key has been correctly written*/
+        SL_MAC_KEY_STATUS_FAILED_KEY_ALREADY_BURNED = 0x1,        /*Key already exists in OTP*/
+        SL_MAC_KEY_STATUS_FAILED_RAM_MODE_NOT_ALLOWED = 0x2       /*RAM mode is not allowed*/
+} SlMacKeyStatus_t;
+
+typedef enum sl_pub_key_exchange_status_e {
+        SL_PUB_KEY_EXCHANGE_STATUS_SUCCESS         = 0x78,        /*Host Public Key authenticated*/
+        SL_PUB_KEY_EXCHANGE_STATUS_FAILED          = 0x1          /*Host Public Key authentication failed*/
+} SlPubKeyExchangeStatus_t;
+
+/**************************************************/
+
+typedef struct __attribute__((__packed__)) hi_capabilities_s {
+        u8       LinkMode : 2;                     /*Bit 0-1 : reg OTPCTRL_FB_STATUS_fb_secure_link_mode*/
+        u8       Reserved : 6;                     /*Bit 2-7 : Reserved*/
+        u8       Reserved2;                        /*Bit 8-15 : Reserved*/
+        u8       Reserved3;                        /*Bit 16-23 : Reserved*/
+        u8       Reserved4;                        /*Bit 24-31 : Reserved*/
+} HiCapabilities_t;
+
+typedef struct __attribute__((__packed__)) hi_rx_stats_s {
+        __le32   NbRxFrame;                        /*Total number of frame received*/
+        __le32   NbCrcFrame;                       /*Number of frame received with bad CRC*/
+        __le32   PerTotal;                         /*PER on the total number of frame*/
+        __le32   Throughput;                       /*Throughput calculated on correct frames received*/
+        __le32   NbRxByRate[API_NB_RX_BY_RATE_SIZE];   /*Number of frame received by rate*/
+        __le32   Per[API_PER_SIZE];                /*PER*10000 by frame rate*/
+        __les32  Snr[API_SNR_SIZE];                /*SNR in Db*100 by frame rate*/
+        __les32  Rssi[API_RSSI_SIZE];              /*RSSI in Dbm*100 by frame rate*/
+} HiRxStats_t;
+
+/**************************************************/
+
+typedef union hi_indication_data_u {
+        HiRxStats_t                                   RxStats;                        /* Element :0*/   
+        u8                                            RawData[API_RAWDATA_SIZE];      /* Element :1*/   
+} HiIndicationData_t;
+
+/**************************************************/
+
+#endif /*HI_GENERIC_API*/
+
 #define WSM_HI_RESET_REQ_ID                             0x0a
 #define WSM_HI_RESET_CNF_ID                             0x0a
 #define WSM_HI_READ_MIB_REQ_ID                          0x05
@@ -78,19 +214,13 @@ typedef __le32 __les32;
 #define WSM_HI_MULTI_TRANSMIT_CNF_ID                    0x1e
 #define WSM_HI_DEBUG_IND_ID                             0x8e
 #define WSM_HI_BA_TIMEOUT_IND_ID                        0x88
-#define HI_STARTUP_IND_ID                               0x81
 
 /**************************************************/
 
-#define WSM_API_DOT11_STATION_ID_SIZE                   6         
-#define WSM_API_TX_POWER_RANGE_SIZE                     2         
-#define WSM_API_CHANNEL_DEF_SIZE                        48        
 #define WSM_API_SSID_DEF_SIZE                           2         
+#define WSM_API_CHANNEL_LIST_SIZE                       14        
 #define WSM_API_TIMESTAMP_SIZE                          8         
-#define WSM_API_RESERVED_SIZE                           5         
-#define WSM_API_MEASUREMENT_REQUEST_SIZE                72        
 #define WSM_API_RESERVED2_SIZE                          3         
-#define WSM_API_MEASUREMENT_REPORT_SIZE                 88        
 #define WSM_API_BSSID_SIZE                              6         
 #define WSM_API_SSID_SIZE                               32        
 #define WSM_API_RESERVED_SIZE_3                         3         
@@ -102,11 +232,6 @@ typedef __le32 __les32;
 #define WSM_API_TX_RESUME_FLAGS_PER_IF_SIZE             3         
 #define WSM_API_MAC_ADDR_SIZE                           6         
 #define WSM_API_TRANSMIT_ADDRESS_SIZE                   6         
-#define WSM_API_DATA_SIZE                               245
-#define WSM_API_FIRMWARE_LABEL_SIZE                     128       
-#define WSM_API_CONFIGURATION_SIZE_4                    4         
-#define WSM_API_MAC_SIZE                                6         
-#define WSM_API_SDD_DATA_SIZE                           1         
 #define WSM_API_PEER_ADDRESS_SIZE                       6         
 #define WSM_API_KEY_DATA_SIZE                           16        
 #define WSM_API_RESERVED_SIZE_2                         2         
@@ -119,8 +244,6 @@ typedef __le32 __les32;
 #define WSM_API_MIC_KEY_DATA_SIZE                       16        
 #define WSM_API_IGTK_KEY_DATA_SIZE                      16        
 #define WSM_API_IPN_SIZE                                8         
-#define WSM_API_CHANNELS_SIZE                           48        
-#define WSM_API_SSI_DS_SIZE                             2         
 #define WSM_API_PEER_MAC_ADDRESS_SIZE                   6         
 #define WSM_API_RESERVED_SIZE_4                         4         
 #define WSM_API_STATISTICS_GROUP_DATA_SIZE              52        
@@ -134,6 +257,8 @@ typedef __le32 __les32;
 #define WSM_API_RESERVED_SIZE_6                         6         
 #define WSM_API_MASK_VALUE_SIZE                         2         
 #define WSM_API_RESULT_VALUE_SIZE                       2         
+#define WSM_API_MAC_ADDR0_SIZE                          6         
+#define WSM_API_MAC_ADDR1_SIZE                          6         
 #define WSM_API_ADDRESS_LIST_SIZE                       8         
 #define WSM_API_IPV4_ADDRESS_SIZE                       4         
 #define WSM_API_FRAME_SIZE                              1024      
@@ -198,11 +323,6 @@ typedef enum filter_packet_type_e {
         FILTER_PACKET_TYPE_BROADCAST               = 0x3,         /*broadcast*/     
         FILTER_PACKET_TYPE_ALL_VALID               = 0x4          /*All Valid Data Packets*/
 } FilterPacketType_t;
-
-typedef enum hi_gen_req_e {
-        HI_GEN_REQ_TRACE_CONTROL_REQ_ID            = 0x0,
-        HI_GEN_REQ_HI_LOOPBACK_TEST_REQ_ID         = 0x1
-} HiGenReq_t;
 
 typedef enum wsm_e {
         WSM_STATUS_SUCCESS                         = 0x0,         /*The firmware has successfully completed a request.*/
@@ -313,12 +433,6 @@ typedef enum wsm_queue_id_e {
         WSM_QUEUE_ID_VOICE                         = 0x3          /*Voice*/         
 } WsmQueueId_t;
 
-typedef enum wsm_scan_type_e {
-        WSM_SCAN_TYPE_FG                           = 0x0,         /*Foreground Scan*/
-        WSM_SCAN_TYPE_BG                           = 0x1,         /*Background Scan*/
-        WSM_SCAN_TYPE_AUTO                         = 0x2          /*Auto Scan*/     
-} WsmScanType_t;
-
 typedef enum wsm_stbc_e {
         WSM_STBC_NOT_ALLOWED                       = 0x0,         /*STBC not allowed*/
         WSM_STBC_ALLOWED                           = 0x1          /*STBC allowed*/  
@@ -348,13 +462,6 @@ typedef enum wsm_filter_mode_e {
         WSM_FILTER_MODE_IN                         = 0x2          /*Filter in matching frames*/
 } WsmFilterMode_t;
 
-typedef enum wsm_gpio_command_e {
-        WSM_GPIO_COMMAND_GPIO_COMMAND_SETUP        = 0x0,         /*Configures GPIO pins direction*/
-        WSM_GPIO_COMMAND_GPIO_COMMAND_READ         = 0x1,         /*Read the value of GPIO pins requested*/
-        WSM_GPIO_COMMAND_GPIO_COMMAND_WRITE        = 0x2,         /*Writes the value to GPIO pins requested*/
-        WSM_GPIO_COMMAND_GPIO_COMMAND_RESET        = 0x3          /*Resets GPIO pins direction to that defined by the Static/Dynamic Definition (SDD) file.*/
-} WsmGpioCommand_t;
-
 typedef enum wsm_hi_dbg_e {
         WSM_HI_DBG_UNDEF_INST                      = 0x0,         /*undefined*/     
         WSM_HI_DBG_PREFETCH_ABORT                  = 0x1,         /*prefetch abort*/
@@ -362,14 +469,6 @@ typedef enum wsm_hi_dbg_e {
         WSM_HI_DBG_UNKNOWN_ERROR                   = 0x3,         /*unknown error*/ 
         WSM_HI_DBG_ASSERT                          = 0x4          /*assertion*/     
 } WsmHiDbg_t;
-
-typedef enum wsm_hi_fw_type_e {
-        WSM_HI_FW_TYPE_ETF                         = 0x0,         /*ETF Firmware*/  
-        WSM_HI_FW_TYPE_WFM                         = 0x1,         /*WLAN Full MAC (WFM)*/
-        WSM_HI_FW_TYPE_WSM                         = 0x2,         /*WLAN Split MAC (WSM)*/
-        WSM_HI_FW_TYPE_HI_TEST                     = 0x3,         /*HI Test Firmware*/
-        WSM_HI_FW_TYPE_PLATFORM_TEST               = 0x4          /*Platform Test Firmware */
-} WsmHiFwType_t;
 
 typedef enum wsm_hi_sta_stat_e {
         WSM_HI_STA_STAT_COUNTERS_TABLE             = 0x0,         /*STA counters from dot11CountersTable*/
@@ -413,7 +512,7 @@ typedef enum wsm_ipi_level_e {
 } WsmIpiLevel_t;
 
 typedef enum wsm_mib_id_e {
-        WSM_MIB_ID_DOT11_STATION_ID                = 0x0,         /*4.1  dot11StationId*/
+        WSM_MIB_ID_DOT11_MAC_ADDRESSES             = 0x0,         /*4.1  dot11MacAdresses*/
         WSM_MIB_ID_DOT11_MAX_TRANSMIT_LIFETIME     = 0x1,         /*4.2  dot11MaxtransmitMsduLifeTime*/
         WSM_MIB_ID_DOT11_MAX_RECEIVE_LIFETIME      = 0x2,         /*4.3  dot11MaxReceiveLifeTime*/
         WSM_MIB_ID_DOT11_SLOT_TIME                 = 0x3,         /*4.4  dot11SlotTime*/
@@ -528,24 +627,6 @@ typedef enum wsm_wcdma_band_e {
 
 /**************************************************/
 
-typedef struct __attribute__((__packed__)) wsm_hi_dpd_data_s {
-        __le16   Length;                           /*Length in bytes of the DpdData_t structure*/
-        __le16   Version;                          /*Version of the DPD record*/
-        u8       Mac[WSM_API_MAC_SIZE];            /*Mac character 0*/
-        u8       SddBlkFst : 1;                    /*Bit definitions:            Bit 2 = 1 Indicates the last SDD data block*/
-        u8       SddBlkMdle : 1;                   /*Bit definitions:            Bit 1 = 1 Indicates the interim SDD data block*/
-        u8       SddBlkLst : 1;                    /*Bit definitions:            Bit 0 = 1 Indicates the first SDD data block*/
-        u8       Reserved : 5;                     /*Reserved*/      
-        u8       Reserved2;                        /*Reserved*/      
-        __le32   SddData[WSM_API_SDD_DATA_SIZE];   /* */             
-} WsmHiDpdData_t;
-
-typedef struct __attribute__((__packed__)) wsm_hi_tx_power_range_s {
-        __les32  MinPowerLevel;                    /*Minimum power level in units of 0.1 dBm.*/
-        __les32  MaxPowerLevel;                    /*Maximum power level in units of 0.1 dBm.*/
-        __le32   Stepping;                         /*The step size in units of 0.1 dBm. The value of 0 indicates a non-constant stepping.*/
-} WsmHiTxPowerRange_t;
-
 typedef struct __attribute__((__packed__)) wsm_hi_reset_flags_s {
         u8       ResetStat : 1;                    /*0 Reset statistics - 1 Do not reset statistics*/
         u8       ResetAllInt : 1;                  /*Set high to reset all interfaces, not only the one indicated by link_id*/
@@ -553,27 +634,26 @@ typedef struct __attribute__((__packed__)) wsm_hi_reset_flags_s {
         u8       Reserved2[WSM_API_RESERVED2_SIZE];   /*Reserved2 0*/   
 } WsmHiResetFlags_t;
 
+typedef struct __attribute__((__packed__)) wsm_hi_scan_type_s {
+        u8       Type : 1;                         /*bit0 : 0=foreground/1=background*/
+        u8       Mode : 2;                         /*bit1-2 : 0=single scan, 1=auto periodic scan, 2=auto quality scan     : scan is done only if reception quality (tbd) is below a threshold*/
+        u8       Reserved : 5;                     /*Reserved*/      
+} WsmHiScanType_t;
+
 typedef struct __attribute__((__packed__)) wsm_hi_scan_flags_s {
         u8       Fbg : 1;                          /*1 - forced background scan.     Forced background scan means if the station cannot enter the power-save mode,    it will be force to perform a background scan.     Only valid when ScanType is background scan.*/
         u8       Split : 1;                        /*A split scan method is to be used*/
         u8       Pre : 1;                          /*Preamble type: 0 : Long, 1 : Short*/
         u8       TxMod : 1;                        /*11n Tx mode: 0 : Mixed, 1 : Greenfield*/
-        u8       Reserved : 4;                     /*Reserved*/      
+        u8       UseMacAddr1 : 1;                  /*Use the second mac address*/
+        u8       Reserved : 3;                     /*Reserved*/      
 } WsmHiScanFlags_t;
 
-typedef struct __attribute__((__packed__)) wsm_hi_auto_scan_interval_s {
+typedef struct __attribute__((__packed__)) wsm_hi_auto_scan_param_s {
         __le16   Interval;                         /*Interval period in TUs that the device will re-execute the requested scan.    Maximum value supported by the device is 256 s.    Applicable to auto-scan ScanType only.*/
         u8       Reserved;                         /*Reserved*/      
-        u8       Rssi;                             /*Scan RSSI Threshold in dBm. Scan reports with lower RSSI value will be discarded and not passed to the host. A value of zero (default) will make all reports pass.*/
-} WsmHiAutoScanInterval_t;
-
-typedef struct __attribute__((__packed__)) wsm_hi_channel_def_s {
-        __le16   ChannelNumber;                    /*Channel number to scan. A channel number will be mapped to an actual frequency according to the band.                     The Dual Band notation for channels should be used if applicable.*/
-        __le16   Reserved;                         /*Reserved*/      
-        __le32   MinChannelTime;                   /*The minimum time (in TUs) to spend when scanning this channel [optional].*/
-        __le32   MaxChannelTime;                   /*The maximum time (in TUs) to spend when scanning this channel [optional].*/
-        __le32   Reserved2;                        /*Reserved*/      
-} WsmHiChannelDef_t;
+        s8       RssiThr;                          /*Scan RSSI Threshold in dBm. Scan reports with lower RSSI value will be discarded and not passed to the host. A value of zero (default) will make all reports pass.*/
+} WsmHiAutoScanParam_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_ssid_def_s {
         __le32   SSIDLength;                       /*Length of the SSID*/
@@ -646,10 +726,10 @@ typedef struct __attribute__((__packed__)) wsm_hi_rx_flags_s {
 
 typedef struct __attribute__((__packed__)) wsm_hi_join_flags_s {
         u8       Sync : 1;                         /*Bit 0 = 0 - synchronized join ; 1 - unsynchronized join*/
-        u8       Owner : 1;                        /*Bit 1 = 0 - The BSS owner is a legacy WLAN AP ; 1 - The BSS owner is a P2P GO*/
+        u8       P2P : 1;                          /*Bit 1 = 0 - The BSS owner is a legacy WLAN AP ; 1 - The BSS owner is a P2P GO*/
         u8       ForceNoBeacon : 1;                /*Bit 2 = 1 - Force to join BSS with the BSSID and the SSID specified without waiting for beacons. The ProbeForJoin parameter is ignored.*/
         u8       Priority : 1;                     /*Bit 3 = 1 - Give probe request/response higher priority over the BT traffic*/
-        u8       Reserved1 : 1;                    /*Bit 4 - Index of MAC address to use*/
+        u8       UseMacAddrIf : 1;                 /*Bit 4 - Index of MAC address to use*/
         u8       ForceWithInd : 1;                 /*Bit 5 - Force with Join Complete Indication */
         u8       ChangeP2PInt : 1;                 /*Bit 6 - Use a different P2P Interface Address*/
         u8       Reserved2 : 1;                    /*Reserved for future*/
@@ -708,22 +788,6 @@ typedef struct __attribute__((__packed__)) wsm_hi_ie_flags_s {
         u8       Reserved1 : 5;                    /*Reserved*/      
         u8       Reserved2;                        /*Reserved*/      
 } WsmHiIeFlags_t;
-
-typedef struct __attribute__((__packed__)) wsm_hi_condition_id_s {
-        u8       Indic : 1;                        /*0 - ConditionID specified in WritePacketFilterCondition message; 1 - condition configured via MIB elements*/
-        u8       ConditionId : 7;                  /*The Condition ID to be used to apply the filter.  0x81 : GroupAddress Filter - 0x82 : Magic Number Filter - 0x83 : Ethernet Type Filter - 0x84 : UDP filter            0x85 : ARP Filter - 0x86 : MAC Address Filtering - 0x87: IPv4 Address Filtering - 0x88: IPv6 Address Filtering - Values : 0x0B-0x7F and 0x89-0xFF are reserved and must not be used*/
-} WsmHiConditionId_t;
-
-
-typedef struct __attribute__((__packed__)) wsm_hi_firmware_api_ver_s {
-        u8       Reserved;                         /*Bit 0-7 : Reserved*/
-        u8       HIApiVersion;                     /*Bit 8-15 : the Host Interface API version. Currently it is 0x02.*/
-} WsmHiFirmwareApiVer_t;
-
-typedef struct __attribute__((__packed__)) wsm_hi_firmware_version_s {
-        u8       FonctionalityNumber;              /*Bit 0-7 : Functionality number*/
-        u8       MajorNumber;                      /*Bit 8-15 : Major number*/
-} WsmHiFirmwareVersion_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_wep_pairwise_key_s {
         u8       PeerAddress[WSM_API_PEER_ADDRESS_SIZE];   /*MAC address of the peer station*/
@@ -811,17 +875,18 @@ typedef struct __attribute__((__packed__)) wsm_hi_meas_noise_histogram_params_s 
 typedef struct __attribute__((__packed__)) wsm_hi_meas_beacon_params_s {
         __le16   RandomInterval;                   /*Upper bound of the random delay to be used before making the measurement. Expressed in units of TUs (for use with the channel load measurement).*/
         __le16   Reserved;                         /*Reserved*/      
-        u8       Band;                             /*The frequency band. 0 - 2.4GHz, 1 - 5GHz*/
-        u8       ScanType;                         /*Specifies the scan type. 1 - Background scan*/
-        u8       ScanFlags;                        /*Scan Flags*/    
-        u8       MaxTxRate;                        /*This parameter specifies the transmission rate to be used for sending probe requests.*/
-        __le32   AutoScanInterval;                 /*Applicable to auto-scan ScanType only.         Interval period in TUs that the device will re-execute the requested scan. Maximum value supported by the device is 256 s.*/
+        u8       Band;                             /*The frequency band. 0 - 2.4GHz, 1 - 5GHz  == SAME AS WSM_HI_START_SCAN_REQ_BODY ==*/
+        WsmHiScanType_t ScanType;                  /*Scan Type*/     
+        WsmHiScanFlags_t ScanFlags;                /*Scan Flags*/    
+        u8       MaxTransmitRate;                  /*This parameter specifies the transmission rate to be used for sending probe requests.*/
+        WsmHiAutoScanParam_t AutoScanParam;         /*Applicable to auto-scan ScanType only.         Interval period in TUs that the device will re-execute the requested scan. Maximum value supported by the device is 256 s.*/
         u8       NumOfProbeRequests;               /*Number of probe requests (per SSID) sent to one (1) channel.         Zero (0) means that none is send, which means that a passive scan is to be done. Value greater than zero (0) means that an active scan is to be done.*/
-        u8       NumOfChannels;                    /*Number of channels to be scanned. [Maximum number is 1.]*/
-        u8       NumOfSsids;                       /*Number of SSIDs provided in the scan command (this is zero (0) in broadcast scan). The maximum number of SSIDs that the device can store is one.*/
         u8       ProbeDelay;                       /*The delay time (in microseconds) period before sending a probe request.*/
-        /* WsmHiChannelDef_t Channels[WSM_API_CHANNELS_SIZE]; */
-        /* WsmHiSsidDef_t SSIDs[WSM_API_SSI_DS_SIZE]; */
+        u8       NumOfSSIDs;                       /*Number of SSIDs provided in the scan command (this is zero (0) in broadcast scan). The maximum number of SSIDs that the device can store is one.*/
+        u8       NumOfChannels;                    /*Number of channels to be scanned. [Maximum number is 1.]*/
+        __le32   MinChannelTime;                   /*time in TUs*/   
+        __le32   MaxChannelTime;                   /*time in TUs*/   
+        __les32  TxPowerLevel;                     /*time in TUs*/   
 } WsmHiMeasBeaconParams_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_meas_sta_stats_params_s {
@@ -837,7 +902,7 @@ typedef struct __attribute__((__packed__)) wsm_hi_meas_link_measurement_params_s
 } WsmHiMeasLinkMeasurementParams_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_meas_channel_load_results_s {
-        u8       Reserved;                         /*Reserved*/      
+        __le16   Reserved;                         /*Reserved*/      
         u8       ChannelLoadCCA;                   /*Determines whether to do a channel load (value 1) or a CCA measurement (value 0).*/
         u8       ChannelNum;                       /*Channel number on which the load needs to be measured.*/
         __le64   ActualMeasurementStartTime;       /*Value of the measuring STA TSF timer at the time the measurement has started.*/
@@ -848,6 +913,7 @@ typedef struct __attribute__((__packed__)) wsm_hi_meas_channel_load_results_s {
 
 typedef struct __attribute__((__packed__)) wsm_hi_meas_noise_histogram_results_s {
         __le16   Reserved;                         /*Reserved*/      
+        u8       Reserved2;                        /*Reserved*/      
         u8       ChannelNum;                       /*Channel number on which the histogram was measured.*/
         __le64   ActualMeasurementStartTime;       /*Value of the measuring STA TSF timer at the time the measurement has started.*/
         __le16   MeasurementDuration;              /*Duration over which the noise histogram report was measured. Expressed in units of TUs.*/
@@ -864,7 +930,7 @@ typedef struct __attribute__((__packed__)) wsm_hi_meas_noise_histogram_results_s
         u8       Pi8Density;                       /*IPI density observed in the channel for level 8 (invalid in case of RPI measurement)*/
         u8       Pi9Density;                       /*IPI density observed in the channel for level 9 (invalid in case of RPI measurement)*/
         u8       Pi10Density;                      /*IPI density observed in the channel for level 10 (invalid in case of RPI measurement)*/
-        u8       Reserved2;                        /*Reserved*/      
+        u8       Reserved3;                        /*Reserved*/      
 } WsmHiMeasNoiseHistogramResults_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_meas_beacon_results_s {
@@ -985,14 +1051,19 @@ typedef struct __attribute__((__packed__)) wsm_hi_mib_udpports_data_frame_filter
         __le16   UDPPort;                          /*The UDP port number to filter on.*/
 } WsmHiMibUdpportsDataFrameFilter_t;
 
-typedef struct __attribute__((__packed__)) wsm_hi_mib_station_id_s {
-        u8       Mac[WSM_API_MAC_SIZE];            /*mac character 0*/
-} WsmHiMibStationId_t;
+typedef struct __attribute__((__packed__)) wsm_hi_mib_mac_addresses_s {
+        u8       MacAddr0[WSM_API_MAC_ADDR0_SIZE];   /*mac address 0 character 0*/
+        u8       MacAddr1[WSM_API_MAC_ADDR1_SIZE];   /*mac address 1 character 0*/
+} WsmHiMibMacAddresses_t;
+
+typedef struct __attribute__((__packed__)) wsm_hi_mib_mac_addr_s {
+        u8       MacAddr[WSM_API_MAC_ADDR_SIZE];   /*mac address character 0*/
+} WsmHiMibMacAddr_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_mib_grp_addr_table_s {
         __le32   Enable;                           /*Address filtering configuration*/
         __le32   NumOfAddresses;                   /*Number of addresses. A zero value clears the address table.*/
-        WsmHiMibStationId_t AddressList[WSM_API_ADDRESS_LIST_SIZE];   /*Mac address 0*/ 
+        WsmHiMibMacAddr_t AddressList[WSM_API_ADDRESS_LIST_SIZE];   /*Mac address 0*/ 
 } WsmHiMibGrpAddrTable_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_mib_wep_default_key_id_s {
@@ -1283,7 +1354,7 @@ typedef union wsm_hi_meas_request_u {
 } WsmHiMeasRequest_t;
 
 typedef union wsm_mib_data_u {
-        WsmHiMibStationId_t                           dot11StationId;                 /* Element :0*/   
+        WsmHiMibMacAddresses_t                        dot11MacAdresses;               /* Element :0*/   
         __le32                                        dot11MaxTransmitMsduLifeTime;   /* Element :1*/   
         __le32                                        dot11MaxReceiveLifeTime;        /* Element :2*/   
         __le32                                        dot11SlotTime;                  /* Element :3*/   
@@ -1379,35 +1450,187 @@ typedef struct __attribute__((__packed__)) HiMsgHdr_s {
 
 /**************************************************/
 
-/* request WSM_HI_CONFIGURATION */
-/* Configure the device and set MAC parameters */
-typedef struct __attribute__((__packed__)) WsmHiConfigurationReqBody_s {
-        __le32   Dot11MaxTransmitMsduLifeTime;     /*This attribute will be the elapsed time in TUs, after the initial transmission of an MSDU,     after which further attempts to transmit the MSDU will be terminated. This is a standard 802.11 MIB variable. If a value of 0 is specified, the default value is used.*/
-        __le32   Dot11MaxReceiveLifeTime;          /*Range of 1 to 0xFFFF FFFF. This is a standard 802.11 MIB variable. If a value of 0 is specified, the default value is used.*/
-        __le32   Dot11RtsThreshold;                /*Range of 0 to 3000. This is a standard 802.11 MIB variable. If a value of 0 is specified, the default value is used.*/
-        WsmHiDpdData_t DpdData;            
-} WsmHiConfigurationReqBody_t;
+#ifndef HI_GENERIC_API
+#define HI_GENERIC_API
 
-typedef struct __attribute__((__packed__)) WsmHiConfigurationReq_s {
+/* request HI_CONTROL_GPIO */
+/* Send a request to read and write a gpio */
+typedef struct __attribute__((__packed__)) HiControlGpioReqBody_s {
+        u8       GpioLabel;                        /*Identify the gpio by its label*/
+        u8       GpioMode;                         /*define how to set or read the gpio*/
+} HiControlGpioReqBody_t;
+
+typedef struct __attribute__((__packed__)) HiControlGpioReq_s {
         HiMsgHdr_t Header;             
-        WsmHiConfigurationReqBody_t Body;               
-} WsmHiConfigurationReq_t;
+        HiControlGpioReqBody_t Body;               
+} HiControlGpioReq_t;
 
-/* confirmation WSM_HI_CONFIGURATION */
+/* confirmation HI_CONTROL_GPIO */
+/* Send a request to read and write a gpio */
+typedef struct __attribute__((__packed__)) HiControlGpioCnfBody_s {
+        u8       Status;                           /*A value of zero indicates the request is completed successfully.*/
+        u8       Value;                            /*the value of the gpio or the error*/
+} HiControlGpioCnfBody_t;
+
+typedef struct __attribute__((__packed__)) HiControlGpioCnf_s {
+        HiMsgHdr_t Header;             
+        HiControlGpioCnfBody_t Body;               
+} HiControlGpioCnf_t;
+
+/* indication HI_ERROR_IND */
+/* Send an Error indication to the Host */
+typedef struct __attribute__((__packed__)) HiErrorIndBody_s {
+        __le32   Type;               
+        u8       Data[API_DATA_SIZE_124];          /*Generic data buffer - contents depends on the error type.*/
+} HiErrorIndBody_t;
+
+typedef struct __attribute__((__packed__)) HiErrorInd_s {
+        HiMsgHdr_t Header;             
+        HiErrorIndBody_t Body;               
+} HiErrorInd_t;
+
+/* indication HI_STARTUP */
+/* Send an indication during startup */
+typedef struct __attribute__((__packed__)) HiStartupIndBody_s {
+        __le32   Status;                           /*Initialization status. same as all indication and confirmation msg*/
+        __le16   HardwareId;                       /*=misc_read_reg7 register*/
+        u8       OPN[API_OPN_SIZE];                /*=OTP part_OPN*/ 
+        u8       UID[API_UID_SIZE];                /*=OTP UID*/      
+        __le16   NumInpChBufs;                     /*Number of buffers in the input channel 0.*/
+        __le16   SizeInpChBuf;                     /*Buffer size in bytes for the input channel 0.*/
+        u8       NumLinksAP;                       /*number of STA that we support in AP mode (currently 16-2)*/
+        u8       NumInterfaces;                    /*number of interfaces free to use by the customer (currently 3-1)*/
+        u8       MacAddr0[API_MAC_ADDR0_SIZE];     /*1st MAC address derived from OTP*/
+        u8       MacAddr1[API_MAC_ADDR1_SIZE];     /*2d MAC address derived from OTP*/
+        u8       ApiVersion;         
+        u8       Reserved;           
+        HiCapabilities_t Capabilities;       
+        u8       FirmwareBuild;      
+        u8       FirmwareMinor;      
+        u8       FirmwareMajor;      
+        u8       FirmwareType;                     /*ETF, WFM, WSM*/ 
+        u8       Reserved2[API_RESERVED2_SIZE];
+        u8       FirmwareLabel[API_FIRMWARE_LABEL_SIZE];   /*Null terminated text string.*/
+} HiStartupIndBody_t;
+
+typedef struct __attribute__((__packed__)) HiStartupInd_s {
+        HiMsgHdr_t Header;             
+        HiStartupIndBody_t Body;               
+} HiStartupInd_t;
+
+/* indication HI_GENERIC_IND */
+/* Send a generic indication */
+typedef struct __attribute__((__packed__)) HiGenericIndBody_s {
+        __le32   IndicationId;                     /*Identify the indication data.*/
+        HiIndicationData_t IndicationData;         /*Indication data.*/
+} HiGenericIndBody_t;
+
+typedef struct __attribute__((__packed__)) HiGenericInd_s {
+        HiMsgHdr_t Header;             
+        HiGenericIndBody_t Body;               
+} HiGenericInd_t;
+
+/* request HI_CONFIGURATION */
 /* Configure the device and set MAC parameters */
-typedef struct __attribute__((__packed__)) WsmHiConfigurationCnfBody_s {
+typedef struct __attribute__((__packed__)) HiConfigurationReqBody_s {
+        __le16   Length;                           /*PdsData length in bytes*/
+        u8       PdsData[API_PDS_DATA_SIZE];       /*PDS data*/      
+} HiConfigurationReqBody_t;
+
+typedef struct __attribute__((__packed__)) HiConfigurationReq_s {
+        HiMsgHdr_t Header;             
+        HiConfigurationReqBody_t Body;               
+} HiConfigurationReq_t;
+
+/* confirmation HI_CONFIGURATION */
+/* Configure the device and set MAC parameters */
+typedef struct __attribute__((__packed__)) HiConfigurationCnfBody_s {
         __le32   Status;                           /*Status. The following data is only valid if the confirmation returns STATUS_SUCCESS.*/
-        u8       Dot11StationId[WSM_API_DOT11_STATION_ID_SIZE];   /*The station MAC address.*/
-        u8       Dot11FrequencyBandsSupported;     /*This is a standard 802.11 MIB to inform the 4.9 GHz and 5 GHz sub-bands supported by the device.*/
-        u8       Reserved;                         /*Reserved*/      
         __le32   SupportedRateMask;                /*This indicates which rates are supported by the PHY. Bits are defined according to rate definition in Section 2.8.*/
-        WsmHiTxPowerRange_t TxPowerRange[WSM_API_TX_POWER_RANGE_SIZE];
-} WsmHiConfigurationCnfBody_t;
+        __les32  Reserved_0;                       /*but not public*/
+        __les32  Reserved_1;                       /*but not public*/
+        __le32   Reserved_2;                       /*but not public*/
+} HiConfigurationCnfBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiConfigurationCnf_s {
+typedef struct __attribute__((__packed__)) HiConfigurationCnf_s {
         HiMsgHdr_t Header;             
-        WsmHiConfigurationCnfBody_t Body;               
-} WsmHiConfigurationCnf_t;
+        HiConfigurationCnfBody_t Body;               
+} HiConfigurationCnf_t;
+
+/* request HI_SET_SL_MAC_KEY */
+/* Set the Secure Link MAC key */
+typedef struct __attribute__((__packed__)) HiSetSlMacKeyReqBody_s {
+        u8       OtpOrRam;                         /*Key destination - OTP or RAM*/
+        u8       KeyValue[API_KEY_VALUE_SIZE];     /*Secure Link MAC Key value*/
+} HiSetSlMacKeyReqBody_t;
+
+typedef struct __attribute__((__packed__)) HiSetSlMacKeyReq_s {
+        HiMsgHdr_t Header;             
+        HiSetSlMacKeyReqBody_t Body;               
+} HiSetSlMacKeyReq_t;
+
+/* confirmation HI_SET_SL_MAC_KEY */
+/* Set the Secure Link MAC key */
+typedef struct __attribute__((__packed__)) HiSetSlMacKeyCnfBody_s {
+        u8       Status;                           /*Key upload status*/
+} HiSetSlMacKeyCnfBody_t;
+
+typedef struct __attribute__((__packed__)) HiSetSlMacKeyCnf_s {
+        HiMsgHdr_t Header;             
+        HiSetSlMacKeyCnfBody_t Body;               
+} HiSetSlMacKeyCnf_t;
+
+/* request HI_SL_EXCHANGE_PUB_KEYS */
+/* Exchange Secure Link Public Keys */
+typedef struct __attribute__((__packed__)) HiSlExchangePubKeysReqBody_s {
+        u8       HostPubKey[API_HOST_PUB_KEY_SIZE];   /*Host Public Key*/
+        u8       HostPubKeyMac[API_HOST_PUB_KEY_MAC_SIZE];   /*Host Public Key MAC*/
+} HiSlExchangePubKeysReqBody_t;
+
+typedef struct __attribute__((__packed__)) HiSlExchangePubKeysReq_s {
+        HiMsgHdr_t Header;             
+        HiSlExchangePubKeysReqBody_t Body;               
+} HiSlExchangePubKeysReq_t;
+
+/* confirmation HI_SL_EXCHANGE_PUB_KEYS */
+/* Exchange Secure Link Public Keys */
+typedef struct __attribute__((__packed__)) HiSlExchangePubKeysCnfBody_s {
+        u8       Status;                           /*Request status*/
+        u8       NcpPubKey[API_NCP_PUB_KEY_SIZE];   /*NCP Public Key*/
+        u8       NcpPubKeyMac[API_NCP_PUB_KEY_MAC_SIZE];   /*NCP Public Key MAC*/
+} HiSlExchangePubKeysCnfBody_t;
+
+typedef struct __attribute__((__packed__)) HiSlExchangePubKeysCnf_s {
+        HiMsgHdr_t Header;             
+        HiSlExchangePubKeysCnfBody_t Body;               
+} HiSlExchangePubKeysCnf_t;
+
+/* request HI_SL_CONFIGURE */
+/* Configure Secure Link Layer */
+typedef struct __attribute__((__packed__)) HiSlConfigureReqBody_s {
+        u8       EncrBmp[API_ENCR_BMP_SIZE];       /*Encryption bitmap*/
+        u8       SkeyInvld;                        /*Invalidate Session Key*/
+} HiSlConfigureReqBody_t;
+
+typedef struct __attribute__((__packed__)) HiSlConfigureReq_s {
+        HiMsgHdr_t Header;             
+        HiSlConfigureReqBody_t Body;               
+} HiSlConfigureReq_t;
+
+/* confirmation HI_SL_CONFIGURE */
+/* Configure Secure Link Layer */
+typedef struct __attribute__((__packed__)) HiSlConfigureCnfBody_s {
+        u8       NcpEncrBmp[API_NCP_ENCR_BMP_SIZE];   /*NCP Encryption Bitmap*/
+} HiSlConfigureCnfBody_t;
+
+typedef struct __attribute__((__packed__)) HiSlConfigureCnf_s {
+        HiMsgHdr_t Header;             
+        HiSlConfigureCnfBody_t Body;               
+} HiSlConfigureCnf_t;
+
+/**************************************************/
+
+#endif /*HI_GENERIC_API*/
 
 /* request WSM_HI_RESET */
 /* Reset Wlan link. */
@@ -1485,16 +1708,19 @@ typedef struct __attribute__((__packed__)) WsmHiWriteMibCnf_s {
 /* Start scanning. */
 typedef struct __attribute__((__packed__)) WsmHiStartScanReqBody_s {
         u8       Band;                             /*The radio band. 0 - 2.4 GHz band ; 1 - 5 GHz band*/
-        u8       ScanType;                         /*Specifies the scan type.*/
+        WsmHiScanType_t ScanType;           
         WsmHiScanFlags_t ScanFlags;          
         u8       MaxTransmitRate;                  /*This parameter specifies the transmission rate to be used for sending probe requests.*/
-        WsmHiAutoScanInterval_t AutoScanInterval;   
+        WsmHiAutoScanParam_t AutoScanParam;      
         u8       NumOfProbeRequests;               /*Number of probe requests (per SSID) sent to one (1) channel.     Zero (0) means that none is send, which means that a passive scan is to be done. Value greater than zero (0) means that an active scan is to be done.*/
-        u8       NumOfChannels;                    /*Number of channels to be scanned. [Maximum number is 48.]*/
-        u8       NumOfSSIDs;                       /*Number of SSIDs provided in the scan command (this is zero (0) in broadcast scan). The maximum number of SSIDs that the device can store is two.*/
         u8       ProbeDelay;                       /*The delay time (in microseconds) period before sending a probe request.*/
-        /* WsmHiChannelDef_t ChannelDef[WSM_API_CHANNEL_DEF_SIZE]; */
+        u8       NumOfSSIDs;                       /*Number of SSIDs provided in the scan command (this is zero (0) in broadcast scan). The maximum number of SSIDs that the device can store is two.*/
+        u8       NumOfChannels;                    /*Number of channels to be scanned. [Maximum number is 14.]*/
+        __le32   MinChannelTime;                   /*time in TUs*/   
+        __le32   MaxChannelTime;                   /*time in TUs*/   
+        __les32  TxPowerLevel;                     /*in 0.1dBm unit*/
         /* WsmHiSsidDef_t SsidDef[WSM_API_SSID_DEF_SIZE]; */
+        /* u8       ChannelList[WSM_API_CHANNEL_LIST_SIZE]; */   /*Optional if the Bit 24 in the Flags field is set.*/
 } WsmHiStartScanReqBody_t;
 
 typedef struct __attribute__((__packed__)) WsmHiStartScanReq_s {
@@ -1607,7 +1833,6 @@ typedef struct __attribute__((__packed__)) WsmHiEventInd_s {
         WsmHiEventIndBody_t Body;               
 } WsmHiEventInd_t;
 
-
 /* request WSM_HI_JOIN */
 /* Requests to join */
 typedef struct __attribute__((__packed__)) WsmHiJoinReqBody_s {
@@ -1618,7 +1843,7 @@ typedef struct __attribute__((__packed__)) WsmHiJoinReqBody_s {
         __le16   AtimWindow;                       /*ATIM window of IBSS. When the ATIM window is zero, the initiated IBSS does not support power saving.*/
         u8       PreambleType;                     /*The frequency band.*/
         u8       ProbeForJoin;                     /*Specifies if a probe request should be send with the specified SSID when joining the network.    This option is to acquire the TSF time of the BSS or IBSS that is to be joined as fast as possible. The TSF time is absorbed from the probe response or from beacon, whichever is received first.*/
-        u8       Reserved;                         /*Reserved*/      
+        u8       DTIMPeriod;                       /*Reserved*/      
         WsmHiJoinFlags_t JoinFlags;          
         __le32   SSIDLength;                       /*Length of the SSID*/
         u8       SSID[WSM_API_SSID_SIZE];          /*Specifies the SSID of the IBSS to join or start*/
@@ -2005,7 +2230,6 @@ typedef struct __attribute__((__packed__)) WsmHiDebugInd_s {
         WsmHiDebugIndBody_t Body;               
 } WsmHiDebugInd_t;
 
-
 /* indication WSM_HI_BA_TIMEOUT */
 /* Send a block ack timeout indication */
 typedef struct __attribute__((__packed__)) WsmHiBaTimeoutIndBody_s {
@@ -2018,29 +2242,6 @@ typedef struct __attribute__((__packed__)) WsmHiBaTimeoutInd_s {
         HiMsgHdr_t Header;             
         WsmHiBaTimeoutIndBody_t Body;               
 } WsmHiBaTimeoutInd_t;
-
-
-/* indication HI_STARTUP */
-/* Send an indication during startup */
-typedef struct __attribute__((__packed__)) HiStartupIndBody_s {
-        __le16   NumInpChBufs;                     /*Number of buffers in the input channel 0.*/
-        __le16   SizeInpChBuf;                     /*Buffer size in bytes for the input channel 0.*/
-        __le16   HardwareId;         
-        __le16   HardwareSubId;                    /*This identifies other hardware components.*/
-        __le16   InitStatus;                       /*Initialization status.*/
-        __le16   FirmwareCap;                      /*Firmware capabilities*/
-        __le16   FirmwareType;       
-        WsmHiFirmwareApiVer_t FirmwareApiVer;     
-        __le16   FirmwareBuildNumber;              /*The firmware build number.*/
-        WsmHiFirmwareVersion_t FirmwareVersion;    
-        u8       FirmwareLabel[WSM_API_FIRMWARE_LABEL_SIZE];   /*Null terminated text string.*/
-        __le32   Configuration[WSM_API_CONFIGURATION_SIZE_4];   /*Firmware configuration data. size variable*/
-} HiStartupIndBody_t;
-
-typedef struct __attribute__((__packed__)) HiStartupInd_s {
-        HiMsgHdr_t Header;             
-        HiStartupIndBody_t Body;               
-} HiStartupInd_t;
 
 /**************************************************/
 

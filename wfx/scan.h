@@ -22,12 +22,12 @@
 #define SCAN_H_INCLUDED
 
 /*========================================================================*/
-/*                 Standard Linux Headers             		              */
+/*                 Standard Linux Headers                                   */
 /*========================================================================*/
 #include <linux/semaphore.h>
 
 /*========================================================================*/
-/*                 Local Header files             			              */
+/*                 Local Header files                                       */
 /*========================================================================*/
 #include "wsm.h"
 
@@ -41,34 +41,34 @@ struct ieee80211_hw;
 struct work_struct;
 
 struct wfx_scan {
-	struct semaphore lock;
-	struct work_struct work;
-	struct delayed_work timeout;
-	struct cfg80211_scan_request *req;
-	struct ieee80211_channel **begin;
-	struct ieee80211_channel **curr;
-	struct ieee80211_channel **end;
-	WsmHiSsidDef_t ssids[WSM_API_SSID_DEF_SIZE];
-	int output_power;
-	int n_ssids;
-	int status;
-	atomic_t in_progress;
-	/* Direct probe requests workaround */
-	struct delayed_work probe_work;
-	int direct_probe;
+    struct semaphore lock;
+    struct work_struct work;
+    struct delayed_work timeout;
+    struct cfg80211_scan_request *req;
+    struct ieee80211_channel **begin;
+    struct ieee80211_channel **curr;
+    struct ieee80211_channel **end;
+    WsmHiSsidDef_t ssids[WSM_API_SSID_DEF_SIZE];
+    int output_power;
+    int n_ssids;
+    int status;
+    atomic_t in_progress;
+    /* Direct probe requests workaround */
+    struct delayed_work probe_work;
+    int direct_probe;
 };
 
 /*========================================================================*/
 /*                       Functions                                        */
 /*========================================================================*/
 int wfx_hw_scan(struct ieee80211_hw *hw,
-		   struct ieee80211_vif *vif,
-		   struct ieee80211_scan_request *hw_req);
+           struct ieee80211_vif *vif,
+           struct ieee80211_scan_request *hw_req);
 void wfx_scan_work(struct work_struct *work);
 void wfx_scan_timeout(struct work_struct *work);
 void wfx_clear_recent_scan_work(struct work_struct *work);
 void wfx_scan_complete_cb(struct wfx_common *priv,
-		WsmHiScanCmplIndBody_t *arg);
+        WsmHiScanCmplIndBody_t *arg);
 void wfx_scan_failed_cb(struct wfx_common *priv);
 
 void wfx_probe_work(struct work_struct *work);
