@@ -1,4 +1,4 @@
- /*
+/*
  * Copyright (c) 2017, Silicon Laboratories, Inc.
  *
  * Based on:
@@ -17,11 +17,9 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
- 
 
-
-#ifndef TXRX_H
-#define TXRX_H
+#ifndef DATA_TXRX_H
+#define DATA_TXRX_H
 
 #include <linux/list.h>
 
@@ -33,27 +31,27 @@
 /* extern */ struct wfx_txpriv;
 
 struct tx_policy {
-    union {
-        __le32 tbl[3];
-        u8 raw[12];
-    };
-    u8  defined;
-    u8  usage_count;
-    u8  retry_count;
-    u8  uploaded;
+	union {
+		__le32	tbl[3];
+		u8	raw[12];
+	};
+	u8	defined;
+	u8	usage_count;
+	u8	retry_count;
+	u8	uploaded;
 };
 
 struct tx_policy_cache_entry {
-    struct tx_policy policy;
-    struct list_head link;
+	struct tx_policy	policy;
+	struct list_head	link;
 };
 
 #define TX_POLICY_CACHE_SIZE    (8)
 struct tx_policy_cache {
-    struct tx_policy_cache_entry cache[TX_POLICY_CACHE_SIZE];
-    struct list_head used;
-    struct list_head free;
-    spinlock_t lock; /* Protect policy cache */
+	struct tx_policy_cache_entry	cache[TX_POLICY_CACHE_SIZE];
+	struct list_head		used;
+	struct list_head		free;
+	spinlock_t			lock; /* Protect policy cache */
 };
 
 /* ******************************************************************** */
@@ -70,25 +68,17 @@ void tx_policy_clean(struct wfx_common *priv);
 /* ******************************************************************** */
 /* TX implementation                            */
 
-u32 wfx_rate_mask_to_wsm(struct wfx_common *priv,
-        u32 rates);
-void wfx_tx(struct ieee80211_hw *dev,
-        struct ieee80211_tx_control *control,
-        struct sk_buff *skb);
-void wfx_skb_dtor(struct wfx_common *priv,
-        struct sk_buff *skb,
-        const struct wfx_txpriv *txpriv);
+u32 wfx_rate_mask_to_wsm(struct wfx_common *priv, u32 rates);
+void wfx_skb_dtor(struct wfx_common *priv, struct sk_buff *skb,
+		  const struct wfx_txpriv *txpriv);
 
 /* ******************************************************************** */
 /* WSM callbacks                            */
 
-void wfx_tx_confirm_cb(struct wfx_common *priv,
-        int link_id,
-        WsmHiTxCnfBody_t *arg);
-void wfx_rx_cb(struct wfx_common *priv,
-        WsmHiRxIndBody_t *arg,
-        int link_id,
-        struct sk_buff **skb_p);
+void wfx_tx_confirm_cb(struct wfx_common *priv, int link_id,
+		       WsmHiTxCnfBody_t *arg);
+void wfx_rx_cb(struct wfx_common *priv, WsmHiRxIndBody_t *arg, int link_id,
+	       struct sk_buff **skb_p);
 
 /* ******************************************************************** */
 /* Timeout                                */
@@ -113,5 +103,4 @@ int wfx_alloc_link_id(struct wfx_common *priv, const u8 *mac);
 void wfx_link_id_work(struct work_struct *work);
 void wfx_link_id_gc_work(struct work_struct *work);
 
-
-#endif /* txRX_H */
+#endif /* DATA_TXRX_H */

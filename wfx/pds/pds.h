@@ -4,12 +4,11 @@
  * \brief
  */
 
-typedef struct PDS_BUFFERS_T
-{
-    u8 u8_NbBuffersUsed;
-    char * apc_output_strings[8];
-}PDS_BUFFERS;
+typedef struct PDS_BUFFERS_T {
+	u8	nb_buffers_used;
+	char	*output_strings[8];
+} PDS_BUFFERS;
 
+PDS_BUFFERS *pds_compress_json(const char *input_string, size_t size);
 
-PDS_BUFFERS *pds_compress_json(const char *cpc_InputString, size_t size);
-void pds_release_buffers(PDS_BUFFERS * p_PdsBuffers);
+void pds_release_buffers(PDS_BUFFERS *pds_buffers);

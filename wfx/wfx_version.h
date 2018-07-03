@@ -1,1 +1,1 @@
-#define WFX_LABEL "WFX__DRV-1.2.2"
+#define WFX_LABEL "WFX__DRV-1.2.8"

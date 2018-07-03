@@ -33,6 +33,9 @@ typedef __le32 __les32;
 
 #define HI_CONTROL_GPIO_REQ_ID                          0x26
 #define HI_CONTROL_GPIO_CNF_ID                          0x26
+#define HI_SHUT_DOWN_REQ_ID                             0x32
+#define HI_SHUT_DOWN_CNF_ID                             0x32
+#define HI_EXCEPTION_IND_ID                             0xe0
 #define HI_ERROR_IND_ID                                 0xe4
 #define HI_STARTUP_IND_ID                               0xe1
 #define HI_GENERIC_IND_ID                               0xe3
@@ -47,6 +50,7 @@ typedef __le32 __les32;
 
 /**************************************************/
 
+#define API_FILENAME_SIZE                               48        
 #define API_DATA_SIZE_124                               124       
 #define API_OPN_SIZE                                    14        
 #define API_UID_SIZE                                    8         
@@ -66,6 +70,7 @@ typedef __le32 __les32;
 #define API_PER_SIZE                                    22        
 #define API_SNR_SIZE                                    22        
 #define API_RSSI_SIZE                                   22        
+#define API_CFO_SIZE                                    22        
 #define API_RAWDATA_SIZE                                1         
 
 /**************************************************/
@@ -127,7 +132,8 @@ typedef enum sl_mac_key_dest_e {
 typedef enum sl_mac_key_status_e {
         SL_MAC_KEY_STATUS_SUCCESS                  = 0x5a,        /*Key has been correctly written*/
         SL_MAC_KEY_STATUS_FAILED_KEY_ALREADY_BURNED = 0x1,        /*Key already exists in OTP*/
-        SL_MAC_KEY_STATUS_FAILED_RAM_MODE_NOT_ALLOWED = 0x2       /*RAM mode is not allowed*/
+        SL_MAC_KEY_STATUS_FAILED_RAM_MODE_NOT_ALLOWED = 0x2,      /*RAM mode is not allowed*/
+        SL_MAC_KEY_STATUS_FAILED_UNKNOWN_MODE      = 0x3          /*Unknown mode (should be RAM or OTP)*/
 } SlMacKeyStatus_t;
 
 typedef enum sl_pub_key_exchange_status_e {
@@ -138,8 +144,8 @@ typedef enum sl_pub_key_exchange_status_e {
 /**************************************************/
 
 typedef struct __attribute__((__packed__)) hi_capabilities_s {
-        u8       LinkMode : 2;                     /*Bit 0-1 : reg OTPCTRL_FB_STATUS_fb_secure_link_mode*/
-        u8       Reserved : 6;                     /*Bit 2-7 : Reserved*/
+        u8       LinkMode : 2;                     /*Bit 0-1 : reg OTPCTRL_FB_STATUS_fb_secure_link_mode type: wsm_hi_error*/
+        u8       Reserved : 6;                     /*Bit 2-7 : Reserved type: hi_gpio_error*/
         u8       Reserved2;                        /*Bit 8-15 : Reserved*/
         u8       Reserved3;                        /*Bit 16-23 : Reserved*/
         u8       Reserved4;                        /*Bit 24-31 : Reserved*/
@@ -151,9 +157,13 @@ typedef struct __attribute__((__packed__)) hi_rx_stats_s {
         __le32   PerTotal;                         /*PER on the total number of frame*/
         __le32   Throughput;                       /*Throughput calculated on correct frames received*/
         __le32   NbRxByRate[API_NB_RX_BY_RATE_SIZE];   /*Number of frame received by rate*/
-        __le32   Per[API_PER_SIZE];                /*PER*10000 by frame rate*/
-        __les32  Snr[API_SNR_SIZE];                /*SNR in Db*100 by frame rate*/
-        __les32  Rssi[API_RSSI_SIZE];              /*RSSI in Dbm*100 by frame rate*/
+        __le16   Per[API_PER_SIZE];                /*PER*10000 by frame rate*/
+        __les16  Snr[API_SNR_SIZE];                /*SNR in Db*100 by frame rate*/
+        __les16  Rssi[API_RSSI_SIZE];              /*RSSI in Dbm*100 by frame rate*/
+        __les16  Cfo[API_CFO_SIZE];                /*CFO in kHz by frame rate*/
+        __le32   Date;                             /*This message transmission date in firmware database (microsecond)*/
+        __le32   PwrClkFreq;                       /*Frequency of the power clock in Hz*/
+        u8       IsExtPwrClk;                      /*Indicate if the power clock is external*/
 } HiRxStats_t;
 
 /**************************************************/
@@ -635,7 +645,7 @@ typedef struct __attribute__((__packed__)) wsm_hi_reset_flags_s {
 } WsmHiResetFlags_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_scan_type_s {
-        u8       Type : 1;                         /*bit0 : 0=foreground/1=background*/
+        u8       Type : 1;                         /*bit0 : 0=foreground/1=background type: wsm*/
         u8       Mode : 2;                         /*bit1-2 : 0=single scan, 1=auto periodic scan, 2=auto quality scan     : scan is done only if reception quality (tbd) is below a threshold*/
         u8       Reserved : 5;                     /*Reserved*/      
 } WsmHiScanType_t;
@@ -661,8 +671,8 @@ typedef struct __attribute__((__packed__)) wsm_hi_ssid_def_s {
 } WsmHiSsidDef_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_queue_id_s {
-        u8       QueueId : 2;                      /*Transmit queue ID (as defined in set Tx queue params) specifies the Access Category Index (ACI) of the queue. 0 - BE ; 1 - BG ; 2 - VI ; 3 - VO*/
-        u8       PerStaId : 4;                     /*Bits 5 to 2 : peer STA id (from 1 to 14)*/
+        u8       QueueId : 2;                      /*Transmit queue ID (as defined in set Tx queue params) specifies the Access Category Index (ACI) of the queue. 0 - BE ; 1 - BG ; 2 - VI ; 3 - VO type: wsm*/
+        u8       PerStaId : 4;                     /*Bits 5 to 2 : peer STA id (from 1 to 14) type: wsm_pm_mode*/
         u8       Reserved : 2;                     /*Bits 7 to 6: reserved*/
 } WsmHiQueueId_t;
 
@@ -689,7 +699,7 @@ typedef struct __attribute__((__packed__)) wsm_hi_ht_tx_parameters_s {
 
 typedef struct __attribute__((__packed__)) wsm_hi_tx_result_flags_s {
         u8       Aggr : 1;                         /*Only valid for the WSM_SUCCESS status. 0 - Frame was not sent aggregated. 1 - Frame was sent aggregated*/
-        u8       Requeue : 1;                      /*Valid only when status is WSM_REQUEUE. 1 - Host should re-queue this frame later. 0 - Host should not re-queue this frame.*/
+        u8       Requeue : 1;                      /*Valid only when status is WSM_REQUEUE. 1 - Host should re-queue this frame later. 0 - Host should not re-queue this frame. type: wsm*/
         u8       AckPolicy : 2;                    /*Only valid for the WSM_SUCCESS status. 00b - Normal ACK ; 01b - No ACK ; 10b - No explicit acknowledgement ; 11b - Block ACK*/
         u8       TxopLimit : 1;                    /*The TXOP limit for the ACI was temporarily increased to allow this frame to transmit.*/
         u8       MoreTxForMulti : 1;               /*seen in FW .h*/ 
@@ -699,7 +709,7 @@ typedef struct __attribute__((__packed__)) wsm_hi_tx_result_flags_s {
 } WsmHiTxResultFlags_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_rx_flags_s {
-        u8       Encryp : 3;                       /*Frame encryption type*/
+        u8       Encryp : 3;                       /*Frame encryption type type: wsm*/
         u8       InAggr : 1;                       /*Bit 3 : 1 - Frame was part of an aggregation*/
         u8       FirstAggr : 1;                    /*Bit 4 : 1 - Frame was first in an aggregation (Only valid if bit 03 = 1)*/
         u8       LastAggr : 1;                     /*Bit 5 : 1 - Frame was last in an aggregation (Only valid if bit 03 = 1)*/
@@ -725,31 +735,31 @@ typedef struct __attribute__((__packed__)) wsm_hi_rx_flags_s {
 } WsmHiRxFlags_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_join_flags_s {
-        u8       Sync : 1;                         /*Bit 0 = 0 - synchronized join ; 1 - unsynchronized join*/
-        u8       P2P : 1;                          /*Bit 1 = 0 - The BSS owner is a legacy WLAN AP ; 1 - The BSS owner is a P2P GO*/
-        u8       ForceNoBeacon : 1;                /*Bit 2 = 1 - Force to join BSS with the BSSID and the SSID specified without waiting for beacons. The ProbeForJoin parameter is ignored.*/
-        u8       Priority : 1;                     /*Bit 3 = 1 - Give probe request/response higher priority over the BT traffic*/
+        u8       Sync : 1;                         /*Bit 0 = 0 - synchronized join ; 1 - unsynchronized join type: wsm_mode*/
+        u8       P2P : 1;                          /*Bit 1 = 0 - The BSS owner is a legacy WLAN AP ; 1 - The BSS owner is a P2P GO type: wsm_measure_type*/
+        u8       ForceNoBeacon : 1;                /*Bit 2 = 1 - Force to join BSS with the BSSID and the SSID specified without waiting for beacons. The ProbeForJoin parameter is ignored. type: wsm_measure_type*/
+        u8       Priority : 1;                     /*Bit 3 = 1 - Give probe request/response higher priority over the BT traffic type: wsm*/
         u8       UseMacAddrIf : 1;                 /*Bit 4 - Index of MAC address to use*/
-        u8       ForceWithInd : 1;                 /*Bit 5 - Force with Join Complete Indication */
+        u8       ForceWithInd : 1;                 /*Bit 5 - Force with Join Complete Indication  type: wsm_preamble*/
         u8       ChangeP2PInt : 1;                 /*Bit 6 - Use a different P2P Interface Address*/
         u8       Reserved2 : 1;                    /*Reserved for future*/
 } WsmHiJoinFlags_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_pm_mode_s {
-        u8       PmMode : 1;                       /*Bit 0 = 0 - Active mode, when this mode is entered, the device automatically transmits a frame with the power management bit cleared to inform the AP that the STA is in the active mode            Bit 0 = 1 - PS mode, when this mode is entered, the device automatically transmits a frame with the power management bit set to inform the AP that the STA has entered the PS mode.            Bit 7 = 1 - Fast power-saving mode is enabled. This bit is only valid with bit 0 is set to 1.*/
+        u8       PmMode : 1;                       /*Bit 0 = 0 - Active mode, when this mode is entered, the device automatically transmits a frame with the power management bit cleared to inform the AP that the STA is in the active mode            Bit 0 = 1 - PS mode, when this mode is entered, the device automatically transmits a frame with the power management bit set to inform the AP that the STA has entered the PS mode.            Bit 7 = 1 - Fast power-saving mode is enabled. This bit is only valid with bit 0 is set to 1. type: wsm*/
         u8       Reserved : 6;                     /*Reserved*/      
         u8       FastPsm : 1;                      /*Bit 7 = 1 - Fast power-saving mode is enabled. This bit is only valid with bit 0 is set to 1.*/
 } WsmHiPmMode_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_bss_flags_s {
-        u8       LostCountOnly : 1;                /*Bit 0 = 1: Only update the beacon lost count limit and reset the internal beacon lost counter.*/
-        u8       Reserved : 7;                     /*Reserved*/      
+        u8       LostCountOnly : 1;                /*Bit 0 = 1: Only update the beacon lost count limit and reset the internal beacon lost counter. type: wsm*/
+        u8       Reserved : 7;                     /*Reserved type: wsm_pm_mode*/
 } WsmHiBssFlags_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_channel_mode_s {
-        u8       Reserved2 : 1;                    /*Reserved*/      
+        u8       Reserved2 : 1;                    /*Reserved type: wsm*/
         u8       Transmit : 1;                     /*1 - The STA will not transmit any further frames until the channel switch has completed.*/
-        u8       Enhanced : 1;                     /*1 - Enhanced switch-channel mode. Extra eight fields are available in the request structure (those that come after NewChannelNumber).*/
+        u8       Enhanced : 1;                     /*1 - Enhanced switch-channel mode. Extra eight fields are available in the request structure (those that come after NewChannelNumber). type: wsm_ackplcy*/
         u8       Reserved1 : 5;                    /*Reserved*/      
 } WsmHiChannelMode_t;
 
@@ -765,7 +775,7 @@ typedef struct __attribute__((__packed__)) wsm_hi_switch_flags_s {
 } WsmHiSwitchFlags_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_mode_s {
-        u8       StartMode : 2;                    /*Bit 1-0 : Start mode 0: MiniAP 1: P2P GO 2: generic channel */
+        u8       StartMode : 2;                    /*Bit 1-0 : Start mode 0: MiniAP 1: P2P GO 2: generic channel  type: wsm_hi_state*/
         u8       Unused : 2;         
         u8       IndexMacUse : 1;                  /*Bit 4 : index of MAC address to use*/
         u8       P2PMultipleInterface : 1;         /*Bit 5 : Use of multiple interface*/
@@ -774,7 +784,7 @@ typedef struct __attribute__((__packed__)) wsm_hi_mode_s {
 } WsmHiMode_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_suspend_resume_flags_s {
-        u8       ResumeOrSuspend : 1;              /*0 - Stop sending further Tx requests to the device for this link. 1 -Resume Tx.*/
+        u8       ResumeOrSuspend : 1;              /*0 - Stop sending further Tx requests to the device for this link. 1 -Resume Tx. type: wsm*/
         u8       Ac : 2;                           /*The AC on which Tx must be suspended or resumed. This is applicable only for UAPSD.*/
         u8       CastType : 1;                     /*1 - Transmit broadcast or multicast frames. This is to instruct the host to transmit broadcast or multicast traffic, if buffered in the host after the DTIM beacon.            0 - Transmit unicast frames.*/
         u8       Reserved1 : 4;                    /*Reserved*/      
@@ -790,8 +800,8 @@ typedef struct __attribute__((__packed__)) wsm_hi_ie_flags_s {
 } WsmHiIeFlags_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_wep_pairwise_key_s {
-        u8       PeerAddress[WSM_API_PEER_ADDRESS_SIZE];   /*MAC address of the peer station*/
-        u8       Reserved;                         /*Reserved*/      
+        u8       PeerAddress[WSM_API_PEER_ADDRESS_SIZE];   /*MAC address of the peer station type: sl_configure_ind_status*/
+        u8       Reserved;                         /*Reserved type: sl_configure_skey_invld*/
         u8       KeyLength;                        /*Key Length in bytes*/
         u8       KeyData[WSM_API_KEY_DATA_SIZE];   /*Key data*/      
 } WsmHiWepPairwiseKey_t;
@@ -876,10 +886,10 @@ typedef struct __attribute__((__packed__)) wsm_hi_meas_beacon_params_s {
         __le16   RandomInterval;                   /*Upper bound of the random delay to be used before making the measurement. Expressed in units of TUs (for use with the channel load measurement).*/
         __le16   Reserved;                         /*Reserved*/      
         u8       Band;                             /*The frequency band. 0 - 2.4GHz, 1 - 5GHz  == SAME AS WSM_HI_START_SCAN_REQ_BODY ==*/
-        WsmHiScanType_t ScanType;                  /*Scan Type*/     
-        WsmHiScanFlags_t ScanFlags;                /*Scan Flags*/    
+        WsmHiScanType_t ScanType;                  /*Scan Type type: wsm_hi_scan_type*/
+        WsmHiScanFlags_t ScanFlags;                /*Scan Flags type: wsm_hi_scan_flags*/
         u8       MaxTransmitRate;                  /*This parameter specifies the transmission rate to be used for sending probe requests.*/
-        WsmHiAutoScanParam_t AutoScanParam;         /*Applicable to auto-scan ScanType only.         Interval period in TUs that the device will re-execute the requested scan. Maximum value supported by the device is 256 s.*/
+        WsmHiAutoScanParam_t AutoScanParam;         /*Applicable to auto-scan ScanType only.         Interval period in TUs that the device will re-execute the requested scan. Maximum value supported by the device is 256 s. type: wsm_hi_auto_scan_param*/
         u8       NumOfProbeRequests;               /*Number of probe requests (per SSID) sent to one (1) channel.         Zero (0) means that none is send, which means that a passive scan is to be done. Value greater than zero (0) means that an active scan is to be done.*/
         u8       ProbeDelay;                       /*The delay time (in microseconds) period before sending a probe request.*/
         u8       NumOfSSIDs;                       /*Number of SSIDs provided in the scan command (this is zero (0) in broadcast scan). The maximum number of SSIDs that the device can store is one.*/
@@ -942,7 +952,7 @@ typedef struct __attribute__((__packed__)) wsm_hi_meas_beacon_results_s {
 
 typedef struct __attribute__((__packed__)) wsm_hi_meas_sta_stats_results_s {
         __le16   MeasurementDuration;              /*The duration over which the change in statistics group data was measured and reported. Expressed in units of TUs.*/
-        u8       GroupId;                          /*Indicates the requested statistics group describing statistics group data.*/
+        u8       GroupId;                          /*Indicates the requested statistics group describing statistics group data. type: wsm_hi_sta_stat*/
         u8       StatisticsGroupDataLength;        /*Length (in octets) of statistics group data.*/
         u8       StatisticsGroupData[WSM_API_STATISTICS_GROUP_DATA_SIZE];   /*Length (in octets) of statistics group data 0*/
 } WsmHiMeasStaStatsResults_t;
@@ -1040,13 +1050,13 @@ typedef struct __attribute__((__packed__)) wsm_hi_filter_condition_mask_s {
 } WsmHiFilterConditionMask_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_mib_ethertype_data_frame_filter_s {
-        u8       FilterMode;                       /*Selects the filter mode*/
+        u8       FilterMode;                       /*Selects the filter mode type: wsm_filter_mode*/
         u8       Reserved;                         /*Reserved*/      
         __le16   EtherType;                        /*EtherType to match.*/
 } WsmHiMibEthertypeDataFrameFilter_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_mib_udpports_data_frame_filter_s {
-        u8       FilterMode;                       /*Selects the filter mode*/
+        u8       FilterMode;                       /*Selects the filter mode type: wsm_filter_mode*/
         u8       IsSrcPort;                        /*0 - Match against the destination port of the UDP header. 1 - Match against the source port of the UDP header*/
         __le16   UDPPort;                          /*The UDP port number to filter on.*/
 } WsmHiMibUdpportsDataFrameFilter_t;
@@ -1061,9 +1071,9 @@ typedef struct __attribute__((__packed__)) wsm_hi_mib_mac_addr_s {
 } WsmHiMibMacAddr_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_mib_grp_addr_table_s {
-        __le32   Enable;                           /*Address filtering configuration*/
+        __le32   Enable;                           /*Address filtering configuration type: wsm_enable*/
         __le32   NumOfAddresses;                   /*Number of addresses. A zero value clears the address table.*/
-        WsmHiMibMacAddr_t AddressList[WSM_API_ADDRESS_LIST_SIZE];   /*Mac address 0*/ 
+        WsmHiMibMacAddr_t AddressList[WSM_API_ADDRESS_LIST_SIZE];   /*Mac address 0 type: wsm_hi_mib_mac_addr*/
 } WsmHiMibGrpAddrTable_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_mib_wep_default_key_id_s {
@@ -1080,7 +1090,7 @@ typedef struct __attribute__((__packed__)) wsm_hi_mib_arp_ip_addr_table_s {
 } WsmHiMibArpIpAddrTable_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_mib_template_frame_s {
-        u8       FrameType;                        /*Frame type*/    
+        u8       FrameType;                        /*Frame type type: wsm_tmplt*/
         u8       InitRate : 7;                     /*Bits 6 to 0 - Defines the initial transmission rate.*/
         u8       Mode : 1;                         /*Bit 7 - Indicates the mode to use for 11n frames. 0 - Mixed ; 1 - Greenfield*/
         __le16   FrameLength;                      /*The length of the frame in bytes. Measured from the first byte of the frame header to the last byte of the frame body (if any). The length is excluding the possible padding.*/
@@ -1089,11 +1099,11 @@ typedef struct __attribute__((__packed__)) wsm_hi_mib_template_frame_s {
 
 typedef struct __attribute__((__packed__)) wsm_hi_mib_bcn_filter_table_s {
         __le32   NumOfInfoElmts;                   /*Number of information elements. Value of 0 clears the table.*/
-        WsmHiIeTableEntry_t IeTable[WSM_API_IE_TABLE_SIZE];   /*IE-Table details.*/
+        WsmHiIeTableEntry_t IeTable[WSM_API_IE_TABLE_SIZE];   /*IE-Table details. type: wsm_hi_ie_table_entry*/
 } WsmHiMibBcnFilterTable_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_mib_bcn_filter_enable_s {
-        __le32   Enable;             
+        __le32   Enable;                           /* type: wsm_beacon_filter*/
         __le32   BcnCount;                         /*The value of received beacons for which the device wakes up the host.*/
 } WsmHiMibBcnFilterEnable_t;
 
@@ -1166,15 +1176,15 @@ typedef struct __attribute__((__packed__)) wsm_hi_mib_set_association_mode_s {
         u8       Spacing : 1;                      /*Bit 3 = 1 use MPDU start spacing*/
         u8       Snoop : 1;                        /*Bit 4 = 1 snoop (re)association frames for AID and U-APSD information*/
         u8       Reserved : 3;                     /*Reserved, set to 0*/
-        u8       PreambleType;                     /*Specifies the PLCP preamble type used*/
+        u8       PreambleType;                     /*Specifies the PLCP preamble type used type: wsm_preamble*/
         u8       MixedOrGreenfieldType;            /*Specifies the 11n mode to be used by template frames (where applicable). Values are defined as follows: 0 - Mixed mode ; 1 - Greenfield mode*/
-        u8       MpduStartSpacing;                 /*Defined according to IEEE 802.11 standard [1] Table 7-43k. The minimum MPDU start spacing subfield of A-MPDU parameters is as follows :*/
+        u8       MpduStartSpacing;                 /*Defined according to IEEE 802.11 standard [1] Table 7-43k. The minimum MPDU start spacing subfield of A-MPDU parameters is as follows : type: wsm_mpdu_start_spacing*/
         __le32   BasicRateSet;                     /*Contains the BasicRateSet to be used.*/
 } WsmHiMibSetAssociationMode_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_mib_update_epta_config_data_s {
         __le32   EnablePta;                        /*0 - Disable (e)PTA. 1 - Enable (e)PTA. >=2 - Reserved*/
-        __le32   BluetoothQuality;                 /*This parameter sets the required Bluetooth quality that must be maintained.*/
+        __le32   BluetoothQuality;                 /*This parameter sets the required Bluetooth quality that must be maintained. type: wsm_bluetooth_quality*/
         __le32   SubscribeBtEvent;                 /*0 - Unsubscribe from Bluetooth event indication. 1 - Subscribe to Bluetooth event indication. >=2 - Reserved*/
         __le32   PtaDebugCommand;                  /*To be defined*/ 
 } WsmHiMibUpdateEptaConfigData_t;
@@ -1219,7 +1229,7 @@ typedef struct __attribute__((__packed__)) wsm_hi_mib_p2p_find_info_s {
         __le16   FindTimeOut;                      /*The total time (in units of 100TU s) that device should perform P2P find procedures. The maximum timeout that can be set is 0xFFFE. The value 0xFFFF indicates no timeout.*/
         u8       NumProbs;                         /*Number of probe requests to be transmitted on each channel during the search phase.*/
         u8       NumChannels;                      /*Number of channels to be searched.*/
-        /* WsmHiChannelDef_t SocialChannels;      */   /*Find the definition of type channels as part of Start-Scan API.*/
+        /* WsmHiChannelDef_t SocialChannels;      */   /*Find the definition of type channels as part of Start-Scan API. type: wsm_hi_channel_def*/
 } WsmHiMibP2PFindInfo_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_mib_p2p_ps_mode_info_s {
@@ -1246,7 +1256,7 @@ typedef struct __attribute__((__packed__)) wsm_hi_mib_udp_port_data_frame_filter
 } WsmHiMibUdpPortDataFrameFilterSet_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_mib_magic_data_frame_filter_s {
-        u8       FilterMode;                       /*Selects the filter mode*/
+        u8       FilterMode;                       /*Selects the filter mode type: wsm_filter_mode*/
         u8       Offset;                           /*Offset in bytes from the end of the 802.11 header.*/
         u8       MagicPatternLength;               /*The length of the magic pattern. A maximum length of 32 bytes (WSM_MAX_MAGIC_PATTERN_LENGTH) is supported.*/
         u8       Reserved;                         /*Reserved*/      
@@ -1271,7 +1281,7 @@ typedef struct __attribute__((__packed__)) wsm_hi_mib_disable_bssid_filter_s {
 
 typedef struct __attribute__((__packed__)) wsm_hi_mib_arp_keep_alive_period_s {
         __le16   ArpKeepAlivePeriod;               /*In seconds. 0 - no ARP keep alive*/
-        u8       EncrType;           
+        u8       EncrType;                         /* type: wsm_key_type*/
         u8       Reserved;                         /*To ensure consistent byte padding.*/
         u8       SenderIpv4Address[WSM_API_SENDER_IPV4_ADDRESS_SIZE];   /*IP address of sender 0*/
         u8       TargetIpv4Address[WSM_API_TARGET_IPV4_ADDRESS_SIZE];   /*IP address of target 0*/
@@ -1477,6 +1487,40 @@ typedef struct __attribute__((__packed__)) HiControlGpioCnf_s {
         HiControlGpioCnfBody_t Body;               
 } HiControlGpioCnf_t;
 
+/* request HI_SHUT_DOWN */
+/* Send a request to shut down the internal power supplies */
+typedef HiMsgHdr_t HiShutDownReq_t; 
+
+/* indication HI_EXCEPTION */
+/* Send an exception */
+typedef struct __attribute__((__packed__)) HiExceptionIndBody_s {
+        __le32   Reason;             
+        __le32   Reserved_0;         
+        __le32   Reserved_1;         
+        __le32   Reserved_2;         
+        __le32   Reserved_3;         
+        __le32   Reserved_4;         
+        __le32   Reserved_5;         
+        __le32   Reserved_6;         
+        __le32   Reserved_7;         
+        __le32   Reserved_8;         
+        __le32   Reserved_9;         
+        __le32   Reserved_10;        
+        __le32   Reserved_11;        
+        __le32   Reserved_12;        
+        __le32   Reserved_13;        
+        __le32   Lr;                               /*ARM register lr.*/
+        __le32   Pc;                               /*ARM register pc.*/
+        __le32   Reserved_14;        
+        __le32   Reserved_15;        
+        u8       Reserved_16[48];    
+} HiExceptionIndBody_t;
+
+typedef struct __attribute__((__packed__)) HiExceptionInd_s {
+        HiMsgHdr_t Header;             
+        HiExceptionIndBody_t Body;               
+} HiExceptionInd_t;
+
 /* indication HI_ERROR_IND */
 /* Send an Error indication to the Host */
 typedef struct __attribute__((__packed__)) HiErrorIndBody_s {
@@ -1547,9 +1591,9 @@ typedef struct __attribute__((__packed__)) HiConfigurationReq_s {
 typedef struct __attribute__((__packed__)) HiConfigurationCnfBody_s {
         __le32   Status;                           /*Status. The following data is only valid if the confirmation returns STATUS_SUCCESS.*/
         __le32   SupportedRateMask;                /*This indicates which rates are supported by the PHY. Bits are defined according to rate definition in Section 2.8.*/
-        __les32  Reserved_0;                       /*but not public*/
-        __les32  Reserved_1;                       /*but not public*/
-        __le32   Reserved_2;                       /*but not public*/
+        __les32  Reserved_0;         
+        __les32  Reserved_1;         
+        __le32   Reserved_2;         
 } HiConfigurationCnfBody_t;
 
 typedef struct __attribute__((__packed__)) HiConfigurationCnf_s {

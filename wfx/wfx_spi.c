@@ -20,7 +20,7 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
- 
+
 /*========================================================================*/
 /*                 Standard Linux Headers                                 */
 /*========================================================================*/
@@ -42,12 +42,12 @@
 #include "hwbus.h"
 #include "hwio.h"
 #include "wfx_version.h"
-
+#include "debug.h"
 
 /*========================================================================*/
 /*                 wfx_wlan_spi module information                        */
 /*========================================================================*/
-MODULE_DESCRIPTION("mac80211 Silicon Laboratories WFx SPI driver");
+MODULE_DESCRIPTION("Silicon labs 802.11 Wireless LAN spi driver");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("spi:wfx_wlan_spi");
 MODULE_VERSION(WFX_LABEL);
@@ -59,389 +59,392 @@ MODULE_VERSION(WFX_LABEL);
 /*========================================================================*/
 /*                  PRIVATE  Constants/Macros/Types/Variables             */
 /*========================================================================*/
-#define SET_WRITE 0x7FFF /* usage: and operation */
-#define SET_READ 0x8000  /* usage: or operation */
-
+#define SET_WRITE 0x7FFF        /* usage: and operation */
+#define SET_READ 0x8000         /* usage: or operation */
 
 /*========================================================================*/
 /*                  Structures definitions                                */
 /*========================================================================*/
 struct wfx_platform_data_spi {
-    u8 spi_bits_per_word;           /* REQUIRED */
-    int reset;                     /* GPIO to RSTn signal (0 disables) */
-    const u8 *macaddr;  /* if NULL, use wfx_mac_template module parameter */
-    bool hif_clkedge; /* if true Hif Dout is sampled on the rising edge of the clock */
-};
+	u8		spi_bits_per_word;      /* REQUIRED */
 
+	int		reset;          /* GPIO to RSTn signal (0 disables) */
+	const u8	*macaddr;       /* if NULL, use wfx_mac_template module parameter */
+
+	bool		hif_clkedge;    /* if true Hif Dout is sampled on the rising edge of the clock */
+};
 
 struct hwbus_priv {
-    struct spi_device    *func;
-    struct wfx_common    *core;
-    struct wfx_platform_data_spi *pdata;        /* SG removing const */
+	struct spi_device		*func;
+	struct wfx_common		*core;
+	struct wfx_platform_data_spi	*pdata;
 };
-
 
 /* Default platform data */
 static struct wfx_platform_data_spi silabs_platform_data = {
-    .spi_bits_per_word = 8,
-    .reset = 13,
-    .hif_clkedge = true,
+	.spi_bits_per_word	= 8,
+	.reset			= 13,
+	.hif_clkedge		= true,
 };
 
 /*========================================================================*/
 /*                  Internally Static Functions                           */
 /*========================================================================*/
 /* Notes on byte ordering:
-   LE:  B0 B1 B2 B3
-   BE:  B3 B2 B1 B0
-
-   Hardware expects 32-bit data to be written as 16-bit BE words:
-
-   B1 B0 B3 B2
-*/
+ * LE:  B0 B1 B2 B3
+ * BE:  B3 B2 B1 B0
+ *
+ * Hardware expects 32-bit data to be written as 16-bit BE words:
+ *
+ * B1 B0 B3 B2
+ */
 static int wfx_spi_memcpy_fromio(struct hwbus_priv *self,
-        unsigned int addr,
-        void *dst, int count)
+				 unsigned int addr,
+				 void *dst, int count)
 {
-    int ret, i;
-    u16 regaddr;
-    struct spi_message      m;
+	int ret;
+	u16 regaddr;
+	struct spi_message m;
 
-    struct spi_transfer     t_addr = {
-        .tx_buf         = &regaddr,
-        .len            = sizeof(regaddr),
-    };
-    struct spi_transfer     t_msg = {
-        .rx_buf         = dst,
-        .len            = count,
-    };
+	struct spi_transfer t_addr = {
+		.tx_buf = &regaddr,
+		.len	= sizeof(regaddr),
+	};
+	struct spi_transfer t_msg = {
+		.rx_buf = dst,
+		.len	= count,
+	};
 
-    regaddr = (addr)<<12;
-    regaddr |= SET_READ;
-    regaddr |= (count>>1);
+	regaddr = (addr) << 12;
+	regaddr |= SET_READ;
+	regaddr |= (count >> 1);
 
 
-    /* Header is LE16 */
-    regaddr = cpu_to_le16(regaddr);
+	/* Header is LE16 */
+	regaddr = cpu_to_le16(regaddr);
 
-    /* We have to byteswap if the SPI bus is limited to 8b operation
-       or we are running on a Big Endian system
-    */
+	/* We have to byteswap if the SPI bus is limited to 8b operation
+	 * or we are running on a Big Endian system
+	 */
 #if defined(__LITTLE_ENDIAN)
-    if (self->func->bits_per_word == 8)
+	if (self->func->bits_per_word == 8)
 #endif
-        regaddr = swab16(regaddr);
+	regaddr = swab16(regaddr);
 
-    spi_message_init(&m);
-    spi_message_add_tail(&t_addr, &m);
-    spi_message_add_tail(&t_msg, &m);
-    ret = spi_sync(self->func, &m);
+	spi_message_init(&m);
+	spi_message_add_tail(&t_addr, &m);
+	spi_message_add_tail(&t_msg, &m);
+	ret = spi_sync(self->func, &m);
 
 
-    /* We have to byteswap if the SPI bus is limited to 8b operation
-       or we are running on a Big Endian system
-    */
+	/* We have to byteswap if the SPI bus is limited to 8b operation
+	 * or we are running on a Big Endian system
+	 */
 #if defined(__LITTLE_ENDIAN)
-    if (self->func->bits_per_word == 8)
+	if (self->func->bits_per_word == 8)
 #endif
-    {
-        uint16_t *buf = (uint16_t *)dst;
-        for (i = 0; i < ((count + 1) >> 1); i++)
-            buf[i] = swab16(buf[i]);
-    }
+	{
+		int i;
 
-    return ret;
+		u16 *buf = (u16 *)dst;
+
+		for (i = 0; i < ((count + 1) >> 1); i++)
+			buf[i] = swab16(buf[i]);
+	}
+
+	return ret;
 }
 
 static int wfx_spi_memcpy_toio(struct hwbus_priv *self,
-        unsigned int addr,
-        const void *src, int count)
+			       unsigned int addr,
+			       const void *src, int count)
 {
-    int rval, i;
-    u16 regaddr;
-    struct spi_transfer     t_addr = {
-        .tx_buf         = &regaddr,
-        .len            = sizeof(regaddr),
-    };
-    struct spi_transfer     t_msg = {
-        .tx_buf         = src,
-        .len            = count,
-    };
-    struct spi_message      m;
+	int rval, i;
+	u16 regaddr;
+	struct spi_transfer t_addr = {
+		.tx_buf = &regaddr,
+		.len	= sizeof(regaddr),
+	};
+	struct spi_transfer t_msg = {
+		.tx_buf = src,
+		.len	= count,
+	};
+	struct spi_message m;
 
-    regaddr = (addr)<<12;
-    regaddr &= SET_WRITE;
-    regaddr |= (count>>1);
+	regaddr = (addr) << 12;
+	regaddr &= SET_WRITE;
+	regaddr |= (count >> 1);
 
-    /* Header is LE16 */
-    regaddr = cpu_to_le16(regaddr);
+	/* Header is LE16 */
+	regaddr = cpu_to_le16(regaddr);
 
-    /* We have to byteswap if the SPI bus is limited to 8b operation
-       or we are running on a Big Endian system
-    */
+	/* We have to byteswap if the SPI bus is limited to 8b operation
+	 * or we are running on a Big Endian system
+	 */
 #if defined(__LITTLE_ENDIAN)
-    if (self->func->bits_per_word == 8)
+	if (self->func->bits_per_word == 8)
 #endif
 
-    {
-        uint16_t *buf = (uint16_t *)src;
-            regaddr = swab16(regaddr);
-        for (i = 0; i < ((count + 1) >> 1); i++)
-            buf[i] = swab16(buf[i]);
-    }
+	{
+		u16 *buf = (u16 *)src;
 
-    spi_message_init(&m);
-    spi_message_add_tail(&t_addr, &m);
-    spi_message_add_tail(&t_msg, &m);
-    rval = spi_sync(self->func, &m);
+		regaddr = swab16(regaddr);
+		for (i = 0; i < ((count + 1) >> 1); i++)
+			buf[i] = swab16(buf[i]);
+	}
+
+	spi_message_init(&m);
+	spi_message_add_tail(&t_addr, &m);
+	spi_message_add_tail(&t_msg, &m);
+	rval = spi_sync(self->func, &m);
 
 
 #if defined(__LITTLE_ENDIAN)
-    /* We have to byteswap if the SPI bus is limited to 8b operation */
-    if (self->func->bits_per_word == 8)
+	/* We have to byteswap if the SPI bus is limited to 8b operation */
+	if (self->func->bits_per_word == 8)
 #endif
-    {
-        uint16_t *buf = (uint16_t *)src;
-        for (i = 0; i < ((count + 1) >> 1); i++)
-            buf[i] = swab16(buf[i]);
-    }
-    return rval;
+	{
+		u16 *buf = (u16 *)src;
+
+		for (i = 0; i < ((count + 1) >> 1); i++)
+			buf[i] = swab16(buf[i]);
+	}
+	return rval;
 }
 
 static void wfx_spi_lock(struct hwbus_priv *self)
 {
 }
+
 static void wfx_spi_unlock(struct hwbus_priv *self)
 {
 }
 
-
 static irqreturn_t wfx_spi_irq_handler(int irq, void *dev_id)
 {
-    struct hwbus_priv *self = dev_id;
+	struct hwbus_priv *self = dev_id;
 
-    if (self->core) {
-        wfx_irq_handler(self->core);
-        return IRQ_HANDLED;
-    } else {
-        return IRQ_NONE;
-    }
+	if (self->core) {
+		wfx_irq_handler(self->core);
+
+		return IRQ_HANDLED;
+	} else {
+		return IRQ_NONE;
+	}
 }
-
 
 static int wfx_spi_irq_subscribe(struct hwbus_priv *self)
 {
-    int ret;
+	int ret;
 
-    pr_debug("SW IRQ subscribe\n");
+	ret = request_irq(self->func->irq,
+			  wfx_spi_irq_handler,
+			  IRQF_TRIGGER_RISING,
+			  "wfx_wlan_irq", self);
+	if (ret < 0) {
+		wfx_err("wfx spi irq subscribe");
+		goto exit;
+	}
 
-    ret = request_irq(self->func->irq,
-                       wfx_spi_irq_handler,
-                       IRQF_TRIGGER_RISING,
-                       "wfx_wlan_irq", self);
-
-    if (WARN_ON(ret < 0)) {
-        goto exit;
-    }
-
-    return 0;
+	return 0;
 exit:
-    return ret;
+	return ret;
 }
 
 static int wfx_spi_irq_unsubscribe(struct hwbus_priv *self)
 {
-    int ret = 0;
+	int ret = 0;
 
-    pr_debug("SW IRQ unsubscribe\n");
-    free_irq(self->func->irq, self);
+	pr_debug("SW IRQ unsubscribe\n");
+	free_irq(self->func->irq, self);
 
-    return ret;
+	return ret;
 }
 
 static int wfx_spi_off(const struct wfx_platform_data_spi *pdata)
 {
-    if (pdata->reset) {
-        gpio_set_value(pdata->reset, 0);
-        msleep(30); /* Min is 2 * CLK32K cycles */
-        gpio_free(pdata->reset);
-    }
-
-    return 0;
+	if (pdata->reset) {
+		gpio_set_value(pdata->reset, 0);
+		msleep(30); /* Min is 2 * CLK32K cycles */
+		gpio_free(pdata->reset);
+	}
+	return 0;
 }
 
 static int wfx_spi_on(const struct wfx_platform_data_spi *pdata)
 {
-    if (pdata->reset) {
-        gpio_request(pdata->reset, "wfx_wlan_reset");
-        gpio_direction_output(pdata->reset, 0);
-        msleep(10); /* In accordance with Reset line behavior */
-        gpio_set_value(pdata->reset, 1);
-        msleep(200); /* In accordance with Reset line behavior */
-    }
-    return 0;
+	if (pdata->reset) {
+		gpio_request(pdata->reset, "wfx_wlan_reset");
+		gpio_direction_output(pdata->reset, 0);
+		msleep(10); /* In accordance with Reset line behavior */
+		gpio_set_value(pdata->reset, 1);
+		msleep(200); /* In accordance with Reset line behavior */
+	}
+	return 0;
 }
 
 static size_t wfx_spi_align_size(struct hwbus_priv *self, size_t size)
 {
-    return size & 1 ? size + 1 : size;
+	return (size & 1) ? size + 1 : size;
 }
 
 static int wfx_spi_pm(struct hwbus_priv *self, bool suspend)
 {
-    return irq_set_irq_wake(self->func->irq, suspend);
+	return irq_set_irq_wake(self->func->irq, suspend);
 }
 
 static struct hwbus_ops wfx_spi_hwbus_ops = {
-    .hwbus_memcpy_fromio    = wfx_spi_memcpy_fromio,
-    .hwbus_memcpy_toio    = wfx_spi_memcpy_toio,
-    .lock            = wfx_spi_lock,
-    .unlock            = wfx_spi_unlock,
-    .align_size        = wfx_spi_align_size,
-    .power_mgmt        = wfx_spi_pm,
+	.hwbus_memcpy_fromio	= wfx_spi_memcpy_fromio,
+	.hwbus_memcpy_toio	= wfx_spi_memcpy_toio,
+	.lock			= wfx_spi_lock,
+	.unlock			= wfx_spi_unlock,
+	.align_size		= wfx_spi_align_size,
+	.power_mgmt		= wfx_spi_pm,
 };
 
 /* Probe Function to be called by SPI stack when device is discovered */
 static int wfx_spi_probe(struct spi_device *func)
 {
-    struct wfx_platform_data_spi *plat_data = devm_kzalloc(&func->dev,
-            sizeof(struct wfx_platform_data_spi),
-            GFP_KERNEL);
+	struct wfx_platform_data_spi *plat_data = devm_kzalloc(&func->dev,
+							       sizeof(struct
+								      wfx_platform_data_spi),
+							       GFP_KERNEL);
 
-    struct hwbus_priv *self;
-    int status;
-    plat_data->spi_bits_per_word = silabs_platform_data.spi_bits_per_word;
-        plat_data->reset = silabs_platform_data.reset;
+	struct hwbus_priv *self;
+	int status;
 
-    plat_data->hif_clkedge = silabs_platform_data.hif_clkedge;
+	plat_data->spi_bits_per_word = silabs_platform_data.spi_bits_per_word;
+	wfx_info("SPI BUS\n");
+	plat_data->reset = silabs_platform_data.reset;
 
-    status = irq_of_parse_and_map(func->dev.of_node,0);
-    
-    /* Sanity check speed */
-    if (func->max_speed_hz > 52000000)
-        func->max_speed_hz = 52000000;
-    if (func->max_speed_hz < 1000000)
-        func->max_speed_hz = 1000000;
+	plat_data->hif_clkedge = silabs_platform_data.hif_clkedge;
 
-    /* Fix up transfer size */
-    if (plat_data->spi_bits_per_word)
-        func->bits_per_word = plat_data->spi_bits_per_word;
-    if (!func->bits_per_word)
-        func->bits_per_word = 16;
+	status = irq_of_parse_and_map(func->dev.of_node, 0);
 
-    /* And finally.. */
-    func->mode = SPI_MODE_0;
+	/* Sanity check speed */
+	if (func->max_speed_hz > 52000000)
+		func->max_speed_hz = 52000000;
+	if (func->max_speed_hz < 1000000)
+		func->max_speed_hz = 1000000;
 
-    pr_info("wfx_wlan_spi: Probe called (CS %d M %d BPW %d CLK %d)\n",
-        func->chip_select, func->mode, func->bits_per_word,
-        func->max_speed_hz);        /* max_speed_hz retrieved from DT */
+	/* Fix up transfer size */
+	if (plat_data->spi_bits_per_word)
+		func->bits_per_word = plat_data->spi_bits_per_word;
+	if (!func->bits_per_word)
+		func->bits_per_word = 16;
 
-    if (wfx_spi_on(plat_data)) {
-        pr_err("spi_on() failed!\n");
-        return -1;
-    }
+	/* And finally.. */
+	func->mode = SPI_MODE_0;
 
-    if (spi_setup(func)) {
-        pr_err("spi_setup() failed!\n");
-        return -1;
-    }
+	wfx_info("Probe called (CS %d M %d BPW %d CLK %d)\n",
+		 func->chip_select, func->mode, func->bits_per_word,
+		 func->max_speed_hz); /* max_speed_hz retrieved from DT */
 
-    self = devm_kzalloc(&func->dev, sizeof(*self), GFP_KERNEL);
-    if (!self) {
-        pr_err("Can't allocate SPI hwbus_priv.");
-        return -ENOMEM;
-    }
+	if (wfx_spi_on(plat_data)) {
+		wfx_err("spi_on() failed!\n");
+		return -1;
+	}
 
-    self->pdata = plat_data;
-    self->func = func;
+	if (spi_setup(func)) {
+		wfx_err("spi_setup() failed!\n");
+		return -1;
+	}
 
-    spi_set_drvdata(func, self);
+	self = devm_kzalloc(&func->dev, sizeof(*self), GFP_KERNEL);
+	if (!self) {
+		wfx_err("Can't allocate SPI hwbus_priv.");
+		return -ENOMEM;
+	}
 
-    status = wfx_spi_irq_subscribe(self);
-    status = wfx_core_probe(&wfx_spi_hwbus_ops,
-                   self, &func->dev, &self->core,
-                   self->pdata->macaddr,
-                   false, /* SPI is used */
-                   self->pdata->hif_clkedge
-                   );
+	self->pdata = plat_data;
+	self->func = func;
 
-    if (status) {
-        wfx_spi_irq_unsubscribe(self);
-        wfx_spi_off(plat_data);
-    }
+	spi_set_drvdata(func, self);
 
-    return status;
+	status = wfx_spi_irq_subscribe(self);
+	status = wfx_core_probe(&wfx_spi_hwbus_ops,
+				self, &func->dev, &self->core,
+				self->pdata->macaddr,
+				false, /* SPI is used */
+				self->pdata->hif_clkedge
+				);
+
+	if (status) {
+		wfx_spi_irq_unsubscribe(self);
+		wfx_spi_off(plat_data);
+	}
+
+	return status;
 }
 
 /* Disconnect Function to be called by SPI stack when device is disconnected */
 static int wfx_spi_disconnect(struct spi_device *func)
 {
-    struct hwbus_priv *self = spi_get_drvdata(func);
+	struct hwbus_priv *self = spi_get_drvdata(func);
 
-    if (self) {
-        if (self->core) {
-            wfx_core_release(self->core);
-            self->core = NULL;
-        }
-        wfx_spi_irq_unsubscribe(self);
-    }
-    pr_info("All wfx wlan modules are disconnected\n");
-    wfx_spi_off(self->pdata);
+	if (self) {
+		if (self->core) {
+			wfx_core_release(self->core);
+			self->core = NULL;
+		}
+		wfx_spi_irq_unsubscribe(self);
 
-    return 0;
+		wfx_spi_off(self->pdata);
+	}
+	wfx_info("All wfx wlan modules are disconnected\n");
+
+	return 0;
 }
 
 #ifdef CONFIG_PM
 static int wfx_spi_suspend(struct device *dev)
 {
-    struct hwbus_priv *self = spi_get_drvdata(to_spi_device(dev));
+	struct hwbus_priv *self = spi_get_drvdata(to_spi_device(dev));
 
-    if (!wfx_can_suspend(self->core)) {
-        return -EAGAIN;
-    }
-    return 0;
+	if (!wfx_can_suspend(self->core))
+		return -EAGAIN;
+	return 0;
 }
 
 static const struct dev_pm_ops wfx_pm_ops = {
-    .suspend = wfx_spi_suspend,
-    .resume = NULL,
+	.suspend	= wfx_spi_suspend,
+	.resume		= NULL,
 };
+
 #endif
 
 #if 1
 static const struct spi_device_id wfx_spi_id[] = {
-    { "wfx_spi", 0 },
-    { }
+	{ "wfx_spi", 0 },
+	{ }
 };
+
 MODULE_DEVICE_TABLE(spi, wfx_spi_id);
 
 #ifdef CONFIG_OF
 static const struct of_device_id wfx_of_match[] = {
-    { .compatible = "siliconlabs,wfx-wlan-spi" },
-    {  },
+	{ .compatible = "siliconlabs,wfx-wlan-spi" },
+	{  },
 };
+
 MODULE_DEVICE_TABLE(of, wfx_of_match);
 #endif
 #endif
 static struct spi_driver wfx_spi_driver = {
-    .probe      = wfx_spi_probe,
-    .remove     = wfx_spi_disconnect,
-#if 1
-    .id_table   = wfx_spi_id,
-#endif
-    .driver = {
-        .name           = "wfx_wlan_spi",
-        .bus            = &spi_bus_type,
-        .owner          = THIS_MODULE,
+	.probe			= wfx_spi_probe,
+	.remove			= wfx_spi_disconnect,
+	.id_table		= wfx_spi_id,
+	.driver			= {
+		.name		= "wfx_wlan_spi",
+		.bus		= &spi_bus_type,
+		.owner		= THIS_MODULE,
 #ifdef CONFIG_PM
-        .pm             = &wfx_pm_ops,
+		.pm		= &wfx_pm_ops,
 #endif
-#if 1
 #ifdef CONFIG_OF
-        .of_match_table = of_match_ptr(wfx_of_match),
+		.of_match_table = of_match_ptr(wfx_of_match),
 #endif
-#endif
-    },
+	},
 };
 
 module_spi_driver(wfx_spi_driver);

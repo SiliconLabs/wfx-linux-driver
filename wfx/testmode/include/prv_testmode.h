@@ -22,22 +22,17 @@
 /*************************/
 /* For driver's use only */
 /*************************/
+int wfx_testmode_reply(struct wiphy *wiphy, const void *data, int len);
 
-int wfx_testmode_command(struct ieee80211_hw *hw,
-        struct ieee80211_vif *vif,
-                void *data, int len);
-int wfx_testmode_reply(struct wiphy *wiphy,
-                const void *data, int len);
-
-int wfx_testmode_hif(struct ieee80211_hw *hw,struct nlattr **p_tb);
-int wfx_testmode_bs(struct ieee80211_hw *hw,struct nlattr **p_tb);
+int wfx_testmode_hif(struct ieee80211_hw *hw, struct nlattr **p_tb);
+int wfx_testmode_bs(struct ieee80211_hw *hw, struct nlattr **p_tb);
 
 /* DO NOT USE DIRECTLY */
 /* It is safer to call through the macro */
 
 #ifdef CONFIG_WF200_TESTMODE
 void hif_buffer_add(u16 id);
-void bs_buffer_add(uint8_t *pui8_Array, size_t s_Length);
+void bs_buffer_add(u8 *pui8_Array, size_t s_Length);
 #define wfx_tm_hif_buffer_add(wsm_id) hif_buffer_add(wsm_id)
 #endif
 

@@ -35,8 +35,7 @@ int wfx_bh_suspend(struct wfx_common *priv);
 int wfx_bh_resume(struct wfx_common *priv);
 
 /* Must be called from BH thread. */
-void wfx_enable_powersave(struct wfx_common *priv,
-                 bool enable);
+void wfx_enable_powersave(struct wfx_common *priv, bool enable);
 void wfx_unregister_bh(struct wfx_common *priv);
 void wfx_irq_handler(struct wfx_common *priv);
 void wfx_bh_wakeup(struct wfx_common *priv);

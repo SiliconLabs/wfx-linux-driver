@@ -7,7 +7,7 @@
  * ST-Ericsson UMAC CW1200 driver which is
  * Copyright (c) 2010, ST-Ericsson
  * Author: Ajitpal Singh <ajitpal.singh@stericsson.com>
- 
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
@@ -20,7 +20,6 @@
  * OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
 
 #ifndef FWIO_H_INCLUDED
 #define FWIO_H_INCLUDED
@@ -43,10 +42,11 @@ extern struct timer_list fwio_timer;
 /*                       Functions                                        */
 /*========================================================================*/
 int wfx_load_firmware(struct wfx_common *priv);
-
+int wfx_secure_load_firmware_file(struct wfx_common *priv, u8 *firmware,
+				  u32 fw_length);
 /* Timer helper functions */
 void timer_expiration_cb(unsigned long data);
-void start_timer(uint32_t timeout);
+void start_timer(u32 timeout);
 void stop_timer(void);
 
 #endif

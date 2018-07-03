@@ -18,9 +18,10 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 #ifndef HWBUS_H
 #define HWBUS_H
+
+#include "hwio.h"
 
 /*========================================================================*/
 /*                  Structures definitions                                */
@@ -28,21 +29,20 @@
 struct hwbus_priv;
 
 struct hwbus_ops {
-    int (*hwbus_memcpy_fromio)(struct hwbus_priv *self, unsigned int addr,
-                    void *dst, int count);
-    int (*hwbus_memcpy_toio)(struct hwbus_priv *self, unsigned int addr,
-                    const void *src, int count);
-    void (*lock)(struct hwbus_priv *self);
-    void (*unlock)(struct hwbus_priv *self);
-    size_t (*align_size)(struct hwbus_priv *self, size_t size);
-    int (*power_mgmt)(struct hwbus_priv *self, bool suspend);
+	int	(*hwbus_memcpy_fromio)(struct hwbus_priv *self,
+				       unsigned int addr, void *dst, int count);
+	int	(*hwbus_memcpy_toio)(struct hwbus_priv *self, unsigned int addr,
+				     const void *src, int count);
+	void	(*lock)(struct hwbus_priv *self);
+	void	(*unlock)(struct hwbus_priv *self);
+	size_t	(*align_size)(struct hwbus_priv *self, size_t size);
+	int	(*power_mgmt)(struct hwbus_priv *self, bool suspend);
 };
 
 /*========================================================================*/
 /*                       Functions                                        */
 /*========================================================================*/
 void wfx_irq_handler(struct wfx_common *priv);
-
-int __wfx_irq_enable(struct wfx_common *priv, int enable);
+int wfx_irq_enable(struct wfx_common *priv, IrqEnable_t enable);
 
 #endif /* HWBUS_H */
