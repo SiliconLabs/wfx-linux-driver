@@ -1046,10 +1046,8 @@ static void wfx_notify_buffered_tx(struct wfx_common *priv,
 			   [link_id - 1].buffered;
 
 		spin_lock_bh(&priv->ps_state_lock);
-		if (!buffered[tid]) {
-			wfx_warn("wfx_notify_buffered_tx: inconsistent tid");
+		if (!WARN_ON(!buffered[tid]))
 			still_buffered = --buffered[tid];
-		}
 		spin_unlock_bh(&priv->ps_state_lock);
 
 		if (!still_buffered && tid < WFX_MAX_TID) {
