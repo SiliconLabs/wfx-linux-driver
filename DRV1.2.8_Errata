@@ -1,0 +1,25 @@
+Apply the following patch to wfx/data_txrx.c to avoid false positives
+
+diff --git a/wfx/data_txrx.c b/wfx/data_txrx.c
+index 387a97f..936874b 100644
+--- a/wfx/data_txrx.c
++++ b/wfx/data_txrx.c
+@@ -1046,10 +1046,8 @@ static void wfx_notify_buffered_tx(struct wfx_common *priv,
+                           [link_id - 1].buffered;
+
+                spin_lock_bh(&priv->ps_state_lock);
+-               if (!buffered[tid]) {
+-                       wfx_warn("wfx_notify_buffered_tx: inconsistent tid");
++               if (!WARN_ON(!buffered[tid]))
+                        still_buffered = --buffered[tid];
+-               }
+                spin_unlock_bh(&priv->ps_state_lock);
+
+                if (!still_buffered && tid < WFX_MAX_TID) {
+diff --git a/wfx/wfx_version.h b/wfx/wfx_version.h
+index 42037b1..4d4e548 100644
+--- a/wfx/wfx_version.h
++++ b/wfx/wfx_version.h
+@@ -1 +1 @@
+-#define WFX_LABEL "WFX__DRV-1.2.8"
++#define WFX_LABEL "WFX__DRV-1.2.8.a"
