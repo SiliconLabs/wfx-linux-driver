@@ -150,7 +150,7 @@ void wfx_bh_wakeup(struct wfx_dev *wdev)
 {
 	pr_debug("[BH] %s wakeup.\n", __func__);
 	if (wdev->bh_error) {
-		wfx_err("[BH] wakeup failed (BH error)\n");
+		dev_err(wdev->pdev, "bh: wakeup failed\n");
 		return;
 	}
 
@@ -201,7 +201,7 @@ int wsm_release_tx_buffer(struct wfx_dev *wdev, int count)
 
 	wdev->hw_bufs_used -= count;
 	if (wdev->hw_bufs_used < 0) {
-		wfx_warn("wrong buffer use %d\n", wdev->hw_bufs_used);
+		dev_warn(wdev->pdev, "wrong buffers use %d\n", wdev->hw_bufs_used);
 		ret = -1;
 	} else if (hw_bufs_used >= wdev->wsm_caps.NumInpChBufs) {
 		ret = 1;
@@ -223,7 +223,7 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 
 	if (wdev->sleep_activated) {
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
-		dev_dbg(wdev->pdev, "%s: wake up chip", __func__);
+		dev_dbg(wdev->pdev, "bh: wake up device\n");
 	}
 
 	/* wait the IRQ indicating the device is ready*/
@@ -246,18 +246,18 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 		 * try to read the control register */
 		int error = wfx_bh_read_ctrl_reg(wdev, &Control_reg);
 
-		if (error) {
+		if (error || !Control_reg || Control_reg == ~0) {
 			ret = 0;
 		} else if (!(Control_reg & CTRL_WLAN_READY)) {
-			wfx_info("[BH] ##### %s can't wakeup.\n", __func__);
+			dev_err(wdev->pdev, "bh: cannot wakeup device\n");
 			ret = 0;
 		} else {
+			dev_dbg(wdev->pdev, "bh: device correctly wake up\n");
 			atomic_set(&wdev->device_can_sleep, 0);
-			pr_debug("[BH] %s Device was already awake.\n", __func__);
 			ret = 1;
 		}
 	} else {
-		pr_debug("[BH] %s Device awake.\n", __func__);
+		dev_dbg(wdev->pdev, "bh: already awake\n");
 		ret = 1;
 	}
 
@@ -350,10 +350,6 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, uint32_t *ctrl_reg)
 	skb_trim(skb_rx, 0);
 	skb_put(skb_rx, read_len);
 	data = skb_rx->data;
-	if (!data) {
-		wfx_err("Wrong data area. Its exceed the total buffer size");
-		goto err;
-	}
 #ifdef RASPBERRY_PI
 	/* Error detection mechanism to detect the issue
 	 * https://github.com/raspberrypi/linux/issues/2200
@@ -364,7 +360,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, uint32_t *ctrl_reg)
 		((uint16_t *)data)[alloc_len / 2 - 1] = HIF_ERROR_DETECTION_16;
 #endif
 	if (wfx_data_read(wdev, data, alloc_len)) {
-		wfx_err("rx blew up, len %zu\n", alloc_len);
+		dev_err(wdev->pdev, "bh: rx blew up, len %zu\n", alloc_len);
 		goto err;
 	}
 
@@ -378,16 +374,15 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, uint32_t *ctrl_reg)
 		 * the control register is set to 0 to cause
 		 * a new read of this register in the bh loop*/
 		*ctrl_reg = 0;
-		wfx_warn("ctrl_reg piggyback error");
+		dev_warn(wdev->pdev, "bh: ctrl_reg piggyback error");
 	}
 #endif
 
 	wsm = (HiMsgHdr_t *)data;
 	wsm_len = le16_to_cpu(wsm->MsgLen);
 	if (wsm_len > read_len) {
-		wfx_err("inconsistent HIF message length %lu != %lu\n",
-			(unsigned long) wsm_len,
-			(unsigned long) read_len);
+		dev_err(wdev->pdev, "bh: inconsistent HIF message length %zu != %zu\n",
+			wsm_len, read_len);
 		goto err;
 	}
 	_trace_wsm_recv((u16 *) data);
@@ -418,7 +413,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, uint32_t *ctrl_reg)
 
 	/* wfx_wsm_rx takes care on SKB livetime */
 	if (wsm_handle_rx(wdev, wsm, &skb_rx)) {
-		wfx_err("wsm_handle_rx id=0x02%x\n", wsm_id);
+		dev_err(wdev->pdev, "bh: wsm_handle_rx return error for cmd %.2x\n", wsm_id);
 		goto err;
 	}
 
@@ -481,7 +476,7 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 	wsm->s.t.MsgInfo &= 0xff ^ WSM_TX_SEQ(HI_MSG_SEQ_RANGE);
 	wsm->s.t.MsgInfo |= WSM_TX_SEQ(wdev->wsm_tx_seq);
 	if (wfx_data_write(wdev, data, tx_len)) {
-		wfx_warn("tx blew up, len %zu\n", tx_len);
+		dev_err(wdev->pdev, "bh: tx blew up, len %zu\n", tx_len);
 		wsm_release_tx_buffer(wdev, 1);
 		return -1; /* Error */
 	}
@@ -608,6 +603,7 @@ static int wfx_bh(void *arg)
 				wake_up(&wdev->bh_evt_wq);
 			}
 		} /* end of the wait_event global processing */
+		dev_dbg(wdev->pdev, "bh: wait event\n");
 
 		/*
 		 * process Rx then Tx because Rx processing can release some buffers for the Tx
@@ -678,12 +674,10 @@ tx:
 		pending_tx += atomic_xchg(&wdev->bh_tx, 0);
 		if (pending_tx)
 			goto tx;
-
-		pr_debug("[BH] loop done.\n");
 	}
 
 	if (!term) {
-		wfx_err("[BH] Fatal error, exiting.\n");
+		dev_dbg(wdev->pdev, "bh: main exited on error\n");
 		wdev->bh_error = 1;
 	}
 	return 0;
