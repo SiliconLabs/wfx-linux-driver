@@ -72,6 +72,7 @@ struct wfx_txpriv {
 	u8 tid;
 	u8 rate_id;
 	u8 offset;
+	u8 vif_id;
 };
 
 int wfx_queue_stats_init(struct wfx_queue_stats *stats,

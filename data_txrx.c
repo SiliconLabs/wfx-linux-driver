@@ -771,6 +771,7 @@ void wfx_tx(struct ieee80211_hw *dev,
 	else
 		wvif = wdev_to_wvif(wdev);
 
+	t.txpriv.vif_id = wvif->Id;
 	t.hdrlen = ieee80211_hdrlen(t.hdr->frame_control);
 	t.da = ieee80211_get_DA(t.hdr);
 	if (control) {
