@@ -2306,8 +2306,6 @@ static int wfx_upload_beacon(struct wfx_vif *wvif)
 	int ret = 0;
 	struct sk_buff *skb = NULL;
 	struct ieee80211_mgmt *mgmt;
-	u16 tim_offset;
-	u16 tim_len;
 	WsmHiMibTemplateFrame_t *p;
 
 	if (wvif->mode == NL80211_IFTYPE_STATION ||
@@ -2315,8 +2313,7 @@ static int wfx_upload_beacon(struct wfx_vif *wvif)
 	    wvif->mode == NL80211_IFTYPE_UNSPECIFIED)
 		goto done;
 
-	skb = ieee80211_beacon_get_tim(wvif->wdev->hw, wvif->vif,
-					     &tim_offset, &tim_len);
+	skb = ieee80211_beacon_get(wvif->wdev->hw, wvif->vif);
 
 	if (!skb)
 		return -ENOMEM;
