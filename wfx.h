@@ -312,6 +312,7 @@ static inline struct wfx_vif *wdev_to_wvif(struct wfx_dev *wdev)
 
 struct wfx_sta_priv {
 	int link_id;
+	int vif_id;
 };
 
 extern const char *const wfx_fw_types[];

@@ -1655,6 +1655,7 @@ int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	if (wvif->mode != NL80211_IFTYPE_AP)
 		return 0;
 
+	sta_priv->vif_id = wvif->Id;
 	sta_priv->link_id = wfx_find_link_id(wvif, sta->addr);
 	pr_debug("[STA] wfx_sta_add : MAC=%d:%d:%d:%d:%d:%d, link_id=%d\n",
 		 sta->addr[0], sta->addr[1], sta->addr[2], sta->addr[3],
