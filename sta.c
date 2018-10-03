@@ -55,8 +55,7 @@ static int wfx_upload_beacon(struct wfx_vif *wvif);
 static int wfx_vif_setup(struct wfx_vif *wvif);
 static int wfx_start_ap(struct wfx_vif *wvif);
 static int wfx_update_beaconing(struct wfx_vif *wvif);
-static void __wfx_sta_notify(struct ieee80211_hw *dev,
-				struct ieee80211_vif *vif,
+static void __wfx_sta_notify(struct wfx_vif *wvif,
 			     enum sta_notify_cmd notify_cmd, int link_id);
 static int __wfx_flush(struct wfx_dev *wdev, bool drop);
 
@@ -1666,20 +1665,17 @@ int wfx_sta_remove(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	return 0;
 }
 
-static void __wfx_sta_notify(struct ieee80211_hw *dev,
-				struct ieee80211_vif *vif,
+static void __wfx_sta_notify(struct wfx_vif *wvif,
 				enum sta_notify_cmd notify_cmd,
 				int link_id)
 {
-	struct wfx_dev *wdev = dev->priv;
-	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 	u32 bit, prev;
 
 	/* Zero link id means "for all link IDs" */
 	if (link_id) {
 		bit = BIT(link_id);
 	} else if (notify_cmd != STA_NOTIFY_AWAKE) {
-		dev_warn(wdev->pdev, "wfx_sta_notify: unsupported notify command");
+		dev_warn(wvif->wdev->pdev, "wfx_sta_notify: unsupported notify command");
 		bit = 0;
 	} else {
 		bit = wvif->link_id_map;
@@ -1691,7 +1687,7 @@ static void __wfx_sta_notify(struct ieee80211_hw *dev,
 		if (!prev) {
 			if (wvif->buffered_multicasts &&
 			    !wvif->sta_asleep_mask)
-				queue_work(wdev->workqueue,
+				queue_work(wvif->wdev->workqueue,
 					   &wvif->multicast_start_work);
 			wvif->sta_asleep_mask |= bit;
 		}
@@ -1701,9 +1697,9 @@ static void __wfx_sta_notify(struct ieee80211_hw *dev,
 			wvif->sta_asleep_mask &= ~bit;
 			wvif->pspoll_mask &= ~bit;
 			if (link_id && !wvif->sta_asleep_mask)
-				queue_work(wdev->workqueue,
+				queue_work(wvif->wdev->workqueue,
 					   &wvif->multicast_stop_work);
-			wfx_bh_wakeup(wdev);
+			wfx_bh_wakeup(wvif->wdev);
 		}
 		break;
 	}
@@ -1722,7 +1718,7 @@ void wfx_sta_notify(struct ieee80211_hw *dev,
 		 sta_priv->link_id, sta_priv->link_id);
 
 	spin_lock_bh(&wvif->ps_state_lock);
-	__wfx_sta_notify(dev, vif, notify_cmd, sta_priv->link_id);
+	__wfx_sta_notify(wvif, notify_cmd, sta_priv->link_id);
 	spin_unlock_bh(&wvif->ps_state_lock);
 }
 
@@ -1734,8 +1730,7 @@ static void wfx_ps_notify(struct wfx_vif *wvif,
 		 ps ? "Start" : "Stop",
 		 wvif->sta_asleep_mask);
 
-	__wfx_sta_notify(wvif->wdev->hw, wvif->vif,
-			    ps ? STA_NOTIFY_AWAKE : STA_NOTIFY_SLEEP, 0);
+	__wfx_sta_notify(wvif, ps ? STA_NOTIFY_AWAKE : STA_NOTIFY_SLEEP, 0);
 }
 
 static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
