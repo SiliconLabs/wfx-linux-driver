@@ -927,7 +927,7 @@ void wfx_tx_confirm_cb(struct wfx_dev	*wdev,
 
 		WARN(!arg->TxResultFlags.Requeue, "Incoherent Status and ResultFlags");
 
-		wfx_suspend_resume(wdev, &suspend);
+		wfx_suspend_resume(wvif, &suspend);
 		dev_dbg(wdev->pdev, "Requeuing for station %d (try %d). STAs asleep: 0x%.8X.\n",
 			   txpriv->link_id, wfx_queue_get_generation(arg->PacketId) + 1,
 			   wvif->sta_asleep_mask);

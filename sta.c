@@ -2195,12 +2195,9 @@ int wfx_ampdu_action(struct ieee80211_hw *hw,
 
 /* ******************************************************************** */
 /* WSM callback								*/
-void wfx_suspend_resume(struct wfx_dev *wdev,
+void wfx_suspend_resume(struct wfx_vif *wvif,
 			WsmHiSuspendResumeTxIndBody_t *arg)
 {
-	// FIXME: Get interface id from link_id
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
-
 	pr_debug("[AP] %s: %s\n",
 		 arg->SuspendResumeFlags.ResumeOrSuspend ? "start" : "stop",
 		 arg->SuspendResumeFlags.CastType ? "broadcast" : "unicast");
@@ -2216,7 +2213,7 @@ void wfx_suspend_resume(struct wfx_dev *wdev,
 					      wvif->buffered_multicasts);
 			if (wvif->tx_multicast) {
 				cancel_tmo = true;
-				wfx_bh_wakeup(wdev);
+				wfx_bh_wakeup(wvif->wdev);
 			}
 		}
 		spin_unlock_bh(&wvif->ps_state_lock);
@@ -2228,7 +2225,7 @@ void wfx_suspend_resume(struct wfx_dev *wdev,
 			      arg->SuspendResumeFlags.ResumeOrSuspend);
 		spin_unlock_bh(&wvif->ps_state_lock);
 		if (arg->SuspendResumeFlags.ResumeOrSuspend)
-			wfx_bh_wakeup(wdev);
+			wfx_bh_wakeup(wvif->wdev);
 	}
 }
 

@@ -291,9 +291,10 @@ static int wsm_ba_timeout_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void
 
 static int wsm_suspend_resume_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	WsmHiSuspendResumeTxIndBody_t *body = buf;
 
-	wfx_suspend_resume(wdev, body);
+	wfx_suspend_resume(wvif, body);
 
 	return 0;
 }
