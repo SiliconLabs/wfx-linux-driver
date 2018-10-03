@@ -319,12 +319,6 @@ static void wfx_scan_complete(struct wfx_dev *wdev)
 
 void wfx_scan_failed_cb(struct wfx_dev *wdev)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
-
-	if (wvif->mode == NL80211_IFTYPE_UNSPECIFIED)
-		/* STA is stopped. */
-		return;
-
 	if (cancel_delayed_work_sync(&wdev->scan.timeout) > 0) {
 		wdev->scan.status = -EIO;
 		queue_delayed_work(wdev->workqueue, &wdev->scan.timeout, 0);
@@ -334,12 +328,6 @@ void wfx_scan_failed_cb(struct wfx_dev *wdev)
 void wfx_scan_complete_cb(struct wfx_dev		*wdev,
 			  WsmHiScanCmplIndBody_t	*arg)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
-
-	if (wvif->mode == NL80211_IFTYPE_UNSPECIFIED)
-		/* STA is stopped. */
-		return;
-
 	if (cancel_delayed_work_sync(&wdev->scan.timeout) > 0) {
 		wdev->scan.status = 1;
 		queue_delayed_work(wdev->workqueue, &wdev->scan.timeout, 0);

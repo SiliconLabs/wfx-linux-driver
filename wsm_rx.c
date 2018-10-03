@@ -186,8 +186,7 @@ static int wsm_event_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 	struct wfx_wsm_event *event;
 	int first;
 
-	if (!wvif || wvif->mode == NL80211_IFTYPE_UNSPECIFIED)
-		/* STA is stopped. */
+	if (!wvif)
 		return 0;
 
 	event = kzalloc(sizeof(*event), GFP_KERNEL);

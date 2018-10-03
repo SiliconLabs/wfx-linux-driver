@@ -880,11 +880,8 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 	}
 
 	wvif = wdev_to_wvif(wdev, txpriv->vif_id);
-
-	if (wvif->mode == NL80211_IFTYPE_UNSPECIFIED) {
-		/* STA is stopped. */
+	if (!wvif)
 		return;
-	}
 
 	if (arg->Status == WSM_REQUEUE) {
 		/* "Requeue" means "implicit suspend" */
@@ -1037,8 +1034,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg,
 
 	hdr->flag = 0;
 
-	if (wvif->mode == NL80211_IFTYPE_UNSPECIFIED)
-		/* STA is stopped. */
+	if (!wvif)
 		goto drop;
 
 	if (link_id && link_id <= WFX_MAX_STA_IN_AP_MODE) {
