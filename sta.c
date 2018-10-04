@@ -227,6 +227,11 @@ int wfx_add_interface(struct ieee80211_hw *dev,
 		return -EOPNOTSUPP;
 	}
 
+	if (wdev->vif) {
+		mutex_unlock(&wdev->conf_mutex);
+		return -EOPNOTSUPP;
+	}
+
 	wdev->vif = vif;
 	wvif->vif = vif;
 	wvif->wdev = wdev;
@@ -317,6 +322,8 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 
 	wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
 	wvif->join_pending = false;
+
+	wdev->vif = NULL;
 
 	mutex_unlock(&wdev->conf_mutex);
 }
