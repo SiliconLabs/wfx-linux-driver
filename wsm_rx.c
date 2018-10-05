@@ -29,28 +29,6 @@
 #include "sta.h"
 #include "testmode.h"
 
-#define WSM_GET(buf, ptr, size)						\
-	do {								\
-		if ((buf)->data + size > (buf)->end)			\
-			goto underflow;					\
-		memcpy(ptr, (buf)->data, size);				\
-		(buf)->data += size;					\
-	} while (0)
-
-#define __WSM_GET(buf, type, type2, cvt)				\
-	({								\
-		type val;						\
-		if ((buf)->data + sizeof(type) > (buf)->end)		\
-			goto underflow;					\
-		val = cvt(*(type2 *)(buf)->data);			\
-		(buf)->data += sizeof(type);				\
-		val;							\
-	})
-
-#define WSM_GET8(buf)  __WSM_GET(buf, u8, u8, (u8))
-#define WSM_GET16(buf) __WSM_GET(buf, u16, __le16, __le16_to_cpu)
-#define WSM_GET32(buf) __WSM_GET(buf, u32, __le32, __le32_to_cpu)
-
 struct wsm_mib {
 	u16	mib_id;
 	void	*buf;
@@ -642,14 +620,9 @@ void wsm_unlock_tx(struct wfx_dev *wdev)
 	}
 }
 
-int wsm_handle_exception(struct wfx_dev *wdev, u8 *data, size_t len)
+int wsm_handle_exception(struct wfx_dev *wdev, void *data, size_t len)
 {
-	struct wsm_buf buf;
-	u32 reason;
-	u32 reg[18];
-	char fname[48];
-	unsigned int i;
-
+	HiExceptionIndBody_t *body = data;
 	static const char * const reason_str[] = {
 		"undefined instruction",
 		"prefetch abort",
@@ -657,36 +630,22 @@ int wsm_handle_exception(struct wfx_dev *wdev, u8 *data, size_t len)
 		"unknown error",
 	};
 
-	buf.begin = data;
-	buf.data = data;
-	buf.end = &buf.begin[len];
-
-	reason = WSM_GET32(&buf);
-	for (i = 0; i < ARRAY_SIZE(reg); ++i)
-		reg[i] = WSM_GET32(&buf);
-	WSM_GET(&buf, fname, sizeof(fname));
-
-	if (reason < 4)
-		wiphy_err(wdev->hw->wiphy,
-			  "Firmware exception: %s.\n",
-			  reason_str[reason]);
-	else
-		wiphy_err(wdev->hw->wiphy,
-			  "Firmware assert: id %d, error code %X\n",
-			  reg[1], reg[2]);
-
-	for (i = 0; i < 4; i += 4) {
-		wiphy_err(wdev->hw->wiphy,
-			  "R%d: 0x%.8X, R%d: 0x%.8X\n",
-			  i + 0, reg[i + 0], i + 1, reg[i + 1]);
+	if (len < sizeof(HiExceptionIndBody_t)) {
+		dev_err(wdev->pdev, "Firmware exception.\n");
+		print_hex_dump_bytes("Exception: ", DUMP_PREFIX_NONE, data, len);
+		return -EINVAL;
 	}
-	return 0;
 
-underflow:
-	wiphy_err(wdev->hw->wiphy, "Firmware exception.\n");
-	print_hex_dump_bytes("Exception: ", DUMP_PREFIX_NONE,
-			     data, len);
-	return -EINVAL;
+	if (body->Reason < 4) {
+		dev_err(wdev->pdev, "Firmware exception: %s\n",
+			reason_str[body->Reason]);
+		return 0;
+	}
+
+	dev_err(wdev->pdev, "Firmware assert: id %d, error code %X\n",
+		body->Reserved_1, body->Reserved_2);
+
+	return 0;
 }
 
 int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,

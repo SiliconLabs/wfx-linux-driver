@@ -258,7 +258,7 @@ int wsm_map_link(struct wfx_dev *wdev, const WsmHiMapLinkReqBody_t *arg);
 int wfx_unmap_link(struct wfx_vif *wvif, int link_id);
 int wsm_set_probe_responder(struct wfx_vif *wvif, bool enable);
 
-int wsm_handle_exception(struct wfx_dev *wdev, u8 *data, size_t len);
+int wsm_handle_exception(struct wfx_dev *wdev, void *data, size_t len);
 int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm, struct sk_buff **skb_p);
 int wsm_get_tx(struct wfx_dev *wdev, u8 **data, size_t *tx_len, int *burst);
 
