@@ -29,12 +29,6 @@
 #include "sta.h"
 #include "testmode.h"
 
-struct wsm_mib {
-	u16	mib_id;
-	void	*buf;
-	size_t	buf_size;
-};
-
 static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf, void *arg)
 {
 	// All confirm messages start with Status
@@ -60,32 +54,6 @@ static int wsm_configuration_confirm(struct wfx_dev *wdev, void *arg,
 
 	if (arg)
 		memcpy(arg, body, sizeof(HiConfigurationCnfBody_t));
-	return 0;
-}
-
-static int wsm_read_mib_confirm(struct wfx_dev	*wdev,
-				struct wsm_mib *arg,
-				struct wsm_buf *buf)
-{
-	u16 size;
-	WsmHiReadMibCnfBody_t *Body = &((WsmHiReadMibCnf_t *)buf->begin)->Body;
-
-	if (Body->Status != WSM_STATUS_SUCCESS) {
-		wfx_err("Failed to receive: HIF read mib confirmation");
-		return -EINVAL;
-	}
-
-	if (Body->MibId != arg->mib_id) {
-		wfx_err("Invalid Read MIB ID");
-		return -EINVAL;
-	}
-
-	size = Body->Length;
-	if (size > arg->buf_size)
-		size = arg->buf_size;
-
-	memcpy(arg->buf, &Body->MibData, size);
-	arg->buf_size = size;
 	return 0;
 }
 
@@ -638,9 +606,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 
 		switch (wsm_id) {
 		case WSM_HI_READ_MIB_CNF_ID:
-			if (wsm_arg)
-				ret = wsm_read_mib_confirm(wdev, wsm_arg,
-								&wsm_buf);
+			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
 			break;
 		case WSM_HI_WRITE_MIB_CNF_ID:
 			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);

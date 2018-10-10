@@ -58,11 +58,6 @@
 #define wfx_cmd_data(wfx_arg, val) __wfx_cmd(wfx_arg, val, u32, __le32, \
 					cpu_to_le32)
 
-struct wsm_mib {
-	u16	mib_id;
-	void	*buf;
-	size_t	buf_size;
-};
 
 static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf, void *arg,
 			u8 cmd, long tmo);
@@ -117,11 +112,8 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
-	struct wsm_mib mib_buf = {
-		.mib_id = mib_id,
-		.buf = _buf,
-		.buf_size = buf_size,
-	};
+	// WsmHiReadMibCnfBody_t is too big to be placed on stack
+	WsmHiReadMibCnfBody_t *reply = kmalloc(sizeof(WsmHiReadMibCnfBody_t), GFP_KERNEL);
 
 	wsm_cmd_lock(wdev);
 	wfx_cmd_len(wfx_arg, mib_id);
@@ -129,12 +121,34 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
 
 	ret = wfx_cmd_send(wdev,
 			   wfx_arg,
-			   &mib_buf,
+			   reply,
 			   WSM_HI_READ_MIB_REQ_ID,
 			   WSM_CMD_TIMEOUT);
+	reply->Length -= 4; // Drop header
+	if (mib_id != reply->MibId) {
+		dev_warn(wdev->pdev, "%s: confirmation mismatch request\n", __func__);
+		ret = -EIO;
+		goto nomem;
+	}
+	if (buf_size < reply->Length) {
+		dev_err(wdev->pdev, "Bad buffer size to receive %s (%zu < %d)\n",
+			get_mib_name(mib_id), buf_size, reply->Length);
+		ret = -ENOMEM;
+		goto nomem;
+	}
+	if (reply->Status) {
+		dev_err(wdev->pdev, "read MIB %s returned error %d\n", get_mib_name(mib_id), reply->Status);
+		goto nomem;
+	}
+	memcpy(_buf, &reply->MibData, reply->Length);
+	wsm_cmd_unlock(wdev);
+	kfree(reply);
+	return ret;
 
 nomem:
+	memset(_buf, 0xFF, buf_size);
 	wsm_cmd_unlock(wdev);
+	kfree(reply);
 	return ret;
 }
 
