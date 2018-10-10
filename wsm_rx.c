@@ -89,13 +89,6 @@ static int wsm_read_mib_confirm(struct wfx_dev	*wdev,
 	return 0;
 }
 
-static int wsm_write_mib_confirm(struct wfx_dev	*wdev,
-				struct wsm_mib *arg,
-				struct wsm_buf *buf)
-{
-	return wsm_generic_confirm(wdev, (HiMsgHdr_t *) buf->begin, buf->data, arg);
-}
-
 static int wsm_tx_confirm(struct wfx_dev	*wdev,
 			  struct wsm_buf *buf)
 {
@@ -650,9 +643,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 								&wsm_buf);
 			break;
 		case WSM_HI_WRITE_MIB_CNF_ID:
-			if (wsm_arg)
-				ret = wsm_write_mib_confirm(wdev, wsm_arg,
-							    &wsm_buf);
+			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
 			break;
 		case WSM_HI_START_SCAN_CNF_ID:
 			if (wsm_arg)
