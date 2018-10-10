@@ -57,6 +57,7 @@ static int wfx_scan_start(struct wfx_dev *wdev, struct wsm_scan *scan)
 			   msecs_to_jiffies(tmo));
 	ret = wsm_scan(wdev, scan);
 	if (ret) {
+		wfx_scan_failed_cb(wdev);
 		atomic_set(&wdev->scan.in_progress, 0);
 		atomic_set(&wdev->wait_for_scan, 0);
 		cancel_delayed_work_sync(&wdev->scan.timeout);

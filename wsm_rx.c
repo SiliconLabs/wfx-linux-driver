@@ -246,18 +246,6 @@ static int wsm_set_pm_indication(struct wfx_dev	*wdev,
 	return 0;
 }
 
-static int wsm_scan_started(struct wfx_dev *wdev, void *arg,
-			    struct wsm_buf *buf)
-{
-	if (((WsmHiStartScanCnf_t *)buf->begin)->Body.Status !=
-	    WSM_STATUS_SUCCESS) {
-		wfx_err("Failed to receive: indication during scan start");
-		wfx_scan_failed_cb(wdev);
-		return -EINVAL;
-	}
-	return 0;
-}
-
 static int wsm_scan_complete_indication(struct wfx_dev	*wdev,
 					struct wsm_buf *buf)
 {
@@ -586,8 +574,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
 			break;
 		case WSM_HI_START_SCAN_CNF_ID:
-			if (wsm_arg)
-				ret = wsm_scan_started(wdev, wsm_arg, &wsm_buf);
+			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
 			break;
 		case HI_CONFIGURATION_CNF_ID:
 			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);

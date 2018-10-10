@@ -179,6 +179,7 @@ int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg)
 	int i;
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	WsmHiStartScanCnfBody_t reply;
 
 	if (arg->scan_req.NumOfChannels > WSM_API_CHANNEL_LIST_SIZE)
 		return -EINVAL;
@@ -213,9 +214,12 @@ int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg)
 
 	ret = wfx_cmd_send(wdev,
 			   wfx_arg,
-			   NULL,
+			   &reply,
 			   WSM_HI_START_SCAN_REQ_ID,
 			   WSM_CMD_TIMEOUT);
+	if (ret)
+		goto nomem;
+	ret = reply.Status;
 
 nomem:
 	wsm_cmd_unlock(wdev);
