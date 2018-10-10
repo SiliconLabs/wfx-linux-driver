@@ -746,8 +746,6 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 				ret = wsm_join_confirm(wdev, wsm_arg, &wsm_buf);
 			break;
 		case WSM_HI_SET_PM_MODE_CNF_ID:
-			if (-ETIMEDOUT == wdev->scan.status)
-				wdev->scan.status = 1;
 		case WSM_HI_STOP_SCAN_CNF_ID:
 		case WSM_HI_RESET_CNF_ID:
 		case WSM_HI_ADD_KEY_CNF_ID:

@@ -699,6 +699,9 @@ int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 		ret = wsm_set_pm(wvif->wdev, &pm);
 		if (ret)
 			wvif->wdev->channel_switch_in_progress = 0;
+		// FIXME: why ?
+		if (-ETIMEDOUT == wvif->wdev->scan.status)
+			wvif->wdev->scan.status = 1;
 		return ret;
 	} else {
 		return 0;
