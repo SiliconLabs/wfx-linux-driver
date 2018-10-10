@@ -35,21 +35,22 @@ struct wsm_mib {
 	size_t	buf_size;
 };
 
-static int wsm_generic_confirm(struct wfx_dev	*wdev,
-			     void *arg,
-			     struct wsm_buf *buf)
+static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf, void *arg)
 {
-	uint32_t status;
-	uint32_t msgId;
+	// All confirm messages start with Status
+	int status = le32_to_cpu(*((__le32 *) buf));
+	int cmd = hdr->s.t.MsgId;
+	int len = hdr->MsgLen - 4; // drop header
 
-	status = le32_to_cpu(((HiConfigurationCnf_t *)buf->begin)->Body.Status);
-	msgId = ((HiConfigurationCnf_t *)buf->begin)->Header.s.t.MsgId;
+	if (status)
+		dev_err(wdev->pdev, "WSM request %s %08x returned error %d\n",
+				get_wsm_name(cmd), cmd, status);
 
-	/* Use configuration message confirmation as default structure*/
-	if (status != WSM_STATUS_SUCCESS)
-		return -EINVAL;
+	// FIXME: check that if arg is provided, caller allocated enough bytes
+	if (arg)
+		memcpy(arg, buf, len);
 
-	return 0;
+	return status;
 }
 
 static int wsm_configuration_confirm(struct wfx_dev *wdev, void *arg,
@@ -92,7 +93,7 @@ static int wsm_write_mib_confirm(struct wfx_dev	*wdev,
 				struct wsm_mib *arg,
 				struct wsm_buf *buf)
 {
-	return wsm_generic_confirm(wdev, arg, buf);
+	return wsm_generic_confirm(wdev, (HiMsgHdr_t *) buf->begin, buf->data, arg);
 }
 
 static int wsm_tx_confirm(struct wfx_dev	*wdev,
@@ -679,15 +680,10 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 		case WSM_HI_MAP_LINK_CNF_ID:    /* map_link */
 			if (wsm_arg != NULL)
 				wfx_err("Wrong HIF map link message");
-			ret = wsm_generic_confirm(wdev, wsm_arg, &wsm_buf);
-			if (ret) {
-				wiphy_warn(wdev->hw->wiphy,
-					   "wsm_generic_confirm failed for request 0x%02x.\n",
-					   wsm_id);
-				// Legacy chip have a special management for this case.
-				// Is it still necessary?
-				WARN_ON(wvif->join_status >= WFX_JOIN_STATUS_JOINING);
-			}
+			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
+			// Legacy chip have a special management for this case.
+			// Is it still necessary?
+			WARN_ON(ret && wvif->join_status >= WFX_JOIN_STATUS_JOINING);
 			break;
 		default:
 			wiphy_warn(wdev->hw->wiphy,
