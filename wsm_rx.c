@@ -92,22 +92,6 @@ static int wsm_multi_tx_confirm(struct wfx_dev *wdev,
 	return ret;
 }
 
-static int wsm_join_confirm(struct wfx_dev	*wdev,
-			    WsmHiJoinCnfBody_t	*arg,
-			    struct wsm_buf *buf)
-{
-	if (((WsmHiJoinCnf_t *)buf->begin)->Body.Status != WSM_STATUS_SUCCESS) {
-		wfx_err("Failed to receive:  join confirmation");
-		wfx_info("Access Point is gone or has never been there\n");
-		ieee80211_connection_loss(wdev->vif);
-		return -EINVAL;
-	}
-
-	memcpy(arg, &((WsmHiJoinCnf_t *)buf->begin)->Body,
-	       sizeof(WsmHiJoinCnfBody_t));
-	return 0;
-}
-
 int wfx_unmap_link(struct wfx_vif *wvif, int sta_id)
 {
 	WsmHiMapLinkReqBody_t maplink = {
@@ -609,8 +593,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
 			break;
 		case WSM_HI_JOIN_CNF_ID:
-			if (wsm_arg)
-				ret = wsm_join_confirm(wdev, wsm_arg, &wsm_buf);
+			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
 			break;
 		case WSM_HI_SET_PM_MODE_CNF_ID:
 		case WSM_HI_STOP_SCAN_CNF_ID:

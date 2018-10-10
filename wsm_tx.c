@@ -242,7 +242,6 @@ int wsm_join(struct wfx_dev *wdev, WsmHiJoinReqBody_t *arg)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
-	WsmHiJoinCnfBody_t resp;
 
 	wsm_cmd_lock(wdev);
 	wfx_cmd_fl(wfx_arg, arg->Mode);
@@ -261,11 +260,9 @@ int wsm_join(struct wfx_dev *wdev, WsmHiJoinReqBody_t *arg)
 
 	ret = wfx_cmd_send(wdev,
 			   wfx_arg,
-			   &resp,
+			   NULL,
 			   WSM_HI_JOIN_REQ_ID,
 			   WSM_CMD_JOIN_TIMEOUT);
-	if (!ret)
-		ret = resp.Status;
 
 nomem:
 	wsm_cmd_unlock(wdev);

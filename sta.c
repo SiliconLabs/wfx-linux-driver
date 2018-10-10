@@ -1430,6 +1430,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	/* Perform actual join */
 	wvif->wdev->tx_burst_idx = -1;
 	if (wsm_join(wvif->wdev, &join)) {
+		ieee80211_connection_loss(wvif->vif);
 		wvif->join_complete_status = -1;
 		cancel_delayed_work_sync(&wvif->join_timeout);
 		wfx_update_listening(wvif, wvif->listening);
