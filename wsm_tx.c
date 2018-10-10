@@ -235,8 +235,6 @@ int wsm_join(struct wfx_dev *wdev, WsmHiJoinReqBody_t *arg)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
-	// FIXME: this code does not scale
-	struct wfx_vif *wvif = (struct wfx_vif *) wdev->vif->drv_priv;
 	WsmHiJoinCnfBody_t resp;
 
 	wsm_cmd_lock(wdev);
@@ -261,8 +259,8 @@ int wsm_join(struct wfx_dev *wdev, WsmHiJoinReqBody_t *arg)
 			   &resp,
 			   WSM_HI_JOIN_REQ_ID,
 			   WSM_CMD_JOIN_TIMEOUT);
-
-	wvif->join_complete_status = ret < 0 ? -1 : resp.Status;
+	if (!ret)
+		ret = resp.Status;
 
 nomem:
 	wsm_cmd_unlock(wdev);

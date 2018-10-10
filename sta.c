@@ -1422,12 +1422,14 @@ static void wfx_do_join(struct wfx_vif *wvif)
 
 	/* Perform actual join */
 	if (wsm_join(wvif->wdev, &join)) {
+		wvif->join_complete_status = -1;
 		cancel_delayed_work_sync(&wvif->join_timeout);
 		wfx_update_listening(wvif, wvif->listening);
 		/* Tx lock still held, unjoin will clear it. */
 		if (queue_work(wvif->wdev->workqueue, &wvif->unjoin_work) <= 0)
 			wsm_unlock_tx(wvif->wdev);
 	} else {
+		wvif->join_complete_status = 0;
 		if (!(join.JoinFlags.ForceWithInd))
 			wfx_join_complete(wvif); /* Will clear tx_lock */
 
