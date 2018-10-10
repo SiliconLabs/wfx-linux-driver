@@ -232,7 +232,6 @@ struct wsm_buf {
 	u8	*end;
 };
 
-
 int wsm_buf_reserve(struct wsm_buf *buf, size_t extra_size);
 
 void wsm_buf_reset(struct wsm_buf *buf);

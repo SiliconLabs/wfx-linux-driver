@@ -157,7 +157,6 @@ static int wsm_join_confirm(struct wfx_dev	*wdev,
 	return 0;
 }
 
-
 int wfx_unmap_link(struct wfx_vif *wvif, int sta_id)
 {
 	WsmHiMapLinkReqBody_t maplink = {
