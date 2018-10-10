@@ -694,6 +694,7 @@ int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 	if (memcmp(&pm, &wvif->firmware_ps_mode,
 		   sizeof(WsmHiSetPmModeReqBody_t))) {
 		wvif->firmware_ps_mode = pm;
+		wvif->wdev->ps_mode_switch_in_progress = 1;
 		return wsm_set_pm(wvif->wdev, &pm);
 	} else {
 		return 0;

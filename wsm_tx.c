@@ -406,8 +406,6 @@ int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg)
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
-	wdev->ps_mode_switch_in_progress = 1;
-
 	wsm_cmd_lock(wdev);
 	wfx_cmd(wfx_arg, &arg->PmMode, sizeof(arg->PmMode));
 	wfx_cmd_fl(wfx_arg, arg->FastPsmIdlePeriod);
