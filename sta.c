@@ -677,6 +677,7 @@ int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 {
 	WsmHiSetPmModeReqBody_t pm = *arg;
 	uint16_t uapsd_flags;
+	int ret;
 
 	memcpy(&uapsd_flags, &wvif->uapsd_info, sizeof(uapsd_flags));
 
@@ -695,7 +696,10 @@ int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 		   sizeof(WsmHiSetPmModeReqBody_t))) {
 		wvif->firmware_ps_mode = pm;
 		wvif->wdev->ps_mode_switch_in_progress = 1;
-		return wsm_set_pm(wvif->wdev, &pm);
+		ret = wsm_set_pm(wvif->wdev, &pm);
+		if (ret)
+			wvif->wdev->channel_switch_in_progress = 0;
+		return ret;
 	} else {
 		return 0;
 	}

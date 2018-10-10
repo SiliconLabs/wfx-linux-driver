@@ -414,9 +414,6 @@ int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg)
 			   WSM_HI_SET_PM_MODE_REQ_ID,
 			   WSM_CMD_TIMEOUT);
 
-	if (ret)
-		wdev->channel_switch_in_progress = 0;
-
 nomem:
 	wsm_cmd_unlock(wdev);
 	return ret;
