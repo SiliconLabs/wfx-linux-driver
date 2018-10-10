@@ -615,7 +615,6 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 {
 	int ret = 0;
 	u8 wsm_id = wsm->s.t.MsgId;
-	int msg_type = wsm->s.b.MesgType;
 	struct wsm_buf wsm_buf;
 	// FIXME: Use interface id from wsm->s.b.IntId
 	struct wfx_vif *wvif = wdev_to_wvif(wdev);
@@ -628,7 +627,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 		ret = wsm_tx_confirm(wdev, &wsm_buf);
 	} else if (wsm_id == WSM_HI_MULTI_TRANSMIT_CNF_ID) {
 		ret = wsm_multi_tx_confirm(wdev, &wsm_buf);
-	} else if (!msg_type) {        /*confirmation msg */
+	} else if (!(wsm_id & HI_MSG_TYPE_MASK)) {
 		void *wsm_arg;
 		u8 wsm_cmd;
 
