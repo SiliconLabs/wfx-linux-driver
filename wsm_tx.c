@@ -143,11 +143,6 @@ int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
-	struct wsm_mib mib_buf = {
-		.mib_id = mib_id,
-		.buf = _buf,
-		.buf_size = buf_size,
-	};
 
 	wsm_cmd_lock(wdev);
 	wfx_cmd_len(wfx_arg, mib_id);
@@ -156,7 +151,7 @@ int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
 
 	ret = wfx_cmd_send(wdev,
 			   wfx_arg,
-			   &mib_buf,
+			   NULL,
 			   WSM_HI_WRITE_MIB_REQ_ID,
 			   WSM_CMD_TIMEOUT);
 
