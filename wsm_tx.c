@@ -252,8 +252,6 @@ int wsm_join(struct wfx_dev *wdev, WsmHiJoinReqBody_t *arg)
 	wfx_cmd_data(wfx_arg, arg->BeaconInterval);
 	wfx_cmd_data(wfx_arg, arg->BasicRateSet);
 
-	wdev->tx_burst_idx = -1;
-
 	ret = wfx_cmd_send(wdev,
 			   wfx_arg,
 			   &resp,
@@ -442,7 +440,6 @@ int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg)
 	wfx_cmd(wfx_arg, arg->Ssid, sizeof(arg->Ssid));
 	wfx_cmd_data(wfx_arg, arg->BasicRateSet);
 
-	wdev->tx_burst_idx = -1;
 	ret = wfx_cmd_send(wdev,
 			   wfx_arg,
 			   NULL,

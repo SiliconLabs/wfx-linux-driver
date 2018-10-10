@@ -1421,6 +1421,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	wsm_set_protected_mgmt_policy(wvif->wdev, &mgmt_policy);
 
 	/* Perform actual join */
+	wvif->wdev->tx_burst_idx = -1;
 	if (wsm_join(wvif->wdev, &join)) {
 		wvif->join_complete_status = -1;
 		cancel_delayed_work_sync(&wvif->join_timeout);
@@ -1556,6 +1557,7 @@ int wfx_enable_listening(struct wfx_vif *wvif)
 		start.ChannelNumber = 1;
 	}
 
+	wvif->wdev->tx_burst_idx = -1;
 	return wsm_start(wvif->wdev, &start);
 }
 
@@ -2413,6 +2415,7 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 		 start.BeaconInterval, start.DTIMPeriod,
 		 start.BasicRateSet,
 		 start.SsidLength, start.Ssid);
+	wvif->wdev->tx_burst_idx = -1;
 	ret = wsm_start(wvif->wdev, &start);
 	if (!ret)
 		ret = wfx_upload_keys(wvif);
