@@ -71,7 +71,7 @@ int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
-	HiConfigurationCnf_t reply;
+	HiConfigurationCnfBody_t reply;
 
 	wsm_cmd_lock(wdev);
 	wfx_cmd_len(wfx_arg, len);
@@ -86,9 +86,7 @@ int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 	if (ret < 0)
 		return ret;
 
-	WARN_ON(le32_to_cpu(reply.Header.MsgLen) != sizeof(reply));
-	WARN_ON(le32_to_cpu(reply.Header.s.t.MsgId) != HI_CONFIGURATION_CNF_ID);
-	return le32_to_cpu(reply.Body.Status);
+	return le32_to_cpu(reply.Status);
 
 nomem:
 	wsm_cmd_unlock(wdev);

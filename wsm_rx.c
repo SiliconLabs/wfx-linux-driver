@@ -52,12 +52,13 @@ static int wsm_generic_confirm(struct wfx_dev	*wdev,
 	return 0;
 }
 
-static int wsm_configuration_confirm(struct wfx_dev *wdev, void *arg, HiMsgHdr_t *buf)
+static int wsm_configuration_confirm(struct wfx_dev *wdev, void *arg,
+				     struct wsm_buf *buf)
 {
-	size_t len = le32_to_cpu(buf->MsgLen);
+	HiConfigurationCnfBody_t *body = &((HiConfigurationCnf_t *)buf->begin)->Body;;
 
 	if (arg)
-		memcpy(arg, buf, len);
+		memcpy(arg, body, sizeof(HiConfigurationCnfBody_t));
 	return 0;
 }
 
@@ -659,7 +660,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 				ret = wsm_scan_started(wdev, wsm_arg, &wsm_buf);
 			break;
 		case HI_CONFIGURATION_CNF_ID:
-			ret = wsm_configuration_confirm(wdev, wsm_arg, wsm);
+			ret = wsm_configuration_confirm(wdev, wsm_arg, &wsm_buf);
 			break;
 		case WSM_HI_JOIN_CNF_ID:
 			if (wsm_arg)
