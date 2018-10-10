@@ -585,21 +585,29 @@ bool wsm_flush_tx(struct wfx_dev *wdev)
 	unsigned long timestamp = jiffies;
 	long timeout;
 
+	/* Flush must be called with TX lock held. */
 	BUG_ON(!atomic_read(&wdev->tx_lock));
+	/* First check if we really need to do something.
+	 * It is safe to use unprotected access, as hw_bufs_used
+	 * can only decrements.
+	 */
 	if (!wdev->hw_bufs_used)
 		return true;
 
 	if (wdev->bh_error) {
+		/* In case of failure do not wait for magic. */
 		wfx_err("[WSM] Fatal error occurred, will not flush TX.\n");
 		return false;
 	} else {
 		bool pending = false;
 		int i;
 
+		/* Get a timestamp of "oldest" frame */
 		for (i = 0; i < 4; ++i)
 			pending |= wfx_queue_get_xmit_timestamp(
 				&wdev->tx_queue[i],
 					&timestamp, 0xffffffff);
+		/* If there's nothing pending, we're good */
 		if (!pending)
 			return true;
 
@@ -607,6 +615,7 @@ bool wsm_flush_tx(struct wfx_dev *wdev)
 		if (timeout < 0 || wait_event_timeout(wdev->bh_evt_wq,
 						      !wdev->hw_bufs_used,
 						      timeout) <= 0) {
+			/* Hmmm... Not good. Frame had stuck in firmware. */
 			wdev->bh_error = 1;
 			wiphy_err(wdev->hw->wiphy,
 				  "[WSM] TX Frames (%d) stuck in firmware, killing BH\n",
@@ -614,6 +623,7 @@ bool wsm_flush_tx(struct wfx_dev *wdev)
 			wake_up(&wdev->bh_wq);
 			return false;
 		}
+		/* Ok, everything is flushed. */
 		return true;
 	}
 }
