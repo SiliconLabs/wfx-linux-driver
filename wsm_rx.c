@@ -175,59 +175,20 @@ int wsm_set_probe_responder(struct wfx_vif *wvif, bool enable)
 	return wsm_set_rx_filter(wvif->wdev, &wvif->rx_filter);
 }
 
-const char * const wfx_fw_types[] = {
-	"ETF",
-	"WFM",
-	"WSM",
-	"HI test",
-	"Platform test"
-};
 
-const char *const wfx_power_mode_types[] = {
-	"RF always active",
-	"RF off allowed",
-	"lowest energy mode",
-};
-
-static int wsm_startup_indication(struct wfx_dev	*wdev,
-					struct wsm_buf *buf)
+static int wsm_startup_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	uint32_t *p_Capa = (uint32_t *)&wdev->wsm_caps.Capabilities;
+	HiStartupIndBody_t *body = buf;
 
-	(void)memcpy(&wdev->wsm_caps, buf->data, sizeof(HiStartupIndBody_t));
-
-	if (wdev->wsm_caps.Status) {
-		wfx_err("Failed to receive: indication during startup");
+	memcpy(&wdev->wsm_caps, body, sizeof(HiStartupIndBody_t));
+	if (body->Status || body->FirmwareType > 4) {
+		dev_err(wdev->pdev, "Received invalid startup indication");
 		return -EINVAL;
 	}
 
-	if (wdev->wsm_caps.FirmwareType > 4) {
-		wfx_err("Unknown firmware type");
-		return -EINVAL;
-	}
-
-	wfx_info("wfx init done.\n"
-		 "\t Driver information:\n"
-		 "\t\t Version. %s\n"
-		 "\t\t Input buffers. %d x %d bytes\n"
-		 "\t\t Cap. 0x%.8X\n"
-		 "\t\t Power mode. %s\n"
-		 "\t Firmware information:\n"
-		 "\t\t Type. %s\n "
-		 "\t\t Label. [%s]\n"
-		 "\t\t ver. %d.%d, build. %d\n"
-		 "\t Hardware information:\n"
-		 "\t\t WF200\n",
-		 WFX_LABEL,
-		 wdev->wsm_caps.NumInpChBufs,
-		 wdev->wsm_caps.SizeInpChBuf,
-		 *p_Capa,
-		 wfx_power_mode_types[wdev->pdata.power_mode],
-		 wfx_fw_types[wdev->wsm_caps.FirmwareType],
-		 wdev->wsm_caps.FirmwareLabel,
-		 wdev->wsm_caps.FirmwareMajor,
-		 wdev->wsm_caps.FirmwareMinor,
-		 wdev->wsm_caps.FirmwareBuild);
+	dev_info(wdev->pdev, "Firmware \"%s\" started. API: %.2x caps: %#.8X\n",
+		 body->FirmwareLabel, body->ApiVersion,
+		 *((uint32_t *) &body->Capabilities));
 
 	/* Disable unsupported frequency bands */
 /*    if (!(wdev->wsm_caps.FirmwareCap & 0x1)) */
@@ -745,7 +706,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 	} else {
 		switch (wsm_id) {
 		case HI_STARTUP_IND_ID:
-			ret = wsm_startup_indication(wdev, &wsm_buf);
+			ret = wsm_startup_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		case WSM_HI_RX_IND_ID:
 			ret = wsm_receive_indication(wdev,
