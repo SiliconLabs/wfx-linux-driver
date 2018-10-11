@@ -584,6 +584,12 @@ static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf,
 		spin_unlock(&wdev->wsm_cmd.lock);
 	}
 done:
+	// Should not be necessary but just in case
+	spin_lock(&wdev->wsm_cmd.lock);
+	wdev->wsm_cmd.arg = NULL;
+	wdev->wsm_cmd.cmd = 0xFF;
+	spin_unlock(&wdev->wsm_cmd.lock);
+
 	if (ret < 0)
 		dev_err(wdev->pdev, "WSM request %s %08x returned error %d\n",
 				get_wsm_name(cmd), cmd, ret);

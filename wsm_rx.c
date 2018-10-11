@@ -29,20 +29,47 @@
 #include "sta.h"
 #include "testmode.h"
 
-static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf, void *arg)
+static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
+	// FIXME: Use interface id from wsm->s.b.IntId
+	struct wfx_vif *wvif = wdev_to_wvif(wdev);
 	// All confirm messages start with Status
 	int status = le32_to_cpu(*((__le32 *) buf));
 	int cmd = hdr->s.t.MsgId;
 	int len = hdr->MsgLen - 4; // drop header
+	int wsm_cmd;
+	void *wsm_arg;
+
+	spin_lock(&wdev->wsm_cmd.lock);
+	wsm_arg = wdev->wsm_cmd.arg;
+	wsm_cmd = wdev->wsm_cmd.cmd;
+	spin_unlock(&wdev->wsm_cmd.lock);
+
+	if (cmd != wsm_cmd) {
+		dev_warn(wdev->pdev, "Chip response mismatch request: %#.4X vs %#.4X\n", cmd, wsm_cmd);
+		return -EINVAL;
+	}
 
 	if (status)
-		dev_err(wdev->pdev, "WSM request %s %08x returned error %d\n",
+		dev_warn(wdev->pdev, "WSM request %s %08x returned error %d\n",
 				get_wsm_name(cmd), cmd, status);
 
-	// FIXME: check that if arg is provided, caller allocated enough bytes
-	if (arg)
-		memcpy(arg, buf, len);
+	// FIXME: check that if wsm_arg is provided, caller allocated enough bytes
+	// FIXME: access to wsm_arg should be inner spinlock. (but mutex from
+	// wsm_tx also protect it).
+	if (wsm_arg)
+		memcpy(wsm_arg, buf, len);
+
+	// Legacy chip have a special management for this case.
+	// Is it still necessary?
+	WARN_ON(status && wvif->join_status >= WFX_JOIN_STATUS_JOINING);
+
+	spin_lock(&wdev->wsm_cmd.lock);
+	wdev->wsm_cmd.ret = status;
+	wdev->wsm_cmd.done = 1;
+	spin_unlock(&wdev->wsm_cmd.lock);
+
+	wake_up(&wdev->wsm_cmd_wq);
 
 	return status;
 }
@@ -539,8 +566,6 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 	int ret = 0;
 	u8 wsm_id = wsm->s.t.MsgId;
 	struct wsm_buf wsm_buf;
-	// FIXME: Use interface id from wsm->s.b.IntId
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
 
 	wsm_buf.begin = (u8 *)&wsm[0];
 	wsm_buf.data = (u8 *)&wsm[1];
@@ -551,34 +576,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 	} else if (wsm_id == WSM_HI_MULTI_TRANSMIT_CNF_ID) {
 		ret = wsm_multi_tx_confirm(wdev, &wsm_buf);
 	} else if (!(wsm_id & HI_MSG_TYPE_MASK)) {
-		void *wsm_arg;
-		u8 wsm_cmd;
-
-		spin_lock(&wdev->wsm_cmd.lock);
-		wsm_arg = wdev->wsm_cmd.arg;
-		wsm_cmd = wdev->wsm_cmd.cmd;
-		wdev->wsm_cmd.cmd = 0xFF;
-		spin_unlock(&wdev->wsm_cmd.lock);
-
-		if (wsm_id != wsm_cmd) {
-			wfx_err("Wrong RX msg id  0x%.4X\n", wsm_id);
-			ret = -EINVAL;
-			goto out;
-		}
-		ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
-		// Legacy chip have a special management for this case.
-		// Is it still necessary?
-		WARN_ON(ret && wvif->join_status >= WFX_JOIN_STATUS_JOINING);
-
-		// FIXME: wsm_cmd.lock is useless since we are already protected with wsm_cmd_lock in wsm_tx.c
-		spin_lock(&wdev->wsm_cmd.lock);
-		wdev->wsm_cmd.ret = ret;
-		wdev->wsm_cmd.done = 1;
-		spin_unlock(&wdev->wsm_cmd.lock);
-
-		ret = 0;
-
-		wake_up(&wdev->wsm_cmd_wq);
+		ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1]);
 	} else {
 		switch (wsm_id) {
 		case HI_STARTUP_IND_ID:
@@ -626,7 +624,6 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 		}
 	}
 
-out:
 	return ret;
 }
 
