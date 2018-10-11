@@ -210,14 +210,16 @@ static int wsm_receive_indication(struct wfx_dev	*wdev,
 	return 0;
 }
 
-static int wsm_event_indication(struct wfx_dev *wdev, struct wsm_buf *buf)
+static int wsm_event_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	int first;
-	struct wfx_wsm_event *event;
-	// FIXME: Get interface id from wsm_buf
+	// FIXME: Get interface id from wsm_buf.
+	// FIXME: wdev->vif may be NULL
 	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	WsmHiEventIndBody_t *body = buf;
+	struct wfx_wsm_event *event;
+	int first;
 
-	if (wvif->mode == NL80211_IFTYPE_UNSPECIFIED)
+	if (!wvif || wvif->mode == NL80211_IFTYPE_UNSPECIFIED)
 		/* STA is stopped. */
 		return 0;
 
@@ -225,8 +227,7 @@ static int wsm_event_indication(struct wfx_dev *wdev, struct wsm_buf *buf)
 	if (!event)
 		return -ENOMEM;
 
-	memcpy(&event->evt, &((WsmHiEventInd_t *)buf->begin)->Body,
-	       sizeof(WsmHiEventIndBody_t));
+	memcpy(&event->evt, body, sizeof(WsmHiEventIndBody_t));
 
 	pr_debug("[WSM] Event: %d(%d)\n",
 		 event->evt.EventId, *((uint32_t *)&event->evt.EventData));
@@ -542,7 +543,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 						     &wsm_buf, skb_p);
 			break;
 		case WSM_HI_EVENT_IND_ID:
-			ret = wsm_event_indication(wdev, &wsm_buf);
+			ret = wsm_event_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		case WSM_HI_SCAN_CMPL_IND_ID:
 			ret = wsm_scan_complete_indication(wdev, &wsm[0], &wsm[1]);
