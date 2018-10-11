@@ -565,48 +565,12 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 			ret = -EINVAL;
 			goto out;
 		}
+		ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
+		// Legacy chip have a special management for this case.
+		// Is it still necessary?
+		WARN_ON(ret && wvif->join_status >= WFX_JOIN_STATUS_JOINING);
 
-		switch (wsm_id) {
-		case WSM_HI_READ_MIB_CNF_ID:
-			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
-			break;
-		case WSM_HI_WRITE_MIB_CNF_ID:
-			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
-			break;
-		case WSM_HI_START_SCAN_CNF_ID:
-			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
-			break;
-		case HI_CONFIGURATION_CNF_ID:
-			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
-			break;
-		case WSM_HI_JOIN_CNF_ID:
-			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
-			break;
-		case WSM_HI_SET_PM_MODE_CNF_ID:
-		case WSM_HI_STOP_SCAN_CNF_ID:
-		case WSM_HI_RESET_CNF_ID:
-		case WSM_HI_ADD_KEY_CNF_ID:
-		case WSM_HI_REMOVE_KEY_CNF_ID:
-		case WSM_HI_SET_BSS_PARAMS_CNF_ID:
-		case WSM_HI_TX_QUEUE_PARAMS_CNF_ID: /* set_tx_queue_params */
-		case WSM_HI_EDCA_PARAMS_CNF_ID:
-		case WSM_HI_START_CNF_ID:
-		case WSM_HI_BEACON_TRANSMIT_CNF_ID:
-		case WSM_HI_UPDATE_IE_CNF_ID:   /* update_ie */
-		case WSM_HI_MAP_LINK_CNF_ID:    /* map_link */
-			if (wsm_arg != NULL)
-				wfx_err("Wrong HIF map link message");
-			ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1], wsm_arg);
-			// Legacy chip have a special management for this case.
-			// Is it still necessary?
-			WARN_ON(ret && wvif->join_status >= WFX_JOIN_STATUS_JOINING);
-			break;
-		default:
-			wiphy_warn(wdev->hw->wiphy,
-				   "Unrecognized confirmation 0x%02x\n",
-				   wsm_id);
-		}
-
+		// FIXME: wsm_cmd.lock is useless since we are already protected with wsm_cmd_lock in wsm_tx.c
 		spin_lock(&wdev->wsm_cmd.lock);
 		wdev->wsm_cmd.ret = ret;
 		wdev->wsm_cmd.done = 1;
