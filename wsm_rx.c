@@ -160,52 +160,38 @@ static int wsm_startup_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 	return 0;
 }
 
-static int wsm_receive_indication(struct wfx_dev	*wdev,
-				  struct wsm_buf *buf,
-				  struct sk_buff **skb_p)
+static int wsm_receive_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf, struct sk_buff **skb_p)
 {
-	WsmHiRxIndBody_t rx;
 	// FIXME: Get interface id from wsm_buf or if_id
 	struct wfx_vif *wvif = wdev_to_wvif(wdev);
-	struct ieee80211_hdr *hdr;
-	size_t hdr_len;
+	WsmHiRxIndBody_t *body = buf;
+	struct ieee80211_hdr *frame;
 	__le16 fctl;
 	int sta_id;
 
-	memcpy(&rx, &((WsmHiRxInd_t *)buf->begin)->Body,
-	       sizeof(WsmHiRxIndBody_t));
-
-	/* hdr_len
-	 * size of RX indication:
-	 * size of the frame_ctl and Msginfo
-	 * Size of the Frame
-	 */
-	hdr_len = (sizeof(WsmHiRxIndBody_t) + sizeof(uint32_t)) -
-		  (sizeof(((WsmHiRxIndBody_t *)0)->Frame));
-
-	skb_pull(*skb_p, hdr_len);
+	skb_pull(*skb_p, sizeof(WsmHiRxIndBody_t));
 
 
-	hdr = (struct ieee80211_hdr *)(*skb_p)->data;
+	frame = (struct ieee80211_hdr *)(*skb_p)->data;
 
-	if (!rx.RcpiRssi &&
-	    (ieee80211_is_probe_resp(hdr->frame_control) ||
-	     ieee80211_is_beacon(hdr->frame_control)))
+	if (!body->RcpiRssi &&
+	    (ieee80211_is_probe_resp(frame->frame_control) ||
+	     ieee80211_is_beacon(frame->frame_control)))
 		return 0;
 
 	if (!wvif->cqm_use_rssi)
-		rx.RcpiRssi = rx.RcpiRssi / 2 - 110;
+		body->RcpiRssi = body->RcpiRssi / 2 - 110;
 
-	fctl = hdr->frame_control;
+	fctl = frame->frame_control;
 	pr_debug("[WSM] \t\t rx_flags=0x%.8X, frame_ctrl=0x%.4X\n",
-		 *((uint32_t *)&rx.RxFlags), le16_to_cpu(fctl));
+		 *((uint32_t *)&body->RxFlags), le16_to_cpu(fctl));
 
 
-	sta_id = rx.RxFlags.PeerStaId;
+	sta_id = body->RxFlags.PeerStaId;
 
-	wfx_rx_cb(wvif, &rx, sta_id, skb_p);
+	wfx_rx_cb(wvif, body, sta_id, skb_p);
 	if (*skb_p)
-		skb_push(*skb_p, hdr_len);
+		skb_push(*skb_p, sizeof(WsmHiRxIndBody_t));
 
 	return 0;
 }
@@ -531,16 +517,14 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 		ret = wsm_tx_confirm(wdev, &wsm[0], &wsm[1]);
 	} else if (wsm_id == WSM_HI_MULTI_TRANSMIT_CNF_ID) {
 		ret = wsm_multi_tx_confirm(wdev, &wsm[0], &wsm[1]);
+	} else if (wsm_id == WSM_HI_RX_IND_ID) {
+		ret = wsm_receive_indication(wdev, &wsm[0], &wsm[1], skb_p);
 	} else if (!(wsm_id & HI_MSG_TYPE_MASK)) {
 		ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1]);
 	} else {
 		switch (wsm_id) {
 		case HI_STARTUP_IND_ID:
 			ret = wsm_startup_indication(wdev, &wsm[0], &wsm[1]);
-			break;
-		case WSM_HI_RX_IND_ID:
-			ret = wsm_receive_indication(wdev,
-						     &wsm_buf, skb_p);
 			break;
 		case WSM_HI_EVENT_IND_ID:
 			ret = wsm_event_indication(wdev, &wsm[0], &wsm[1]);
