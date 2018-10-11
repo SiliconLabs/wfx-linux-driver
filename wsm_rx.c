@@ -275,17 +275,14 @@ static int wsm_scan_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, v
 	return 0;
 }
 
-static int wsm_join_complete_indication(struct wfx_dev	*wdev,
-					struct wsm_buf *buf)
+static int wsm_join_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	WsmHiJoinCompleteIndBody_t arg;
-	// FIXME: Get interface id from wsm_buf
+	// FIXME: Get interface id from hdr
 	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	WsmHiJoinCompleteIndBody_t *body = buf;
 
-	memcpy(&arg, &((WsmHiJoinCompleteInd_t *)buf->begin)->Body,
-	       sizeof(WsmHiJoinCompleteIndBody_t));
-	pr_debug("[WSM] Join complete indication, status: %d\n", arg.Status);
-	wfx_join_complete_cb(wvif, &arg);
+	pr_debug("[WSM] Join complete indication, status: %d\n", body->Status);
+	wfx_join_complete_cb(wvif, body);
 
 	return 0;
 }
@@ -600,7 +597,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 						      wsm->MsgLen);
 			break;
 		case WSM_HI_JOIN_COMPLETE_IND_ID:
-			ret = wsm_join_complete_indication(wdev, &wsm_buf);
+			ret = wsm_join_complete_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		case HI_ERROR_IND_ID:
 			ret = wsm_error_indication(wdev, &wsm_buf);
