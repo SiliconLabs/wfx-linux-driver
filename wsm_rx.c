@@ -82,18 +82,13 @@ static int wsm_tx_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 	return 0;
 }
 
-static int wsm_multi_tx_confirm(struct wfx_dev *wdev,
-				struct wsm_buf *buf)
+static int wsm_multi_tx_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
+	WsmHiMultiTransmitCnfBody_t *body = buf;
+	WsmHiTxCnfBody_t *buf_loc = (WsmHiTxCnfBody_t *) &body->TxConfPayload;
+	int count = body->NumTxConfs;
 	int ret = 0;
-	int count;
 	int i;
-	WsmHiMultiTransmitCnf_t *p_MutliTxCnf;
-	uint8_t *buf_loc;
-
-	p_MutliTxCnf = ((WsmHiMultiTransmitCnf_t *)buf->begin);
-	buf_loc = (uint8_t *)&p_MutliTxCnf->Body.TxConfPayload;
-	count = p_MutliTxCnf->Body.NumTxConfs;
 
 	if (count <= 0) {
 		wfx_err(
@@ -114,8 +109,8 @@ static int wsm_multi_tx_confirm(struct wfx_dev *wdev,
 
 	wfx_debug_txed_multi(wdev, count);
 	for (i = 0; i < count; ++i) {
-		wfx_tx_confirm_cb(wdev, (WsmHiTxCnfBody_t *)buf_loc);
-		buf_loc += sizeof(WsmHiTxCnfBody_t);
+		wfx_tx_confirm_cb(wdev, buf_loc);
+		buf_loc++;
 	}
 	return ret;
 }
@@ -575,7 +570,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 	if (wsm_id == WSM_HI_TX_CNF_ID) {
 		ret = wsm_tx_confirm(wdev, &wsm[0], &wsm[1]);
 	} else if (wsm_id == WSM_HI_MULTI_TRANSMIT_CNF_ID) {
-		ret = wsm_multi_tx_confirm(wdev, &wsm_buf);
+		ret = wsm_multi_tx_confirm(wdev, &wsm[0], &wsm[1]);
 	} else if (!(wsm_id & HI_MSG_TYPE_MASK)) {
 		ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1]);
 	} else {
