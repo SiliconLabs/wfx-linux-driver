@@ -242,18 +242,16 @@ static int wsm_event_indication(struct wfx_dev *wdev, struct wsm_buf *buf)
 	return 0;
 }
 
-static int wsm_channel_switch_indication(struct wfx_dev	*wdev,
-					 struct wsm_buf *buf)
+static int wsm_channel_switch_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	if (((WsmHiSwitchChannelCnf_t *)buf->begin)->Body.Status !=
-	    WSM_STATUS_SUCCESS) {
+	WsmHiSwitchChannelCnfBody_t *body = buf;
+
+	if (body->Status) {
 		wfx_err("Failed to receive: indication during channel switch");
 		return -EINVAL;
 	}
-
 	wdev->channel_switch_in_progress = 0;
 	wake_up(&wdev->channel_switch_done);
-
 	wsm_unlock_tx(wdev);
 
 	return 0;
@@ -595,7 +593,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 			ret = wsm_set_pm_indication(wdev, &wsm_buf);
 			break;
 		case WSM_HI_SWITCH_CHANNEL_IND_ID:
-			ret = wsm_channel_switch_indication(wdev, &wsm_buf);
+			ret = wsm_channel_switch_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		case WSM_HI_SUSPEND_RESUME_TX_IND_ID:
 			ret = wsm_suspend_resume_indication(wdev,
