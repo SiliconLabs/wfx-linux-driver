@@ -287,18 +287,18 @@ static int wsm_join_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, v
 	return 0;
 }
 
-static int wsm_dbg_info_indication(struct wfx_dev *wdev,
-				   struct wsm_buf *buf, __le16 msgLen)
+static int wsm_dbg_info_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	WsmHiDebugIndBody_t *Body = &((WsmHiDebugInd_t *)buf->begin)->Body;
+	WsmHiDebugIndBody_t *body = buf;
+	int msgLen = hdr->MsgLen;
 
-	switch (Body->DbgId) {
+	switch (body->DbgId) {
 	case 6:
 		wfx_err("dbg msg CPU profiling : cpu_load=%d\n",
-			Body->DbgData.EptaRtStats.MsgStartIdentifier);
+			body->DbgData.EptaRtStats.MsgStartIdentifier);
 		break;
 	case 7:
-		wfx_testmode_bs_buffer_add((uint8_t *)&Body->DbgData, msgLen - 8);
+		wfx_testmode_bs_buffer_add((uint8_t *) &body->DbgData, msgLen - 8);
 		break;
 	default:
 		break;
@@ -593,8 +593,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 					&wsm_buf);
 			break;
 		case WSM_HI_DEBUG_IND_ID:
-			ret = wsm_dbg_info_indication(wdev, &wsm_buf,
-						      wsm->MsgLen);
+			ret = wsm_dbg_info_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		case WSM_HI_JOIN_COMPLETE_IND_ID:
 			ret = wsm_join_complete_indication(wdev, &wsm[0], &wsm[1]);
