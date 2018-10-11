@@ -504,66 +504,58 @@ int wsm_exception_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 	return -1;
 }
 
-int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
-		  struct sk_buff **skb_p)
+static const struct {
+	int msg_id;
+	int (* handler)(struct wfx_dev *, HiMsgHdr_t *, void *);
+} wsm_handlers[] = {
+	/* Confirmations */
+	{ WSM_HI_TX_CNF_ID,              wsm_tx_confirm },
+	{ WSM_HI_MULTI_TRANSMIT_CNF_ID,  wsm_multi_tx_confirm },
+	{ WSM_HI_ADD_KEY_CNF_ID,         wsm_generic_confirm },
+	{ WSM_HI_REMOVE_KEY_CNF_ID,      wsm_generic_confirm },
+	{ WSM_HI_RESET_CNF_ID,           wsm_generic_confirm },
+	{ WSM_HI_START_CNF_ID,           wsm_generic_confirm },
+	{ WSM_HI_START_SCAN_CNF_ID,      wsm_generic_confirm },
+	{ WSM_HI_STOP_SCAN_CNF_ID,       wsm_generic_confirm },
+	{ WSM_HI_JOIN_CNF_ID,            wsm_generic_confirm },
+	{ WSM_HI_READ_MIB_CNF_ID,        wsm_generic_confirm },
+	{ WSM_HI_WRITE_MIB_CNF_ID,       wsm_generic_confirm },
+	{ WSM_HI_MAP_LINK_CNF_ID,        wsm_generic_confirm },
+	{ WSM_HI_EDCA_PARAMS_CNF_ID,     wsm_generic_confirm },
+	{ WSM_HI_BEACON_TRANSMIT_CNF_ID, wsm_generic_confirm },
+	{ WSM_HI_TX_QUEUE_PARAMS_CNF_ID, wsm_generic_confirm },
+	{ WSM_HI_SET_BSS_PARAMS_CNF_ID,  wsm_generic_confirm },
+	{ WSM_HI_SET_PM_MODE_CNF_ID,     wsm_generic_confirm },
+	{ WSM_HI_UPDATE_IE_CNF_ID,       wsm_generic_confirm },
+	{ HI_CONFIGURATION_CNF_ID,       wsm_generic_confirm },
+	/* Indications */
+	{ WSM_HI_EVENT_IND_ID,           wsm_event_indication },
+	{ WSM_HI_SET_PM_MODE_CMPL_IND_ID, wsm_set_pm_indication },
+	{ WSM_HI_DEBUG_IND_ID,           wsm_dbg_info_indication },
+	{ WSM_HI_BA_TIMEOUT_IND_ID,      wsm_ba_timeout_indication },
+	{ WSM_HI_JOIN_COMPLETE_IND_ID,   wsm_join_complete_indication },
+	{ WSM_HI_SCAN_CMPL_IND_ID,       wsm_scan_complete_indication },
+	{ WSM_HI_SWITCH_CHANNEL_IND_ID,  wsm_channel_switch_indication },
+	{ WSM_HI_SUSPEND_RESUME_TX_IND_ID, wsm_suspend_resume_indication },
+	{ HI_ERROR_IND_ID,               wsm_error_indication },
+	{ HI_STARTUP_IND_ID,             wsm_startup_indication },
+	{ HI_GENERIC_IND_ID,             wsm_generic_indication },
+	// FIXME: allocate skb_p from wsm_receive_indication and make it generic
+	//{ WSM_HI_RX_IND_ID,            wsm_receive_indication },
+ };
+
+int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm, struct sk_buff **skb_p)
 {
-	int ret = 0;
-	u8 wsm_id = wsm->s.t.MsgId;
-	struct wsm_buf wsm_buf;
+	int i;
+	int wsm_id = wsm->s.t.MsgId;
 
-	wsm_buf.begin = (u8 *)&wsm[0];
-	wsm_buf.data = (u8 *)&wsm[1];
-	wsm_buf.end = &wsm_buf.begin[__le16_to_cpu(wsm->MsgLen)];
-
-	if (wsm_id == WSM_HI_TX_CNF_ID) {
-		ret = wsm_tx_confirm(wdev, &wsm[0], &wsm[1]);
-	} else if (wsm_id == WSM_HI_MULTI_TRANSMIT_CNF_ID) {
-		ret = wsm_multi_tx_confirm(wdev, &wsm[0], &wsm[1]);
-	} else if (wsm_id == WSM_HI_RX_IND_ID) {
-		ret = wsm_receive_indication(wdev, &wsm[0], &wsm[1], skb_p);
-	} else if (!(wsm_id & HI_MSG_TYPE_MASK)) {
-		ret = wsm_generic_confirm(wdev, &wsm[0], &wsm[1]);
-	} else {
-		switch (wsm_id) {
-		case HI_STARTUP_IND_ID:
-			ret = wsm_startup_indication(wdev, &wsm[0], &wsm[1]);
-			break;
-		case WSM_HI_EVENT_IND_ID:
-			ret = wsm_event_indication(wdev, &wsm[0], &wsm[1]);
-			break;
-		case WSM_HI_SCAN_CMPL_IND_ID:
-			ret = wsm_scan_complete_indication(wdev, &wsm[0], &wsm[1]);
-			break;
-		case WSM_HI_BA_TIMEOUT_IND_ID:
-			ret = wsm_ba_timeout_indication(wdev, &wsm[0], &wsm[1]);
-			break;
-		case WSM_HI_SET_PM_MODE_CMPL_IND_ID:
-			ret = wsm_set_pm_indication(wdev, &wsm[0], &wsm[1]);
-			break;
-		case WSM_HI_SWITCH_CHANNEL_IND_ID:
-			ret = wsm_channel_switch_indication(wdev, &wsm[0], &wsm[1]);
-			break;
-		case WSM_HI_SUSPEND_RESUME_TX_IND_ID:
-			ret = wsm_suspend_resume_indication(wdev, &wsm[0], &wsm[1]);
-			break;
-		case WSM_HI_DEBUG_IND_ID:
-			ret = wsm_dbg_info_indication(wdev, &wsm[0], &wsm[1]);
-			break;
-		case WSM_HI_JOIN_COMPLETE_IND_ID:
-			ret = wsm_join_complete_indication(wdev, &wsm[0], &wsm[1]);
-			break;
-		case HI_ERROR_IND_ID:
-			ret = wsm_error_indication(wdev, &wsm[0], &wsm[1]);
-			break;
-		case HI_GENERIC_IND_ID:
-			ret = wsm_generic_indication(wdev, &wsm[0], &wsm[1]);
-			break;
-		default:
-			wfx_err("Unrecognised WSM ID %02x\n", wsm_id);
-		}
-	}
-
-	return ret;
+	if (wsm_id == WSM_HI_RX_IND_ID)
+		return wsm_receive_indication(wdev, &wsm[0], &wsm[1], skb_p);
+	for (i = 0; i < ARRAY_SIZE(wsm_handlers); i++)
+		if (wsm_handlers[i].msg_id == wsm_id)
+			return wsm_handlers[i].handler(wdev, &wsm[0], &wsm[1]);
+	dev_err(wdev->pdev, "Unsupported WSM ID %02x\n", wsm_id);
+	return -EIO;
 }
 
 static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
