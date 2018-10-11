@@ -325,11 +325,11 @@ static int wsm_suspend_resume_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, 
 	return 0;
 }
 
-static int wsm_error_indication(struct wfx_dev *wdev, struct wsm_buf *buf)
+static int wsm_error_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	HiErrorIndBody_t *Body = &((HiErrorInd_t *)buf->begin)->Body;
+	HiErrorIndBody_t *body = buf;
 
-	wfx_err(" : type 0x%x\n", Body->Type);
+	wfx_err(" : type 0x%x\n", body->Type);
 	return 0;
 }
 
@@ -593,7 +593,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 			ret = wsm_join_complete_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		case HI_ERROR_IND_ID:
-			ret = wsm_error_indication(wdev, &wsm_buf);
+			ret = wsm_error_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		case HI_GENERIC_IND_ID:
 			ret = wsm_generic_indication(wdev, &wsm_buf,
