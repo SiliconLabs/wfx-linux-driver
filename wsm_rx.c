@@ -316,15 +316,11 @@ static int wsm_ba_timeout_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void
 	return 0;
 }
 
-static int wsm_suspend_resume_indication(struct wfx_dev *wdev,
-					 struct wsm_buf *buf)
+static int wsm_suspend_resume_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	WsmHiSuspendResumeTxIndBody_t arg;
+	WsmHiSuspendResumeTxIndBody_t *body = buf;
 
-	memcpy(&arg, &((WsmHiSuspendResumeTxInd_t *)buf->begin)->Body,
-	       sizeof(WsmHiSuspendResumeTxIndBody_t));
-
-	wfx_suspend_resume(wdev, &arg);
+	wfx_suspend_resume(wdev, body);
 
 	return 0;
 }
@@ -588,8 +584,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 			ret = wsm_channel_switch_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		case WSM_HI_SUSPEND_RESUME_TX_IND_ID:
-			ret = wsm_suspend_resume_indication(wdev,
-					&wsm_buf);
+			ret = wsm_suspend_resume_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		case WSM_HI_DEBUG_IND_ID:
 			ret = wsm_dbg_info_indication(wdev, &wsm[0], &wsm[1]);
