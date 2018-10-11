@@ -333,106 +333,79 @@ static int wsm_error_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 	return 0;
 }
 
-static int wsm_generic_indication(struct wfx_dev *wdev,
-				  struct wsm_buf *buf, __le16 msgLen)
+static void pr_rx_stats(HiRxStats_t *rx_stats)
 {
-	HiGenericIndBody_t *Body = &((HiGenericInd_t *)buf->begin)->Body;
-	HiRxStats_t *rx_stats;
+	u32 *rx = rx_stats->NbRxByRate;
+	u16 *per = rx_stats->Per;
+	s16 *rssi = rx_stats->Rssi;
+	s16 *snr = rx_stats->Snr;
+	s16 *cfo = rx_stats->Cfo;
 
-	switch (Body->IndicationId) {
+	pr_info("Receiving new Rx statistics t = %dus:\n", rx_stats->Date);
+	pr_info("NbFrame %d, PERx10000 %d , throughput %dKbps/s\n",
+			rx_stats->NbRxFrame, rx_stats->PerTotal, rx_stats->Throughput);
+	pr_info("NbFrame by rate:\n");
+	pr_info("\t1Mbps %d, 2Mpbs %d, 5.5Mbps %d, 11Mpbs %d\n",
+		rx[0], rx[1], rx[2], rx[3]);
+	pr_info("\t6Mbps %d, 9Mpbs %d, 12Mbps %d, 18Mpbs %d, 24Mbps %d, 36Mbps %d, 48Mbps %d, 54Mbps %d\n",
+		rx[6], rx[7], rx[8], rx[9], rx[10], rx[11], rx[12], rx[13]);
+	pr_info("\tMCS0 %d, MCS1 %d, MCS2 %d, MCS3 %d, MCS4 %d, MCS5 %d, MCS6 %d, MCS7 %d\n",
+		rx[14], rx[15], rx[16], rx[17], rx[18], rx[19], rx[20], rx[21]);
+	pr_info("PERx10000 by rate:\n");
+	pr_info("\t1Mbps %d, 2Mpbs %d, 5.5Mbps %d, 11Mpbs %d\n",
+		per[0], per[1], per[2], per[3]);
+	pr_info("\t6Mbps %d, 9Mpbs %d, 12Mbps %d, 18Mpbs %d, 24Mbps %d, 36Mbps %d, 48Mbps %d, 54Mbps %d\n",
+		per[6], per[7], per[8], per[9], per[10], per[11], per[12], per[13]);
+	pr_info("\tMCS0 %d, MCS1 %d, MCS2 %d, MCS3 %d, MCS4 %d, MCS5 %d, MCS6 %d, MCS7 %d\n",
+		per[14], per[15], per[16], per[17], per[18], per[19], per[20], per[21]);
+	pr_info("RSSI(dB) by rate:\n");
+	pr_info("\t1Mbps %d, 2Mpbs %d, 5.5Mbps %d, 11Mpbs %d\n",
+		rssi[0] / 100, rssi[1] / 100, rssi[2] / 100, rssi[3] / 100);
+	pr_info("\t6Mbps %d, 9Mpbs %d, 12Mbps %d, 18Mpbs %d, 24Mbps %d, 36Mbps %d, 48Mbps %d, 54Mbps %d\n",
+		rssi[6] / 100, rssi[7] / 100, rssi[8] / 100, rssi[9] / 100,
+		rssi[10] / 100, rssi[11] / 100, rssi[12] / 100, rssi[13] / 100);
+	pr_info("\tMCS0 %d, MCS1 %d, MCS2 %d, MCS3 %d, MCS4 %d, MCS5 %d, MCS6 %d, MCS7 %d\n",
+		rssi[14] / 100, rssi[15] / 100, rssi[16] / 100, rssi[17] / 100,
+		rssi[18] / 100, rssi[19] / 100, rssi[20] / 100, rssi[21] / 100);
+	pr_info("SNR (dB) by rate:\n");
+	pr_info("\t1Mbps %d, 2Mpbs %d, 5.5Mbps %d, 11Mpbs %d\n",
+		snr[0] / 100, snr[1] / 100, snr[2] / 100, snr[3] / 100);
+	pr_info("\t6Mbps %d, 9Mpbs %d, 12Mbps %d, 18Mpbs %d, 24Mbps %d, 36Mbps %d, 48Mbps %d, 54Mbps %d\n",
+		snr[6] / 100, snr[7] / 100, snr[8] / 100, snr[9] / 100,
+		snr[10] / 100, snr[11] / 100, snr[12] / 100, snr[13] / 100);
+	pr_info("\tMCS0 %d, MCS1 %d, MCS2 %d, MCS3 %d, MCS4 %d, MCS5 %d, MCS6 %d, MCS7 %d\n",
+		snr[14] / 100, snr[15] / 100, snr[16] / 100, snr[17] / 100,
+		snr[18] / 100, snr[19] / 100, snr[20] / 100, snr[21] / 100);
+	pr_info("CFO by rate (in kHz):\n");
+	pr_info("\t1Mbps %d, 2Mpbs %d, 5.5Mbps %d, 11Mpbs %d\n",
+		cfo[0], cfo[1], cfo[2], cfo[3]);
+	pr_info("\t6Mbps %d, 9Mpbs %d, 12Mbps %d, 18Mpbs %d, 24Mbps %d, 36Mbps %d, 48Mbps %d, 54Mbps %d\n",
+		cfo[6], cfo[7], cfo[8], cfo[9], cfo[10], cfo[11], cfo[12], cfo[13]);
+	pr_info("\tMCS0 %d, MCS1 %d, MCS2 %d, MCS3 %d, MCS4 %d, MCS5 %d, MCS6 %d, MCS7 %d\n",
+		cfo[14], cfo[15], cfo[16], cfo[17], cfo[18], cfo[19], cfo[20], cfo[21]);
+	pr_info("External power clock %u, frequency %u:\n",
+		rx_stats->IsExtPwrClk, rx_stats->PwrClkFreq);
+}
+
+static int wsm_generic_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
+{
+	HiGenericIndBody_t *body = buf;
+
+	switch (body->IndicationId) {
 	case  HI_GENERIC_INDICATION_ID_RAW:
 		/* Not used yet */
 		break;
 	case HI_GENERIC_INDICATION_ID_STRING:
 		/* Display received message */
-		wfx_info("%s", (char *)Body->IndicationData.RawData);
+		wfx_info("%s", (char *) body->IndicationData.RawData);
 		break;
 	case HI_GENERIC_INDICATION_ID_RX_STATS:
-		rx_stats = &Body->IndicationData.RxStats;
-		wfx_info(
-			"Receiving new Rx statistics t = %dus:\n"
-			"NbFrame %d, PERx10000 %d , throughput %dKbps/s\n"
-			"NbFrame by rate:\n"
-			"\t1Mbps %d, 2Mpbs %d, 5.5Mbps %d, 11Mpbs %d\n"
-			"\t6Mbps %d, 9Mpbs %d, 12Mbps %d, 18Mpbs %d, 24Mbps %d, 36Mbps %d, 48Mbps %d, 54Mbps %d\n"
-			"\tMCS0 %d, MCS1 %d, MCS2 %d, MCS3 %d, MCS4 %d, MCS5 %d, MCS6 %d, MCS7 %d\n"
-			"PERx10000 by rate:\n"
-			"\t1Mbps %d, 2Mpbs %d, 5.5Mbps %d, 11Mpbs %d\n"
-			"\t6Mbps %d, 9Mpbs %d, 12Mbps %d, 18Mpbs %d, 24Mbps %d, 36Mbps %d, 48Mbps %d, 54Mbps %d\n"
-			"\tMCS0 %d, MCS1 %d, MCS2 %d, MCS3 %d, MCS4 %d, MCS5 %d, MCS6 %d, MCS7 %d\n",
-			rx_stats->Date,
-			rx_stats->NbRxFrame, rx_stats->PerTotal, rx_stats->Throughput,
-			rx_stats->NbRxByRate[0], rx_stats->NbRxByRate[1],
-			rx_stats->NbRxByRate[2], rx_stats->NbRxByRate[3],
-			rx_stats->NbRxByRate[6], rx_stats->NbRxByRate[7],
-			rx_stats->NbRxByRate[8], rx_stats->NbRxByRate[9],
-			rx_stats->NbRxByRate[10], rx_stats->NbRxByRate[11],
-			rx_stats->NbRxByRate[12], rx_stats->NbRxByRate[13],
-			rx_stats->NbRxByRate[14], rx_stats->NbRxByRate[15],
-			rx_stats->NbRxByRate[16], rx_stats->NbRxByRate[17],
-			rx_stats->NbRxByRate[18], rx_stats->NbRxByRate[19],
-			rx_stats->NbRxByRate[20], rx_stats->NbRxByRate[21],
-			rx_stats->Per[0], rx_stats->Per[1], rx_stats->Per[2],
-			rx_stats->Per[3],
-			rx_stats->Per[6], rx_stats->Per[7], rx_stats->Per[8],
-			rx_stats->Per[9], rx_stats->Per[10], rx_stats->Per[11],
-			rx_stats->Per[12], rx_stats->Per[13],
-			rx_stats->Per[14], rx_stats->Per[15], rx_stats->Per[16],
-			rx_stats->Per[17], rx_stats->Per[18], rx_stats->Per[19],
-			rx_stats->Per[20], rx_stats->Per[21]);
-		wfx_info(
-			"Receiving new Rx statistics part2:\n"
-			"RSSI(dB) by rate:\n"
-			"\t1Mbps %d, 2Mpbs %d, 5.5Mbps %d, 11Mpbs %d\n"
-			"\t6Mbps %d, 9Mpbs %d, 12Mbps %d, 18Mpbs %d, 24Mbps %d, 36Mbps %d, 48Mbps %d, 54Mbps %d\n"
-			"\tMCS0 %d, MCS1 %d, MCS2 %d, MCS3 %d, MCS4 %d, MCS5 %d, MCS6 %d, MCS7 %d\n"
-			"SNR (dB) by rate:\n"
-			"\t1Mbps %d, 2Mpbs %d, 5.5Mbps %d, 11Mpbs %d\n"
-			"\t6Mbps %d, 9Mpbs %d, 12Mbps %d, 18Mpbs %d, 24Mbps %d, 36Mbps %d, 48Mbps %d, 54Mbps %d\n"
-			"\tMCS0 %d, MCS1 %d, MCS2 %d, MCS3 %d, MCS4 %d, MCS5 %d, MCS6 %d, MCS7 %d\n"
-			"CFO by rate (in kHz):\n"
-			"\t1Mbps %d, 2Mpbs %d, 5.5Mbps %d, 11Mpbs %d\n"
-			"\t6Mbps %d, 9Mpbs %d, 12Mbps %d, 18Mpbs %d, 24Mbps %d, 36Mbps %d, 48Mbps %d, 54Mbps %d\n"
-			"\tMCS0 %d, MCS1 %d, MCS2 %d, MCS3 %d, MCS4 %d, MCS5 %d, MCS6 %d, MCS7 %d\n",
-			(s16)rx_stats->Rssi[0] / 100, (s16)rx_stats->Rssi[1] / 100,
-			(s16)rx_stats->Rssi[2] / 100, (s16)rx_stats->Rssi[3] / 100,
-			(s16)rx_stats->Rssi[6] / 100, (s16)rx_stats->Rssi[7] / 100,
-			(s16)rx_stats->Rssi[8] / 100, (s16)rx_stats->Rssi[9] / 100,
-			(s16)rx_stats->Rssi[10] / 100, (s16)rx_stats->Rssi[11] / 100,
-			(s16)rx_stats->Rssi[12] / 100, (s16)rx_stats->Rssi[13] / 100,
-			(s16)rx_stats->Rssi[14] / 100, (s16)rx_stats->Rssi[15] / 100,
-			(s16)rx_stats->Rssi[16] / 100, (s16)rx_stats->Rssi[17] / 100,
-			(s16)rx_stats->Rssi[18] / 100, (s16)rx_stats->Rssi[19] / 100,
-			(s16)rx_stats->Rssi[20] / 100, (s16)rx_stats->Rssi[21] / 100,
-			(s16)rx_stats->Snr[0] / 100, (s16)rx_stats->Snr[1] / 100,
-			(s16)rx_stats->Snr[2] / 100, (s16)rx_stats->Snr[3] / 100,
-			(s16)rx_stats->Snr[6] / 100, (s16)rx_stats->Snr[7] / 100,
-			(s16)rx_stats->Snr[8] / 100, (s16)rx_stats->Snr[9] / 100,
-			(s16)rx_stats->Snr[10] / 100, (s16)rx_stats->Snr[11] / 100,
-			(s16)rx_stats->Snr[12] / 100, (s16)rx_stats->Snr[13] / 100,
-			(s16)rx_stats->Snr[14] / 100, (s16)rx_stats->Snr[15] / 100,
-			(s16)rx_stats->Snr[16] / 100, (s16)rx_stats->Snr[17] / 100,
-			(s16)rx_stats->Snr[18] / 100, (s16)rx_stats->Snr[19] / 100,
-			(s16)rx_stats->Snr[20] / 100, (s16)rx_stats->Snr[21] / 100,
-			(s16)rx_stats->Cfo[0], (s16)rx_stats->Cfo[1],
-			(s16)rx_stats->Cfo[2], (s16)rx_stats->Cfo[3],
-			(s16)rx_stats->Cfo[6], (s16)rx_stats->Cfo[7],
-			(s16)rx_stats->Cfo[8], (s16)rx_stats->Cfo[9],
-			(s16)rx_stats->Cfo[10], (s16)rx_stats->Cfo[11],
-			(s16)rx_stats->Cfo[12], (s16)rx_stats->Cfo[13],
-			(s16)rx_stats->Cfo[14], (s16)rx_stats->Cfo[15],
-			(s16)rx_stats->Cfo[16], (s16)rx_stats->Cfo[17],
-			(s16)rx_stats->Cfo[18], (s16)rx_stats->Cfo[19],
-			(s16)rx_stats->Cfo[20], (s16)rx_stats->Cfo[21]);
-		wfx_info(
-			"External power clock %u, frequency %u:\n",
-			rx_stats->IsExtPwrClk,
-			rx_stats->PwrClkFreq);
+		pr_rx_stats(&body->IndicationData.RxStats);
 		break;
 	default:
 		wfx_err("wrong type in generic_ind\n");
 		return -1;
-}
+	}
 
 	return 0;
 }
@@ -596,8 +569,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 			ret = wsm_error_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		case HI_GENERIC_IND_ID:
-			ret = wsm_generic_indication(wdev, &wsm_buf,
-						       wsm->MsgLen);
+			ret = wsm_generic_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		default:
 			wfx_err("Unrecognised WSM ID %02x\n", wsm_id);
