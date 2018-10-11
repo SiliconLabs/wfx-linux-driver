@@ -257,8 +257,7 @@ static int wsm_channel_switch_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, 
 	return 0;
 }
 
-static int wsm_set_pm_indication(struct wfx_dev	*wdev,
-				 struct wsm_buf *buf)
+static int wsm_set_pm_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
 	if (wdev->ps_mode_switch_in_progress) {
 		wdev->ps_mode_switch_in_progress = 0;
@@ -590,7 +589,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 			ret = wsm_ba_timeout_indication(wdev, &wsm_buf);
 			break;
 		case WSM_HI_SET_PM_MODE_CMPL_IND_ID:
-			ret = wsm_set_pm_indication(wdev, &wsm_buf);
+			ret = wsm_set_pm_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		case WSM_HI_SWITCH_CHANNEL_IND_ID:
 			ret = wsm_channel_switch_indication(wdev, &wsm[0], &wsm[1]);
