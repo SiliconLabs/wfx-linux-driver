@@ -74,10 +74,11 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 	return status;
 }
 
-static int wsm_tx_confirm(struct wfx_dev	*wdev,
-			  struct wsm_buf *buf)
+static int wsm_tx_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	wfx_tx_confirm_cb(wdev, &((WsmHiTxCnf_t *)buf->begin)->Body);
+	WsmHiTxCnfBody_t *body = buf;
+
+	wfx_tx_confirm_cb(wdev, body);
 	return 0;
 }
 
@@ -572,7 +573,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 	wsm_buf.end = &wsm_buf.begin[__le16_to_cpu(wsm->MsgLen)];
 
 	if (wsm_id == WSM_HI_TX_CNF_ID) {
-		ret = wsm_tx_confirm(wdev, &wsm_buf);
+		ret = wsm_tx_confirm(wdev, &wsm[0], &wsm[1]);
 	} else if (wsm_id == WSM_HI_MULTI_TRANSMIT_CNF_ID) {
 		ret = wsm_multi_tx_confirm(wdev, &wsm_buf);
 	} else if (!(wsm_id & HI_MSG_TYPE_MASK)) {
