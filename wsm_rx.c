@@ -307,12 +307,11 @@ static int wsm_dbg_info_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *
 	return 0;
 }
 
-static int wsm_ba_timeout_indication(struct wfx_dev	*wdev,
-				     struct wsm_buf *buf)
+static int wsm_ba_timeout_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	wfx_info("BlockACK timeout, tid %d, addr %pM\n",
-		 ((WsmHiBaTimeoutInd_t *)buf->begin)->Body.TID,
-		 ((WsmHiBaTimeoutInd_t *)buf->begin)->Body.TransmitAddress);
+	WsmHiBaTimeoutIndBody_t *body = buf;
+
+	wfx_info("BlockACK timeout, tid %d, addr %pM\n", body->TID, body->TransmitAddress);
 
 	return 0;
 }
@@ -580,7 +579,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 			ret = wsm_scan_complete_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		case WSM_HI_BA_TIMEOUT_IND_ID:
-			ret = wsm_ba_timeout_indication(wdev, &wsm_buf);
+			ret = wsm_ba_timeout_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		case WSM_HI_SET_PM_MODE_CMPL_IND_ID:
 			ret = wsm_set_pm_indication(wdev, &wsm[0], &wsm[1]);
