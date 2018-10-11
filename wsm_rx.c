@@ -266,14 +266,11 @@ static int wsm_set_pm_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *bu
 	return 0;
 }
 
-static int wsm_scan_complete_indication(struct wfx_dev	*wdev,
-					struct wsm_buf *buf)
+static int wsm_scan_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	WsmHiScanCmplIndBody_t arg;
+	WsmHiScanCmplIndBody_t *body = buf;
 
-	memcpy(&arg, &((WsmHiScanCmplInd_t *)buf->begin)->Body,
-	       sizeof(WsmHiScanCmplIndBody_t));
-	wfx_scan_complete_cb(wdev, &arg);
+	wfx_scan_complete_cb(wdev, body);
 
 	return 0;
 }
@@ -583,7 +580,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 			ret = wsm_event_indication(wdev, &wsm_buf);
 			break;
 		case WSM_HI_SCAN_CMPL_IND_ID:
-			ret = wsm_scan_complete_indication(wdev, &wsm_buf);
+			ret = wsm_scan_complete_indication(wdev, &wsm[0], &wsm[1]);
 			break;
 		case WSM_HI_BA_TIMEOUT_IND_ID:
 			ret = wsm_ba_timeout_indication(wdev, &wsm_buf);
