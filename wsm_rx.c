@@ -1009,100 +1009,78 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	bool more = false;
 
 	if (wdev->wsm_cmd.ptr) { /* CMD request */
-		++count;
 		spin_lock(&wdev->wsm_cmd.lock);
 		BUG_ON(!wdev->wsm_cmd.ptr);
 		*data = wdev->wsm_cmd.ptr;
 		*tx_len = wdev->wsm_cmd.len;
 		*burst = 1;
 		spin_unlock(&wdev->wsm_cmd.lock);
-	} else {
-		if (!wvif) {
-			// May happen during unregister
-			dev_dbg(wdev->pdev, "%s: non-existant vif", __func__);
-			return 0;
-		}
-		for (;;) {
-			int ret;
-			int queue_num;
+		return 1;
+	}
+	if (!wvif) {
+		// May happen during unregister
+		dev_dbg(wdev->pdev, "%s: non-existant vif", __func__);
+		return 0;
+	}
+	for (;;) {
+		int ret;
+		int queue_num;
+		struct ieee80211_hdr *hdr;
 
-			if (atomic_add_return(0, &wdev->tx_lock))
-				break;
-
-			spin_lock_bh(&wvif->ps_state_lock);
-
-			ret = wsm_get_tx_queue_and_mask(wdev, &queue,
-							&tx_allowed_mask,
-							&more);
-			queue_num = queue - wdev->tx_queue;
-
-			if (wvif->buffered_multicasts &&
-			    (ret || !more) &&
-			    (wvif->tx_multicast || !wvif->sta_asleep_mask)) {
-				wvif->buffered_multicasts = false;
-				if (wvif->tx_multicast) {
-					wvif->tx_multicast = false;
-					queue_work(wdev->workqueue,
-						   &wvif->multicast_stop_work);
-				}
-			}
-
-			spin_unlock_bh(&wvif->ps_state_lock);
-
-			if (ret)
-				break;
-
-			if (wfx_queue_get(queue,
-					     tx_allowed_mask,
-					     &wsm, &tx_info, &txpriv))
-				continue;
-
-			if (wsm_handle_tx_data(wvif, wsm,
-					       tx_info, txpriv, queue))
-				continue;  /* Handled by WSM */
-
-			wsm->Header.s.b.IntId = 0;
-			wvif->pspoll_mask &= ~BIT(txpriv->raw_link_id);
-
-			*data = (u8 *)wsm;
-			*tx_len = le16_to_cpu(wsm->Header.MsgLen);
-
-			/* allow bursting if txop is set */
-			if (wvif->edca.params.TxOpLimit[queue_num])
-				*burst = (int)wfx_queue_get_num_queued(queue,
-								       tx_allowed_mask)
-					 + 1;
-			else
-				*burst = 1;
-
-			/* store index of bursting queue */
-			if (*burst > 1)
-				wdev->tx_burst_idx = queue_num;
-			else
-				wdev->tx_burst_idx = -1;
-
-			if (more) {
-				struct ieee80211_hdr *hdr =
-					(struct ieee80211_hdr *)
-					&((u8 *)wsm)[txpriv->offset];
-
-				hdr->frame_control |=
-					cpu_to_le16(IEEE80211_FCTL_MOREDATA);
-			}
-			{
-				struct ieee80211_hdr *hdr =
-					(struct ieee80211_hdr *)&((u8 *)wsm)[txpriv->offset];
-
-				pr_debug(
-					"[WSM] Tx sta_id=%d >>> frame_ctrl=0x%.4x  tx_len=%zu, %p %c\n",
-					txpriv->link_id,
-					hdr->frame_control,
-					*tx_len, *data,
-					wsm->Body.More ? 'M' : ' ');
-			}
-			++count;
+		if (atomic_add_return(0, &wdev->tx_lock))
 			break;
+
+		spin_lock_bh(&wvif->ps_state_lock);
+
+		ret = wsm_get_tx_queue_and_mask(wdev, &queue, &tx_allowed_mask, &more);
+		queue_num = queue - wdev->tx_queue;
+
+		if (wvif->buffered_multicasts && (ret || !more) &&
+		    (wvif->tx_multicast || !wvif->sta_asleep_mask)) {
+			wvif->buffered_multicasts = false;
+			if (wvif->tx_multicast) {
+				wvif->tx_multicast = false;
+				queue_work(wdev->workqueue, &wvif->multicast_stop_work);
+			}
 		}
+
+		spin_unlock_bh(&wvif->ps_state_lock);
+
+		if (ret)
+			break;
+
+		if (wfx_queue_get(queue, tx_allowed_mask, &wsm, &tx_info, &txpriv))
+			continue;
+
+		if (wsm_handle_tx_data(wvif, wsm, tx_info, txpriv, queue))
+			continue;  /* Handled by WSM */
+
+		wsm->Header.s.b.IntId = 0;
+		wvif->pspoll_mask &= ~BIT(txpriv->raw_link_id);
+
+		*data = (u8 *)wsm;
+		*tx_len = le16_to_cpu(wsm->Header.MsgLen);
+
+		/* allow bursting if txop is set */
+		if (wvif->edca.params.TxOpLimit[queue_num])
+			*burst = (int)wfx_queue_get_num_queued(queue, tx_allowed_mask) + 1;
+		else
+			*burst = 1;
+
+		/* store index of bursting queue */
+		if (*burst > 1)
+			wdev->tx_burst_idx = queue_num;
+		else
+			wdev->tx_burst_idx = -1;
+
+		hdr = (struct ieee80211_hdr *) &((u8 *) wsm)[txpriv->offset];
+		if (more)
+			hdr->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
+		pr_debug("[WSM] Tx sta_id=%d >>> frame_ctrl=0x%.4x  tx_len=%zu, %p %c\n",
+			txpriv->link_id, hdr->frame_control, *tx_len, *data,
+			wsm->Body.More ? 'M' : ' ');
+		++count;
+		break;
 	}
 
 	return count;
