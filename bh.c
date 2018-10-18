@@ -424,9 +424,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, uint32_t *ctrl_reg)
 	skb_trim(skb_rx, wsm_len);
 
 	if (wsm_id == HI_EXCEPTION_IND_ID) {
-		wsm_handle_exception(wdev,
-				     &data[sizeof(*wsm)],
-				     wsm_len - sizeof(*wsm));
+		wsm_exception_indication(wdev, wsm, data + sizeof(*wsm));
 		goto err;
 	} else if (!rx_resync) {
 		if (wsm_seq != wdev->wsm_rx_seq) {
