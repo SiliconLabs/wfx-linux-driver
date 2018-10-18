@@ -423,18 +423,15 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, uint32_t *ctrl_reg)
 
 	skb_trim(skb_rx, wsm_len);
 
-	if (wsm_id == HI_EXCEPTION_IND_ID) {
-		wsm_exception_indication(wdev, wsm, data + sizeof(*wsm));
-		goto err;
-	} else if (!rx_resync) {
-		if (wsm_seq != wdev->wsm_rx_seq) {
-			wfx_warn("Wrong message sequence %d != %d\n", wsm_seq,
-				 wdev->wsm_rx_seq);
+	if (wsm_id != HI_EXCEPTION_IND_ID) {
+		if (wsm_seq != wdev->wsm_rx_seq &&  !rx_resync) {
+			dev_warn(wdev->pdev, "wrong message sequence %d != %d\n",
+					wsm_seq, wdev->wsm_rx_seq);
 			goto err;
+		}
+		wdev->wsm_rx_seq = (wsm_seq + 1) & 7;
+		rx_resync = 0;
 	}
-	}
-	wdev->wsm_rx_seq = (wsm_seq + 1) & 7;
-	rx_resync = 0;
 
 	/* is it a confirmation message? */
 	if ((wsm_id & HI_MSG_TYPE_MASK) == 0) {

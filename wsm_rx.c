@@ -474,8 +474,7 @@ void wsm_unlock_tx(struct wfx_dev *wdev)
 	}
 }
 
-int wsm_exception_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
-
+static int wsm_exception_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
 	HiExceptionIndBody_t *body = buf;
 	size_t len = hdr->MsgLen - 4; // drop header
@@ -540,6 +539,7 @@ static const struct {
 	{ HI_ERROR_IND_ID,               wsm_error_indication },
 	{ HI_STARTUP_IND_ID,             wsm_startup_indication },
 	{ HI_GENERIC_IND_ID,             wsm_generic_indication },
+	{ HI_EXCEPTION_IND_ID,           wsm_exception_indication },
 	// FIXME: allocate skb_p from wsm_receive_indication and make it generic
 	//{ WSM_HI_RX_IND_ID,            wsm_receive_indication },
  };
