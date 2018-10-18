@@ -143,10 +143,6 @@
 
 struct wfx_dev;
 struct wfx_vif;
-struct wsm_configuration {
-	HiConfigurationReqBody_t	req_part;
-	HiConfigurationCnfBody_t	cnf_part;
-};
 
 struct wsm_scan {
 	WsmHiStartScanReqBody_t scan_req;
