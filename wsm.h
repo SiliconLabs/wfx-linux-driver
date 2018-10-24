@@ -243,7 +243,7 @@ static inline int wsm_get_counters_table(struct wfx_dev *wdev,
 			    arg, sizeof(*arg));
 }
 
-static inline int wsm_set_station_id(struct wfx_dev *wdev, u8 *mac1, u8 *mac2)
+static inline int wsm_set_macaddr(struct wfx_dev *wdev, u8 *mac1, u8 *mac2)
 {
 	WsmHiMibMacAddresses_t msg = { };
 

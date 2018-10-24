@@ -95,7 +95,7 @@ int wfx_start(struct ieee80211_hw *dev)
 
 	ether_addr_copy(wdev->mac_addr, dev->wiphy->perm_addr);
 
-	ret = wsm_set_station_id(wdev, wdev->mac_addr, NULL);
+	ret = wsm_set_macaddr(wdev, wdev->mac_addr, NULL);
 	if (ret)
 		goto out;
 
@@ -237,7 +237,7 @@ int wfx_add_interface(struct ieee80211_hw *dev,
 	wvif->Id = 0;
 	wvif->mode = vif->type;
 	ether_addr_copy(wdev->mac_addr, vif->addr);
-	ret = wsm_set_station_id(wdev, wdev->mac_addr, NULL);
+	ret = wsm_set_macaddr(wdev, wdev->mac_addr, NULL);
 	wfx_vif_setup(wvif);
 	mutex_unlock(&wdev->conf_mutex);
 	wsm_set_edca_params(wdev, &wvif->edca.params, wvif->Id);
@@ -296,7 +296,7 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 	memset(&wvif->p2p_ps_modeinfo, 0, sizeof(wvif->p2p_ps_modeinfo));
 	wfx_free_keys(wdev);
 
-	wsm_set_station_id(wdev, wdev->mac_addr, NULL);
+	wsm_set_macaddr(wdev, wdev->mac_addr, NULL);
 
 	wvif->listening = false;
 	wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
@@ -1480,7 +1480,7 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 	wsm_reset(wvif->wdev, true, wvif->Id);
 	wsm_set_output_power(wvif->wdev, wvif->wdev->output_power * 10, wvif->Id);
 	wvif->join_dtim_period = 0;
-	wsm_set_station_id(wvif->wdev, wvif->wdev->mac_addr, NULL);
+	wsm_set_macaddr(wvif->wdev, wvif->wdev->mac_addr, NULL);
 	wfx_free_event_queue(wvif);
 	cancel_work_sync(&wvif->event_handler);
 	wfx_update_listening(wvif, wvif->listening);
