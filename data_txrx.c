@@ -30,7 +30,7 @@
 #define WFX_INVALID_RATE_ID (0xFF)
 
 static int wfx_handle_action_rx(struct wfx_dev *wdev, struct sk_buff *skb);
-static const struct ieee80211_rate *wfx_get_tx_rate(const struct wfx_dev *wdev,
+static const struct ieee80211_rate *wfx_get_tx_rate(struct wfx_vif *wvif,
 						    const struct ieee80211_tx_rate *rate);
 
 /* ******************************************************************** */
@@ -71,10 +71,11 @@ static void tx_policy_dump(struct tx_policy *policy)
 		 policy->defined);
 }
 
-static void tx_policy_build(struct wfx_dev *wdev, struct tx_policy *policy,
+static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 			    struct ieee80211_tx_rate *rates, size_t count)
 {
 	int i, j;
+	struct wfx_dev *wdev = wvif->wdev;
 	unsigned limit = wdev->short_frame_max_tx_count;
 	unsigned total = 0;
 	BUG_ON(rates[0].idx < 0);
@@ -175,12 +176,12 @@ static void tx_policy_build(struct wfx_dev *wdev, struct tx_policy *policy,
 		}
 	}
 
-	policy->defined = wfx_get_tx_rate(wdev, &rates[0])->hw_value + 1;
+	policy->defined = wfx_get_tx_rate(wvif, &rates[0])->hw_value + 1;
 
 	for (i = 0; i < count; ++i) {
 		register unsigned rateid, off, shift, retries;
 
-		rateid = wfx_get_tx_rate(wdev, &rates[i])->hw_value;
+		rateid = wfx_get_tx_rate(wvif, &rates[i])->hw_value;
 		off = rateid >> 3;		/* eq. rateid / 8 */
 		shift = (rateid & 0x07) << 2;	/* eq. (rateid % 8) * 4 */
 
@@ -301,14 +302,15 @@ void tx_policy_init(struct wfx_dev *wdev)
 		list_add(&cache->cache[i].link, &cache->free);
 }
 
-static int tx_policy_get(struct wfx_dev *wdev, struct ieee80211_tx_rate *rates,
+static int tx_policy_get(struct wfx_vif *wvif, struct ieee80211_tx_rate *rates,
 			 size_t count, bool *renew)
 {
 	int idx;
+	struct wfx_dev *wdev = wvif->wdev;
 	struct tx_policy_cache *cache = &wdev->tx_policy_cache;
 	struct tx_policy wanted;
 
-	tx_policy_build(wdev, &wanted, rates, count);
+	tx_policy_build(wvif, &wanted, rates, count);
 
 	spin_lock_bh(&cache->lock);
 	if (WARN_ON_ONCE(list_empty(&cache->free))) {
@@ -453,9 +455,10 @@ u32 wfx_rate_mask_to_wsm(struct wfx_dev *wdev, u32 rates)
 	return ret;
 }
 
-static const struct ieee80211_rate *wfx_get_tx_rate(const struct wfx_dev *wdev,
+static const struct ieee80211_rate *wfx_get_tx_rate(struct wfx_vif *wvif,
 						    const struct ieee80211_tx_rate *rate)
 {
+	struct wfx_dev *wdev = wvif->wdev;
 	if (rate->idx < 0)
 		return NULL;
 	if (rate->flags & IEEE80211_TX_RC_MCS)
@@ -602,7 +605,7 @@ static int wfx_tx_h_rate_policy(struct wfx_dev *wdev, struct wfx_txinfo *t, WsmH
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, wsm->Header.s.b.IntId);
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 
-	t->txpriv.rate_id = tx_policy_get(wdev,
+	t->txpriv.rate_id = tx_policy_get(wvif,
 		t->tx_info->control.rates, IEEE80211_TX_MAX_RATES,
 		&tx_policy_renew);
 	if (t->txpriv.rate_id == WFX_INVALID_RATE_ID)
@@ -610,7 +613,7 @@ static int wfx_tx_h_rate_policy(struct wfx_dev *wdev, struct wfx_txinfo *t, WsmH
 
 	wsm->Body.TxFlags.Txrate = t->txpriv.rate_id;
 
-	t->rate = wfx_get_tx_rate(wdev,
+	t->rate = wfx_get_tx_rate(wvif,
 		&t->tx_info->control.rates[0]),
 	wsm->Body.MaxTxRate = t->rate->hw_value;
 	// correct the max TX rate if needed when using the IBSS mode
