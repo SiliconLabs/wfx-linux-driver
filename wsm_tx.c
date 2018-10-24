@@ -541,8 +541,6 @@ static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf,
 	wdev->wsm_cmd.done = 0;
 	spin_unlock(&wdev->wsm_cmd.lock);
 
-	buf_len += 4;
-
 	((__le16 *)buf->begin)[0] = cpu_to_le16(buf_len);
 	((__le16 *)buf->begin)[1] = cpu_to_le16(cmd);
 
