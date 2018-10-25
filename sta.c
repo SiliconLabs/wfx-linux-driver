@@ -1346,7 +1346,8 @@ static void wfx_do_join(struct wfx_vif *wvif)
 		 __LINE__);
 
 	/* Turn on Block ACKs */
-	wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF);
+	if (wfx_is_ht(&wvif->wdev->ht_info))
+		wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF);
 
 	/* Set up timeout */
 	if (join.JoinFlags.ForceWithInd) {
@@ -2088,6 +2089,12 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 				       sizeof(wvif->association_mode));
 				memset(&wvif->bss_params, 0,
 				       sizeof(wvif->bss_params));
+			}
+			if (changed & BSS_CHANGED_HT) {
+				if (wfx_is_ht(&wvif->wdev->ht_info))
+					wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF);
+				else
+					wsm_set_block_ack_policy(wvif->wdev, 0x00, 0x00);
 			}
 		}
 	}
