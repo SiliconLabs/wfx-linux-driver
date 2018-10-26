@@ -769,7 +769,7 @@ void wfx_tx(struct ieee80211_hw *dev,
 	if (IEEE80211_SKB_CB(skb)->control.vif)
 		wvif = (struct wfx_vif *) IEEE80211_SKB_CB(skb)->control.vif->drv_priv;
 	else
-		wvif = wdev_to_wvif(wdev);
+		wvif = wdev_to_wvif(wdev, 0);
 
 	t.txpriv.vif_id = wvif->Id;
 	t.hdrlen = ieee80211_hdrlen(t.hdr->frame_control);
@@ -899,7 +899,7 @@ void wfx_tx_confirm_cb(struct wfx_dev	*wdev,
 		       WsmHiTxCnfBody_t		*arg)
 {
 	// FIXME: Get interface id from WSM buffer
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 	u8 queue_id = wfx_queue_get_queue_id(arg->PacketId);
 	struct wfx_queue *queue = &wdev->tx_queue[queue_id];
 	struct sk_buff *skb;
@@ -1047,7 +1047,7 @@ void wfx_skb_dtor(struct wfx_dev		*wdev,
 		     const struct wfx_txpriv *txpriv)
 {
 	// FIXME: Get interface id from wfx_txpriv
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	skb_pull(skb, txpriv->offset);
 	if (txpriv->rate_id != WF200_INVALID_RATE_ID) {

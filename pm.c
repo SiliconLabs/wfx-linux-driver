@@ -170,7 +170,7 @@ int wfx_wow_suspend(struct ieee80211_hw *hw, struct cfg80211_wowlan *wowlan)
 {
 	struct wfx_dev *wdev = hw->priv;
 	// FIXME: this function should work with multiple vif
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 	struct wfx_pm_state *pm_state = &wdev->pm_state;
 	struct wfx_suspend_state *state;
 	int ret;
@@ -316,7 +316,7 @@ int wfx_wow_resume(struct ieee80211_hw *hw)
 {
 	struct wfx_dev *wdev = hw->priv;
 	// FIXME: this function should work with multiple vif
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 	struct wfx_pm_state *pm_state = &wdev->pm_state;
 	struct wfx_suspend_state *state;
 

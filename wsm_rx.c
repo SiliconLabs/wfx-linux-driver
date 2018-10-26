@@ -32,7 +32,7 @@
 static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
 	// FIXME: Use interface id from wsm->s.b.IntId
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 	// All confirm messages start with Status
 	int status = le32_to_cpu(*((__le32 *) buf));
 	int cmd = hdr->s.t.MsgId;
@@ -159,7 +159,7 @@ static int wsm_startup_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 static int wsm_receive_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf, struct sk_buff **skb_p)
 {
 	// FIXME: Get interface id from wsm_buf or if_id
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 	WsmHiRxIndBody_t *body = buf;
 	struct ieee80211_hdr *frame;
 	__le16 fctl;
@@ -196,7 +196,7 @@ static int wsm_event_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 {
 	// FIXME: Get interface id from wsm_buf.
 	// FIXME: wdev->vif may be NULL
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 	WsmHiEventIndBody_t *body = buf;
 	struct wfx_wsm_event *event;
 	int first;
@@ -261,7 +261,7 @@ static int wsm_scan_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, v
 static int wsm_join_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
 	// FIXME: Get interface id from hdr
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 	WsmHiJoinCompleteIndBody_t *body = buf;
 
 	pr_debug("[WSM] Join complete indication, status: %d\n", body->Status);
@@ -714,7 +714,7 @@ static int wsm_get_tx_queue_and_mask(struct wfx_dev	*wdev,
 	u32 tx_allowed_mask;
 	int total = 0;
 	// FIXME: Get interface id from wsm_buf or if_id
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	/* Search for a queue with multicast frames buffered */
 	if (wvif->tx_multicast) {
@@ -764,7 +764,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	const struct wfx_txpriv *txpriv = NULL;
 	int count = 0;
 	// FIXME: Get interface id from wsm_buf
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	/* More is used only for broadcasts. */
 	bool more = false;

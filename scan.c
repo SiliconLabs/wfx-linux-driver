@@ -29,7 +29,7 @@ static void wfx_scan_restart_delayed(struct wfx_dev *wdev);
 
 static int wfx_scan_start(struct wfx_dev *wdev, struct wsm_scan *scan)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 	int ret;
 
 	int tmo = 200;
@@ -71,7 +71,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 		   struct ieee80211_scan_request *hw_req)
 {
 	struct wfx_dev *wdev = hw->priv;
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 	struct cfg80211_scan_request *req = &hw_req->req;
 	struct sk_buff *skb;
 	int i, ret;
@@ -165,7 +165,7 @@ void wfx_scan_work(struct work_struct *work)
 {
 	struct wfx_dev *wdev = container_of(work, struct wfx_dev,
 							scan.work);
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 	struct ieee80211_channel **it;
 	struct wsm_scan scan = {
 		.scan_req.ScanType.Type		= 0,    /* WSM_SCAN_TYPE_FG, */
@@ -292,7 +292,7 @@ fail:
 
 static void wfx_scan_restart_delayed(struct wfx_dev *wdev)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	if (wvif->join_status == WFX_JOIN_STATUS_MONITOR) {
 		wfx_enable_listening(wvif);
@@ -327,7 +327,7 @@ static void wfx_scan_complete(struct wfx_dev *wdev)
 
 void wfx_scan_failed_cb(struct wfx_dev *wdev)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	if (wvif->mode == NL80211_IFTYPE_UNSPECIFIED)
 		/* STA is stopped. */
@@ -342,7 +342,7 @@ void wfx_scan_failed_cb(struct wfx_dev *wdev)
 void wfx_scan_complete_cb(struct wfx_dev		*wdev,
 			  WsmHiScanCmplIndBody_t	*arg)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	if (wvif->mode == NL80211_IFTYPE_UNSPECIFIED)
 		/* STA is stopped. */
@@ -377,7 +377,7 @@ void wfx_probe_work(struct work_struct *work)
 {
 	struct wfx_dev *wdev =
 		container_of(work, struct wfx_dev, scan.probe_work.work);
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 	u8 queue_id = wfx_queue_get_queue_id(wdev->pending_frame_id);
 	struct wfx_queue *queue = &wdev->tx_queue[queue_id];
 	const struct wfx_txpriv *txpriv;

@@ -173,7 +173,7 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 	struct list_head *item;
 	struct wfx_dev *wdev = seq->private;
 	// FIXME: wfx_status_show should be local to one interface
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 	struct wfx_debug_priv *d = wdev->debug;
 	uint32_t *p_Capa = (uint32_t *)&wdev->wsm_caps.Capabilities;
 

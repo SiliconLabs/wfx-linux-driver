@@ -355,7 +355,7 @@ int wfx_config(struct ieee80211_hw *dev, u32 changed)
 	struct wfx_dev *wdev = dev->priv;
 	struct ieee80211_conf *conf = &dev->conf;
 	// FIXME: Interface id should not been hardcoded
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	pr_debug("[STA] wfx_config:  %08x\n", changed);
 
@@ -532,7 +532,7 @@ u64 wfx_prepare_multicast(struct ieee80211_hw *hw,
 	struct netdev_hw_addr *ha;
 	int count = 0;
 	// FIXME: Interface id should not been hardcoded
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	pr_debug("[STA] wfx_prepare_multicast\n");
 
@@ -573,7 +573,7 @@ void wfx_configure_filter(struct ieee80211_hw *dev,
 			     FIF_BCN_PRBRESP_PROMISC |
 			     FIF_PROBE_REQ));
 	// FIXME: Interface id should not been hardcoded
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	*total_flags &= FIF_OTHER_BSS |
 			FIF_FCSFAIL |
@@ -945,7 +945,7 @@ int wfx_set_rts_threshold(struct ieee80211_hw *hw, u32 value)
 	__le32 val32;
 	struct wfx_dev *wdev = hw->priv;
 	// FIXME: Interface id should not been hardcoded
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	pr_debug("[STA] wfx_set_rts_threshold = %d\n", value);
 
@@ -1833,7 +1833,7 @@ int wfx_set_tim(struct ieee80211_hw *dev, struct ieee80211_sta *sta,
 {
 	struct wfx_dev *wdev = dev->priv;
 	// FIXME: Get interface id from sta
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	queue_work(wdev->workqueue, &wvif->set_tim_work);
 	return 0;
@@ -2277,7 +2277,7 @@ void wfx_suspend_resume(struct wfx_dev *wdev,
 			WsmHiSuspendResumeTxIndBody_t *arg)
 {
 	// FIXME: Get interface id from link_id
-	struct wfx_vif *wvif = wdev_to_wvif(wdev);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	pr_debug("[AP] %s: %s\n",
 		 arg->SuspendResumeFlags.ResumeOrSuspend ? "stop" : "start",

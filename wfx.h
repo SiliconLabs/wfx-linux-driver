@@ -303,8 +303,9 @@ struct wfx_vif {
 	struct timer_list	mcast_timeout;
 };
 
-static inline struct wfx_vif *wdev_to_wvif(struct wfx_dev *wdev)
+static inline struct wfx_vif *wdev_to_wvif(struct wfx_dev *wdev, int vif_id)
 {
+	WARN(vif_id, "Not yet supported");
 	if (!wdev->vif)
 		return NULL;
 	return (struct wfx_vif *) wdev->vif->drv_priv;
