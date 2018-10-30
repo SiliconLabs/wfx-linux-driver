@@ -31,8 +31,7 @@
 
 static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	// FIXME: Use interface id from wsm->s.b.IntId
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	// All confirm messages start with Status
 	int status = le32_to_cpu(*((__le32 *) buf));
 	int cmd = hdr->s.t.MsgId;
@@ -194,9 +193,7 @@ static int wsm_receive_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 
 static int wsm_event_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	// FIXME: Get interface id from wsm_buf.
-	// FIXME: wdev->vif may be NULL
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	WsmHiEventIndBody_t *body = buf;
 	struct wfx_wsm_event *event;
 	int first;
@@ -260,8 +257,7 @@ static int wsm_scan_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, v
 
 static int wsm_join_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	// FIXME: Get interface id from hdr
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	WsmHiJoinCompleteIndBody_t *body = buf;
 
 	pr_debug("[WSM] Join complete indication, status: %d\n", body->Status);

@@ -1046,8 +1046,7 @@ void wfx_skb_dtor(struct wfx_dev		*wdev,
 		     struct sk_buff *skb,
 		     const struct wfx_txpriv *txpriv)
 {
-	// FIXME: Get interface id from wfx_txpriv
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, txpriv->vif_id);
 
 	skb_pull(skb, txpriv->offset);
 	if (txpriv->rate_id != WF200_INVALID_RATE_ID) {

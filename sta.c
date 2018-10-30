@@ -1832,8 +1832,8 @@ int wfx_set_tim(struct ieee80211_hw *dev, struct ieee80211_sta *sta,
 			   bool set)
 {
 	struct wfx_dev *wdev = dev->priv;
-	// FIXME: Get interface id from sta
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
+	struct wfx_sta_priv *sta_dev = (struct wfx_sta_priv *) &sta->drv_priv;
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, sta_dev->vif_id);
 
 	queue_work(wdev->workqueue, &wvif->set_tim_work);
 	return 0;
