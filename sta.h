@@ -108,7 +108,7 @@ void wfx_ba_work(struct work_struct *work);
 void wfx_ba_timer(unsigned long arg);
 
 /* AP stuffs */
-void wfx_suspend_resume(struct wfx_dev *wdev, int link_id,
+void wfx_suspend_resume(struct wfx_dev *wdev,
 			WsmHiSuspendResumeTxIndBody_t *arg);
 void wfx_set_tim_work(struct work_struct *work);
 void wfx_set_cts_work(struct work_struct *work);

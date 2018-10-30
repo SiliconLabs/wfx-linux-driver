@@ -1745,18 +1745,16 @@ void wfx_sta_notify(struct ieee80211_hw *dev,
 	spin_unlock_bh(&wvif->ps_state_lock);
 }
 
+// FIXME: wfx_ps_notify should change each station status independently
 static void wfx_ps_notify(struct wfx_vif *wvif,
-		      int link_id, bool ps)
+		      bool ps)
 {
-	if (link_id > WFX_MAX_STA_IN_AP_MODE)
-		return;
-
-	pr_debug("%s for LinkId: %d. STAs asleep: %.8X\n",
+	dev_info(wvif->wdev->pdev, "%s: %s STAs asleep: %.8X\n", __func__,
 		 ps ? "Stop" : "Start",
-		 link_id, wvif->sta_asleep_mask);
+		 wvif->sta_asleep_mask);
 
 	__wfx_sta_notify(wvif->wdev->hw, wvif->vif,
-			    ps ? STA_NOTIFY_SLEEP : STA_NOTIFY_AWAKE, link_id);
+			    ps ? STA_NOTIFY_SLEEP : STA_NOTIFY_AWAKE, 0);
 }
 
 static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
@@ -2254,7 +2252,7 @@ int wfx_ampdu_action(struct ieee80211_hw *hw,
 
 /* ******************************************************************** */
 /* WSM callback								*/
-void wfx_suspend_resume(struct wfx_dev *wdev, int link_id,
+void wfx_suspend_resume(struct wfx_dev *wdev,
 			WsmHiSuspendResumeTxIndBody_t *arg)
 {
 	// FIXME: Get interface id from link_id
@@ -2291,7 +2289,7 @@ void wfx_suspend_resume(struct wfx_dev *wdev, int link_id,
 			del_timer_sync(&wvif->mcast_timeout);
 	} else {
 		spin_lock_bh(&wvif->ps_state_lock);
-		wfx_ps_notify(wvif, link_id,
+		wfx_ps_notify(wvif,
 			      arg->SuspendResumeFlags.ResumeOrSuspend);
 		spin_unlock_bh(&wvif->ps_state_lock);
 		if (!arg->SuspendResumeFlags.ResumeOrSuspend)

@@ -895,7 +895,6 @@ done:
 /* ******************************************************************** */
 
 void wfx_tx_confirm_cb(struct wfx_dev	*wdev,
-			  int link_id,
 		       WsmHiTxCnfBody_t		*arg)
 {
 	// FIXME: Get interface id from WSM buffer
@@ -905,8 +904,8 @@ void wfx_tx_confirm_cb(struct wfx_dev	*wdev,
 	struct sk_buff *skb;
 	const struct wfx_txpriv *txpriv;
 
-	pr_debug("[TX] TX confirm: link_id=%d, status=%d, ack_failure=%d.\n",
-		 link_id, arg->Status, arg->AckFailures);
+	pr_debug("[TX] TX confirm: status=%d, ack_failure=%d.\n",
+		 arg->Status, arg->AckFailures);
 
 	if (wvif->mode == NL80211_IFTYPE_UNSPECIFIED) {
 		/* STA is stopped. */
@@ -924,22 +923,20 @@ void wfx_tx_confirm_cb(struct wfx_dev	*wdev,
 		/* "Requeue" means "implicit suspend" */
 		WsmHiSuspendResumeTxIndBody_t suspend = {
 			.SuspendResumeFlags.ResumeOrSuspend	= 1,
-			.SuspendResumeFlags.CastType		= !link_id,
+			.SuspendResumeFlags.CastType		= 1,
 		};
 
-		wfx_suspend_resume(wdev, link_id, &suspend);
-		wiphy_warn(wdev->hw->wiphy, "Requeue for link_id %d (try %d). STAs asleep: 0x%.8X\n",
-			   link_id,
+		wfx_suspend_resume(wdev, &suspend);
+		dev_warn(wdev->pdev, "Requeue is known to be broken. sta_id %d (try %d). STAs asleep: 0x%.8X\n",
+			   0,
 			   wfx_queue_get_generation(arg->PacketId) + 1,
 			   wvif->sta_asleep_mask);
 		wfx_queue_requeue(queue, arg->PacketId);
 		spin_lock_bh(&wvif->ps_state_lock);
-		if (!link_id) {
-			wvif->buffered_multicasts = true;
-			if (wvif->sta_asleep_mask) {
-				queue_work(wdev->workqueue,
-					   &wvif->multicast_start_work);
-			}
+		wvif->buffered_multicasts = true;
+		if (wvif->sta_asleep_mask) {
+			queue_work(wdev->workqueue,
+				   &wvif->multicast_start_work);
 		}
 		spin_unlock_bh(&wvif->ps_state_lock);
 	} else if (!wfx_queue_get_skb(queue, arg->PacketId,

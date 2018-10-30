@@ -80,7 +80,6 @@ void wfx_skb_dtor(struct wfx_dev *wdev,
 /* WSM callbacks							*/
 
 void wfx_tx_confirm_cb(struct wfx_dev *wdev,
-			  int link_id,
 			  WsmHiTxCnfBody_t *arg);
 void wfx_rx_cb(struct wfx_vif *wvif,
 		  WsmHiRxIndBody_t *arg,

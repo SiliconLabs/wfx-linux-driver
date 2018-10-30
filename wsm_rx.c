@@ -117,15 +117,14 @@ static int wsm_write_mib_confirm(struct wfx_dev	*wdev,
 }
 
 static int wsm_tx_confirm(struct wfx_dev	*wdev,
-			  struct wsm_buf *buf,
-			  int link_id)
+			  struct wsm_buf *buf)
 {
-	wfx_tx_confirm_cb(wdev, link_id, &((WsmHiTxCnf_t *)buf->begin)->Body);
+	wfx_tx_confirm_cb(wdev, &((WsmHiTxCnf_t *)buf->begin)->Body);
 	return 0;
 }
 
 static int wsm_multi_tx_confirm(struct wfx_dev *wdev,
-				struct wsm_buf *buf, int link_id)
+				struct wsm_buf *buf)
 {
 	int ret = 0;
 	int count;
@@ -156,7 +155,7 @@ static int wsm_multi_tx_confirm(struct wfx_dev *wdev,
 
 	wfx_debug_txed_multi(wdev, count);
 	for (i = 0; i < count; ++i) {
-		wfx_tx_confirm_cb(wdev, link_id, (WsmHiTxCnfBody_t *)buf_loc);
+		wfx_tx_confirm_cb(wdev, (WsmHiTxCnfBody_t *)buf_loc);
 		buf_loc += sizeof(WsmHiTxCnfBody_t);
 	}
 	return ret;
@@ -264,7 +263,6 @@ static int wsm_startup_indication(struct wfx_dev	*wdev,
 }
 
 static int wsm_receive_indication(struct wfx_dev	*wdev,
-				  int			if_id,
 				  struct wsm_buf *buf,
 				  struct sk_buff **skb_p)
 {
@@ -443,14 +441,14 @@ static int wsm_ba_timeout_indication(struct wfx_dev	*wdev,
 }
 
 static int wsm_suspend_resume_indication(struct wfx_dev *wdev,
-					 int link_id, struct wsm_buf *buf)
+					 struct wsm_buf *buf)
 {
 	WsmHiSuspendResumeTxIndBody_t arg;
 
 	memcpy(&arg, &((WsmHiSuspendResumeTxInd_t *)buf->begin)->Body,
 	       sizeof(WsmHiSuspendResumeTxIndBody_t));
 
-	wfx_suspend_resume(wdev, link_id, &arg);
+	wfx_suspend_resume(wdev, &arg);
 
 	return 0;
 }
@@ -687,7 +685,6 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 	int ret = 0;
 	u8 wsm_id = wsm->s.t.MsgId;
 	int msg_type = wsm->s.b.MesgType;
-	int link_id = wsm->s.b.IntId;
 	struct wsm_buf wsm_buf;
 	// FIXME: Use interface id from wsm->s.b.IntId
 	struct wfx_vif *wvif = wdev_to_wvif(wdev);
@@ -697,9 +694,9 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 	wsm_buf.end = &wsm_buf.begin[__le16_to_cpu(wsm->MsgLen)];
 
 	if (wsm_id == WSM_HI_TX_CNF_ID) {
-		ret = wsm_tx_confirm(wdev, &wsm_buf, link_id);
+		ret = wsm_tx_confirm(wdev, &wsm_buf);
 	} else if (wsm_id == WSM_HI_MULTI_TRANSMIT_CNF_ID) {
-		ret = wsm_multi_tx_confirm(wdev, &wsm_buf, link_id);
+		ret = wsm_multi_tx_confirm(wdev, &wsm_buf);
 	} else if (!msg_type) {        /*confirmation msg */
 		void *wsm_arg;
 		u8 wsm_cmd;
@@ -784,7 +781,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 			ret = wsm_startup_indication(wdev, &wsm_buf);
 			break;
 		case WSM_HI_RX_IND_ID:
-			ret = wsm_receive_indication(wdev, link_id,
+			ret = wsm_receive_indication(wdev,
 						     &wsm_buf, skb_p);
 			break;
 		case WSM_HI_EVENT_IND_ID:
@@ -804,7 +801,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
 			break;
 		case WSM_HI_SUSPEND_RESUME_TX_IND_ID:
 			ret = wsm_suspend_resume_indication(wdev,
-					link_id, &wsm_buf);
+					&wsm_buf);
 			break;
 		case WSM_HI_DEBUG_IND_ID:
 			ret = wsm_dbg_info_indication(wdev, &wsm_buf,
