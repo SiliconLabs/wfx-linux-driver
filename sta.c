@@ -2129,7 +2129,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 			cpu_to_le32(9) : __cpu_to_le32(20);
 
 		pr_debug("[STA] Slot time: %d us.\n",
-			 __le32_to_cpu(slot_time));
+			 le32_to_cpu(slot_time));
 		wsm_write_mib(wdev, WSM_MIB_ID_DOT11_SLOT_TIME,
 			      &slot_time, sizeof(slot_time));
 	}

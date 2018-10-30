@@ -393,7 +393,7 @@ static int wfx_counters_show(struct seq_file *seq, void *v)
 		return ret;
 
 #define PUT_COUNTER(name) \
-	seq_printf(seq, "%24s %d\n", #name ":", __le32_to_cpu(counters.name))
+	seq_printf(seq, "%24s %d\n", #name ":", le32_to_cpu(counters.name))
 
 	PUT_COUNTER(plcp_errors);
 	PUT_COUNTER(fcs_errors);
