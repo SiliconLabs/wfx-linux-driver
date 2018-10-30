@@ -395,7 +395,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, uint32_t *ctrl_reg)
 
 	/* update ctrl_reg with the u16 piggybacked value */
 	*ctrl_reg =
-		(uint32_t)__le16_to_cpu(((__le16 *)data)[alloc_len / 2 - 1]);
+		(uint32_t)le16_to_cpu(((__le16 *)data)[alloc_len / 2 - 1]);
 
 #ifdef RASPBERRY_PI
 	if (wdev->pdata.sdio == false && data[alloc_len - 2] == HIF_ERROR_DETECTION_8) {
@@ -408,7 +408,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, uint32_t *ctrl_reg)
 #endif
 
 	wsm = (HiMsgHdr_t *)data;
-	wsm_len = __le16_to_cpu(wsm->MsgLen);
+	wsm_len = le16_to_cpu(wsm->MsgLen);
 	if (wsm_len > read_len) {
 		wfx_err("inconsistent HIF message length %lu != %lu\n",
 			(unsigned long) wsm_len,
@@ -504,7 +504,7 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 
 	wsm = (HiMsgHdr_t *)data;
 	BUG_ON(tx_len < sizeof(*wsm));
-	BUG_ON(__le16_to_cpu(wsm->MsgLen) != tx_len);
+	BUG_ON(le16_to_cpu(wsm->MsgLen) != tx_len);
 
 	tx_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, tx_len);
 

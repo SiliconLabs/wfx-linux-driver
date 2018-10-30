@@ -300,7 +300,7 @@ static int wsm_receive_indication(struct wfx_dev	*wdev,
 
 	fctl = hdr->frame_control;
 	pr_debug("[WSM] \t\t rx_flags=0x%.8X, frame_ctrl=0x%.4X\n",
-		 *((uint32_t *)&rx.RxFlags), __le16_to_cpu(fctl));
+		 *((uint32_t *)&rx.RxFlags), le16_to_cpu(fctl));
 
 
 	sta_id = rx.RxFlags.PeerStaId;
@@ -1098,7 +1098,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 			wvif->pspoll_mask &= ~BIT(txpriv->raw_link_id);
 
 			*data = (u8 *)wsm;
-			*tx_len = __le16_to_cpu(wsm->Header.MsgLen);
+			*tx_len = le16_to_cpu(wsm->Header.MsgLen);
 
 			/* allow bursting if txop is set */
 			if (wvif->edca.params.TxOpLimit[queue_num])
