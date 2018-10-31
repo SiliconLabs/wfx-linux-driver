@@ -429,13 +429,13 @@ struct wfx_txinfo {
 };
 
 /* Send map request message to firmware and save peer MAC address */
-int wfx_map_link(struct wfx_dev		*wdev,
+int wfx_map_link(struct wfx_vif		*wvif,
 		 struct wfx_link_entry		*link_entry,
 		 const WsmHiMapLinkReqBody_t	*link)
 {
 	int ret;
 
-	ret = wsm_map_link(wdev, link);
+	ret = wsm_map_link(wvif->wdev, link);
 
 	if (ret == 0)
 		/* Save the MAC address currently associated with the peer
@@ -1486,7 +1486,7 @@ void wfx_link_id_gc_work(struct work_struct *work)
 			if (need_reset)
 				wfx_unmap_link(wvif, i + 1);
 			map_link.PeerStaId = i + 1;
-			wfx_map_link(wvif->wdev, &wvif->link_id_db[i], &map_link);
+			wfx_map_link(wvif, &wvif->link_id_db[i], &map_link);
 			next_gc = min(next_gc, WFX_LINK_ID_GC_TIMEOUT);
 			spin_lock_bh(&wvif->ps_state_lock);
 		} else if (wvif->link_id_db[i].status == WFX_LINK_SOFT) {
@@ -1516,7 +1516,7 @@ void wfx_link_id_gc_work(struct work_struct *work)
 			if (status == WFX_LINK_RESET_REMAP) {
 				ether_addr_copy(map_link.MacAddr, wvif->link_id_db[i].mac);
 				map_link.PeerStaId = i + 1;
-				wfx_map_link(wvif->wdev, &wvif->link_id_db[i],
+				wfx_map_link(wvif, &wvif->link_id_db[i],
 					     &map_link);
 				next_gc = min(next_gc,
 						WFX_LINK_ID_GC_TIMEOUT);
