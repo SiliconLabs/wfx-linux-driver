@@ -50,10 +50,6 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 		return -EINVAL;
 	}
 
-	if (status)
-		dev_warn(wdev->pdev, "WSM request %s %08x returned error %d\n",
-				get_wsm_name(cmd), cmd, status);
-
 	// FIXME: check that if wsm_arg is provided, caller allocated enough bytes
 	// FIXME: access to wsm_arg should be inner spinlock. (but mutex from
 	// wsm_tx also protect it).

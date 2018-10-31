@@ -590,7 +590,10 @@ static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf, void *arg,
 	spin_unlock(&wdev->wsm_cmd.lock);
 
 	if (ret < 0)
-		dev_err(wdev->pdev, "WSM request %s %08x returned error %d\n",
+		dev_err(wdev->pdev, "WSM request %s (%#02x) returned error %d\n",
+				get_wsm_name(cmd), cmd, ret);
+	if (ret > 0)
+		dev_warn(wdev->pdev, "WSM request %s (%#02x) returned status %d\n",
 				get_wsm_name(cmd), cmd, ret);
 
 	wsm_buf_reset(buf);
