@@ -338,10 +338,9 @@ int wfx_wow_resume(struct ieee80211_hw *hw)
 	}
 
 	if (state->beacon_skipping) {
-		wsm_set_beacon_wakeup_period(wdev, wvif->beacon_int *
-					     wvif->join_dtim_period >
-					     MAX_BEACON_SKIP_TIME_MS ? 1 :
-					     wvif->join_dtim_period, 0);
+		unsigned period = wvif->beacon_int * wvif->join_dtim_period > MAX_BEACON_SKIP_TIME_MS ? 1 : wvif->join_dtim_period;
+
+		wsm_set_beacon_wakeup_period(wdev, period, period);
 		state->beacon_skipping = false;
 	}
 
