@@ -60,7 +60,7 @@
 
 
 static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf,
-			void *arg, int cmd, long tmo);
+			void *arg, int cmd, long tmo, int if_id);
 
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 {
@@ -76,7 +76,7 @@ int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 			   wfx_arg,
 			   &reply,
 			   HI_CONFIGURATION_REQ_ID,
-			   WSM_CMD_TIMEOUT);
+			   WSM_CMD_TIMEOUT, 0);
 	wsm_cmd_unlock(wdev);
 	if (ret < 0)
 		return ret;
@@ -88,7 +88,7 @@ nomem:
 	return -ENOMEM;
 }
 
-int wsm_reset(struct wfx_dev *wdev, const WsmHiResetFlags_t *arg)
+int wsm_reset(struct wfx_dev *wdev, const WsmHiResetFlags_t *arg,  int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
@@ -100,7 +100,8 @@ int wsm_reset(struct wfx_dev *wdev, const WsmHiResetFlags_t *arg)
 			   wfx_arg,
 			   NULL,
 			   WSM_HI_RESET_REQ_ID,
-			   WSM_CMD_RESET_TIMEOUT);
+			   WSM_CMD_RESET_TIMEOUT,
+			   Id);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -123,7 +124,8 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
 			   wfx_arg,
 			   reply,
 			   WSM_HI_READ_MIB_REQ_ID,
-			   WSM_CMD_TIMEOUT);
+			   WSM_CMD_TIMEOUT,
+			   0);
 	reply->Length -= 4; // Drop header
 	if (mib_id != reply->MibId) {
 		dev_warn(wdev->pdev, "%s: confirmation mismatch request\n", __func__);
@@ -153,7 +155,7 @@ nomem:
 }
 
 int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
-			size_t buf_size)
+		  size_t buf_size, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
@@ -167,14 +169,15 @@ int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
 			   wfx_arg,
 			   NULL,
 			   WSM_HI_WRITE_MIB_REQ_ID,
-			   WSM_CMD_TIMEOUT);
+			   WSM_CMD_TIMEOUT,
+			   Id);
 
 nomem:
 	wsm_cmd_unlock(wdev);
 	return ret;
 }
 
-int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg)
+int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id)
 {
 	int i;
 	int ret;
@@ -216,7 +219,8 @@ int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg)
 			   wfx_arg,
 			   &reply,
 			   WSM_HI_START_SCAN_REQ_ID,
-			   WSM_CMD_TIMEOUT);
+			   WSM_CMD_TIMEOUT,
+			   Id);
 	if (ret)
 		goto nomem;
 	ret = reply.Status;
@@ -226,7 +230,7 @@ nomem:
 	return ret;
 }
 
-int wsm_stop_scan(struct wfx_dev *wdev)
+int wsm_stop_scan(struct wfx_dev *wdev, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
@@ -236,13 +240,14 @@ int wsm_stop_scan(struct wfx_dev *wdev)
 			   wfx_arg,
 			   NULL,
 			   WSM_HI_STOP_SCAN_REQ_ID,
-			   WSM_CMD_TIMEOUT);
+			   WSM_CMD_TIMEOUT,
+			   Id);
 
 	wsm_cmd_unlock(wdev);
 	return ret;
 }
 
-int wsm_join(struct wfx_dev *wdev, WsmHiJoinReqBody_t *arg)
+int wsm_join(struct wfx_dev *wdev, WsmHiJoinReqBody_t *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
@@ -266,7 +271,8 @@ int wsm_join(struct wfx_dev *wdev, WsmHiJoinReqBody_t *arg)
 			   wfx_arg,
 			   NULL,
 			   WSM_HI_JOIN_REQ_ID,
-			   WSM_CMD_JOIN_TIMEOUT);
+			   WSM_CMD_JOIN_TIMEOUT,
+			   Id);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -274,7 +280,7 @@ nomem:
 }
 
 int wsm_set_bss_params(struct wfx_dev		*wdev,
-		       const WsmHiSetBssParamsReqBody_t *arg)
+		       const WsmHiSetBssParamsReqBody_t *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
@@ -289,14 +295,15 @@ int wsm_set_bss_params(struct wfx_dev		*wdev,
 			   wfx_arg,
 			   NULL,
 			   WSM_HI_SET_BSS_PARAMS_REQ_ID,
-			   WSM_CMD_TIMEOUT);
+			   WSM_CMD_TIMEOUT,
+			   Id);
 
 nomem:
 	wsm_cmd_unlock(wdev);
 	return ret;
 }
 
-int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg)
+int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
@@ -308,14 +315,15 @@ int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg)
 			   wfx_arg,
 			   NULL,
 			   WSM_HI_ADD_KEY_REQ_ID,
-			   WSM_CMD_TIMEOUT);
+			   WSM_CMD_TIMEOUT,
+			   Id);
 
 nomem:
 	wsm_cmd_unlock(wdev);
 	return ret;
 }
 
-int wsm_remove_key(struct wfx_dev *wdev, const WsmHiRemoveKeyReqBody_t *arg)
+int wsm_remove_key(struct wfx_dev *wdev, const WsmHiRemoveKeyReqBody_t *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
@@ -329,7 +337,8 @@ int wsm_remove_key(struct wfx_dev *wdev, const WsmHiRemoveKeyReqBody_t *arg)
 			   wfx_arg,
 			   NULL,
 			   WSM_HI_REMOVE_KEY_REQ_ID,
-			   WSM_CMD_TIMEOUT);
+			   WSM_CMD_TIMEOUT,
+			   Id);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -337,7 +346,7 @@ nomem:
 }
 
 int wsm_set_tx_queue_params(struct wfx_dev *wdev,
-			    const WsmHiTxQueueParamsReqBody_t *arg, u8 id)
+			    const WsmHiTxQueueParamsReqBody_t *arg, u8 id, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
@@ -355,14 +364,16 @@ int wsm_set_tx_queue_params(struct wfx_dev *wdev,
 			   wfx_arg,
 			   NULL,
 			   WSM_HI_TX_QUEUE_PARAMS_REQ_ID,
-			   WSM_CMD_TIMEOUT);
+			   WSM_CMD_TIMEOUT,
+			   Id);
 
 nomem:
 	wsm_cmd_unlock(wdev);
 	return ret;
 }
 
-int wsm_set_edca_params(struct wfx_dev *wdev, const struct wsm_edca_params *arg)
+int wsm_set_edca_params(struct wfx_dev *wdev,
+			const struct wsm_edca_params *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
@@ -398,14 +409,15 @@ int wsm_set_edca_params(struct wfx_dev *wdev, const struct wsm_edca_params *arg)
 			   wfx_arg,
 			   NULL,
 			   WSM_HI_EDCA_PARAMS_REQ_ID,
-			   WSM_CMD_TIMEOUT);
+			   WSM_CMD_TIMEOUT,
+			   Id);
 
 nomem:
 	wsm_cmd_unlock(wdev);
 	return ret;
 }
 
-int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg)
+int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
@@ -420,14 +432,15 @@ int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg)
 			   wfx_arg,
 			   NULL,
 			   WSM_HI_SET_PM_MODE_REQ_ID,
-			   WSM_CMD_TIMEOUT);
+			   WSM_CMD_TIMEOUT,
+			   Id);
 
 nomem:
 	wsm_cmd_unlock(wdev);
 	return ret;
 }
 
-int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg)
+int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
@@ -449,14 +462,16 @@ int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg)
 			   wfx_arg,
 			   NULL,
 			   WSM_HI_START_REQ_ID,
-			   WSM_CMD_START_TIMEOUT);
+			   WSM_CMD_START_TIMEOUT,
+			   Id);
 
 nomem:
 	wsm_cmd_unlock(wdev);
 	return ret;
 }
 
-int wsm_beacon_transmit(struct wfx_dev *wdev, const WsmHiBeaconTransmitReqBody_t *arg)
+int wsm_beacon_transmit(struct wfx_dev *wdev,
+			const WsmHiBeaconTransmitReqBody_t *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
@@ -468,14 +483,15 @@ int wsm_beacon_transmit(struct wfx_dev *wdev, const WsmHiBeaconTransmitReqBody_t
 			   wfx_arg,
 			   NULL,
 			   WSM_HI_BEACON_TRANSMIT_REQ_ID,
-			   WSM_CMD_TIMEOUT);
+			   WSM_CMD_TIMEOUT,
+			   Id);
 
 nomem:
 	wsm_cmd_unlock(wdev);
 	return ret;
 }
 
-int wsm_map_link(struct wfx_dev *wdev, const WsmHiMapLinkReqBody_t *arg)
+int wsm_map_link(struct wfx_dev *wdev, const WsmHiMapLinkReqBody_t *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
@@ -489,14 +505,16 @@ int wsm_map_link(struct wfx_dev *wdev, const WsmHiMapLinkReqBody_t *arg)
 			   wfx_arg,
 			   NULL,
 			   WSM_HI_MAP_LINK_REQ_ID,
-			   WSM_CMD_TIMEOUT);
+			   WSM_CMD_TIMEOUT,
+			   Id);
 
 nomem:
 	wsm_cmd_unlock(wdev);
 	return ret;
 }
 
-int wsm_update_ie(struct wfx_dev *wdev, const struct wsm_update_ie *arg)
+int wsm_update_ie(struct wfx_dev *wdev,
+		  const struct wsm_update_ie *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
@@ -510,7 +528,8 @@ int wsm_update_ie(struct wfx_dev *wdev, const struct wsm_update_ie *arg)
 			   wfx_arg,
 			   NULL,
 			   WSM_HI_UPDATE_IE_REQ_ID,
-			   WSM_CMD_TIMEOUT);
+			   WSM_CMD_TIMEOUT,
+			   Id);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -518,12 +537,11 @@ nomem:
 }
 
 static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf, void *arg,
-			int cmd, long tmo)
+			int cmd, long tmo, int if_id)
 {
 	size_t buf_len = buf->data - buf->begin;
 	HiMsgHdr_t *hdr = (HiMsgHdr_t *) buf->begin;
 	int ret;
-	int if_id = -1;
 
 	if (wdev->bh_error) {
 		wsm_buf_reset(buf);
