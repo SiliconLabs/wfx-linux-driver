@@ -55,7 +55,7 @@ static int wfx_scan_start(struct wfx_dev *wdev, struct wsm_scan *scan)
 	wfx_pm_stay_awake(&wdev->pm_state, msecs_to_jiffies(tmo));
 	queue_delayed_work(wdev->workqueue, &wdev->scan.timeout,
 			   msecs_to_jiffies(tmo));
-	ret = wsm_scan(wdev, scan);
+	ret = wsm_scan(wdev, scan, 0);
 	if (ret) {
 		wfx_scan_failed_cb(wdev);
 		atomic_set(&wdev->scan.in_progress, 0);
@@ -108,7 +108,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	p = (WsmHiMibTemplateFrame_t *)skb_push(skb, 4);
 	p->FrameType = WSM_TMPLT_PRBREQ;
 	p->FrameLength = cpu_to_le16(skb->len - 4);
-	ret = wsm_set_template_frame(wdev, p);
+	ret = wsm_set_template_frame(wdev, p, -1);
 	skb_pull(skb, 4);
 
 	if (!ret)
@@ -196,7 +196,7 @@ void wfx_scan_work(struct work_struct *work)
 
 	if (!wdev->scan.req || (wdev->scan.curr == wdev->scan.end)) {
 		if (wdev->scan.output_power != wdev->output_power)
-			wsm_set_output_power(wdev, wdev->output_power * 10);
+			wsm_set_output_power(wdev, wdev->output_power * 10, 0);
 
 		if (wdev->scan.status < 0)
 			wiphy_warn(wdev->hw->wiphy,
@@ -273,7 +273,7 @@ void wfx_scan_work(struct work_struct *work)
 		    wdev->scan.output_power != first->max_power) {
 			wdev->scan.output_power = first->max_power;
 			wsm_set_output_power(wdev,
-					     wdev->scan.output_power * 10);
+					     wdev->scan.output_power * 10, -1);
 		}
 		wdev->scan.status = wfx_scan_start(wdev, &scan);
 		kfree(scan.ch);
@@ -367,7 +367,7 @@ void wfx_scan_timeout(struct work_struct *work)
 				   "Timeout waiting for scan complete notification.\n");
 			wdev->scan.status = -ETIMEDOUT;
 			wdev->scan.curr = wdev->scan.end;
-			wsm_stop_scan(wdev);
+			wsm_stop_scan(wdev, -1);
 		}
 		wfx_scan_complete(wdev);
 	}
@@ -463,7 +463,7 @@ void wfx_probe_work(struct work_struct *work)
 	p->FrameType = WSM_TMPLT_PRBREQ;
 	p->FrameLength = cpu_to_le16(skb->len - 4);
 
-	ret = wsm_set_template_frame(wdev, p);
+	ret = wsm_set_template_frame(wdev, p, -1);
 	skb_pull(skb, 4);
 	wdev->scan.direct_probe = 1;
 	if (!ret) {

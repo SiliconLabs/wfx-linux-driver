@@ -477,10 +477,9 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 
 	mode.disable_more_flag_usage = true;
 	mode.power_mode = wdev->pdata.power_mode;
-	wsm_set_operational_mode(wdev, &mode);
+	wsm_set_operational_mode(wdev, &mode, -1);
 
-	wsm_use_multi_tx_conf(wdev, true);
-
+	wsm_use_multi_tx_conf(wdev, true, -1);
 	eth_zero_addr(dev->wiphy->perm_addr);
 	macaddr = of_get_mac_address(pdev->of_node);
 	if (macaddr)

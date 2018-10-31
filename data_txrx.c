@@ -397,7 +397,7 @@ static int tx_policy_upload(struct wfx_dev *wdev)
 	spin_unlock_bh(&cache->lock);
 	wfx_debug_tx_cache_miss(wdev);
 	pr_debug("[TX policy] Upload %d policies\n", arg.NumTxRatePolicy);
-	return wsm_set_tx_rate_retry_policy(wdev, &arg);
+	return wsm_set_tx_rate_retry_policy(wdev, &arg, -1);
 }
 
 void tx_policy_upload_work(struct work_struct *work)
