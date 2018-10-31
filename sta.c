@@ -1264,6 +1264,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	WsmHiJoinReqBody_t join = {
 		.Mode		= conf->ibss_joined ?
 				  WSM_MODE_IBSS : WSM_MODE_BSS,
+		.JoinFlags.UseMacAddrIf = wvif->Id,
 		.PreambleType	= WSM_PREAMBLE_LONG,
 		.ProbeForJoin	= 1,
 		.AtimWindow	= 0,
@@ -1548,7 +1549,7 @@ int wfx_enable_listening(struct wfx_vif *wvif)
 {
 	WsmHiStartReqBody_t start = {
 		.Mode = {
-				.StartMode	= WSM_START_MODE_P2P_DEV,
+				.StartMode	= WSM_START_MODE_P2P_DEV | (wvif->Id << 4),
 			},
 		.Band			= WSM_PHY_BAND_2_4G,
 		.BeaconInterval		= 100,
@@ -2391,6 +2392,7 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 			.StartMode	= wvif->vif->p2p ?
 					  WSM_START_MODE_P2P_GO :
 					  WSM_START_MODE_AP,
+			.IndexMacUse	= wvif->Id,
 		},
 		.Band			= WSM_PHY_BAND_2_4G,
 		.ChannelNumber		= wvif->wdev->channel->hw_value,
