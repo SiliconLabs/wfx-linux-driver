@@ -58,6 +58,19 @@
 #define wfx_cmd_data(wfx_arg, val) __wfx_cmd(wfx_arg, val, u32, __le32, \
 					cpu_to_le32)
 
+static void wfx_fill_header(HiMsgHdr_t *hdr, int if_id, unsigned cmd, size_t size)
+{
+	if (if_id == -1)
+		if_id = 0;
+
+	WARN(cmd > 0x3f, "Invalid WSM command %02x", cmd);
+	WARN(size > 0xFFF, "Requested buffer is too large: %zu bytes", size);
+	WARN(if_id > 0x3, "Invalid interface ID %d", if_id);
+
+	hdr->MsgLen = cpu_to_le16(size + 4);
+	hdr->s.b.Id = cmd;
+	hdr->s.b.IntId = if_id;
+}
 
 static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf,
 			void *arg, int cmd, long tmo, int if_id);
@@ -531,16 +544,9 @@ static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf, void *arg,
 		return 0;
 	}
 
-	if (if_id == -1)
-		if_id = 0;
-
-	WARN(cmd & ~0x3f, "Invalid WSM command %02x", cmd);
-	WARN(if_id & ~0x3, "Invalid interface ID %d", if_id);
 	WARN(wdev->wsm_cmd.ptr, "Data locking error");
 
-	hdr->MsgLen = cpu_to_le16(buf_len);
-	hdr->s.b.Id = cmd;
-	hdr->s.b.IntId = if_id;
+	wfx_fill_header(hdr, if_id, cmd, buf_len - 4);
 
 	spin_lock(&wdev->wsm_cmd.lock);
 	wdev->wsm_cmd.done = 0;
