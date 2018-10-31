@@ -52,7 +52,6 @@ static void wfx_do_join(struct wfx_vif *wvif);
 static void wfx_do_unjoin(struct wfx_vif *wvif);
 
 static int wfx_upload_beacon(struct wfx_vif *wvif);
-
 static int wfx_vif_setup(struct wfx_vif *wvif);
 static int wfx_start_ap(struct wfx_vif *wvif);
 static int wfx_update_beaconing(struct wfx_vif *wvif);
@@ -1298,7 +1297,6 @@ static void wfx_do_join(struct wfx_vif *wvif)
 
 	join.BeaconInterval = wvif->beacon_int;
 
-
 	if (wvif->wdev->hw->conf.ps_dtim_period)
 		wvif->join_dtim_period = wvif->wdev->hw->conf.ps_dtim_period;
 	join.DTIMPeriod = wvif->join_dtim_period;
@@ -1812,7 +1810,7 @@ void wfx_set_tim_work(struct work_struct *work)
 }
 
 int wfx_set_tim(struct ieee80211_hw *dev, struct ieee80211_sta *sta,
-		   bool set)
+			   bool set)
 {
 	struct wfx_dev *wdev = dev->priv;
 	// FIXME: Get interface id from sta
@@ -1856,7 +1854,6 @@ void wfx_set_cts_work(struct work_struct *work)
 	if (wvif->mode != NL80211_IFTYPE_STATION)
 		wsm_update_ie(wvif->wdev, &update_ie);
 }
-
 
 void wfx_bss_info_changed(struct ieee80211_hw *dev,
 			     struct ieee80211_vif *vif,
@@ -2358,7 +2355,6 @@ done:
 		dev_kfree_skb(skb);
 	return ret;
 }
-
 
 static int wfx_enable_beaconing(struct wfx_vif	*wvif,
 				   bool enable)

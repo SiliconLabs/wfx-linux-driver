@@ -535,14 +535,6 @@ static inline int wsm_set_uapsd_info(struct wfx_dev			*wdev,
 				arg, sizeof(*arg));
 }
 
-static inline int wsm_set_override_internal_txrate(
-	struct wfx_dev		*wdev,
-	WsmHiMibOverrideIntRate_t	*arg)
-{
-	return wsm_write_mib(wdev, WSM_MIB_ID_OVERRIDE_INTERNAL_TX_RATE,
-				arg, sizeof(*arg));
-}
-
 /* Queue mapping: WSM <---> linux					*/
 /* Linux: VO VI BE BK							*/
 /* WSM:   BE BK VI VO							*/

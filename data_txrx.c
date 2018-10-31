@@ -619,7 +619,6 @@ wfx_tx_h_wsm(struct wfx_vif	*wvif,
 	return wsm;
 }
 
-
 static int
 wfx_tx_h_rate_policy(struct wfx_dev	*wdev,
 			struct wfx_txinfo *t,
