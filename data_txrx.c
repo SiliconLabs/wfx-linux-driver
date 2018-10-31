@@ -613,6 +613,7 @@ wfx_tx_h_wsm(struct wfx_vif	*wvif,
 	memset(wsm, 0, wsm_length);
 	wsm->Header.MsgLen = cpu_to_le16(t->skb->len);
 	wsm->Header.s.t.MsgId = WSM_HI_TX_REQ_ID; /* useless cpu_to_le16(WSM_HI_TX_REQ_ID); */
+	wsm->Header.s.b.IntId = t->txpriv.vif_id;
 	/* wsm->Body.QueueId = (t->txpriv.raw_link_id << 2) | wsm_queue_id_to_wsm(t->queue); */
 	wsm->Body.QueueId.PerStaId = t->txpriv.raw_link_id;
 	wsm->Body.QueueId.QueueId = wsm_queue_id_to_wsm(t->queue);
