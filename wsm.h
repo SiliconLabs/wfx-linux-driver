@@ -239,25 +239,19 @@ void wsm_buf_reset(struct wsm_buf *buf);
 
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len);
 int wsm_reset(struct wfx_dev *wdev, const WsmHiResetFlags_t *arg);
-int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *buf,
-		 size_t buf_size);
-int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *buf,
-		  size_t buf_size);
+int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *buf, size_t buf_size);
+int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *buf, size_t buf_size);
 int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg);
 int wsm_stop_scan(struct wfx_dev *wdev);
 int wsm_join(struct wfx_dev *wdev, WsmHiJoinReqBody_t *arg);
 int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg);
-int wsm_set_bss_params(struct wfx_dev		*wdev,
-		       const WsmHiSetBssParamsReqBody_t *arg);
+int wsm_set_bss_params(struct wfx_dev *wdev, const WsmHiSetBssParamsReqBody_t *arg);
 int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg);
 int wsm_remove_key(struct wfx_dev *wdev, const WsmHiRemoveKeyReqBody_t *arg);
-int wsm_set_tx_queue_params(struct wfx_dev *wdev,
-			    const WsmHiTxQueueParamsReqBody_t *arg, u8 id);
-int wsm_set_edca_params(struct wfx_dev		*wdev,
-			const struct wsm_edca_params *arg);
+int wsm_set_tx_queue_params(struct wfx_dev *wdev, const WsmHiTxQueueParamsReqBody_t *arg, u8 id);
+int wsm_set_edca_params(struct wfx_dev *wdev, const struct wsm_edca_params *arg);
 int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg);
-int wsm_beacon_transmit(struct wfx_dev			*wdev,
-			const WsmHiBeaconTransmitReqBody_t	*arg);
+int wsm_beacon_transmit(struct wfx_dev *wdev, const WsmHiBeaconTransmitReqBody_t *arg);
 int wsm_update_ie(struct wfx_dev *wdev, const struct wsm_update_ie *arg);
 
 int wsm_map_link(struct wfx_dev *wdev, const WsmHiMapLinkReqBody_t *arg);
@@ -265,8 +259,7 @@ int wfx_unmap_link(struct wfx_vif *wvif, int link_id);
 int wsm_set_probe_responder(struct wfx_vif *wvif, bool enable);
 
 int wsm_handle_exception(struct wfx_dev *wdev, u8 *data, size_t len);
-int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm,
-		  struct sk_buff **skb_p);
+int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm, struct sk_buff **skb_p);
 int wsm_get_tx(struct wfx_dev *wdev, u8 **data, size_t *tx_len, int *burst);
 
 void wsm_lock_tx(struct wfx_dev *wdev);
@@ -278,7 +271,7 @@ void wsm_txed(struct wfx_dev *wdev, u8 *data);
 
 bool wsm_flush_tx(struct wfx_dev *wdev);
 
-static inline int wsm_set_output_power(struct wfx_dev	*wdev,
+static inline int wsm_set_output_power(struct wfx_dev *wdev,
 				       int power_level)
 {
 	__le32 val = cpu_to_le32(power_level);
@@ -287,7 +280,7 @@ static inline int wsm_set_output_power(struct wfx_dev	*wdev,
 			     &val, sizeof(val));
 }
 
-static inline int wsm_set_beacon_wakeup_period(struct wfx_dev	*wdev,
+static inline int wsm_set_beacon_wakeup_period(struct wfx_dev *wdev,
 					       unsigned dtim_interval,
 					       unsigned listen_interval)
 {
@@ -302,15 +295,14 @@ static inline int wsm_set_beacon_wakeup_period(struct wfx_dev	*wdev,
 				     &val, sizeof(val));
 }
 
-static inline int wsm_set_rcpi_rssi_threshold(
-	struct wfx_dev		*wdev,
-	WsmHiMibRcpiRssiThreshold_t	*arg)
+static inline int wsm_set_rcpi_rssi_threshold(struct wfx_dev *wdev,
+					      WsmHiMibRcpiRssiThreshold_t *arg)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_RCPI_RSSI_THRESHOLD, arg,
 			     sizeof(*arg));
 }
 
-static inline int wsm_get_counters_table(struct wfx_dev		*wdev,
+static inline int wsm_get_counters_table(struct wfx_dev *wdev,
 					 struct wsm_mib_counters_table *arg)
 {
 	return wsm_read_mib(wdev, WSM_MIB_ID_COUNTERS_TABLE,
@@ -341,7 +333,7 @@ static inline int wsm_set_station_id(struct wfx_dev *wdev, u8 *mac1, u8 *mac2)
 	return wsm_write_mib(wdev, WSM_MIB_ID_DOT11_MAC_ADDRESSES, &msg, sizeof(msg));
 }
 
-static inline int wsm_set_rx_filter(struct wfx_dev		*wdev,
+static inline int wsm_set_rx_filter(struct wfx_dev *wdev,
 				    const struct wsm_rx_filter *arg)
 {
 	__le32 val = 0;
@@ -357,19 +349,19 @@ static inline int wsm_set_rx_filter(struct wfx_dev		*wdev,
 	return wsm_write_mib(wdev, WSM_MIB_ID_RX_FILTER, &val, sizeof(val));
 }
 
-static inline int wsm_set_beacon_filter_table(struct wfx_dev		*wdev,
-					      WsmHiMibBcnFilterTable_t	*ft)
+static inline int wsm_set_beacon_filter_table(struct wfx_dev *wdev,
+					      WsmHiMibBcnFilterTable_t *ft)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_BEACON_FILTER_TABLE, ft,
 			     sizeof(*ft));
 }
 
-static inline int wsm_beacon_filter_control(struct wfx_dev		*wdev,
-					    WsmHiMibBcnFilterEnable_t	*arg)
+static inline int wsm_beacon_filter_control(struct wfx_dev *wdev,
+					    WsmHiMibBcnFilterEnable_t *arg)
 {
 	struct {
-		__le32	Enable;
-		__le32	BcnCount;
+		__le32 Enable;
+		__le32 BcnCount;
 	} val;
 	val.Enable = cpu_to_le32(arg->Enable);
 	val.BcnCount = cpu_to_le32(arg->BcnCount);
@@ -377,9 +369,8 @@ static inline int wsm_beacon_filter_control(struct wfx_dev		*wdev,
 			     sizeof(val));
 }
 
-static inline int wsm_set_operational_mode(
-	struct wfx_dev			*wdev,
-					const struct wsm_operational_mode *arg)
+static inline int wsm_set_operational_mode(struct wfx_dev *wdev,
+					   const struct wsm_operational_mode *arg)
 {
 	u8 val = arg->power_mode;
 
@@ -391,16 +382,15 @@ static inline int wsm_set_operational_mode(
 			     sizeof(val));
 }
 
-static inline int wsm_set_template_frame(struct wfx_dev		*wdev,
-					 WsmHiMibTemplateFrame_t	*arg)
+static inline int wsm_set_template_frame(struct wfx_dev *wdev,
+					 WsmHiMibTemplateFrame_t *arg)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_TEMPLATE_FRAME, arg,
 			     sizeof(*arg));
 }
 
-static inline int wsm_set_protected_mgmt_policy(
-	struct wfx_dev			*wdev,
-		struct wsm_protected_mgmt_policy *arg)
+static inline int wsm_set_protected_mgmt_policy(struct wfx_dev *wdev,
+						struct wsm_protected_mgmt_policy *arg)
 {
 	__le32 val = 0;
 	int ret;
@@ -416,29 +406,27 @@ static inline int wsm_set_protected_mgmt_policy(
 	return ret;
 }
 
-static inline int wsm_set_block_ack_policy(struct wfx_dev	*wdev,
-					   u8 tx_tid_policy,
-					   u8 rx_tid_policy)
+static inline int wsm_set_block_ack_policy(struct wfx_dev *wdev,
+					   u8 tx_tid_policy, u8 rx_tid_policy)
 {
 	WsmHiMibBlockAckPolicy_t val = {
-		.BlockAckTxTidPolicy	= tx_tid_policy,
-		.BlockAckRxTidPolicy	= rx_tid_policy,
+		.BlockAckTxTidPolicy = tx_tid_policy,
+		.BlockAckRxTidPolicy = rx_tid_policy,
 	};
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_BLOCK_ACK_POLICY, &val,
 			     sizeof(val));
 }
 
-static inline int wsm_set_association_mode(struct wfx_dev		*wdev,
+static inline int wsm_set_association_mode(struct wfx_dev *wdev,
 					   WsmHiMibSetAssociationMode_t *arg)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_SET_ASSOCIATION_MODE, arg,
 			     sizeof(*arg));
 }
 
-static inline int wsm_set_tx_rate_retry_policy(
-	struct wfx_dev		*wdev,
-	WsmHiMibSetTxRateRetryPolicy_t	*arg)
+static inline int wsm_set_tx_rate_retry_policy(struct wfx_dev *wdev,
+					       WsmHiMibSetTxRateRetryPolicy_t *arg)
 {
 	size_t size = 4 + arg->NumTxRatePolicy *
 		      sizeof(WsmHiMibTxRateRetryPolicy_t);
@@ -447,34 +435,32 @@ static inline int wsm_set_tx_rate_retry_policy(
 			     size);
 }
 
-static inline int wsm_set_ether_type_filter(
-	struct wfx_dev			*wdev,
-	WsmHiMibEtherTypeDataFrameFilterSet_t	*arg)
+static inline int wsm_set_ether_type_filter(struct wfx_dev *wdev,
+					    WsmHiMibEtherTypeDataFrameFilterSet_t *arg)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_SET_ETHERTYPE_DATAFRAME_FILTER,
 			     arg, sizeof(*arg));
 }
 
-static inline int wsm_set_udp_port_filter(
-	struct wfx_dev			*wdev,
-	WsmHiMibUdpPortDataFrameFilterSet_t	*arg)
+static inline int wsm_set_udp_port_filter(struct wfx_dev *wdev,
+					  WsmHiMibUdpPortDataFrameFilterSet_t *arg)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_SET_UDPPORT_DATAFRAME_FILTER,
 			     arg, sizeof(*arg));
 }
 
-static inline int wsm_keep_alive_period(struct wfx_dev	*wdev,
+static inline int wsm_keep_alive_period(struct wfx_dev *wdev,
 					int period)
 {
 	WsmHiMibKeepAlivePeriod_t arg = {
-		.KeepAlivePeriod	= cpu_to_le16(period),
+		.KeepAlivePeriod = cpu_to_le16(period),
 	};
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_KEEP_ALIVE_PERIOD,
-			&arg, sizeof(arg));
+			     &arg, sizeof(arg));
 };
 
-static inline int wsm_set_bssid_filtering(struct wfx_dev	*wdev,
+static inline int wsm_set_bssid_filtering(struct wfx_dev *wdev,
 					  bool enabled)
 {
 	WsmHiMibDisableBssidFilter_t arg = {
@@ -482,40 +468,38 @@ static inline int wsm_set_bssid_filtering(struct wfx_dev	*wdev,
 	};
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_DISABLE_BSSID_FILTER,
-			&arg, sizeof(arg));
+			     &arg, sizeof(arg));
 }
 
-static inline int wsm_set_multicast_filter(struct wfx_dev		*wdev,
-					   WsmHiMibGrpAddrTable_t	*fp)
+static inline int wsm_set_multicast_filter(struct wfx_dev *wdev,
+					   WsmHiMibGrpAddrTable_t *fp)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_DOT11_GROUP_ADDRESSES_TABLE,
 			     fp, sizeof(*fp));
 }
 
-static inline int wsm_set_arp_ipv4_filter(struct wfx_dev		*wdev,
-					  WsmHiMibArpIpAddrTable_t	*fp)
+static inline int wsm_set_arp_ipv4_filter(struct wfx_dev *wdev,
+					  WsmHiMibArpIpAddrTable_t *fp)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_ARP_IP_ADDRESSES_TABLE,
 			    fp, sizeof(*fp));
 }
 
-static inline int wsm_set_p2p_ps_modeinfo(struct wfx_dev		*wdev,
-					  WsmHiMibP2PPsModeInfo_t	*mi)
+static inline int wsm_set_p2p_ps_modeinfo(struct wfx_dev *wdev,
+					  WsmHiMibP2PPsModeInfo_t *mi)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_P2P_PS_MODE_INFO,
 			     mi, sizeof(*mi));
 }
 
-static inline int wsm_get_p2p_ps_modeinfo(struct wfx_dev		*wdev,
-					  WsmHiMibP2PPsModeInfo_t	*mi)
+static inline int wsm_get_p2p_ps_modeinfo(struct wfx_dev *wdev,
+					  WsmHiMibP2PPsModeInfo_t *mi)
 {
 	return wsm_read_mib(wdev, WSM_MIB_ID_P2P_PS_MODE_INFO,
 			    mi, sizeof(*mi));
 }
 
-/* UseMultiTxConfMessage */
-
-static inline int wsm_use_multi_tx_conf(struct wfx_dev	*wdev,
+static inline int wsm_use_multi_tx_conf(struct wfx_dev *wdev,
 					bool enabled)
 {
 	__le32 arg = enabled ? cpu_to_le32(1) : 0;
@@ -524,8 +508,8 @@ static inline int wsm_use_multi_tx_conf(struct wfx_dev	*wdev,
 			&arg, sizeof(arg));
 }
 
-static inline int wsm_set_uapsd_info(struct wfx_dev			*wdev,
-				     WsmHiMibSetUapsdInformation_t	*arg)
+static inline int wsm_set_uapsd_info(struct wfx_dev *wdev,
+				     WsmHiMibSetUapsdInformation_t *arg)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_SET_UAPSD_INFORMATION,
 				arg, sizeof(*arg));
