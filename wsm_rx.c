@@ -120,13 +120,13 @@ int wfx_unmap_link(struct wfx_vif *wvif, int sta_id)
 	if (sta_id)
 		ether_addr_copy(&maplink.MacAddr[0], wvif->link_id_db[sta_id - 1].old_mac);
 
-	return wsm_map_link(wvif->wdev, &maplink);
+	return wsm_map_link(wvif->wdev, &maplink, wvif->Id);
 }
 
 int wsm_set_probe_responder(struct wfx_vif *wvif, bool enable)
 {
 	wvif->rx_filter.probeResponder = enable;
-	return wsm_set_rx_filter(wvif->wdev, &wvif->rx_filter);
+	return wsm_set_rx_filter(wvif->wdev, &wvif->rx_filter, wvif->Id);
 }
 
 

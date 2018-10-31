@@ -435,7 +435,7 @@ int wfx_map_link(struct wfx_vif		*wvif,
 {
 	int ret;
 
-	ret = wsm_map_link(wvif->wdev, link);
+	ret = wsm_map_link(wvif->wdev, link, wvif->Id);
 
 	if (ret == 0)
 		/* Save the MAC address currently associated with the peer
@@ -1325,7 +1325,7 @@ int wfx_upload_keys(struct wfx_vif *wvif)
 
 	for (idx = 0; idx <= WSM_KEY_MAX_INDEX; ++idx)
 		if (wvif->wdev->key_map & BIT(idx)) {
-			ret = wsm_add_key(wvif->wdev, &wvif->wdev->keys[idx]);
+			ret = wsm_add_key(wvif->wdev, &wvif->wdev->keys[idx], wvif->Id);
 			if (ret < 0)
 				break;
 		}

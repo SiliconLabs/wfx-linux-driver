@@ -207,10 +207,10 @@ int wfx_wow_suspend(struct ieee80211_hw *hw, struct cfg80211_wowlan *wowlan)
 		goto revert2;
 
 	/* Set UDP filter */
-	wsm_set_udp_port_filter(wdev, &wfx_udp_port_filter_on);
+	wsm_set_udp_port_filter(wdev, &wfx_udp_port_filter_on, wvif->Id);
 
 	/* Set ethernet frame type filter */
-	wsm_set_ether_type_filter(wdev, &wfx_ether_type_filter_on);
+	wsm_set_ether_type_filter(wdev, &wfx_ether_type_filter_on, wvif->Id);
 
 	/* Allocate state */
 	state = kzalloc(sizeof(*state), GFP_KERNEL);
@@ -251,7 +251,7 @@ int wfx_wow_suspend(struct ieee80211_hw *hw, struct cfg80211_wowlan *wowlan)
 		wsm_set_beacon_wakeup_period(wdev,
 					     wvif->join_dtim_period,
 					     WF200_BEACON_SKIPPING_MULTIPLIER *
-					     wvif->join_dtim_period);
+					     wvif->join_dtim_period, wvif->Id);
 	}
 
 	/* Stop serving thread */
@@ -296,8 +296,8 @@ revert5:
 revert4:
 	kfree(state);
 revert3:
-	wsm_set_udp_port_filter(wdev, &wfx_udp_port_filter_off);
-	wsm_set_ether_type_filter(wdev, &wfx_ether_type_filter_off);
+	wsm_set_udp_port_filter(wdev, &wfx_udp_port_filter_off, wvif->Id);
+	wsm_set_ether_type_filter(wdev, &wfx_ether_type_filter_off, wvif->Id);
 revert2:
 	wsm_unlock_tx(wdev);
 	up(&wdev->scan.lock);
@@ -340,7 +340,7 @@ int wfx_wow_resume(struct ieee80211_hw *hw)
 	if (state->beacon_skipping) {
 		unsigned period = wvif->beacon_int * wvif->join_dtim_period > MAX_BEACON_SKIP_TIME_MS ? 1 : wvif->join_dtim_period;
 
-		wsm_set_beacon_wakeup_period(wdev, period, period);
+		wsm_set_beacon_wakeup_period(wdev, period, period, wvif->Id);
 		state->beacon_skipping = false;
 	}
 
@@ -355,10 +355,10 @@ int wfx_wow_resume(struct ieee80211_hw *hw)
 			   state->link_id_gc);
 
 	/* Remove UDP port filter */
-	wsm_set_udp_port_filter(wdev, &wfx_udp_port_filter_off);
+	wsm_set_udp_port_filter(wdev, &wfx_udp_port_filter_off, wvif->Id);
 
 	/* Remove ethernet frame type filter */
-	wsm_set_ether_type_filter(wdev, &wfx_ether_type_filter_off);
+	wsm_set_ether_type_filter(wdev, &wfx_ether_type_filter_off, wvif->Id);
 
 	/* Unlock datapath */
 	wsm_unlock_tx(wdev);
