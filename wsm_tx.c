@@ -66,7 +66,6 @@ int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
-	HiConfigurationCnfBody_t reply;
 
 	wsm_cmd_lock(wdev);
 	wfx_cmd_len(wfx_arg, len);
@@ -74,18 +73,13 @@ int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 
 	ret = wfx_cmd_send(wdev,
 			   wfx_arg,
-			   &reply,
+			   NULL,
 			   HI_CONFIGURATION_REQ_ID,
 			   WSM_CMD_TIMEOUT, 0);
-	wsm_cmd_unlock(wdev);
-	if (ret < 0)
-		return ret;
-
-	return le32_to_cpu(reply.Status);
 
 nomem:
 	wsm_cmd_unlock(wdev);
-	return -ENOMEM;
+	return ret;
 }
 
 int wsm_reset(struct wfx_dev *wdev, const WsmHiResetFlags_t *arg,  int Id)
