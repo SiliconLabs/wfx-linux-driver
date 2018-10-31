@@ -59,8 +59,8 @@
 					cpu_to_le32)
 
 
-static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf, void *arg,
-			u8 cmd, long tmo);
+static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf,
+			void *arg, int cmd, long tmo);
 
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 {
@@ -517,34 +517,33 @@ nomem:
 	return ret;
 }
 
-static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf,
-			void *arg, u8 cmd, long tmo)
+static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf, void *arg,
+			int cmd, long tmo)
 {
 	size_t buf_len = buf->data - buf->begin;
+	HiMsgHdr_t *hdr = (HiMsgHdr_t *) buf->begin;
 	int ret;
+	int if_id = -1;
 
-	WARN(cmd > NB_REQ_MSG, "Invalid WSM command %02x", cmd);
-
-	/* Don't bother if we're dead. */
 	if (wdev->bh_error) {
-		ret = 0;
-		goto done;
+		wsm_buf_reset(buf);
+		return 0;
 	}
 
+	if (if_id == -1)
+		if_id = 0;
+
+	WARN(cmd & ~0x3f, "Invalid WSM command %02x", cmd);
+	WARN(if_id & ~0x3, "Invalid interface ID %d", if_id);
+	WARN(wdev->wsm_cmd.ptr, "Data locking error");
+
+	hdr->MsgLen = cpu_to_le16(buf_len);
+	hdr->s.b.Id = cmd;
+	hdr->s.b.IntId = if_id;
+
 	spin_lock(&wdev->wsm_cmd.lock);
-	while (!wdev->wsm_cmd.done) {
-		spin_unlock(&wdev->wsm_cmd.lock);
-		spin_lock(&wdev->wsm_cmd.lock);
-	}
 	wdev->wsm_cmd.done = 0;
-	spin_unlock(&wdev->wsm_cmd.lock);
-
-	((__le16 *)buf->begin)[0] = cpu_to_le16(buf_len);
-	((__le16 *)buf->begin)[1] = cpu_to_le16(cmd);
-
-	spin_lock(&wdev->wsm_cmd.lock);
-	BUG_ON(wdev->wsm_cmd.ptr);
-	wdev->wsm_cmd.ptr = buf->begin;
+	wdev->wsm_cmd.ptr = (u8 *) hdr;
 	wdev->wsm_cmd.len = buf_len;
 	wdev->wsm_cmd.arg = arg;
 	wdev->wsm_cmd.cmd = cmd;
@@ -583,7 +582,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf,
 		ret = wdev->wsm_cmd.ret;
 		spin_unlock(&wdev->wsm_cmd.lock);
 	}
-done:
+
 	// Should not be necessary but just in case
 	spin_lock(&wdev->wsm_cmd.lock);
 	wdev->wsm_cmd.arg = NULL;
