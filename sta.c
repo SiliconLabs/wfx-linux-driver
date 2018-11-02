@@ -620,8 +620,7 @@ int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
 	mutex_lock(&wdev->conf_mutex);
 
 	if (queue < dev->queues) {
-		memcpy(&old_uapsd_flags, &wvif->uapsd_info,
-		       sizeof(old_uapsd_flags));
+		old_uapsd_flags = *((uint16_t *) &wvif->uapsd_info);
 
 		wvif->tx_queue_params.params[queue].AckPolicy = 0;
 		wvif->tx_queue_params.params[queue].AllowedMediumTime = 0;
@@ -647,8 +646,7 @@ int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
 
 		if (wvif->mode == NL80211_IFTYPE_STATION) {
 			ret = wfx_set_uapsd_param(wvif, &wvif->edca);
-			memcpy(&new_uapsd_flags, &wvif->uapsd_info,
-			       sizeof(new_uapsd_flags));
+			new_uapsd_flags = *((uint16_t *) &wvif->uapsd_info);
 			if (!ret && wvif->setbssparams_done &&
 			    (wvif->join_status == WFX_JOIN_STATUS_STA) &&
 			    /* (old_uapsd_flags != le16_to_cpu(wvif->uapsd_info.uapsd_flags))) */
