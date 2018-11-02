@@ -292,24 +292,18 @@ int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg, int Id)
 	return ret;
 }
 
-int wsm_remove_key(struct wfx_dev *wdev, const WsmHiRemoveKeyReqBody_t *arg, int Id)
+int wsm_remove_key(struct wfx_dev *wdev, int idx, int Id)
 {
 	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 	HiMsgHdr_t *hdr;
+	WsmHiRemoveKeyReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
+	body->EntryIndex = idx;
+	wfx_fill_header(hdr, Id, WSM_HI_REMOVE_KEY_REQ_ID, sizeof(*body));
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	wfx_cmd_fl(wfx_arg, arg->EntryIndex);
-	wfx_cmd_fl(wfx_arg, 0);
-	wfx_cmd_len(wfx_arg, 0);
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, Id, WSM_HI_REMOVE_KEY_REQ_ID, sizeof(WsmHiRemoveKeyReqBody_t));
 	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
-
-nomem:
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 

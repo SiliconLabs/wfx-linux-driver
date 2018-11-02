@@ -896,17 +896,13 @@ int wfx_set_key(struct ieee80211_hw *dev, enum set_key_cmd cmd,
 		else
 			wfx_free_key(wdev, idx);
 	} else if (cmd == DISABLE_KEY) {
-		WsmHiRemoveKeyReqBody_t wsm_key = {
-			.EntryIndex	= key->hw_key_idx,
-		};
-
-		if (wsm_key.EntryIndex > WSM_KEY_MAX_INDEX) {
+		if (key->hw_key_idx > WSM_KEY_MAX_INDEX) {
 			ret = -EINVAL;
 			goto finally;
 		}
 
-		wfx_free_key(wdev, wsm_key.EntryIndex);
-		ret = wsm_remove_key(wdev, &wsm_key, wvif->Id);
+		wfx_free_key(wdev, key->hw_key_idx);
+		ret = wsm_remove_key(wdev, key->hw_key_idx, wvif->Id);
 	} else {
 		dev_warn(wdev->pdev, "unsupported key command %d\n", cmd);
 	}
