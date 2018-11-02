@@ -86,20 +86,18 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *arg, long t
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 {
 	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	// sizeof(HiConfigurationReqBody_t) is wider than necessary
+	size_t buf_len = sizeof(u16) + len;
 	HiMsgHdr_t *hdr;
+	HiConfigurationReqBody_t *body = wfx_alloc_wsm(buf_len, &hdr);
 
+	body->Length = cpu_to_le16(len);
+	memcpy(body->PdsData, conf, len);
+	wfx_fill_header(hdr, -1, HI_CONFIGURATION_REQ_ID, buf_len);
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	wfx_cmd_len(wfx_arg, len);
-	wfx_cmd(wfx_arg, conf, len);
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, -1, HI_CONFIGURATION_REQ_ID, sizeof(u16) + len);
 	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
-
-nomem:
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 
