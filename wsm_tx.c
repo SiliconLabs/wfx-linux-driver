@@ -72,6 +72,15 @@ static void wfx_fill_header(HiMsgHdr_t *hdr, int if_id, unsigned cmd, size_t siz
 	hdr->s.b.IntId = if_id;
 }
 
+static void *wfx_alloc_wsm(size_t body_len, HiMsgHdr_t **hdr)
+{
+	*hdr = kzalloc(sizeof(HiMsgHdr_t) + body_len, GFP_KERNEL);
+	if (*hdr)
+		return *hdr + 1;
+	else
+		return NULL;
+}
+
 static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *arg, long tmo);
 
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
