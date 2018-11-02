@@ -72,24 +72,22 @@ static void wfx_fill_header(HiMsgHdr_t *hdr, int if_id, unsigned cmd, size_t siz
 	hdr->s.b.IntId = if_id;
 }
 
-static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf,
-			void *arg, int cmd, long tmo, int if_id);
+static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *arg, long tmo);
 
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
 	wfx_cmd_len(wfx_arg, len);
 	wfx_cmd(wfx_arg, conf, len);
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   HI_CONFIGURATION_REQ_ID,
-			   WSM_CMD_TIMEOUT, 0);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, -1, HI_CONFIGURATION_REQ_ID, sizeof(u16) + len);
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -100,17 +98,15 @@ int wsm_reset(struct wfx_dev *wdev, const WsmHiResetFlags_t *arg,  int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
 	wfx_cmd_data(wfx_arg, arg->ResetStat ? 0 : 1);
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_RESET_REQ_ID,
-			   WSM_CMD_RESET_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_RESET_REQ_ID, sizeof(WsmHiResetReqBody_t));
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_RESET_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -122,6 +118,7 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 	// WsmHiReadMibCnfBody_t is too big to be placed on stack
 	WsmHiReadMibCnfBody_t *reply = kmalloc(sizeof(WsmHiReadMibCnfBody_t), GFP_KERNEL);
 
@@ -130,12 +127,10 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
 	wfx_cmd_len(wfx_arg, mib_id);
 	wfx_cmd_len(wfx_arg, 0);
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   reply,
-			   WSM_HI_READ_MIB_REQ_ID,
-			   WSM_CMD_TIMEOUT,
-			   0);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, -1, WSM_HI_READ_MIB_REQ_ID, sizeof(WsmHiReadMibReqBody_t));
+	ret = wfx_cmd_send(wdev, hdr, reply, WSM_CMD_TIMEOUT);
+
 	reply->Length -= 4; // Drop header
 	if (buf_size < reply->Length) {
 		dev_err(wdev->pdev, "Bad buffer size to receive %s (%zu < %d)\n",
@@ -162,6 +157,7 @@ int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
@@ -169,12 +165,9 @@ int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
 	wfx_cmd_len(wfx_arg, buf_size);
 	wfx_cmd(wfx_arg, _buf, buf_size);
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_WRITE_MIB_REQ_ID,
-			   WSM_CMD_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_WRITE_MIB_REQ_ID, 2 * sizeof(u16) + buf_size);
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -186,6 +179,8 @@ int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id)
 	int i;
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
+	size_t buf_len = sizeof(WsmHiStartScanReqBody_t);
 
 	if (arg->scan_req.NumOfChannels > WSM_API_CHANNEL_LIST_SIZE)
 		return -EINVAL;
@@ -214,17 +209,17 @@ int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id)
 	for (i = 0; i < arg->scan_req.NumOfSSIDs; ++i) {
 		wfx_cmd_data(wfx_arg, arg->ssids[i].SSIDLength);
 		wfx_cmd(wfx_arg, arg->ssids[i].SSID, sizeof(arg->ssids[i].SSID));
+		buf_len += sizeof(u16) + sizeof(arg->ssids[i].SSID);
 	}
 
-	for (i = 0; i < arg->scan_req.NumOfChannels; ++i)
+	for (i = 0; i < arg->scan_req.NumOfChannels; ++i) {
 		wfx_cmd_fl(wfx_arg, arg->ch[i]);
+		buf_len += 1;
+	}
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_START_SCAN_REQ_ID,
-			   WSM_CMD_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_START_SCAN_REQ_ID, buf_len);
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -235,15 +230,13 @@ int wsm_stop_scan(struct wfx_dev *wdev, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_STOP_SCAN_REQ_ID,
-			   WSM_CMD_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_STOP_SCAN_REQ_ID, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
 
 	wsm_cmd_unlock(wdev);
 	return ret;
@@ -253,6 +246,7 @@ int wsm_join(struct wfx_dev *wdev, WsmHiJoinReqBody_t *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
@@ -270,12 +264,9 @@ int wsm_join(struct wfx_dev *wdev, WsmHiJoinReqBody_t *arg, int Id)
 	wfx_cmd_data(wfx_arg, arg->BeaconInterval);
 	wfx_cmd_data(wfx_arg, arg->BasicRateSet);
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_JOIN_REQ_ID,
-			   WSM_CMD_JOIN_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_JOIN_REQ_ID, sizeof(WsmHiJoinReqBody_t));
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_JOIN_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -287,6 +278,7 @@ int wsm_set_bss_params(struct wfx_dev		*wdev,
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
@@ -295,12 +287,9 @@ int wsm_set_bss_params(struct wfx_dev		*wdev,
 	wfx_cmd_len(wfx_arg, arg->AID);
 	wfx_cmd_data(wfx_arg, arg->OperationalRateSet);
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_SET_BSS_PARAMS_REQ_ID,
-			   WSM_CMD_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_SET_BSS_PARAMS_REQ_ID, sizeof(WsmHiSetBssParamsReqBody_t));
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -311,17 +300,15 @@ int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
 	wfx_cmd(wfx_arg, arg, sizeof(*arg));
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_ADD_KEY_REQ_ID,
-			   WSM_CMD_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_ADD_KEY_REQ_ID, sizeof(WsmHiAddKeyReqBody_t));
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -332,6 +319,7 @@ int wsm_remove_key(struct wfx_dev *wdev, const WsmHiRemoveKeyReqBody_t *arg, int
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
@@ -339,12 +327,9 @@ int wsm_remove_key(struct wfx_dev *wdev, const WsmHiRemoveKeyReqBody_t *arg, int
 	wfx_cmd_fl(wfx_arg, 0);
 	wfx_cmd_len(wfx_arg, 0);
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_REMOVE_KEY_REQ_ID,
-			   WSM_CMD_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_REMOVE_KEY_REQ_ID, sizeof(WsmHiRemoveKeyReqBody_t));
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -356,6 +341,7 @@ int wsm_set_tx_queue_params(struct wfx_dev *wdev,
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
@@ -367,12 +353,9 @@ int wsm_set_tx_queue_params(struct wfx_dev *wdev,
 	wfx_cmd_len(wfx_arg, arg->AllowedMediumTime);
 	wfx_cmd_len(wfx_arg, 0);
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_TX_QUEUE_PARAMS_REQ_ID,
-			   WSM_CMD_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_TX_QUEUE_PARAMS_REQ_ID, sizeof(WsmHiTxQueueParamsReqBody_t));
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -384,6 +367,7 @@ int wsm_set_edca_params(struct wfx_dev *wdev,
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
@@ -413,12 +397,9 @@ int wsm_set_edca_params(struct wfx_dev *wdev,
 	wfx_cmd_data(wfx_arg, arg->params.MaxReceiveLifetime[1]);
 	wfx_cmd_data(wfx_arg, arg->params.MaxReceiveLifetime[0]);
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_EDCA_PARAMS_REQ_ID,
-			   WSM_CMD_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_EDCA_PARAMS_REQ_ID, sizeof(WsmHiEdcaParamsReqBody_t));
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -429,6 +410,7 @@ int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
@@ -437,12 +419,9 @@ int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg, int Id)
 	wfx_cmd_fl(wfx_arg, arg->ApPsmChangePeriod);
 	wfx_cmd_fl(wfx_arg, arg->MinAutoPsPollPeriod);
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_SET_PM_MODE_REQ_ID,
-			   WSM_CMD_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_SET_PM_MODE_REQ_ID, sizeof(WsmHiSetPmModeReqBody_t));
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -453,6 +432,7 @@ int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
@@ -468,12 +448,9 @@ int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg, int Id)
 	wfx_cmd(wfx_arg, arg->Ssid, sizeof(arg->Ssid));
 	wfx_cmd_data(wfx_arg, arg->BasicRateSet);
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_START_REQ_ID,
-			   WSM_CMD_START_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_START_REQ_ID, sizeof(WsmHiStartReqBody_t));
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_START_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -485,17 +462,15 @@ int wsm_beacon_transmit(struct wfx_dev *wdev,
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
 	wfx_cmd_data(wfx_arg, arg->EnableBeaconing ? 1 : 0);
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_BEACON_TRANSMIT_REQ_ID,
-			   WSM_CMD_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_BEACON_TRANSMIT_REQ_ID, sizeof(WsmHiBeaconTransmitReqBody_t));
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -506,6 +481,7 @@ int wsm_map_link(struct wfx_dev *wdev, const WsmHiMapLinkReqBody_t *arg, int Id)
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
@@ -513,12 +489,9 @@ int wsm_map_link(struct wfx_dev *wdev, const WsmHiMapLinkReqBody_t *arg, int Id)
 	wfx_cmd_fl(wfx_arg, arg->Flags);
 	wfx_cmd_fl(wfx_arg, arg->PeerStaId);
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_MAP_LINK_REQ_ID,
-			   WSM_CMD_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_MAP_LINK_REQ_ID, sizeof(WsmHiMapLinkReqBody_t));
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
@@ -530,6 +503,7 @@ int wsm_update_ie(struct wfx_dev *wdev,
 {
 	int ret;
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	HiMsgHdr_t *hdr;
 
 	wsm_cmd_lock(wdev);
 	wsm_buf_reset(wfx_arg);
@@ -537,23 +511,19 @@ int wsm_update_ie(struct wfx_dev *wdev,
 	wfx_cmd_len(wfx_arg, arg->Body.NumIEs);
 	wfx_cmd(wfx_arg, arg->ies, arg->length);
 
-	ret = wfx_cmd_send(wdev,
-			   wfx_arg,
-			   NULL,
-			   WSM_HI_UPDATE_IE_REQ_ID,
-			   WSM_CMD_TIMEOUT,
-			   Id);
+	hdr = (HiMsgHdr_t *) wfx_arg->begin;
+	wfx_fill_header(hdr, Id, WSM_HI_UPDATE_IE_REQ_ID, sizeof(WsmHiUpdateIeReqBody_t) + arg->length);
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
 
 nomem:
 	wsm_cmd_unlock(wdev);
 	return ret;
 }
 
-static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf, void *arg,
-			int cmd, long tmo, int if_id)
+static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *arg, long tmo)
 {
-	size_t buf_len = buf->data - buf->begin;
-	HiMsgHdr_t *hdr = (HiMsgHdr_t *) buf->begin;
+	size_t buf_len = le16_to_cpu(hdr->MsgLen);
+	int cmd = hdr->s.b.Id;
 	int ret;
 
 	if (wdev->bh_error) {
@@ -561,8 +531,6 @@ static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf, void *arg,
 	}
 
 	WARN(wdev->wsm_cmd.ptr, "Data locking error");
-
-	wfx_fill_header(hdr, if_id, cmd, buf_len - 4);
 
 	spin_lock(&wdev->wsm_cmd.lock);
 	wdev->wsm_cmd.done = 0;
