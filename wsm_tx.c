@@ -81,6 +81,7 @@ int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd_len(wfx_arg, len);
 	wfx_cmd(wfx_arg, conf, len);
 
@@ -101,6 +102,7 @@ int wsm_reset(struct wfx_dev *wdev, const WsmHiResetFlags_t *arg,  int Id)
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd_data(wfx_arg, arg->ResetStat ? 0 : 1);
 
 	ret = wfx_cmd_send(wdev,
@@ -124,6 +126,7 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
 	WsmHiReadMibCnfBody_t *reply = kmalloc(sizeof(WsmHiReadMibCnfBody_t), GFP_KERNEL);
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd_len(wfx_arg, mib_id);
 	wfx_cmd_len(wfx_arg, 0);
 
@@ -161,6 +164,7 @@ int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd_len(wfx_arg, mib_id);
 	wfx_cmd_len(wfx_arg, buf_size);
 	wfx_cmd(wfx_arg, _buf, buf_size);
@@ -193,6 +197,7 @@ int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id)
 		return -EINVAL;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd_fl(wfx_arg, arg->scan_req.Band);
 	wfx_cmd(wfx_arg, &arg->scan_req.ScanType, sizeof(WsmHiScanType_t));
 	wfx_cmd(wfx_arg, &arg->scan_req.ScanFlags, sizeof(WsmHiScanFlags_t));
@@ -232,6 +237,7 @@ int wsm_stop_scan(struct wfx_dev *wdev, int Id)
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	ret = wfx_cmd_send(wdev,
 			   wfx_arg,
 			   NULL,
@@ -249,6 +255,7 @@ int wsm_join(struct wfx_dev *wdev, WsmHiJoinReqBody_t *arg, int Id)
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd_fl(wfx_arg, arg->Mode);
 	wfx_cmd_fl(wfx_arg, arg->Band);
 	wfx_cmd_len(wfx_arg, arg->ChannelNumber);
@@ -282,6 +289,7 @@ int wsm_set_bss_params(struct wfx_dev		*wdev,
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd_fl(wfx_arg, arg->BssFlags.LostCountOnly ? 1 : 0);
 	wfx_cmd_fl(wfx_arg, arg->BeaconLostCount);
 	wfx_cmd_len(wfx_arg, arg->AID);
@@ -305,6 +313,7 @@ int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg, int Id)
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd(wfx_arg, arg, sizeof(*arg));
 
 	ret = wfx_cmd_send(wdev,
@@ -325,6 +334,7 @@ int wsm_remove_key(struct wfx_dev *wdev, const WsmHiRemoveKeyReqBody_t *arg, int
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd_fl(wfx_arg, arg->EntryIndex);
 	wfx_cmd_fl(wfx_arg, 0);
 	wfx_cmd_len(wfx_arg, 0);
@@ -348,6 +358,7 @@ int wsm_set_tx_queue_params(struct wfx_dev *wdev,
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd_fl(wfx_arg, wsm_queue_id_to_wsm(id));
 	wfx_cmd_fl(wfx_arg, 0);
 	wfx_cmd_fl(wfx_arg, arg->AckPolicy);
@@ -375,6 +386,7 @@ int wsm_set_edca_params(struct wfx_dev *wdev,
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 
 	wfx_cmd_len(wfx_arg, arg->params.CwMin[3]);
 	wfx_cmd_len(wfx_arg, arg->params.CwMin[2]);
@@ -419,6 +431,7 @@ int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg, int Id)
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd(wfx_arg, &arg->PmMode, sizeof(arg->PmMode));
 	wfx_cmd_fl(wfx_arg, arg->FastPsmIdlePeriod);
 	wfx_cmd_fl(wfx_arg, arg->ApPsmChangePeriod);
@@ -442,6 +455,7 @@ int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg, int Id)
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd(wfx_arg, &arg->Mode, sizeof(arg->Mode));
 	wfx_cmd_fl(wfx_arg, arg->Band);
 	wfx_cmd_len(wfx_arg, arg->ChannelNumber);
@@ -473,6 +487,7 @@ int wsm_beacon_transmit(struct wfx_dev *wdev,
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd_data(wfx_arg, arg->EnableBeaconing ? 1 : 0);
 
 	ret = wfx_cmd_send(wdev,
@@ -493,6 +508,7 @@ int wsm_map_link(struct wfx_dev *wdev, const WsmHiMapLinkReqBody_t *arg, int Id)
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd(wfx_arg, arg->MacAddr, sizeof(arg->MacAddr));
 	wfx_cmd_fl(wfx_arg, arg->Flags);
 	wfx_cmd_fl(wfx_arg, arg->PeerStaId);
@@ -516,6 +532,7 @@ int wsm_update_ie(struct wfx_dev *wdev,
 	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 
 	wsm_cmd_lock(wdev);
+	wsm_buf_reset(wfx_arg);
 	wfx_cmd(wfx_arg, &arg->Body.IeFlags, sizeof(arg->Body.IeFlags));
 	wfx_cmd_len(wfx_arg, arg->Body.NumIEs);
 	wfx_cmd(wfx_arg, arg->ies, arg->length);
@@ -540,7 +557,6 @@ static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf, void *arg,
 	int ret;
 
 	if (wdev->bh_error) {
-		wsm_buf_reset(buf);
 		return 0;
 	}
 
@@ -603,7 +619,6 @@ static int wfx_cmd_send(struct wfx_dev *wdev, struct wsm_buf *buf, void *arg,
 		dev_warn(wdev->pdev, "WSM request %s (%#02x) returned status %d\n",
 				get_wsm_name(cmd), cmd, ret);
 
-	wsm_buf_reset(buf);
 	return ret;
 }
 
