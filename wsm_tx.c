@@ -252,26 +252,20 @@ int wsm_join(struct wfx_dev *wdev, const WsmHiJoinReqBody_t *arg, int Id)
 	return ret;
 }
 
-int wsm_set_bss_params(struct wfx_dev		*wdev,
-		       const WsmHiSetBssParamsReqBody_t *arg, int Id)
+int wsm_set_bss_params(struct wfx_dev *wdev, const WsmHiSetBssParamsReqBody_t *arg, int Id)
 {
 	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 	HiMsgHdr_t *hdr;
+	WsmHiSetBssParamsReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
+	memcpy(body, arg, sizeof(*body));
+	cpu_to_le16s(&body->AID);
+	cpu_to_le32s(&body->OperationalRateSet);
+	wfx_fill_header(hdr, Id, WSM_HI_SET_BSS_PARAMS_REQ_ID, sizeof(*body));
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	wfx_cmd_fl(wfx_arg, arg->BssFlags.LostCountOnly ? 1 : 0);
-	wfx_cmd_fl(wfx_arg, arg->BeaconLostCount);
-	wfx_cmd_len(wfx_arg, arg->AID);
-	wfx_cmd_data(wfx_arg, arg->OperationalRateSet);
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, Id, WSM_HI_SET_BSS_PARAMS_REQ_ID, sizeof(WsmHiSetBssParamsReqBody_t));
 	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
-
-nomem:
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 
