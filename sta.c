@@ -55,7 +55,6 @@ static int wfx_upload_beacon(struct wfx_vif *wvif);
 static int wfx_vif_setup(struct wfx_vif *wvif);
 static int wfx_start_ap(struct wfx_vif *wvif);
 static int wfx_update_beaconing(struct wfx_vif *wvif);
-static int wfx_enable_beaconing(struct wfx_vif *wvif, bool enable);
 static void __wfx_sta_notify(struct ieee80211_hw *dev,
 				struct ieee80211_vif *vif,
 			     enum sta_notify_cmd notify_cmd, int link_id);
@@ -1898,7 +1897,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 			 info->enable_beacon);
 
 		if (wvif->enable_beacon != info->enable_beacon) {
-			wfx_enable_beaconing(wvif, info->enable_beacon);
+			wsm_beacon_transmit(wvif->wdev, info->enable_beacon, wvif->Id);
 			wvif->enable_beacon = info->enable_beacon;
 		}
 	}
@@ -2324,16 +2323,6 @@ done:
 	if (!skb)
 		dev_kfree_skb(skb);
 	return ret;
-}
-
-static int wfx_enable_beaconing(struct wfx_vif	*wvif,
-				   bool enable)
-{
-	WsmHiBeaconTransmitReqBody_t transmit = {
-		.EnableBeaconing	= enable,
-	};
-
-	return wsm_beacon_transmit(wvif->wdev, &transmit, wvif->Id);
 }
 
 static int wfx_start_ap(struct wfx_vif *wvif)
