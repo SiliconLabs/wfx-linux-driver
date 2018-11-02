@@ -103,22 +103,19 @@ nomem:
 	return ret;
 }
 
-int wsm_reset(struct wfx_dev *wdev, const WsmHiResetFlags_t *arg,  int Id)
+int wsm_reset(struct wfx_dev *wdev, bool reset_stat, int Id)
 {
 	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 	HiMsgHdr_t *hdr;
+	WsmHiResetReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
+	// FIXME: API logic is inverted
+	body->ResetFlags.ResetStat = reset_stat ? 0 : 1;
+	wfx_fill_header(hdr, Id, WSM_HI_RESET_REQ_ID, sizeof(*body));
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	wfx_cmd_data(wfx_arg, arg->ResetStat ? 0 : 1);
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, Id, WSM_HI_RESET_REQ_ID, sizeof(WsmHiResetReqBody_t));
 	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_RESET_TIMEOUT);
-
-nomem:
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 

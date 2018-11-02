@@ -196,7 +196,7 @@ int wsm_buf_reserve(struct wsm_buf *buf, size_t extra_size);
 void wsm_buf_reset(struct wsm_buf *buf);
 
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len);
-int wsm_reset(struct wfx_dev *wdev, const WsmHiResetFlags_t *arg, int Id);
+int wsm_reset(struct wfx_dev *wdev, bool reset_stat, int Id);
 int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *buf, size_t buf_size);
 int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *buf, size_t buf_size, int Id);
 int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id);

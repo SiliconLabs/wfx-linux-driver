@@ -252,9 +252,6 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 {
 	struct wfx_dev *wdev = dev->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
-	WsmHiResetFlags_t reset = {
-		.ResetStat	= true,
-	};
 	LIST_HEAD(list);
 	int i;
 
@@ -286,7 +283,7 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 		wvif->buffered_multicasts = false;
 		wvif->pspoll_mask = 0;
 		/* reset.link_id = 0; */
-		wsm_reset(wdev, &reset, wvif->Id);
+		wsm_reset(wdev, true, wvif->Id);
 		break;
 	case WFX_JOIN_STATUS_MONITOR:
 		wfx_update_listening(wvif, false);
@@ -1456,10 +1453,6 @@ void wfx_join_timeout(struct work_struct *work)
 
 static void wfx_do_unjoin(struct wfx_vif *wvif)
 {
-	WsmHiResetFlags_t reset = {
-		.ResetStat	= true,
-	};
-
 	cancel_delayed_work_sync(&wvif->join_timeout);
 
 	mutex_lock(&wvif->wdev->conf_mutex);
@@ -1489,7 +1482,7 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 	/* Unjoin is a reset. */
 	wsm_flush_tx(wvif->wdev);
 	wsm_keep_alive_period(wvif->wdev, 0, wvif->Id);
-	wsm_reset(wvif->wdev, &reset, wvif->Id);
+	wsm_reset(wvif->wdev, true, wvif->Id);
 	wsm_set_output_power(wvif->wdev, wvif->wdev->output_power * 10, wvif->Id);
 	wvif->join_dtim_period = 0;
 	wsm_set_station_id(wvif->wdev, wvif->wdev->mac_addr, NULL);
@@ -1553,13 +1546,7 @@ int wfx_enable_listening(struct wfx_vif *wvif)
 
 int wfx_disable_listening(struct wfx_vif *wvif)
 {
-	int ret;
-	WsmHiResetFlags_t reset = {
-		.ResetStat	= true,
-	};
-
-	ret = wsm_reset(wvif->wdev, &reset, wvif->Id);
-	return ret;
+	return wsm_reset(wvif->wdev, true, wvif->Id);
 }
 
 void wfx_update_listening(struct wfx_vif *wvif, bool enabled)
@@ -2417,9 +2404,6 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 static int wfx_update_beaconing(struct wfx_vif *wvif)
 {
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
-	WsmHiResetFlags_t reset = {
-		.ResetStat	= true,
-	};
 
 	if (wvif->mode == NL80211_IFTYPE_AP) {
 		if (wvif->join_status != WFX_JOIN_STATUS_AP ||
@@ -2427,7 +2411,7 @@ static int wfx_update_beaconing(struct wfx_vif *wvif)
 			pr_debug("ap restarting\n");
 			wsm_lock_tx(wvif->wdev);
 			if (wvif->join_status != WFX_JOIN_STATUS_PASSIVE)
-				wsm_reset(wvif->wdev, &reset, wvif->Id);
+				wsm_reset(wvif->wdev, true, wvif->Id);
 			wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
 			wfx_start_ap(wvif);
 			wsm_unlock_tx(wvif->wdev);
