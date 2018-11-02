@@ -220,16 +220,15 @@ int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id)
 int wsm_stop_scan(struct wfx_dev *wdev, int Id)
 {
 	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 	HiMsgHdr_t *hdr;
+	// body associated to WSM_HI_STOP_SCAN_REQ_ID is empty
+	wfx_alloc_wsm(0, &hdr);
 
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
 	wfx_fill_header(hdr, Id, WSM_HI_STOP_SCAN_REQ_ID, 0);
 	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
-
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 
