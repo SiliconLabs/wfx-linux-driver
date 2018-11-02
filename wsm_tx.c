@@ -278,19 +278,17 @@ nomem:
 int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg, int Id)
 {
 	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 	HiMsgHdr_t *hdr;
+	// FIXME: only send necessary bits
+	WsmHiAddKeyReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
+	// FIXME: swap bytes as necessary in body
+	memcpy(body, arg, sizeof(*body));
+	wfx_fill_header(hdr, Id, WSM_HI_ADD_KEY_REQ_ID, sizeof(*body));
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	wfx_cmd(wfx_arg, arg, sizeof(*arg));
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, Id, WSM_HI_ADD_KEY_REQ_ID, sizeof(WsmHiAddKeyReqBody_t));
 	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
-
-nomem:
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 
