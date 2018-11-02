@@ -619,13 +619,12 @@ int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
 	if (queue < dev->queues) {
 		old_uapsd_flags = *((uint16_t *) &wvif->uapsd_info);
 
+		// FIXME: currently unused
 		wvif->tx_queue_params.params[queue].AckPolicy = 0;
 		wvif->tx_queue_params.params[queue].AllowedMediumTime = 0;
 		wvif->tx_queue_params.params[queue].MaxTransmitLifetime = 0;
 
-		ret = wsm_set_tx_queue_params(wdev,
-					      &wvif->tx_queue_params.params[
-						      queue], queue, wvif->Id);
+		ret = wsm_set_tx_queue_params(wdev, queue, 0, 0, 0, wvif->Id);
 		if (ret) {
 			ret = -EINVAL;
 			goto out;

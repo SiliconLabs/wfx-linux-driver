@@ -301,29 +301,22 @@ int wsm_remove_key(struct wfx_dev *wdev, int idx, int Id)
 	return ret;
 }
 
-int wsm_set_tx_queue_params(struct wfx_dev *wdev,
-			    const WsmHiTxQueueParamsReqBody_t *arg, u8 id, int Id)
+int wsm_set_tx_queue_params(struct wfx_dev *wdev, int queue_id, int ack_policy,
+			    int max_lifetime, int medium_time, int Id)
 {
 	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 	HiMsgHdr_t *hdr;
+	WsmHiTxQueueParamsReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
+	body->QueueId = wsm_queue_id_to_wsm(queue_id);
+	body->AckPolicy = ack_policy;
+	body->MaxTransmitLifetime = cpu_to_le32(max_lifetime);
+	body->AllowedMediumTime = cpu_to_le16(medium_time);
+	wfx_fill_header(hdr, Id, WSM_HI_TX_QUEUE_PARAMS_REQ_ID, sizeof(*body));
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	wfx_cmd_fl(wfx_arg, wsm_queue_id_to_wsm(id));
-	wfx_cmd_fl(wfx_arg, 0);
-	wfx_cmd_fl(wfx_arg, arg->AckPolicy);
-	wfx_cmd_fl(wfx_arg, 0);
-	wfx_cmd_data(wfx_arg, arg->MaxTransmitLifetime);
-	wfx_cmd_len(wfx_arg, arg->AllowedMediumTime);
-	wfx_cmd_len(wfx_arg, 0);
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, Id, WSM_HI_TX_QUEUE_PARAMS_REQ_ID, sizeof(WsmHiTxQueueParamsReqBody_t));
 	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
-
-nomem:
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 
