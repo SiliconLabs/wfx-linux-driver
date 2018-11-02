@@ -117,41 +117,34 @@ int wsm_reset(struct wfx_dev *wdev, bool reset_stat, int Id)
 	return ret;
 }
 
-int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
-			size_t buf_size)
+int wsm_read_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len)
 {
 	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 	HiMsgHdr_t *hdr;
-	// WsmHiReadMibCnfBody_t is too big to be placed on stack
-	WsmHiReadMibCnfBody_t *reply = kmalloc(sizeof(WsmHiReadMibCnfBody_t), GFP_KERNEL);
+	WsmHiReadMibReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	WsmHiReadMibCnfBody_t *reply = kmalloc(sizeof(*reply), GFP_KERNEL);
 
+	body->MibId = cpu_to_le16(id);
+	wfx_fill_header(hdr, -1, WSM_HI_READ_MIB_REQ_ID, sizeof(*body));
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	wfx_cmd_len(wfx_arg, mib_id);
-	wfx_cmd_len(wfx_arg, 0);
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, -1, WSM_HI_READ_MIB_REQ_ID, sizeof(WsmHiReadMibReqBody_t));
 	ret = wfx_cmd_send(wdev, hdr, reply, WSM_CMD_TIMEOUT);
+	wsm_cmd_unlock(wdev);
 
 	reply->Length -= 4; // Drop header
-	if (buf_size < reply->Length) {
-		dev_err(wdev->pdev, "Bad buffer size to receive %s (%zu < %d)\n",
-			get_mib_name(mib_id), buf_size, reply->Length);
+	if (val_len < reply->Length) {
+		dev_err(wdev->pdev, "Buffer is too small to receive %s (%zu < %d)\n",
+			get_mib_name(id), val_len, reply->Length);
 		ret = -ENOMEM;
 	}
-	if (mib_id != reply->MibId) {
+	if (id != reply->MibId) {
 		dev_warn(wdev->pdev, "%s: confirmation mismatch request\n", __func__);
 		ret = -EIO;
 	}
-
-nomem:
 	if (!ret)
-		memcpy(_buf, &reply->MibData, reply->Length);
+		memcpy(val, &reply->MibData, reply->Length);
 	else
-		memset(_buf, 0xFF, buf_size);
-	wsm_cmd_unlock(wdev);
+		memset(val, 0xFF, val_len);
+	kfree(hdr);
 	kfree(reply);
 	return ret;
 }
