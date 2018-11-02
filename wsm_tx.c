@@ -127,28 +127,21 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
 			   WSM_CMD_TIMEOUT,
 			   0);
 	reply->Length -= 4; // Drop header
-	if (mib_id != reply->MibId) {
-		dev_warn(wdev->pdev, "%s: confirmation mismatch request\n", __func__);
-		ret = -EIO;
-		goto nomem;
-	}
 	if (buf_size < reply->Length) {
 		dev_err(wdev->pdev, "Bad buffer size to receive %s (%zu < %d)\n",
 			get_mib_name(mib_id), buf_size, reply->Length);
 		ret = -ENOMEM;
-		goto nomem;
 	}
-	if (reply->Status) {
-		dev_err(wdev->pdev, "read MIB %s returned error %d\n", get_mib_name(mib_id), reply->Status);
-		goto nomem;
+	if (mib_id != reply->MibId) {
+		dev_warn(wdev->pdev, "%s: confirmation mismatch request\n", __func__);
+		ret = -EIO;
 	}
-	memcpy(_buf, &reply->MibData, reply->Length);
-	wsm_cmd_unlock(wdev);
-	kfree(reply);
-	return ret;
 
 nomem:
-	memset(_buf, 0xFF, buf_size);
+	if (!ret)
+		memcpy(_buf, &reply->MibData, reply->Length);
+	else
+		memset(_buf, 0xFF, buf_size);
 	wsm_cmd_unlock(wdev);
 	kfree(reply);
 	return ret;
