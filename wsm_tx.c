@@ -149,25 +149,22 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len)
 	return ret;
 }
 
-int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *_buf,
-		  size_t buf_size, int Id)
+int wsm_write_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len, int Id)
 {
 	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	// sizeof(WsmHiWriteMibReqBody_t) is wider than necessary
+	int buf_len = 2 * sizeof(u16) + val_len;
 	HiMsgHdr_t *hdr;
+	WsmHiWriteMibReqBody_t *body = wfx_alloc_wsm(buf_len, &hdr);
 
+	body->MibId = cpu_to_le16(id);
+	body->Length = cpu_to_le16(val_len);
+	memcpy(&body->MibData, val, val_len);
+	wfx_fill_header(hdr, Id, WSM_HI_WRITE_MIB_REQ_ID, buf_len);
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	wfx_cmd_len(wfx_arg, mib_id);
-	wfx_cmd_len(wfx_arg, buf_size);
-	wfx_cmd(wfx_arg, _buf, buf_size);
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, Id, WSM_HI_WRITE_MIB_REQ_ID, 2 * sizeof(u16) + buf_size);
 	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
-
-nomem:
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 
