@@ -1,0 +1,97 @@
+Changes in 1.6
+--------------
+
+  * Fix maximum bitrate in IBSS mode
+  * Show interface id in traces
+  * Improve SDIO bandwith by improving usage of block mode
+  * Improve SPI bandwith by ensuring that buffer size are 32bits aligned
+  * Fix crash during join when BSS is NULL
+  * Fix possible race condition while calling ieee80211_bss_get_ie()
+  * Fix driver stuck during unbind (mainly with SDIO, but also with SPI)
+
+Changes in 1.5 (not released)
+-----------------------------
+
+  * Introduce a framework to change arbitrary fileds in WSM messages
+  * Replace ldpc and sgi module parameters with a dynamic parameters in debugfs:
+      /sys/kernel/debug/ieee80211/phy0/wfx/wsm_params
+  * Add files in debugfs to change contents of WSM_MIB_ID_BEACON_WAKEUP_PERIOD
+  * Add files in debugfs to change content of WSM_MIB_ID_BLOCK_ACK_POLICY
+  * Enable LDPC with hardware revision >= A2
+  * Replace traces for SDIO/SPI messages with tracepoints (see README for usage)
+  * Replace traces for WSM send/receive messages with tracepoints (see README
+    for usage)
+  * Remove traces related to wake-up. They can be replaced by tracespoints (see
+    README for examples)
+  * Fix beacon wakeup period that was (loudly) ignored by firmware
+  * Fix bug with unaligned buffers and SDIO access
+  * Fix badly detected flags in received frames.
+  * Bump API to 0.6.7
+  * Implement a better work-around for SDIO messages of 512 bytes length
+  * Change error reported when a WSM message fail
+
+Changes in 1.4.2
+----------------
+
+  * Fix bug with SDIO message of 512 bytes introduced in 1.4
+  * Support hardware revision A2
+
+Changes in 1.4.1
+----------------
+
+  * Do not hide ldpc and sgi module parameter in ppublic version (revert change
+    from 1.4)
+
+Changes in 1.4
+--------------
+
+  * Reset and Wake-up gpios should been declared from device tree. Process is
+    described in README. YOU HAVE TO UPDATE YOUR DEVICE TREE (IPWHIFER-275,
+    IPWHIFER-274)
+  * Driver is now packed in one module named wfx.ko. Module aliases allow to
+    provide a bit compatibility but this change may break external processes.
+  * MAC address is fetched from chip OTP memory. macadress module parameter
+    does not exist anymore. It is possible to change macadress using standard
+    Linux tools (or DT). Notice you need firmware >= 1.2.13 to make this work
+    properly
+  * Allow to use an external IRQ pin instead of SDIO native one (not yet
+    supported by firmware)
+  * Drop wfx_refclk module parameter
+  * Drop bssloss_mitigation module parameter
+  * Drop wfx_ba_*x_tids module parameters
+  * Module parameters ldpc and sgi was now available only for internal versions
+  * Fix race condition during firmware loading
+  * Fix buffer overflow while printing bootloader label
+  * Fix potential memory allocation failure during firmware loading
+  * Faster chip init (350ms vs 600ms previously)
+  * Network interface does not appears if PDS does not correctly load
+  * PDS name can now been overloaded from DT
+  * Driver try to test bus communication and report useful errors during
+    probing
+  * Only useful messages are emitted during driver probing
+  * Device name in DT has been changed to follow upstream rules from
+    vendor-prefixes.txt (legacy naming are also recognized)
+  * Documentation explain how to properly setup SDIO host to allow to reset
+    chip without reboot whole target
+  * Add documentation about debug features
+  * Add documentation about driver architecture
+  * Driver now build if kernel does enable SPI or MMC support
+  * You can now run 'make clean modules' without race condition between targets
+  * Driver now build without warning on various architecture/kernel versions
+  * Checkpatch results are now reported during continuous integration (but
+    there is yet plenty of errors)
+  * Spinlock bss_loss_lock is now a mutex
+
+Changes in 1.3.0
+----------------
+
+  * Driver is now maintained outside of reference kernel. This prominent change
+    may break some process.
+  * PDS format changes. It is now necessary to use a compressed PDS.
+  * Driver now compile with kernels from 4.4 to 4.18
+  * Driver now autoload when chip is detected on SDIO bus
+  * Chipset CW1200 is no more supported by this driver
+  * Testmode is automatically enabled if kernel enable NL80211_TESTMODE
+  * Jenkins recipe is now versioned with this driver
+  * When compiled with "_NO_PROD", output files does not have different name
+
