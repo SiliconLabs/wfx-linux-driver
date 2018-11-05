@@ -509,13 +509,6 @@ static inline int wsm_set_p2p_ps_modeinfo(struct wfx_dev *wdev,
 			     mi, sizeof(*mi), Id);
 }
 
-static inline int wsm_get_p2p_ps_modeinfo(struct wfx_dev *wdev,
-					  WsmHiMibP2PPsModeInfo_t *mi)
-{
-	return wsm_read_mib(wdev, WSM_MIB_ID_P2P_PS_MODE_INFO,
-			    mi, sizeof(*mi));
-}
-
 static inline int wsm_use_multi_tx_conf(struct wfx_dev *wdev,
 					bool enabled,
 					int Id)
