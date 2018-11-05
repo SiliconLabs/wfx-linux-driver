@@ -232,34 +232,23 @@ int wsm_stop_scan(struct wfx_dev *wdev, int Id)
 	return ret;
 }
 
-int wsm_join(struct wfx_dev *wdev, WsmHiJoinReqBody_t *arg, int Id)
+int wsm_join(struct wfx_dev *wdev, const WsmHiJoinReqBody_t *arg, int Id)
 {
 	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 	HiMsgHdr_t *hdr;
+	WsmHiJoinReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
+	memcpy(body, arg, sizeof(WsmHiJoinReqBody_t));
+	cpu_to_le16s(&body->ChannelNumber);
+	cpu_to_le16s(&body->AtimWindow);
+	cpu_to_le32s(&body->SSIDLength);
+	cpu_to_le32s(&body->BeaconInterval);
+	cpu_to_le32s(&body->BasicRateSet);
+	wfx_fill_header(hdr, Id, WSM_HI_JOIN_REQ_ID, sizeof(*body));
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	wfx_cmd_fl(wfx_arg, arg->Mode);
-	wfx_cmd_fl(wfx_arg, arg->Band);
-	wfx_cmd_len(wfx_arg, arg->ChannelNumber);
-	wfx_cmd(wfx_arg, arg->BSSID, sizeof(arg->BSSID));
-	wfx_cmd_len(wfx_arg, arg->AtimWindow);
-	wfx_cmd_fl(wfx_arg, arg->PreambleType);
-	wfx_cmd_fl(wfx_arg, arg->ProbeForJoin);
-	wfx_cmd_fl(wfx_arg, arg->DTIMPeriod);
-	wfx_cmd(wfx_arg, &arg->JoinFlags, sizeof(arg->JoinFlags));
-	wfx_cmd_data(wfx_arg, arg->SSIDLength);
-	wfx_cmd(wfx_arg, arg->SSID, sizeof(arg->SSID));
-	wfx_cmd_data(wfx_arg, arg->BeaconInterval);
-	wfx_cmd_data(wfx_arg, arg->BasicRateSet);
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, Id, WSM_HI_JOIN_REQ_ID, sizeof(WsmHiJoinReqBody_t));
 	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_JOIN_TIMEOUT);
-
-nomem:
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 

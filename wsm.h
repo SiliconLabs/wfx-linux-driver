@@ -201,7 +201,7 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *buf, size_t buf_size);
 int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *buf, size_t buf_size, int Id);
 int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id);
 int wsm_stop_scan(struct wfx_dev *wdev, int Id);
-int wsm_join(struct wfx_dev *wdev, WsmHiJoinReqBody_t *arg, int Id);
+int wsm_join(struct wfx_dev *wdev, const WsmHiJoinReqBody_t *arg, int Id);
 int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg, int Id);
 int wsm_set_bss_params(struct wfx_dev *wdev, const WsmHiSetBssParamsReqBody_t *arg, int Id);
 int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg, int Id);
