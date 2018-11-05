@@ -180,53 +180,40 @@ nomem:
 
 int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id)
 {
-	int i;
-	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	int ret, i;
 	HiMsgHdr_t *hdr;
-	size_t buf_len = sizeof(WsmHiStartScanReqBody_t);
+	WsmHiSsidDef_t *ssids;
+	size_t buf_len = sizeof(WsmHiStartScanReqBody_t) +
+		arg->scan_req.NumOfChannels * sizeof(u8) +
+		arg->scan_req.NumOfSSIDs * sizeof(WsmHiSsidDef_t);
+	WsmHiStartScanReqBody_t *body = wfx_alloc_wsm(buf_len, &hdr);
+	u8 *ptr = (u8 *) body + sizeof(*body);
 
-	if (arg->scan_req.NumOfChannels > WSM_API_CHANNEL_LIST_SIZE)
-		return -EINVAL;
+	WARN(arg->scan_req.NumOfChannels > WSM_API_CHANNEL_LIST_SIZE, "Invalid params");
+	WARN(arg->scan_req.NumOfSSIDs > 2, "Invalid params");
+	WARN(arg->scan_req.Band > 1, "Invalid params");
 
-	if (arg->scan_req.NumOfSSIDs > 2)
-		return -EINVAL;
-
-	if (arg->scan_req.Band > 1)
-		return -EINVAL;
+	// FIXME: This API is unecessary complex, fixing NumOfChannels and
+	// adding a member SsidDef at end of WsmHiStartScanReqBody_t would
+	// simplify that a lot.
+	memcpy(body, &arg->scan_req, sizeof(*body));
+	cpu_to_le32s(&body->MinChannelTime);
+	cpu_to_le32s(&body->MaxChannelTime);
+	cpu_to_le32s(&body->TxPowerLevel);
+	memcpy(ptr, arg->ssids, arg->scan_req.NumOfSSIDs * sizeof(WsmHiSsidDef_t));
+	ssids = (WsmHiSsidDef_t *) ptr;
+	for (i = 0; i < body->NumOfSSIDs; ++i)
+		cpu_to_le32s(&ssids[i].SSIDLength);
+	ptr += arg->scan_req.NumOfSSIDs * sizeof(WsmHiSsidDef_t);
+	memcpy(ptr, arg->ch, arg->scan_req.NumOfChannels * sizeof(u8));
+	ptr += arg->scan_req.NumOfChannels * sizeof(u8);
+	WARN(buf_len != ptr - (u8 *) body, "Allocation size mismatch");
+	wfx_fill_header(hdr, Id, WSM_HI_START_SCAN_REQ_ID, buf_len);
 
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	wfx_cmd_fl(wfx_arg, arg->scan_req.Band);
-	wfx_cmd(wfx_arg, &arg->scan_req.ScanType, sizeof(WsmHiScanType_t));
-	wfx_cmd(wfx_arg, &arg->scan_req.ScanFlags, sizeof(WsmHiScanFlags_t));
-	wfx_cmd_fl(wfx_arg, arg->scan_req.MaxTransmitRate);
-	wfx_cmd(wfx_arg, &arg->scan_req.AutoScanParam, sizeof(WsmHiAutoScanParam_t));
-	wfx_cmd_fl(wfx_arg, arg->scan_req.NumOfProbeRequests);
-	wfx_cmd_fl(wfx_arg, arg->scan_req.ProbeDelay);
-	wfx_cmd_fl(wfx_arg, arg->scan_req.NumOfSSIDs);
-	wfx_cmd_fl(wfx_arg, arg->scan_req.NumOfChannels);
-	wfx_cmd_data(wfx_arg, arg->scan_req.MinChannelTime);
-	wfx_cmd_data(wfx_arg, arg->scan_req.MaxChannelTime);
-	wfx_cmd_data(wfx_arg, arg->scan_req.TxPowerLevel);
-
-	for (i = 0; i < arg->scan_req.NumOfSSIDs; ++i) {
-		wfx_cmd_data(wfx_arg, arg->ssids[i].SSIDLength);
-		wfx_cmd(wfx_arg, arg->ssids[i].SSID, sizeof(arg->ssids[i].SSID));
-		buf_len += sizeof(u16) + sizeof(arg->ssids[i].SSID);
-	}
-
-	for (i = 0; i < arg->scan_req.NumOfChannels; ++i) {
-		wfx_cmd_fl(wfx_arg, arg->ch[i]);
-		buf_len += 1;
-	}
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, Id, WSM_HI_START_SCAN_REQ_ID, buf_len);
 	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
-
-nomem:
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 
