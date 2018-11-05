@@ -489,7 +489,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	if (!ret)
 		ret = wsm_set_beacon_filter_table(wvif->wdev, &bf_tbl, wvif->Id);
 	if (!ret)
-		ret = wsm_beacon_filter_control(wvif->wdev, &bf_ctrl, wvif->Id);
+		ret = wsm_beacon_filter_control(wvif->wdev, bf_ctrl.Enable, bf_ctrl.BcnCount, wvif->Id);
 	if (!ret)
 		ret = wsm_set_bssid_filtering(wvif->wdev, bssid_filtering, wvif->Id);
 	if (!ret)

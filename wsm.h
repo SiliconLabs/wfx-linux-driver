@@ -305,18 +305,15 @@ static inline int wsm_set_beacon_filter_table(struct wfx_dev *wdev,
 			     sizeof(*ft), Id);
 }
 
-static inline int wsm_beacon_filter_control(struct wfx_dev *wdev,
-					    WsmHiMibBcnFilterEnable_t *arg,
-					    int Id)
+static inline int wsm_beacon_filter_control(struct wfx_dev *wdev, int enable,
+					    int beacon_count, int Id)
 {
-	struct {
-		__le32 Enable;
-		__le32 BcnCount;
-	} val;
-	val.Enable = cpu_to_le32(arg->Enable);
-	val.BcnCount = cpu_to_le32(arg->BcnCount);
-	return wsm_write_mib(wdev, WSM_MIB_ID_BEACON_FILTER_ENABLE, &val,
-			     sizeof(val), Id);
+	WsmHiMibBcnFilterEnable_t arg = {
+	    .Enable = cpu_to_le32(enable),
+	    .BcnCount = cpu_to_le32(beacon_count),
+	};
+	return wsm_write_mib(wdev, WSM_MIB_ID_BEACON_FILTER_ENABLE, &arg,
+			     sizeof(arg), Id);
 }
 
 static inline int wsm_set_operational_mode(struct wfx_dev *wdev,
