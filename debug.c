@@ -377,37 +377,37 @@ static int wfx_counters_show(struct seq_file *seq, void *v)
 {
 	int ret;
 	struct wfx_dev *wdev = seq->private;
-	struct wsm_mib_counters_table counters;
+	WsmHiMibCountTable_t counters;
 
 	ret = wsm_get_counters_table(wdev, &counters);
 	if (ret)
 		return ret;
 
 #define PUT_COUNTER(name) \
-	seq_printf(seq, "%24s %d\n", #name ":", le32_to_cpu(counters.name))
+	seq_printf(seq, "%24s %d\n", #name ":", le32_to_cpu(counters.Count##name))
 
-	PUT_COUNTER(plcp_errors);
-	PUT_COUNTER(fcs_errors);
-	PUT_COUNTER(tx_packets);
-	PUT_COUNTER(rx_packets);
-	PUT_COUNTER(rx_packet_errors);
-	PUT_COUNTER(rx_decryption_failures);
-	PUT_COUNTER(rx_mic_failures);
-	PUT_COUNTER(rx_no_key_failures);
-	PUT_COUNTER(tx_multicast_frames);
-	PUT_COUNTER(tx_frames_success);
-	PUT_COUNTER(tx_frame_failures);
-	PUT_COUNTER(tx_frames_retried);
-	PUT_COUNTER(tx_frames_multi_retried);
-	PUT_COUNTER(rx_frame_duplicates);
-	PUT_COUNTER(rts_success);
-	PUT_COUNTER(rts_failures);
-	PUT_COUNTER(ack_failures);
-	PUT_COUNTER(rx_multicast_frames);
-	PUT_COUNTER(rx_frames_success);
-	PUT_COUNTER(rx_cmac_icv_errors);
-	PUT_COUNTER(rx_cmac_replays);
-	PUT_COUNTER(rx_mgmt_ccmp_replays);
+	PUT_COUNTER(PlcpErrors);
+	PUT_COUNTER(FcsErrors);
+	PUT_COUNTER(TxPackets);
+	PUT_COUNTER(RxPackets);
+	PUT_COUNTER(RxPacketErrors);
+	PUT_COUNTER(RxDecryptionFailures);
+	PUT_COUNTER(RxMicFailures);
+	PUT_COUNTER(RxNoKeyFailures);
+	PUT_COUNTER(TxMulticastFrames);
+	PUT_COUNTER(TxFramesSuccess);
+	PUT_COUNTER(TxFrameFailures);
+	PUT_COUNTER(TxFramesRetried);
+	PUT_COUNTER(TxFramesMultiRetried);
+	PUT_COUNTER(RxFrameDuplicates);
+	PUT_COUNTER(RtsSuccess);
+	PUT_COUNTER(RtsFailures);
+	PUT_COUNTER(AckFailures);
+	PUT_COUNTER(RxMulticastFrames);
+	PUT_COUNTER(RxFramesSuccess);
+	PUT_COUNTER(RxCMACICVErrors);
+	PUT_COUNTER(RxCMACReplays);
+	PUT_COUNTER(RxMgmtCCMPReplays);
 
 #undef PUT_COUNTER
 

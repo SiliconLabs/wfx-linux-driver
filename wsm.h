@@ -156,31 +156,6 @@ struct wsm_update_ie {
 	size_t			length;
 };
 
-struct wsm_mib_counters_table {
-	__le32	plcp_errors;
-	__le32	fcs_errors;
-	__le32	tx_packets;
-	__le32	rx_packets;
-	__le32	rx_packet_errors;
-	__le32	rx_decryption_failures;
-	__le32	rx_mic_failures;
-	__le32	rx_no_key_failures;
-	__le32	tx_multicast_frames;
-	__le32	tx_frames_success;
-	__le32	tx_frame_failures;
-	__le32	tx_frames_retried;
-	__le32	tx_frames_multi_retried;
-	__le32	rx_frame_duplicates;
-	__le32	rts_success;
-	__le32	rts_failures;
-	__le32	ack_failures;
-	__le32	rx_multicast_frames;
-	__le32	rx_frames_success;
-	__le32	rx_cmac_icv_errors;
-	__le32	rx_cmac_replays;
-	__le32	rx_mgmt_ccmp_replays;
-} __packed;
-
 struct wsm_rx_filter {
 	bool	promiscuous;
 	bool	bssid;
@@ -288,7 +263,7 @@ static inline int wsm_set_rcpi_rssi_threshold(struct wfx_dev *wdev,
 }
 
 static inline int wsm_get_counters_table(struct wfx_dev *wdev,
-					 struct wsm_mib_counters_table *arg)
+					 WsmHiMibCountTable_t *arg)
 {
 	return wsm_read_mib(wdev, WSM_MIB_ID_COUNTERS_TABLE,
 			    arg, sizeof(*arg));
