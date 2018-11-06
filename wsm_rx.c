@@ -39,6 +39,9 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 	int wsm_cmd;
 	void *wsm_arg;
 
+
+	WARN(!mutex_is_locked(&wdev->wsm_cmd_mux), "Data locking error");
+
 	spin_lock(&wdev->wsm_cmd.lock);
 	wsm_arg = wdev->wsm_cmd.arg;
 	wsm_cmd = wdev->wsm_cmd.cmd;
@@ -757,8 +760,8 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	bool more = false;
 
 	if (wdev->wsm_cmd.ptr) { /* CMD request */
+		WARN(!mutex_is_locked(&wdev->wsm_cmd_mux), "Data locking error");
 		spin_lock(&wdev->wsm_cmd.lock);
-		BUG_ON(!wdev->wsm_cmd.ptr);
 		*data = wdev->wsm_cmd.ptr;
 		*tx_len = wdev->wsm_cmd.len;
 		*burst = 1;
