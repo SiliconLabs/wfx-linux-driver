@@ -1850,23 +1850,18 @@ void wfx_set_cts_work(struct work_struct *work)
 		.length = 3,
 	};
 	u32 erp_info;
-	__le32 use_cts_prot;
 
 	pr_debug("[STA] wfx_set_cts_work\n");
 
 	mutex_lock(&wvif->wdev->conf_mutex);
 	erp_info = wvif->erp_info;
 	mutex_unlock(&wvif->wdev->conf_mutex);
-	use_cts_prot =
-		(erp_info & WLAN_ERP_USE_PROTECTION) ?
-		cpu_to_le32(1) : 0;
 
 	update_ie.ies[ERP_INFO_BYTE_OFFSET] = erp_info;
 
 	pr_debug("[STA] ERP information 0x%x\n", erp_info);
 
-	wsm_write_mib(wvif->wdev, WSM_MIB_ID_NON_ERP_PROTECTION,
-		      &use_cts_prot, sizeof(use_cts_prot), wvif->Id);
+	wsm_erp_use_protection(wvif->wdev, erp_info & WLAN_ERP_USE_PROTECTION, wvif->Id);
 
 	if (wvif->mode != NL80211_IFTYPE_STATION)
 		wsm_update_ie(wvif->wdev, &update_ie, wvif->Id);

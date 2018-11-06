@@ -467,6 +467,14 @@ static inline int wsm_set_uapsd_info(struct wfx_dev *wdev,
 			     arg, sizeof(*arg), Id);
 }
 
+static inline int wsm_erp_use_protection(struct wfx_dev *wdev, bool enable, int Id)
+{
+	__le32 arg = enable ? cpu_to_le32(1) : 0;
+
+	return wsm_write_mib(wdev, WSM_MIB_ID_NON_ERP_PROTECTION,
+			     &arg, sizeof(arg), Id);
+}
+
 /* Queue mapping: WSM <---> linux					*/
 /* Linux: VO VI BE BK							*/
 /* WSM:   BE BK VI VO							*/
