@@ -362,7 +362,6 @@ int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame,
 
 static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, size_t reply_len)
 {
-	size_t buf_len = le16_to_cpu(request->MsgLen);
 	int cmd = request->s.b.Id;
 	int ret;
 
@@ -374,10 +373,8 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 	WARN(wdev->wsm_cmd.buf_send, "Data locking error");
 
 	wdev->wsm_cmd.buf_send = request;
-	wdev->wsm_cmd.len = buf_len;
 	wdev->wsm_cmd.buf_recv = reply;
 	wdev->wsm_cmd.len_recv = reply_len;
-	wdev->wsm_cmd.cmd = cmd;
 	complete(&wdev->wsm_cmd.ready);
 
 	wfx_bh_wakeup(wdev);
@@ -397,7 +394,6 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 	}
 
 	wdev->wsm_cmd.buf_send = NULL;
-	wdev->wsm_cmd.cmd = 0xFF;
 	mutex_unlock(&wdev->wsm_cmd_mux);
 
 	if (ret < 0)

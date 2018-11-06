@@ -165,11 +165,9 @@ struct wsm_cmd {
 	struct completion ready;
 	struct completion done;
 	HiMsgHdr_t        *buf_send;
-	size_t		len;
 	void              *buf_recv;
 	size_t            len_recv;
 	int               ret;
-	u8		cmd;
 };
 
 void init_wsm_cmd(struct wsm_cmd *wsm_cmd);
