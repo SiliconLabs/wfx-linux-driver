@@ -37,11 +37,6 @@
 #define WSM_LARGE_L_LENGTH_PROT         BIT5
 
 /*FOR WFX COMMANDS SEND/RECEIVE/CONFIRM*/
-#define WSM_CMD_TIMEOUT         (2 * HZ)        /* With respect to interrupt loss */
-#define WSM_CMD_JOIN_TIMEOUT    (7 * HZ)        /* Join timeout is 5 sec. in FW   */
-#define WSM_CMD_START_TIMEOUT   (7 * HZ)
-#define WSM_CMD_RESET_TIMEOUT   (3 * HZ)        /* 2 sec. timeout was observed.   */
-#define WSM_CMD_MAX_TIMEOUT     (3 * HZ)
 #define NB_REQ_MSG   33
 #define NB_INDIC_MSG 16
 
