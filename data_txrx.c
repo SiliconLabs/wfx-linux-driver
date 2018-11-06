@@ -1300,8 +1300,10 @@ void wfx_free_key(struct wfx_vif *wvif, int idx)
 	wdev->key_map &= ~BIT(idx);
 }
 
-void wfx_free_keys(struct wfx_dev *wdev)
+void wfx_free_keys(struct wfx_vif *wvif)
 {
+	struct wfx_dev *wdev = wvif->wdev;
+
 	memset(&wdev->keys, 0, sizeof(wdev->keys));
 	wdev->key_map = 0;
 }

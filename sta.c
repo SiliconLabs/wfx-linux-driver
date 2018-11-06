@@ -293,7 +293,7 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 	wvif->mode = NL80211_IFTYPE_MONITOR;
 	eth_zero_addr(wdev->mac_addr);
 	memset(&wvif->p2p_ps_modeinfo, 0, sizeof(wvif->p2p_ps_modeinfo));
-	wfx_free_keys(wdev);
+	wfx_free_keys(wvif);
 
 	wsm_set_macaddr(wdev, wdev->mac_addr, NULL);
 
