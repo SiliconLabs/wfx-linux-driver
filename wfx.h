@@ -185,9 +185,6 @@ struct wfx_dev {
 
 	u32			pending_frame_id;
 
-	// FIXME: key_map and keys should be parts of wvif
-	u32			key_map;
-	WsmHiAddKeyReqBody_t			keys[WSM_KEY_MAX_INDEX + 1];
 
 	/* TX rate policy cache */
 	struct tx_policy_cache tx_policy_cache;
@@ -230,6 +227,7 @@ struct wfx_vif {
 	u32			bss_loss_confirm_id;
 	u32			cipherType;
 	u32			rts_threshold;
+	u32			key_map;
 
 	bool			join_pending;
 	bool			enable_beacon;
@@ -284,6 +282,7 @@ struct wfx_vif {
 	WsmHiMibGrpAddrTable_t		multicast_filter;
 	/*Add support in mac80211 for psmode info per VIF */
 	WsmHiMibP2PPsModeInfo_t		p2p_ps_modeinfo;
+	WsmHiAddKeyReqBody_t		keys[WSM_KEY_MAX_INDEX + 1];
 
 	/* spinlock/mutex */
 	struct mutex		bss_loss_lock;

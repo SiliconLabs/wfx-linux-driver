@@ -1280,32 +1280,27 @@ drop:
 int wfx_alloc_key(struct wfx_vif *wvif)
 {
 	int idx;
-	struct wfx_dev *wdev = wvif->wdev;
 
-	idx = ffs(~wdev->key_map) - 1;
+	idx = ffs(~wvif->key_map) - 1;
 	if (idx < 0 || idx > WSM_KEY_MAX_INDEX)
 		return -1;
 
-	wdev->key_map |= BIT(idx);
-	wdev->keys[idx].EntryIndex = idx;
+	wvif->key_map |= BIT(idx);
+	wvif->keys[idx].EntryIndex = idx;
 	return idx;
 }
 
 void wfx_free_key(struct wfx_vif *wvif, int idx)
 {
-	struct wfx_dev *wdev = wvif->wdev;
-
-	BUG_ON(!(wdev->key_map & BIT(idx)));
-	memset(&wdev->keys[idx], 0, sizeof(wdev->keys[idx]));
-	wdev->key_map &= ~BIT(idx);
+	BUG_ON(!(wvif->key_map & BIT(idx)));
+	memset(&wvif->keys[idx], 0, sizeof(wvif->keys[idx]));
+	wvif->key_map &= ~BIT(idx);
 }
 
 void wfx_free_keys(struct wfx_vif *wvif)
 {
-	struct wfx_dev *wdev = wvif->wdev;
-
-	memset(&wdev->keys, 0, sizeof(wdev->keys));
-	wdev->key_map = 0;
+	memset(&wvif->keys, 0, sizeof(wvif->keys));
+	wvif->key_map = 0;
 }
 
 int wfx_upload_keys(struct wfx_vif *wvif)
@@ -1313,8 +1308,8 @@ int wfx_upload_keys(struct wfx_vif *wvif)
 	int idx, ret = 0;
 
 	for (idx = 0; idx <= WSM_KEY_MAX_INDEX; ++idx)
-		if (wvif->wdev->key_map & BIT(idx)) {
-			ret = wsm_add_key(wvif->wdev, &wvif->wdev->keys[idx], wvif->Id);
+		if (wvif->key_map & BIT(idx)) {
+			ret = wsm_add_key(wvif->wdev, &wvif->keys[idx], wvif->Id);
 			if (ret < 0)
 				break;
 		}

@@ -719,7 +719,7 @@ int wfx_set_key(struct ieee80211_hw *dev, enum set_key_cmd cmd,
 		int pairwise = (key->flags & IEEE80211_KEY_FLAG_PAIRWISE) ?
 			1 : 0;
 		int idx = wfx_alloc_key(wvif);
-		WsmHiAddKeyReqBody_t *wsm_key = &wdev->keys[idx];
+		WsmHiAddKeyReqBody_t *wsm_key = &wvif->keys[idx];
 
 		if (idx < 0) {
 			ret = -EINVAL;
