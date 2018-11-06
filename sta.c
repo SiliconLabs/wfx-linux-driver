@@ -2134,13 +2134,10 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 
 	/* ERP Slottime */
 	if (changed & (BSS_CHANGED_ASSOC | BSS_CHANGED_ERP_SLOT)) {
-		__le32 slot_time = info->use_short_slot ?
-			cpu_to_le32(9) : __cpu_to_le32(20);
+		uint32_t slot_time = info->use_short_slot ? 9 : 20;
 
-		pr_debug("[STA] Slot time: %d us.\n",
-			 le32_to_cpu(slot_time));
-		wsm_write_mib(wdev, WSM_MIB_ID_DOT11_SLOT_TIME,
-			      &slot_time, sizeof(slot_time), wvif->Id);
+		pr_debug("[STA] Slot time: %d us.\n", slot_time);
+		wsm_slot_time(wdev, slot_time, wvif->Id);
 	}
 
 	if (changed & (BSS_CHANGED_ASSOC | BSS_CHANGED_CQM)) {
