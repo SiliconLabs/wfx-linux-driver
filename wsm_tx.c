@@ -28,36 +28,6 @@
 #include "sta.h"
 #include "testmode.h"
 
-#define FWLOAD_BLOCK_SIZE         (1024)
-
-#define wfx_cmd(wfx_arg, ptr, size) \
-	do { \
-		if ((wfx_arg)->data + size > (wfx_arg)->end) { \
-			ret = wsm_buf_reserve((wfx_arg), size); \
-			if (ret < 0) \
-				goto nomem; \
-		} \
-		memcpy((wfx_arg)->data, ptr, size); \
-		(wfx_arg)->data += size; \
-	} while (0)
-
-#define __wfx_cmd(wfx_arg, val, type, type2, cvt) \
-	do { \
-		if ((wfx_arg)->data + sizeof(type) > (wfx_arg)->end) { \
-			ret = wsm_buf_reserve((wfx_arg), sizeof(type)); \
-			if (ret < 0) \
-				goto nomem; \
-		} \
-		*(type2 *)(wfx_arg)->data = cvt(val); \
-		(wfx_arg)->data += sizeof(type); \
-	} while (0)
-
-#define wfx_cmd_fl(wfx_arg, val) __wfx_cmd(wfx_arg, val, u8, u8, (u8))
-#define wfx_cmd_len(wfx_arg, val) __wfx_cmd(wfx_arg, val, u16, __le16, \
-					cpu_to_le16)
-#define wfx_cmd_data(wfx_arg, val) __wfx_cmd(wfx_arg, val, u32, __le32, \
-					cpu_to_le32)
-
 static void wfx_fill_header(HiMsgHdr_t *hdr, int if_id, unsigned cmd, size_t size)
 {
 	if (if_id == -1)
@@ -487,48 +457,5 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *arg, long t
 				get_wsm_name(cmd), cmd, ret);
 
 	return ret;
-}
-
-void wsm_buf_init(struct wsm_buf *buf)
-{
-	BUG_ON(buf->begin);
-	buf->begin = kmalloc(FWLOAD_BLOCK_SIZE, GFP_KERNEL | GFP_DMA);
-	buf->end = buf->begin ? &buf->begin[FWLOAD_BLOCK_SIZE] : buf->begin;
-	wsm_buf_reset(buf);
-}
-
-void wsm_buf_deinit(struct wsm_buf *buf)
-{
-	kfree(buf->begin);
-	buf->begin = buf->data = buf->end = NULL;
-}
-
-void wsm_buf_reset(struct wsm_buf *buf)
-{
-	if (buf->begin) {
-		buf->data = &buf->begin[4];
-		*(u32 *)buf->begin = 0;
-	} else {
-		buf->data = buf->begin;
-	}
-}
-
-int wsm_buf_reserve(struct wsm_buf *buf, size_t extra_size)
-{
-	u8 *oldBlock = buf->begin;
-	size_t pos = buf->data - buf->begin;
-	size_t size = pos + extra_size;
-
-	size = round_up(size, FWLOAD_BLOCK_SIZE);
-	buf->begin = krealloc(oldBlock, size, GFP_KERNEL | GFP_DMA);
-	if (buf->begin) {
-		buf->data = &buf->begin[pos];
-		buf->end = &buf->begin[size];
-		return 0;
-	} else {
-		buf->end = buf->begin;
-		buf->data = buf->begin;
-		return -ENOMEM;
-	}
 }
 

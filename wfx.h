@@ -179,7 +179,6 @@ struct wfx_dev {
 	/* WSM */
 	/* Mutex to protect wsm message sending */
 	struct mutex			wsm_cmd_mux;
-	struct wsm_buf			wsm_cmd_buf;
 	struct wsm_cmd			wsm_cmd;
 	wait_queue_head_t		wsm_cmd_wq;
 	struct completion		firmware_ready;

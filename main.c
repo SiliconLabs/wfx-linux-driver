@@ -339,7 +339,6 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 	init_waitqueue_head(&wdev->channel_switch_done);
 	init_waitqueue_head(&wdev->wsm_cmd_wq);
 	init_waitqueue_head(&wdev->ps_mode_switch_done);
-	wsm_buf_init(&wdev->wsm_cmd_buf);
 	spin_lock_init(&wdev->wsm_cmd.lock);
 	tx_policy_init(wdev);
 
@@ -397,8 +396,6 @@ static void wfx_unregister_common(struct ieee80211_hw *dev)
 	wfx_unregister_bh(wdev);
 
 	mutex_destroy(&wdev->conf_mutex);
-
-	wsm_buf_deinit(&wdev->wsm_cmd_buf);
 
 	destroy_workqueue(wdev->workqueue);
 	wdev->workqueue = NULL;

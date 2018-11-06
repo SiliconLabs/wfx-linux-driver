@@ -179,16 +179,6 @@ struct wsm_cmd {
 	u8		cmd;
 };
 
-struct wsm_buf {
-	u8	*begin;
-	u8	*data;
-	u8	*end;
-};
-
-int wsm_buf_reserve(struct wsm_buf *buf, size_t extra_size);
-
-void wsm_buf_reset(struct wsm_buf *buf);
-
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len);
 int wsm_reset(struct wfx_dev *wdev, bool reset_stat, int Id);
 int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *buf, size_t buf_size);
@@ -216,8 +206,6 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data, size_t *tx_len, int *burst);
 void wsm_lock_tx(struct wfx_dev *wdev);
 void wsm_lock_tx_async(struct wfx_dev *wdev);
 void wsm_unlock_tx(struct wfx_dev *wdev);
-void wsm_buf_init(struct wsm_buf *buf);
-void wsm_buf_deinit(struct wsm_buf *buf);
 void wsm_txed(struct wfx_dev *wdev, u8 *data);
 
 bool wsm_flush_tx(struct wfx_dev *wdev);
