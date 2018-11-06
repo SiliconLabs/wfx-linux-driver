@@ -169,9 +169,9 @@ struct wsm_protected_mgmt_policy {
 struct wsm_cmd {
 	spinlock_t	lock; /* Protect structure from multiple access */
 	int		done;
-	u8		*ptr;
+	HiMsgHdr_t	*buf_send;
 	size_t		len;
-	void		*arg;
+	void		*buf_recv;
 	int		ret;
 	u8		cmd;
 };

@@ -43,7 +43,7 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 	WARN(!mutex_is_locked(&wdev->wsm_cmd_mux), "Data locking error");
 
 	spin_lock(&wdev->wsm_cmd.lock);
-	wsm_arg = wdev->wsm_cmd.arg;
+	wsm_arg = wdev->wsm_cmd.buf_recv;
 	wsm_cmd = wdev->wsm_cmd.cmd;
 	spin_unlock(&wdev->wsm_cmd.lock);
 
@@ -759,10 +759,10 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	/* More is used only for broadcasts. */
 	bool more = false;
 
-	if (wdev->wsm_cmd.ptr) { /* CMD request */
+	if (wdev->wsm_cmd.buf_send) { /* CMD request */
 		WARN(!mutex_is_locked(&wdev->wsm_cmd_mux), "Data locking error");
 		spin_lock(&wdev->wsm_cmd.lock);
-		*data = wdev->wsm_cmd.ptr;
+		*data = (u8 *) wdev->wsm_cmd.buf_send;
 		*tx_len = wdev->wsm_cmd.len;
 		*burst = 1;
 		spin_unlock(&wdev->wsm_cmd.lock);
@@ -839,9 +839,9 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 
 void wsm_txed(struct wfx_dev *wdev, u8 *data)
 {
-	if (data == wdev->wsm_cmd.ptr) {
+	if (data == (u8 *) wdev->wsm_cmd.buf_send) {
 		spin_lock(&wdev->wsm_cmd.lock);
-		wdev->wsm_cmd.ptr = NULL;
+		wdev->wsm_cmd.buf_send = NULL;
 		spin_unlock(&wdev->wsm_cmd.lock);
 	}
 }

@@ -51,7 +51,7 @@ static void *wfx_alloc_wsm(size_t body_len, HiMsgHdr_t **hdr)
 		return NULL;
 }
 
-static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *arg, long tmo);
+static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, long tmo);
 
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 {
@@ -354,10 +354,10 @@ int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame,
 	return ret;
 }
 
-static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *arg, long tmo)
+static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, long tmo)
 {
-	size_t buf_len = le16_to_cpu(hdr->MsgLen);
-	int cmd = hdr->s.b.Id;
+	size_t buf_len = le16_to_cpu(request->MsgLen);
+	int cmd = request->s.b.Id;
 	int ret;
 
 	if (wdev->bh_error) {
@@ -365,13 +365,13 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *arg, long t
 	}
 
 	mutex_lock(&wdev->wsm_cmd_mux);
-	WARN(wdev->wsm_cmd.ptr, "Data locking error");
+	WARN(wdev->wsm_cmd.buf_send, "Data locking error");
 
 	spin_lock(&wdev->wsm_cmd.lock);
 	wdev->wsm_cmd.done = 0;
-	wdev->wsm_cmd.ptr = (u8 *) hdr;
+	wdev->wsm_cmd.buf_send = request;
 	wdev->wsm_cmd.len = buf_len;
-	wdev->wsm_cmd.arg = arg;
+	wdev->wsm_cmd.buf_recv = reply;
 	wdev->wsm_cmd.cmd = cmd;
 	spin_unlock(&wdev->wsm_cmd.lock);
 
@@ -382,7 +382,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *arg, long t
 					 wdev->wsm_cmd.done, HZ);
 		spin_lock(&wdev->wsm_cmd.lock);
 		wdev->wsm_cmd.done = 1;
-		wdev->wsm_cmd.ptr = NULL;
+		wdev->wsm_cmd.buf_send = NULL;
 		spin_unlock(&wdev->wsm_cmd.lock);
 	}
 
@@ -393,7 +393,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *arg, long t
 	if (!ret && !wdev->wsm_cmd.done) {
 		spin_lock(&wdev->wsm_cmd.lock);
 		wdev->wsm_cmd.done = 1;
-		wdev->wsm_cmd.ptr = NULL;
+		wdev->wsm_cmd.buf_send = NULL;
 		spin_unlock(&wdev->wsm_cmd.lock);
 		if (wdev->bh_error) {
 			/* Return ok to help system cleanup */
@@ -411,7 +411,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *arg, long t
 
 	// Should not be necessary but just in case
 	spin_lock(&wdev->wsm_cmd.lock);
-	wdev->wsm_cmd.arg = NULL;
+	wdev->wsm_cmd.buf_send = NULL;
 	wdev->wsm_cmd.cmd = 0xFF;
 	spin_unlock(&wdev->wsm_cmd.lock);
 	mutex_unlock(&wdev->wsm_cmd_mux);
