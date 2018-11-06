@@ -1291,8 +1291,10 @@ int wfx_alloc_key(struct wfx_vif *wvif)
 	return idx;
 }
 
-void wfx_free_key(struct wfx_dev *wdev, int idx)
+void wfx_free_key(struct wfx_vif *wvif, int idx)
 {
+	struct wfx_dev *wdev = wvif->wdev;
+
 	BUG_ON(!(wdev->key_map & BIT(idx)));
 	memset(&wdev->keys[idx], 0, sizeof(wdev->keys[idx]));
 	wdev->key_map &= ~BIT(idx);

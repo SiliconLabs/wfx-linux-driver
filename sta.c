@@ -736,7 +736,7 @@ int wfx_set_key(struct ieee80211_hw *dev, enum set_key_cmd cmd,
 		case WLAN_CIPHER_SUITE_WEP40:
 		case WLAN_CIPHER_SUITE_WEP104:
 			if (key->keylen > 16) {
-				wfx_free_key(wdev, idx);
+				wfx_free_key(wvif, idx);
 				ret = -EINVAL;
 				goto finally;
 			}
@@ -884,7 +884,7 @@ int wfx_set_key(struct ieee80211_hw *dev, enum set_key_cmd cmd,
 			break;
 		default:
 			dev_warn(wdev->pdev, "unsupported key type %d\n", key->cipher);
-			wfx_free_key(wdev, idx);
+			wfx_free_key(wvif, idx);
 			ret = -EOPNOTSUPP;
 			goto finally;
 		}
@@ -892,14 +892,14 @@ int wfx_set_key(struct ieee80211_hw *dev, enum set_key_cmd cmd,
 		if (!ret)
 			key->hw_key_idx = idx;
 		else
-			wfx_free_key(wdev, idx);
+			wfx_free_key(wvif, idx);
 	} else if (cmd == DISABLE_KEY) {
 		if (key->hw_key_idx > WSM_KEY_MAX_INDEX) {
 			ret = -EINVAL;
 			goto finally;
 		}
 
-		wfx_free_key(wdev, key->hw_key_idx);
+		wfx_free_key(wvif, key->hw_key_idx);
 		ret = wsm_remove_key(wdev, key->hw_key_idx, wvif->Id);
 	} else {
 		dev_warn(wdev->pdev, "unsupported key command %d\n", cmd);
