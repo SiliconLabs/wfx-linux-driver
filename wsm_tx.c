@@ -346,22 +346,15 @@ int wsm_set_edca_params(struct wfx_dev *wdev, const WsmHiEdcaParamsReqBody_t *ar
 int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg, int Id)
 {
 	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 	HiMsgHdr_t *hdr;
+	WsmHiSetPmModeReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
+	memcpy(body, arg, sizeof(*body));
+	wfx_fill_header(hdr, Id, WSM_HI_SET_PM_MODE_REQ_ID, sizeof(*body));
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	wfx_cmd(wfx_arg, &arg->PmMode, sizeof(arg->PmMode));
-	wfx_cmd_fl(wfx_arg, arg->FastPsmIdlePeriod);
-	wfx_cmd_fl(wfx_arg, arg->ApPsmChangePeriod);
-	wfx_cmd_fl(wfx_arg, arg->MinAutoPsPollPeriod);
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, Id, WSM_HI_SET_PM_MODE_REQ_ID, sizeof(WsmHiSetPmModeReqBody_t));
 	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
-
-nomem:
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 
