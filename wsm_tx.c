@@ -364,7 +364,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *arg, long t
 		return 0;
 	}
 
-	wsm_cmd_lock(wdev);
+	mutex_lock(&wdev->wsm_cmd_mux);
 	WARN(wdev->wsm_cmd.ptr, "Data locking error");
 
 	spin_lock(&wdev->wsm_cmd.lock);
@@ -414,7 +414,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *arg, long t
 	wdev->wsm_cmd.arg = NULL;
 	wdev->wsm_cmd.cmd = 0xFF;
 	spin_unlock(&wdev->wsm_cmd.lock);
-	wsm_cmd_unlock(wdev);
+	mutex_unlock(&wdev->wsm_cmd_mux);
 
 	if (ret < 0)
 		dev_err(wdev->pdev, "WSM request %s (%#02x) returned error %d\n",

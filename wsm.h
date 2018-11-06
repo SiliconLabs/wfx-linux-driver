@@ -45,9 +45,6 @@
 #define NB_REQ_MSG   33
 #define NB_INDIC_MSG 16
 
-#define wsm_cmd_lock(__priv)   mutex_lock(&((__priv)->wsm_cmd_mux))
-#define wsm_cmd_unlock(__priv) mutex_unlock(&((__priv)->wsm_cmd_mux))
-
 /* Bands */
 /* Radio band 2.412 -2.484 GHz. */
 #define WSM_PHY_BAND_2_4G		(0)

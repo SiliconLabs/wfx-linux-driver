@@ -391,11 +391,11 @@ static int wsm_generic_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 
 void wsm_lock_tx(struct wfx_dev *wdev)
 {
-	wsm_cmd_lock(wdev);
+	mutex_lock(&wdev->wsm_cmd_mux);
 	if (atomic_add_return(1, &wdev->tx_lock) == 1)
 		if (wsm_flush_tx(wdev))
 			pr_debug("[WSM] TX is locked.\n");
-	wsm_cmd_unlock(wdev);
+	mutex_unlock(&wdev->wsm_cmd_mux);
 }
 
 void wsm_lock_tx_async(struct wfx_dev *wdev)
