@@ -93,7 +93,7 @@ void wfx_tx_timeout(struct work_struct *work);
 
 /* ******************************************************************** */
 /* Security								*/
-int wfx_alloc_key(struct wfx_dev *wdev);
+int wfx_alloc_key(struct wfx_vif *wvif);
 void wfx_free_key(struct wfx_dev *wdev, int idx);
 void wfx_free_keys(struct wfx_dev *wdev);
 int wfx_upload_keys(struct wfx_vif *wvif);

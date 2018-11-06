@@ -1277,9 +1277,10 @@ drop:
 /* ******************************************************************** */
 /* Security								*/
 
-int wfx_alloc_key(struct wfx_dev *wdev)
+int wfx_alloc_key(struct wfx_vif *wvif)
 {
 	int idx;
+	struct wfx_dev *wdev = wvif->wdev;
 
 	idx = ffs(~wdev->key_map) - 1;
 	if (idx < 0 || idx > WSM_KEY_MAX_INDEX)
