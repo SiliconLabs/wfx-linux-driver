@@ -37,13 +37,15 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 	int cmd = hdr->s.t.MsgId;
 	int len = hdr->MsgLen - 4; // drop header
 	int wsm_cmd;
-	void *wsm_arg;
+	void *reply;
+	size_t reply_len;
 
 
 	WARN(!mutex_is_locked(&wdev->wsm_cmd_mux), "Data locking error");
 
 	spin_lock(&wdev->wsm_cmd.lock);
-	wsm_arg = wdev->wsm_cmd.buf_recv;
+	reply = wdev->wsm_cmd.buf_recv;
+	reply_len = wdev->wsm_cmd.len_recv;
 	wsm_cmd = wdev->wsm_cmd.cmd;
 	spin_unlock(&wdev->wsm_cmd.lock);
 
@@ -52,11 +54,14 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 		return -EINVAL;
 	}
 
-	// FIXME: check that if wsm_arg is provided, caller allocated enough bytes
 	// FIXME: access to wsm_arg should be inner spinlock. (but mutex from
 	// wsm_tx also protect it).
-	if (wsm_arg)
-		memcpy(wsm_arg, buf, len);
+	if (reply) {
+		if (reply_len >= len)
+			memcpy(reply, buf, len);
+		else
+			status = -EINVAL;
+	}
 
 	// Legacy chip have a special management for this case.
 	// Is it still necessary?

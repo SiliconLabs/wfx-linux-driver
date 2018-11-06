@@ -167,6 +167,7 @@ struct wsm_cmd {
 	HiMsgHdr_t	*buf_send;
 	size_t		len;
 	void		*buf_recv;
+	size_t		len_recv;
 	int		ret;
 	u8		cmd;
 };
