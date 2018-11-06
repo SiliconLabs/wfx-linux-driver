@@ -53,47 +53,31 @@
 #define WSM_PHY_BAND_2_4G		(0)
 /* Radio band 4.9375-5.8250 GHz. */
 #define WSM_PHY_BAND_5G			(1)
-/* Transmit rates */
-/* 1   Mbps            ERP-DSSS */
-#define WSM_TRANSMIT_RATE_1		(0)
-/* 2   Mbps            ERP-DSSS */
-#define WSM_TRANSMIT_RATE_2		(1)
-/* 5.5 Mbps            ERP-CCK */
-#define WSM_TRANSMIT_RATE_5		(2)
-/* 11  Mbps            ERP-CCK */
-#define WSM_TRANSMIT_RATE_11		(3)
-/* 6   Mbps   (3 Mbps) ERP-OFDM, BPSK coding rate 1/2 */
-#define WSM_TRANSMIT_RATE_6		(6)
-/* 9   Mbps (4.5 Mbps) ERP-OFDM, BPSK coding rate 3/4 */
-#define WSM_TRANSMIT_RATE_9		(7)
-/* 12  Mbps  (6 Mbps)  ERP-OFDM, QPSK coding rate 1/2 */
-#define WSM_TRANSMIT_RATE_12		(8)
-/* 18  Mbps  (9 Mbps)  ERP-OFDM, QPSK coding rate 3/4 */
-#define WSM_TRANSMIT_RATE_18		(9)
-/* 24  Mbps (12 Mbps)  ERP-OFDM, 16QAM coding rate 1/2 */
-#define WSM_TRANSMIT_RATE_24		(10)
-/* 36  Mbps (18 Mbps)  ERP-OFDM, 16QAM coding rate 3/4 */
-#define WSM_TRANSMIT_RATE_36		(11)
-/* 48  Mbps (24 Mbps)  ERP-OFDM, 64QAM coding rate 1/2 */
-#define WSM_TRANSMIT_RATE_48		(12)
-/* 54  Mbps (27 Mbps)  ERP-OFDM, 64QAM coding rate 3/4 */
-#define WSM_TRANSMIT_RATE_54		(13)
-/* 6.5 Mbps            HT-OFDM, BPSK coding rate 1/2 */
-#define WSM_TRANSMIT_RATE_HT_6		(14)
-/* 13  Mbps            HT-OFDM, QPSK coding rate 1/2 */
-#define WSM_TRANSMIT_RATE_HT_13		(15)
-/* 19.5 Mbps           HT-OFDM, QPSK coding rate 3/4 */
-#define WSM_TRANSMIT_RATE_HT_19		(16)
-/* 26  Mbps            HT-OFDM, 16QAM coding rate 1/2 */
-#define WSM_TRANSMIT_RATE_HT_26		(17)
-/* 39  Mbps            HT-OFDM, 16QAM coding rate 3/4 */
-#define WSM_TRANSMIT_RATE_HT_39		(18)
-/* 52  Mbps            HT-OFDM, 64QAM coding rate 2/3 */
-#define WSM_TRANSMIT_RATE_HT_52		(19)
-/* 58.5 Mbps           HT-OFDM, 64QAM coding rate 3/4 */
-#define WSM_TRANSMIT_RATE_HT_58		(20)
-/* 65  Mbps            HT-OFDM, 64QAM coding rate 5/6 */
-#define WSM_TRANSMIT_RATE_HT_65		(21)
+
+// See also:
+//   https://en.wikipedia.org/wiki/IEEE_802.11g-2003#Technical_description
+//   https://en.wikipedia.org/wiki/IEEE_802.11n-2009#Data_rates
+#define WSM_TRANSMIT_RATE_1      0 //  1   Mbps ERP-DSSS            b
+#define WSM_TRANSMIT_RATE_2      1 //  2   Mbps ERP-DSSS            b
+#define WSM_TRANSMIT_RATE_5      2 //  5.5 Mbps ERP-CCK             b
+#define WSM_TRANSMIT_RATE_11     3 // 11   Mbps ERP-CCK             b
+#define WSM_TRANSMIT_RATE_6      6 //  6   Mbps ERP-OFDM,  BPSK 1/2 g
+#define WSM_TRANSMIT_RATE_9      7 //  9   Mbps ERP-OFDM,  BPSK 3/4 g
+#define WSM_TRANSMIT_RATE_12     8 // 12   Mbps ERP-OFDM,  QPSK 1/2 g
+#define WSM_TRANSMIT_RATE_18     9 // 18   Mbps ERP-OFDM,  QPSK 3/4 g
+#define WSM_TRANSMIT_RATE_24    10 // 24   Mbps ERP-OFDM, 16QAM 1/2 g
+#define WSM_TRANSMIT_RATE_36    11 // 36   Mbps ERP-OFDM, 16QAM 3/4 g
+#define WSM_TRANSMIT_RATE_48    12 // 48   Mbps ERP-OFDM, 64QAM 1/2 g
+#define WSM_TRANSMIT_RATE_54    13 // 54   Mbps ERP-OFDM, 64QAM 3/4 g
+#define WSM_TRANSMIT_RATE_HT_6  14 //  6.5 Mbps  HT-OFDM,  BPSK 1/2 n MCS0
+#define WSM_TRANSMIT_RATE_HT_13 15 // 13   Mbps  HT-OFDM,  QPSK 1/2 n MCS1
+#define WSM_TRANSMIT_RATE_HT_19 16 // 19.5 Mbps  HT-OFDM,  QPSK 3/4 n MCS2
+#define WSM_TRANSMIT_RATE_HT_26 17 // 26   Mbps  HT-OFDM, 16QAM 1/2 n MCS3
+#define WSM_TRANSMIT_RATE_HT_39 18 // 39   Mbps  HT-OFDM, 16QAM 3/4 n MCS4
+#define WSM_TRANSMIT_RATE_HT_52 19 // 52   Mbps  HT-OFDM, 64QAM 2/3 n MCS5
+#define WSM_TRANSMIT_RATE_HT_58 20 // 58.5 Mbps  HT-OFDM, 64QAM 3/4 n MCS6
+#define WSM_TRANSMIT_RATE_HT_65 21 // 65   Mbps  HT-OFDM, 64QAM 5/6 n MCS7
+
 /* Scan constraints */
 /* Maximum number of channels to be scanned. */
 #define WSM_SCAN_MAX_NUM_OF_CHANNELS	(48)
