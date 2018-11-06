@@ -437,29 +437,19 @@ nomem:
 int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg, int Id)
 {
 	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 	HiMsgHdr_t *hdr;
+	WsmHiStartReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
+	memcpy(body, arg, sizeof(*body));
+	cpu_to_le16s(&body->ChannelNumber);
+	cpu_to_le32s(&body->CTWindow);
+	cpu_to_le32s(&body->BeaconInterval);
+	cpu_to_le32s(&body->BasicRateSet);
+	wfx_fill_header(hdr, Id, WSM_HI_START_REQ_ID, sizeof(*body));
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	wfx_cmd(wfx_arg, &arg->Mode, sizeof(arg->Mode));
-	wfx_cmd_fl(wfx_arg, arg->Band);
-	wfx_cmd_len(wfx_arg, arg->ChannelNumber);
-	wfx_cmd_data(wfx_arg, arg->CTWindow);
-	wfx_cmd_data(wfx_arg, arg->BeaconInterval);
-	wfx_cmd_fl(wfx_arg, arg->DTIMPeriod);
-	wfx_cmd_fl(wfx_arg, arg->PreambleType);
-	wfx_cmd_fl(wfx_arg, arg->ProbeDelay);
-	wfx_cmd_fl(wfx_arg, arg->SsidLength);
-	wfx_cmd(wfx_arg, arg->Ssid, sizeof(arg->Ssid));
-	wfx_cmd_data(wfx_arg, arg->BasicRateSet);
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, Id, WSM_HI_START_REQ_ID, sizeof(WsmHiStartReqBody_t));
-	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_START_TIMEOUT);
-
-nomem:
+	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 
