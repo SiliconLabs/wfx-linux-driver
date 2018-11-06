@@ -241,7 +241,7 @@ int wfx_add_interface(struct ieee80211_hw *dev,
 	ret = wsm_set_station_id(wdev, wdev->mac_addr, NULL);
 	wfx_vif_setup(wvif);
 	mutex_unlock(&wdev->conf_mutex);
-	wsm_set_edca_params(wdev, &wvif->edca, wvif->Id);
+	wsm_set_edca_params(wdev, &wvif->edca.params, wvif->Id);
 	wfx_set_uapsd_param(wvif, &wvif->edca);
 
 	return 0;
@@ -634,7 +634,7 @@ int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
 			     params->cw_min, params->cw_max,
 			     params->txop, 0xc8,
 			     params->uapsd);
-		ret = wsm_set_edca_params(wdev, &wvif->edca, wvif->Id);
+		ret = wsm_set_edca_params(wdev, &wvif->edca.params, wvif->Id);
 		if (ret) {
 			ret = -EINVAL;
 			goto out;

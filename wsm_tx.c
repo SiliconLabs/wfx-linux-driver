@@ -320,47 +320,26 @@ int wsm_set_tx_queue_params(struct wfx_dev *wdev, int queue_id, int ack_policy,
 	return ret;
 }
 
-int wsm_set_edca_params(struct wfx_dev *wdev,
-			const struct wsm_edca_params *arg, int Id)
+int wsm_set_edca_params(struct wfx_dev *wdev, const WsmHiEdcaParamsReqBody_t *arg, int Id)
 {
-	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
+	int ret, i, j;
 	HiMsgHdr_t *hdr;
+	WsmHiEdcaParamsReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
+	// NOTE: queues numerotation is inverted between WFx and Linux
+	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
+		j = IEEE80211_NUM_ACS - 1 - i;
+		body->AIFSN[i] = arg->AIFSN[j];
+		body->CwMin[i] = cpu_to_le16(arg->CwMin[j]);
+		body->CwMax[i] = cpu_to_le16(arg->CwMax[j]);
+		body->TxOpLimit[i] = cpu_to_le16(arg->TxOpLimit[j]);
+		body->MaxReceiveLifetime[i] = cpu_to_le32(arg->MaxReceiveLifetime[j]);
+	}
+	wfx_fill_header(hdr, Id, WSM_HI_EDCA_PARAMS_REQ_ID, sizeof(*body));
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-
-	wfx_cmd_len(wfx_arg, arg->params.CwMin[3]);
-	wfx_cmd_len(wfx_arg, arg->params.CwMin[2]);
-	wfx_cmd_len(wfx_arg, arg->params.CwMin[1]);
-	wfx_cmd_len(wfx_arg, arg->params.CwMin[0]);
-
-	wfx_cmd_len(wfx_arg, arg->params.CwMax[3]);
-	wfx_cmd_len(wfx_arg, arg->params.CwMax[2]);
-	wfx_cmd_len(wfx_arg, arg->params.CwMax[1]);
-	wfx_cmd_len(wfx_arg, arg->params.CwMax[0]);
-
-	wfx_cmd_fl(wfx_arg, arg->params.AIFSN[3]);
-	wfx_cmd_fl(wfx_arg, arg->params.AIFSN[2]);
-	wfx_cmd_fl(wfx_arg, arg->params.AIFSN[1]);
-	wfx_cmd_fl(wfx_arg, arg->params.AIFSN[0]);
-
-	wfx_cmd_len(wfx_arg, arg->params.TxOpLimit[3]);
-	wfx_cmd_len(wfx_arg, arg->params.TxOpLimit[2]);
-	wfx_cmd_len(wfx_arg, arg->params.TxOpLimit[1]);
-	wfx_cmd_len(wfx_arg, arg->params.TxOpLimit[0]);
-
-	wfx_cmd_data(wfx_arg, arg->params.MaxReceiveLifetime[3]);
-	wfx_cmd_data(wfx_arg, arg->params.MaxReceiveLifetime[2]);
-	wfx_cmd_data(wfx_arg, arg->params.MaxReceiveLifetime[1]);
-	wfx_cmd_data(wfx_arg, arg->params.MaxReceiveLifetime[0]);
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, Id, WSM_HI_EDCA_PARAMS_REQ_ID, sizeof(WsmHiEdcaParamsReqBody_t));
 	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
-
-nomem:
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 
