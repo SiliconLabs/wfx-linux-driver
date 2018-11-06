@@ -438,24 +438,21 @@ nomem:
 	return ret;
 }
 
-int wsm_map_link(struct wfx_dev *wdev, const WsmHiMapLinkReqBody_t *arg, int Id)
+int wsm_map_link(struct wfx_dev *wdev, u8 *mac_addr, int flags, int sta_id, int Id)
 {
 	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 	HiMsgHdr_t *hdr;
+	WsmHiMapLinkReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
+	if (mac_addr)
+		ether_addr_copy(body->MacAddr, mac_addr);
+	body->Flags = flags;
+	body->PeerStaId = sta_id;
+	wfx_fill_header(hdr, Id, WSM_HI_MAP_LINK_REQ_ID, sizeof(*body));
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	wfx_cmd(wfx_arg, arg->MacAddr, sizeof(arg->MacAddr));
-	wfx_cmd_fl(wfx_arg, arg->Flags);
-	wfx_cmd_fl(wfx_arg, arg->PeerStaId);
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, Id, WSM_HI_MAP_LINK_REQ_ID, sizeof(WsmHiMapLinkReqBody_t));
 	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
-
-nomem:
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 

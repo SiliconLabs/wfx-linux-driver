@@ -431,11 +431,11 @@ struct wfx_txinfo {
 /* Send map request message to firmware and save peer MAC address */
 int wfx_map_link(struct wfx_vif		*wvif,
 		 struct wfx_link_entry		*link_entry,
-		 const WsmHiMapLinkReqBody_t	*link)
+		 int sta_id)
 {
 	int ret;
 
-	ret = wsm_map_link(wvif->wdev, link, wvif->Id);
+	ret = wsm_map_link(wvif->wdev, link_entry->mac, 0, sta_id, wvif->Id);
 
 	if (ret == 0)
 		/* Save the MAC address currently associated with the peer
@@ -1445,14 +1445,6 @@ void wfx_link_id_gc_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
 		container_of(work, struct wfx_vif, link_id_gc_work.work);
-	/* WsmHiResetFlags_t reset = {
-	 *  .ResetStat = false,
-	 * };
-	 */
-	WsmHiMapLinkReqBody_t map_link = {
-		.PeerStaId	= 0,
-		.Flags		= 0,
-	};
 	unsigned long now = jiffies;
 	unsigned long next_gc = -1;
 	long ttl;
@@ -1480,12 +1472,10 @@ void wfx_link_id_gc_work(struct work_struct *work)
 			if (wvif->link_id_db[i].status != WFX_LINK_HARD)
 				wvif->link_id_db[i].status = WFX_LINK_SOFT;
 
-			ether_addr_copy(map_link.MacAddr, wvif->link_id_db[i].mac);
 			spin_unlock_bh(&wvif->ps_state_lock);
 			if (need_reset)
 				wfx_unmap_link(wvif, i + 1);
-			map_link.PeerStaId = i + 1;
-			wfx_map_link(wvif, &wvif->link_id_db[i], &map_link);
+			wfx_map_link(wvif, &wvif->link_id_db[i], i + 1);
 			next_gc = min(next_gc, WFX_LINK_ID_GC_TIMEOUT);
 			spin_lock_bh(&wvif->ps_state_lock);
 		} else if (wvif->link_id_db[i].status == WFX_LINK_SOFT) {
@@ -1497,7 +1487,6 @@ void wfx_link_id_gc_work(struct work_struct *work)
 				wvif->link_id_map &= ~mask;
 				wvif->sta_asleep_mask &= ~mask;
 				wvif->pspoll_mask &= ~mask;
-				eth_zero_addr(map_link.MacAddr);
 				spin_unlock_bh(&wvif->ps_state_lock);
 				wfx_unmap_link(wvif, i + 1);
 				spin_lock_bh(&wvif->ps_state_lock);
@@ -1513,10 +1502,7 @@ void wfx_link_id_gc_work(struct work_struct *work)
 			spin_unlock_bh(&wvif->ps_state_lock);
 			wfx_unmap_link(wvif, i + 1);
 			if (status == WFX_LINK_RESET_REMAP) {
-				ether_addr_copy(map_link.MacAddr, wvif->link_id_db[i].mac);
-				map_link.PeerStaId = i + 1;
-				wfx_map_link(wvif, &wvif->link_id_db[i],
-					     &map_link);
+				wfx_map_link(wvif, &wvif->link_id_db[i], i + 1);
 				next_gc = min(next_gc,
 						WFX_LINK_ID_GC_TIMEOUT);
 			} else {

@@ -212,7 +212,7 @@ int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg, int Id);
 int wsm_beacon_transmit(struct wfx_dev *wdev, const WsmHiBeaconTransmitReqBody_t *arg, int Id);
 int wsm_update_ie(struct wfx_dev *wdev, const struct wsm_update_ie *arg, int Id);
 
-int wsm_map_link(struct wfx_dev *wdev, const WsmHiMapLinkReqBody_t *arg, int Id);
+int wsm_map_link(struct wfx_dev *wdev, u8 *mac_addr, int flags, int sta_id, int Id);
 int wfx_unmap_link(struct wfx_vif *wvif, int link_id);
 int wsm_set_probe_responder(struct wfx_vif *wvif, bool enable);
 

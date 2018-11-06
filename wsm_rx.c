@@ -112,15 +112,12 @@ static int wsm_multi_tx_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 
 int wfx_unmap_link(struct wfx_vif *wvif, int sta_id)
 {
-	WsmHiMapLinkReqBody_t maplink = {
-		.PeerStaId	= sta_id,
-		.Flags		= true,
-	};
+	u8 *mac_addr = NULL;
 
 	if (sta_id)
-		ether_addr_copy(&maplink.MacAddr[0], wvif->link_id_db[sta_id - 1].old_mac);
+		mac_addr = wvif->link_id_db[sta_id - 1].old_mac;
 
-	return wsm_map_link(wvif->wdev, &maplink, wvif->Id);
+	return wsm_map_link(wvif->wdev, mac_addr, 1, sta_id, wvif->Id);
 }
 
 int wsm_set_probe_responder(struct wfx_vif *wvif, bool enable)
