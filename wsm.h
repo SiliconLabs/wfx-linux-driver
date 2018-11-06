@@ -150,12 +150,6 @@ struct wsm_edca_params {
 	bool				uapsd_enable[4];
 };
 
-struct wsm_update_ie {
-	WsmHiUpdateIeReqBody_t	Body;
-	u8			*ies;
-	size_t			length;
-};
-
 struct wsm_rx_filter {
 	bool	promiscuous;
 	bool	bssid;
@@ -210,7 +204,7 @@ int wsm_set_tx_queue_params(struct wfx_dev *wdev, int queue_id, int ack_policy, 
 int wsm_set_edca_params(struct wfx_dev *wdev, const WsmHiEdcaParamsReqBody_t *arg, int Id);
 int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg, int Id);
 int wsm_beacon_transmit(struct wfx_dev *wdev, bool enable, int Id);
-int wsm_update_ie(struct wfx_dev *wdev, const struct wsm_update_ie *arg, int Id);
+int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame, const u8 *ies, size_t ies_len, int Id);
 
 int wsm_map_link(struct wfx_dev *wdev, u8 *mac_addr, int flags, int sta_id, int Id);
 int wfx_unmap_link(struct wfx_vif *wvif, int link_id);

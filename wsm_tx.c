@@ -410,25 +410,22 @@ int wsm_map_link(struct wfx_dev *wdev, u8 *mac_addr, int flags, int sta_id, int 
 	return ret;
 }
 
-int wsm_update_ie(struct wfx_dev *wdev,
-		  const struct wsm_update_ie *arg, int Id)
+int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame,
+		  const u8 *ies, size_t ies_len, int Id)
 {
 	int ret;
-	struct wsm_buf *wfx_arg = &wdev->wsm_cmd_buf;
 	HiMsgHdr_t *hdr;
+	WsmHiUpdateIeReqBody_t *body = wfx_alloc_wsm(sizeof(*body) + ies_len, &hdr);
+	u8 *ptr = (u8 *) body + sizeof(*body);
 
+	memcpy(&body->IeFlags, target_frame, sizeof(WsmHiIeFlags_t));
+	body->NumIEs = cpu_to_le16(1);
+	memcpy(ptr, ies, ies_len);
+	wfx_fill_header(hdr, Id, WSM_HI_UPDATE_IE_REQ_ID, sizeof(*body) + ies_len);
 	wsm_cmd_lock(wdev);
-	wsm_buf_reset(wfx_arg);
-	wfx_cmd(wfx_arg, &arg->Body.IeFlags, sizeof(arg->Body.IeFlags));
-	wfx_cmd_len(wfx_arg, arg->Body.NumIEs);
-	wfx_cmd(wfx_arg, arg->ies, arg->length);
-
-	hdr = (HiMsgHdr_t *) wfx_arg->begin;
-	wfx_fill_header(hdr, Id, WSM_HI_UPDATE_IE_REQ_ID, sizeof(WsmHiUpdateIeReqBody_t) + arg->length);
 	ret = wfx_cmd_send(wdev, hdr, NULL, WSM_CMD_TIMEOUT);
-
-nomem:
 	wsm_cmd_unlock(wdev);
+	kfree(hdr);
 	return ret;
 }
 

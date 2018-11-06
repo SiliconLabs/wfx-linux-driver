@@ -1743,12 +1743,11 @@ static void wfx_ps_notify(struct wfx_vif *wvif,
 static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
 {
 	struct sk_buff *skb;
-	struct wsm_update_ie update_ie = {
-		.Body.IeFlags.Beacon	= 1,
-		/* .what = WSM_UPDATE_IE_BEACON, */
-		.Body.NumIEs		= 1,
+	WsmHiIeFlags_t target_frame = {
+		.Beacon = 1,
 	};
 	u16 tim_offset, tim_length;
+	u8 *tim_ptr;
 
 	pr_debug("[AP] mcast: %s.\n", aid0_bit_set ? "ena" : "dis");
 
@@ -1759,23 +1758,22 @@ static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
 			wsm_unlock_tx(wvif->wdev);
 		return -ENOENT;
 	}
+	tim_ptr = skb->data + tim_offset;
 
 	if (tim_offset && tim_length >= 6) {
 		/* Ignore DTIM count from mac80211:
 		 * firmware handles DTIM internally.
 		 */
-		skb->data[tim_offset + 2] = 0;
+		tim_ptr[2] = 0;
 
 		/* Set/reset aid0 bit */
 		if (aid0_bit_set)
-			skb->data[tim_offset + 4] |= 1;
+			tim_ptr[4] |= 1;
 		else
-			skb->data[tim_offset + 4] &= ~1;
+			tim_ptr[4] &= ~1;
 	}
 
-	update_ie.ies = &skb->data[tim_offset];
-	update_ie.length = tim_length;
-	wsm_update_ie(wvif->wdev, &update_ie, wvif->Id);
+	wsm_update_ie(wvif->wdev, &target_frame, tim_ptr, tim_length, wvif->Id);
 
 	dev_kfree_skb(skb);
 
@@ -1803,32 +1801,24 @@ int wfx_set_tim(struct ieee80211_hw *dev, struct ieee80211_sta *sta,
 
 void wfx_set_cts_work(struct work_struct *work)
 {
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, set_cts_work);
-	u8 erp_ie[3] = { WLAN_EID_ERP_INFO, 0x1, 0 };
-	struct wsm_update_ie update_ie = {
-		.Body.IeFlags.Beacon	= 1,
-		/* .what = WSM_UPDATE_IE_BEACON, */
-		.Body.NumIEs		= 1,
-		.ies = erp_ie,
-		.length = 3,
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, set_cts_work);
+	u8 erp_ie[3] = { WLAN_EID_ERP_INFO, 1, 0 };
+	WsmHiIeFlags_t target_frame = {
+		.Beacon = 1,
 	};
-	u32 erp_info;
 
 	pr_debug("[STA] wfx_set_cts_work\n");
 
 	mutex_lock(&wvif->wdev->conf_mutex);
-	erp_info = wvif->erp_info;
+	erp_ie[2] = wvif->erp_info;
 	mutex_unlock(&wvif->wdev->conf_mutex);
 
-	update_ie.ies[ERP_INFO_BYTE_OFFSET] = erp_info;
+	pr_debug("[STA] ERP information 0x%x\n", erp_ie[2]);
 
-	pr_debug("[STA] ERP information 0x%x\n", erp_info);
-
-	wsm_erp_use_protection(wvif->wdev, erp_info & WLAN_ERP_USE_PROTECTION, wvif->Id);
+	wsm_erp_use_protection(wvif->wdev, erp_ie[2] & WLAN_ERP_USE_PROTECTION, wvif->Id);
 
 	if (wvif->mode != NL80211_IFTYPE_STATION)
-		wsm_update_ie(wvif->wdev, &update_ie, wvif->Id);
+		wsm_update_ie(wvif->wdev, &target_frame, erp_ie, sizeof(erp_ie), wvif->Id);
 }
 
 void wfx_bss_info_changed(struct ieee80211_hw *dev,
