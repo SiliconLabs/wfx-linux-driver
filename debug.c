@@ -305,15 +305,6 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 	seq_printf(seq, "Device:     %s\n",
 		   atomic_read(&wdev->device_can_sleep) ? "asleep" : "awake");
 
-	spin_lock(&wdev->wsm_cmd.lock);
-	seq_printf(seq, "WSM status: %s\n",
-		   wdev->wsm_cmd.done ? "idle" : "active");
-	seq_printf(seq, "WSM cmd:    0x%.4X (%td bytes)\n",
-		   wdev->wsm_cmd.cmd, wdev->wsm_cmd.len);
-	seq_printf(seq, "WSM retval: %d\n",
-		   wdev->wsm_cmd.ret);
-	spin_unlock(&wdev->wsm_cmd.lock);
-
 	seq_printf(seq, "Datapath:   %s\n",
 		   atomic_read(&wdev->tx_lock) ? "locked" : "unlocked");
 	if (atomic_read(&wdev->tx_lock))
