@@ -937,7 +937,6 @@ void wfx_wep_key_work(struct work_struct *work)
 int wfx_set_rts_threshold(struct ieee80211_hw *hw, u32 value)
 {
 	int ret = 0;
-	__le32 val32;
 	struct wfx_dev *wdev = hw->priv;
 	// FIXME: Interface id should not been hardcoded
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
@@ -947,28 +946,15 @@ int wfx_set_rts_threshold(struct ieee80211_hw *hw, u32 value)
 	if (wvif->mode == NL80211_IFTYPE_UNSPECIFIED)
 		return 0;
 
-	if (value != (u32) -1)
-		val32 = cpu_to_le32(value);
-	else
-		val32 = 0; /* disabled */
-
-	if (wvif->mode == NL80211_IFTYPE_UNSPECIFIED) { /*EV can be removed : exited before this line*/
-		/* device is down, can _not_ set threshold */
-		ret = -ENODEV;
-		goto out;
-	}
-
 	if (wvif->rts_threshold == value)
-		goto out;
+		return 0;
 
 	/* mutex_lock(&wdev->conf_mutex); */
-	ret = wsm_write_mib(wdev, WSM_MIB_ID_DOT11_RTS_THRESHOLD,
-			    &val32, sizeof(val32), wvif->Id);
+	ret = wsm_rts_threshold(wdev, value, wvif->Id);
 	if (!ret)
 		wvif->rts_threshold = value;
 	/* mutex_unlock(&wdev->conf_mutex); */
 
-out:
 	return ret;
 }
 
