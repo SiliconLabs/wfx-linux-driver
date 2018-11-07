@@ -162,16 +162,17 @@ struct wsm_protected_mgmt_policy {
 };
 
 struct wsm_cmd {
-	spinlock_t	lock; /* Protect structure from multiple access */
-	int		done;
-	HiMsgHdr_t	*buf_send;
+	struct completion ready;
+	struct completion done;
+	HiMsgHdr_t        *buf_send;
 	size_t		len;
-	void		*buf_recv;
-	size_t		len_recv;
-	int		ret;
+	void              *buf_recv;
+	size_t            len_recv;
+	int               ret;
 	u8		cmd;
 };
 
+void init_wsm_cmd(struct wsm_cmd *wsm_cmd);
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len);
 int wsm_reset(struct wfx_dev *wdev, bool reset_stat, int Id);
 int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *buf, size_t buf_size);
@@ -199,7 +200,6 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data, size_t *tx_len, int *burst);
 void wsm_lock_tx(struct wfx_dev *wdev);
 void wsm_lock_tx_async(struct wfx_dev *wdev);
 void wsm_unlock_tx(struct wfx_dev *wdev);
-void wsm_txed(struct wfx_dev *wdev, u8 *data);
 
 bool wsm_flush_tx(struct wfx_dev *wdev);
 

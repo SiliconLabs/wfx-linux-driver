@@ -180,7 +180,6 @@ struct wfx_dev {
 	/* Mutex to protect wsm message sending */
 	struct mutex			wsm_cmd_mux;
 	struct wsm_cmd			wsm_cmd;
-	wait_queue_head_t		wsm_cmd_wq;
 	struct completion		firmware_ready;
 	HiStartupIndBody_t		wsm_caps;
 	atomic_t			tx_lock;

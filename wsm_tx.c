@@ -53,6 +53,12 @@ static void *wfx_alloc_wsm(size_t body_len, HiMsgHdr_t **hdr)
 
 static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, size_t reply_len);
 
+void init_wsm_cmd(struct wsm_cmd *wsm_cmd)
+{
+	init_completion(&wsm_cmd->ready);
+	init_completion(&wsm_cmd->done);
+}
+
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 {
 	int ret;
@@ -367,45 +373,31 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 	mutex_lock(&wdev->wsm_cmd_mux);
 	WARN(wdev->wsm_cmd.buf_send, "Data locking error");
 
-	spin_lock(&wdev->wsm_cmd.lock);
-	wdev->wsm_cmd.done = 0;
 	wdev->wsm_cmd.buf_send = request;
 	wdev->wsm_cmd.len = buf_len;
 	wdev->wsm_cmd.buf_recv = reply;
 	wdev->wsm_cmd.len_recv = reply_len;
 	wdev->wsm_cmd.cmd = cmd;
-	spin_unlock(&wdev->wsm_cmd.lock);
+	complete(&wdev->wsm_cmd.ready);
 
 	wfx_bh_wakeup(wdev);
 
-	/* Wait for command completion */
-	ret = wait_event_timeout(wdev->wsm_cmd_wq,
-				 wdev->wsm_cmd.done, 7 * HZ);
-
-	if (!ret && !wdev->wsm_cmd.done) {
-		spin_lock(&wdev->wsm_cmd.lock);
-		wdev->wsm_cmd.done = 1;
-		wdev->wsm_cmd.buf_send = NULL;
-		spin_unlock(&wdev->wsm_cmd.lock);
-		if (wdev->bh_error) {
-			/* Return ok to help system cleanup */
-			ret = 0;
-		} else {
-			wake_up(&wdev->bh_wq);
-			ret = -ETIMEDOUT;
-		}
+	ret = wait_for_completion_timeout(&wdev->wsm_cmd.done, 3 * HZ);
+	if (!ret) {
+		dev_err(wdev->pdev, "chip is abnormally long to answer");
+		reinit_completion(&wdev->wsm_cmd.ready);
+		ret = wait_for_completion_timeout(&wdev->wsm_cmd.done, 7 * HZ);
+	}
+	if (!ret) {
+		dev_err(wdev->pdev, "chip did not answer");
+		reinit_completion(&wdev->wsm_cmd.done);
+		ret = -ETIMEDOUT;
 	} else {
-		spin_lock(&wdev->wsm_cmd.lock);
-		BUG_ON(!wdev->wsm_cmd.done);
 		ret = wdev->wsm_cmd.ret;
-		spin_unlock(&wdev->wsm_cmd.lock);
 	}
 
-	// Should not be necessary but just in case
-	spin_lock(&wdev->wsm_cmd.lock);
 	wdev->wsm_cmd.buf_send = NULL;
 	wdev->wsm_cmd.cmd = 0xFF;
-	spin_unlock(&wdev->wsm_cmd.lock);
 	mutex_unlock(&wdev->wsm_cmd_mux);
 
 	if (ret < 0)

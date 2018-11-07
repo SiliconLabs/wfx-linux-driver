@@ -517,7 +517,6 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 
 	_trace_wsm_send((u16 *) data);
 
-	wsm_txed(wdev, data);
 	wdev->wsm_tx_seq = (wdev->wsm_tx_seq + 1) & HI_MSG_SEQ_RANGE;
 
 	if (tx_burst > 1)

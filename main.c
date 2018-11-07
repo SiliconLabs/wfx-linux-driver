@@ -313,6 +313,7 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 	hw->wiphy->max_scan_ie_len = IEEE80211_MAX_DATA_LEN;
 
 	init_completion(&wdev->firmware_ready);
+	init_wsm_cmd(&wdev->wsm_cmd);
 	mutex_init(&wdev->wsm_cmd_mux);
 	mutex_init(&wdev->conf_mutex);
 	wdev->workqueue = create_singlethread_workqueue("wfx_wq");
@@ -337,9 +338,7 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 	}
 
 	init_waitqueue_head(&wdev->channel_switch_done);
-	init_waitqueue_head(&wdev->wsm_cmd_wq);
 	init_waitqueue_head(&wdev->ps_mode_switch_done);
-	spin_lock_init(&wdev->wsm_cmd.lock);
 	tx_policy_init(wdev);
 
 	return hw;

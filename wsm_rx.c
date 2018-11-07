@@ -36,43 +36,28 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 	int status = le32_to_cpu(*((__le32 *) buf));
 	int cmd = hdr->s.t.MsgId;
 	int len = hdr->MsgLen - 4; // drop header
-	int wsm_cmd;
-	void *reply;
-	size_t reply_len;
-
 
 	WARN(!mutex_is_locked(&wdev->wsm_cmd_mux), "Data locking error");
 
-	spin_lock(&wdev->wsm_cmd.lock);
-	reply = wdev->wsm_cmd.buf_recv;
-	reply_len = wdev->wsm_cmd.len_recv;
-	wsm_cmd = wdev->wsm_cmd.cmd;
-	spin_unlock(&wdev->wsm_cmd.lock);
-
-	if (cmd != wsm_cmd) {
-		dev_warn(wdev->pdev, "Chip response mismatch request: %#.4X vs %#.4X\n", cmd, wsm_cmd);
+	if (cmd != wdev->wsm_cmd.buf_send->s.b.Id) {
+		dev_warn(wdev->pdev, "Chip response mismatch request: %#.4X vs %#.4X\n",
+			 cmd, wdev->wsm_cmd.buf_send->s.b.Id);
 		return -EINVAL;
 	}
 
-	// FIXME: access to wsm_arg should be inner spinlock. (but mutex from
-	// wsm_tx also protect it).
-	if (reply) {
-		if (reply_len >= len)
-			memcpy(reply, buf, len);
+	if (wdev->wsm_cmd.buf_recv) {
+		if (wdev->wsm_cmd.len_recv >= len)
+			memcpy(wdev->wsm_cmd.buf_recv, buf, len);
 		else
 			status = -EINVAL;
 	}
+	wdev->wsm_cmd.ret = status;
 
 	// Legacy chip have a special management for this case.
 	// Is it still necessary?
 	WARN_ON(status && wvif->join_status >= WFX_JOIN_STATUS_JOINING);
 
-	spin_lock(&wdev->wsm_cmd.lock);
-	wdev->wsm_cmd.ret = status;
-	wdev->wsm_cmd.done = 1;
-	spin_unlock(&wdev->wsm_cmd.lock);
-
-	wake_up(&wdev->wsm_cmd_wq);
+	complete(&wdev->wsm_cmd.done);
 
 	return status;
 }
@@ -764,13 +749,11 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	/* More is used only for broadcasts. */
 	bool more = false;
 
-	if (wdev->wsm_cmd.buf_send) { /* CMD request */
+	if (try_wait_for_completion(&wdev->wsm_cmd.ready)) {
 		WARN(!mutex_is_locked(&wdev->wsm_cmd_mux), "Data locking error");
-		spin_lock(&wdev->wsm_cmd.lock);
 		*data = (u8 *) wdev->wsm_cmd.buf_send;
 		*tx_len = wdev->wsm_cmd.len;
 		*burst = 1;
-		spin_unlock(&wdev->wsm_cmd.lock);
 		return 1;
 	}
 	if (!wvif) {
@@ -841,15 +824,4 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 
 	return count;
 }
-
-void wsm_txed(struct wfx_dev *wdev, u8 *data)
-{
-	if (data == (u8 *) wdev->wsm_cmd.buf_send) {
-		spin_lock(&wdev->wsm_cmd.lock);
-		wdev->wsm_cmd.buf_send = NULL;
-		spin_unlock(&wdev->wsm_cmd.lock);
-	}
-}
-
-
 
