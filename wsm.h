@@ -165,6 +165,7 @@ struct wsm_cmd {
 	struct mutex      lock;
 	struct completion ready;
 	struct completion done;
+	bool              async;
 	HiMsgHdr_t        *buf_send;
 	void              *buf_recv;
 	size_t            len_recv;

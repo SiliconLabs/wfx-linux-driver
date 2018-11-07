@@ -57,8 +57,12 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 	// Is it still necessary?
 	WARN_ON(status && wvif->join_status >= WFX_JOIN_STATUS_JOINING);
 
-	complete(&wdev->wsm_cmd.done);
-
+	if (!wdev->wsm_cmd.async) {
+		complete(&wdev->wsm_cmd.done);
+	} else {
+		wdev->wsm_cmd.buf_send = NULL;
+		mutex_unlock(&wdev->wsm_cmd.lock);
+	}
 	return status;
 }
 

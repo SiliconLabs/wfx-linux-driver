@@ -51,7 +51,7 @@ static void *wfx_alloc_wsm(size_t body_len, HiMsgHdr_t **hdr)
 		return NULL;
 }
 
-static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, size_t reply_len);
+static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, size_t reply_len, bool async);
 
 void init_wsm_cmd(struct wsm_cmd *wsm_cmd)
 {
@@ -71,7 +71,7 @@ int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 	body->Length = cpu_to_le16(len);
 	memcpy(body->PdsData, conf, len);
 	wfx_fill_header(hdr, -1, HI_CONFIGURATION_REQ_ID, buf_len);
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -85,7 +85,7 @@ int wsm_reset(struct wfx_dev *wdev, bool reset_stat, int Id)
 	// FIXME: API logic is inverted
 	body->ResetFlags.ResetStat = reset_stat ? 0 : 1;
 	wfx_fill_header(hdr, Id, WSM_HI_RESET_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -99,7 +99,7 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len)
 
 	body->MibId = cpu_to_le16(id);
 	wfx_fill_header(hdr, -1, WSM_HI_READ_MIB_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, reply, sizeof(*reply));
+	ret = wfx_cmd_send(wdev, hdr, reply, sizeof(*reply), false);
 
 	reply->Length -= 4; // Drop header
 	if (val_len < reply->Length) {
@@ -132,7 +132,7 @@ int wsm_write_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len, int I
 	body->Length = cpu_to_le16(val_len);
 	memcpy(&body->MibData, val, val_len);
 	wfx_fill_header(hdr, Id, WSM_HI_WRITE_MIB_REQ_ID, buf_len);
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -168,7 +168,7 @@ int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id)
 	ptr += arg->scan_req.NumOfChannels * sizeof(u8);
 	WARN(buf_len != ptr - (u8 *) body, "Allocation size mismatch");
 	wfx_fill_header(hdr, Id, WSM_HI_START_SCAN_REQ_ID, buf_len);
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -181,7 +181,7 @@ int wsm_stop_scan(struct wfx_dev *wdev, int Id)
 	wfx_alloc_wsm(0, &hdr);
 
 	wfx_fill_header(hdr, Id, WSM_HI_STOP_SCAN_REQ_ID, 0);
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -199,7 +199,7 @@ int wsm_join(struct wfx_dev *wdev, const WsmHiJoinReqBody_t *arg, int Id)
 	cpu_to_le32s(&body->BeaconInterval);
 	cpu_to_le32s(&body->BasicRateSet);
 	wfx_fill_header(hdr, Id, WSM_HI_JOIN_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -214,7 +214,7 @@ int wsm_set_bss_params(struct wfx_dev *wdev, const WsmHiSetBssParamsReqBody_t *a
 	cpu_to_le16s(&body->AID);
 	cpu_to_le32s(&body->OperationalRateSet);
 	wfx_fill_header(hdr, Id, WSM_HI_SET_BSS_PARAMS_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -229,7 +229,7 @@ int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg, int Id)
 	// FIXME: swap bytes as necessary in body
 	memcpy(body, arg, sizeof(*body));
 	wfx_fill_header(hdr, Id, WSM_HI_ADD_KEY_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -242,7 +242,7 @@ int wsm_remove_key(struct wfx_dev *wdev, int idx, int Id)
 
 	body->EntryIndex = idx;
 	wfx_fill_header(hdr, Id, WSM_HI_REMOVE_KEY_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -259,7 +259,7 @@ int wsm_set_tx_queue_params(struct wfx_dev *wdev, int queue_id, int ack_policy,
 	body->MaxTransmitLifetime = cpu_to_le32(max_lifetime);
 	body->AllowedMediumTime = cpu_to_le16(medium_time);
 	wfx_fill_header(hdr, Id, WSM_HI_TX_QUEUE_PARAMS_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -280,7 +280,7 @@ int wsm_set_edca_params(struct wfx_dev *wdev, const WsmHiEdcaParamsReqBody_t *ar
 		body->MaxReceiveLifetime[i] = cpu_to_le32(arg->MaxReceiveLifetime[j]);
 	}
 	wfx_fill_header(hdr, Id, WSM_HI_EDCA_PARAMS_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -293,7 +293,7 @@ int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg, int Id)
 
 	memcpy(body, arg, sizeof(*body));
 	wfx_fill_header(hdr, Id, WSM_HI_SET_PM_MODE_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -310,7 +310,7 @@ int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg, int Id)
 	cpu_to_le32s(&body->BeaconInterval);
 	cpu_to_le32s(&body->BasicRateSet);
 	wfx_fill_header(hdr, Id, WSM_HI_START_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -323,7 +323,7 @@ int wsm_beacon_transmit(struct wfx_dev *wdev, bool enable_beaconing, int Id)
 
 	body->EnableBeaconing = enable_beaconing ? 1 : 0;
 	wfx_fill_header(hdr, Id, WSM_HI_BEACON_TRANSMIT_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -339,7 +339,7 @@ int wsm_map_link(struct wfx_dev *wdev, u8 *mac_addr, int flags, int sta_id, int 
 	body->Flags = flags;
 	body->PeerStaId = sta_id;
 	wfx_fill_header(hdr, Id, WSM_HI_MAP_LINK_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -356,15 +356,17 @@ int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame,
 	body->NumIEs = cpu_to_le16(1);
 	memcpy(ptr, ies, ies_len);
 	wfx_fill_header(hdr, Id, WSM_HI_UPDATE_IE_REQ_ID, sizeof(*body) + ies_len);
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
 
-static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, size_t reply_len)
+static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, size_t reply_len, bool async)
 {
 	int cmd = request->s.b.Id;
 	int ret;
+
+	WARN(wdev->wsm_cmd.buf_recv && wdev->wsm_cmd.async, "API usage error");
 
 	if (wdev->bh_error) {
 		return 0;
@@ -376,9 +378,14 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 	wdev->wsm_cmd.buf_send = request;
 	wdev->wsm_cmd.buf_recv = reply;
 	wdev->wsm_cmd.len_recv = reply_len;
+	wdev->wsm_cmd.async = async;
 	complete(&wdev->wsm_cmd.ready);
 
 	wfx_bh_wakeup(wdev);
+
+	// NOTE: no timeout is catched async is enabled
+	if (async)
+		return 0;
 
 	ret = wait_for_completion_timeout(&wdev->wsm_cmd.done, 3 * HZ);
 	if (!ret) {
