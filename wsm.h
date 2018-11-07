@@ -491,6 +491,14 @@ static inline int wsm_ht_protection(struct wfx_dev *wdev, int val, int Id)
 			     &arg, sizeof(arg), Id);
 }
 
+static inline int wsm_wep_default_key_id(struct wfx_dev *wdev, int val, int Id)
+{
+	__le32 arg = cpu_to_le32(val);
+
+	return wsm_write_mib(wdev, WSM_MIB_ID_DOT11_WEP_DEFAULT_KEY_ID,
+			     &arg, sizeof(arg), Id);
+}
+
 /* Queue mapping: WSM <---> linux					*/
 /* Linux: VO VI BE BK							*/
 /* WSM:   BE BK VI VO							*/

@@ -925,14 +925,11 @@ void wfx_wep_key_work(struct work_struct *work)
 		container_of(work, struct wfx_vif, wep_key_work);
 	u8 queue_id = wfx_queue_get_queue_id(wvif->wdev->pending_frame_id);
 	struct wfx_queue *queue = &wvif->wdev->tx_queue[queue_id];
-	__le32 wep_default_key_id = cpu_to_le32(
-		wvif->wep_default_key_id);
+	int wep_default_key_id = wvif->wep_default_key_id;
 
-	pr_debug("[STA] Setting default WEP key: %d\n",
-		 wvif->wep_default_key_id);
+	pr_debug("[STA] Setting default WEP key: %d\n", wep_default_key_id);
 	wsm_flush_tx(wvif->wdev);
-	wsm_write_mib(wvif->wdev, WSM_MIB_ID_DOT11_WEP_DEFAULT_KEY_ID,
-		      &wep_default_key_id, sizeof(wep_default_key_id), wvif->Id);
+	wsm_wep_default_key_id(wvif->wdev, wep_default_key_id, wvif->Id);
 	wfx_queue_requeue(queue, wvif->wdev->pending_frame_id);
 	wsm_unlock_tx(wvif->wdev);
 }
