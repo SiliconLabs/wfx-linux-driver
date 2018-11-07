@@ -1989,7 +1989,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 
 			if (info->assoc || info->ibss_joined) {
 				struct ieee80211_sta *sta = NULL;
-				__le32 htprot = 0;
+				int htprot = 0;
 
 				if (info->dtim_period)
 					wvif->join_dtim_period =
@@ -2027,15 +2027,12 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 				/* Non Greenfield stations present */
 				if (wdev->ht_info.operation_mode &
 				    IEEE80211_HT_OP_MODE_NON_GF_STA_PRSNT)
-					htprot |= cpu_to_le32(
-						WSM_NON_GREENFIELD_STA_PRESENT);
+					htprot |= WSM_NON_GREENFIELD_STA_PRESENT;
 
 				/* Set HT protection method */
-				htprot |= cpu_to_le32((wdev->ht_info.operation_mode &
-					IEEE80211_HT_OP_MODE_PROTECTION) << 2);
-				wsm_write_mib(wdev,
-					      WSM_MIB_ID_SET_HT_PROTECTION,
-				      &htprot, sizeof(htprot), wvif->Id);
+				htprot |= (wdev->ht_info.operation_mode &
+					IEEE80211_HT_OP_MODE_PROTECTION) << 2;
+				wsm_ht_protection(wdev, htprot, wvif->Id);
 
 				wvif->association_mode.MixedOrGreenfieldType =
 					wfx_ht_greenfield(&wdev->ht_info);
