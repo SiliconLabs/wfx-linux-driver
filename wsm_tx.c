@@ -28,6 +28,13 @@
 #include "sta.h"
 #include "testmode.h"
 
+void init_wsm_cmd(struct wsm_cmd *wsm_cmd)
+{
+	init_completion(&wsm_cmd->ready);
+	init_completion(&wsm_cmd->done);
+	mutex_init(&wsm_cmd->lock);
+}
+
 static void wfx_fill_header(HiMsgHdr_t *hdr, int if_id, unsigned cmd, size_t size)
 {
 	if (if_id == -1)
@@ -51,13 +58,57 @@ static void *wfx_alloc_wsm(size_t body_len, HiMsgHdr_t **hdr)
 		return NULL;
 }
 
-static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, size_t reply_len, bool async);
-
-void init_wsm_cmd(struct wsm_cmd *wsm_cmd)
+static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, size_t reply_len, bool async)
 {
-	init_completion(&wsm_cmd->ready);
-	init_completion(&wsm_cmd->done);
-	mutex_init(&wsm_cmd->lock);
+	int cmd = request->s.b.Id;
+	int ret;
+
+	WARN(wdev->wsm_cmd.buf_recv && wdev->wsm_cmd.async, "API usage error");
+
+	if (wdev->bh_error) {
+		return 0;
+	}
+
+	mutex_lock(&wdev->wsm_cmd.lock);
+	WARN(wdev->wsm_cmd.buf_send, "Data locking error");
+
+	wdev->wsm_cmd.buf_send = request;
+	wdev->wsm_cmd.buf_recv = reply;
+	wdev->wsm_cmd.len_recv = reply_len;
+	wdev->wsm_cmd.async = async;
+	complete(&wdev->wsm_cmd.ready);
+
+	wfx_bh_wakeup(wdev);
+
+	// NOTE: no timeout is catched async is enabled
+	if (async)
+		return 0;
+
+	ret = wait_for_completion_timeout(&wdev->wsm_cmd.done, 3 * HZ);
+	if (!ret) {
+		dev_err(wdev->pdev, "chip is abnormally long to answer");
+		reinit_completion(&wdev->wsm_cmd.ready);
+		ret = wait_for_completion_timeout(&wdev->wsm_cmd.done, 7 * HZ);
+	}
+	if (!ret) {
+		dev_err(wdev->pdev, "chip did not answer");
+		reinit_completion(&wdev->wsm_cmd.done);
+		ret = -ETIMEDOUT;
+	} else {
+		ret = wdev->wsm_cmd.ret;
+	}
+
+	wdev->wsm_cmd.buf_send = NULL;
+	mutex_unlock(&wdev->wsm_cmd.lock);
+
+	if (ret < 0)
+		dev_err(wdev->pdev, "WSM request %s (%#02x) returned error %d\n",
+				get_wsm_name(cmd), cmd, ret);
+	if (ret > 0)
+		dev_warn(wdev->pdev, "WSM request %s (%#02x) returned status %d\n",
+				get_wsm_name(cmd), cmd, ret);
+
+	return ret;
 }
 
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
@@ -358,59 +409,6 @@ int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame,
 	wfx_fill_header(hdr, Id, WSM_HI_UPDATE_IE_REQ_ID, sizeof(*body) + ies_len);
 	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
-	return ret;
-}
-
-static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, size_t reply_len, bool async)
-{
-	int cmd = request->s.b.Id;
-	int ret;
-
-	WARN(wdev->wsm_cmd.buf_recv && wdev->wsm_cmd.async, "API usage error");
-
-	if (wdev->bh_error) {
-		return 0;
-	}
-
-	mutex_lock(&wdev->wsm_cmd.lock);
-	WARN(wdev->wsm_cmd.buf_send, "Data locking error");
-
-	wdev->wsm_cmd.buf_send = request;
-	wdev->wsm_cmd.buf_recv = reply;
-	wdev->wsm_cmd.len_recv = reply_len;
-	wdev->wsm_cmd.async = async;
-	complete(&wdev->wsm_cmd.ready);
-
-	wfx_bh_wakeup(wdev);
-
-	// NOTE: no timeout is catched async is enabled
-	if (async)
-		return 0;
-
-	ret = wait_for_completion_timeout(&wdev->wsm_cmd.done, 3 * HZ);
-	if (!ret) {
-		dev_err(wdev->pdev, "chip is abnormally long to answer");
-		reinit_completion(&wdev->wsm_cmd.ready);
-		ret = wait_for_completion_timeout(&wdev->wsm_cmd.done, 7 * HZ);
-	}
-	if (!ret) {
-		dev_err(wdev->pdev, "chip did not answer");
-		reinit_completion(&wdev->wsm_cmd.done);
-		ret = -ETIMEDOUT;
-	} else {
-		ret = wdev->wsm_cmd.ret;
-	}
-
-	wdev->wsm_cmd.buf_send = NULL;
-	mutex_unlock(&wdev->wsm_cmd.lock);
-
-	if (ret < 0)
-		dev_err(wdev->pdev, "WSM request %s (%#02x) returned error %d\n",
-				get_wsm_name(cmd), cmd, ret);
-	if (ret > 0)
-		dev_warn(wdev->pdev, "WSM request %s (%#02x) returned status %d\n",
-				get_wsm_name(cmd), cmd, ret);
-
 	return ret;
 }
 
