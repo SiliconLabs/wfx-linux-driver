@@ -150,8 +150,7 @@ static int wsm_startup_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 /*    if (!(wdev->wsm_caps.FirmwareCap & 0x2)) */
 	wdev->hw->wiphy->bands[NL80211_BAND_5GHZ] = NULL;
 
-	wdev->firmware_ready = 1;
-	wake_up(&wdev->wsm_startup_done);
+	complete(&wdev->firmware_ready);
 	return 0;
 }
 

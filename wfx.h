@@ -177,14 +177,13 @@ struct wfx_dev {
 	atomic_t				wait_for_scan;
 
 	/* WSM */
-	HiStartupIndBody_t			wsm_caps;
 	/* Mutex to protect wsm message sending */
 	struct mutex			wsm_cmd_mux;
 	struct wsm_buf			wsm_cmd_buf;
 	struct wsm_cmd			wsm_cmd;
 	wait_queue_head_t		wsm_cmd_wq;
-	wait_queue_head_t		wsm_startup_done;
-	int                             firmware_ready;
+	struct completion		firmware_ready;
+	HiStartupIndBody_t		wsm_caps;
 	atomic_t			tx_lock;
 
 	/* WSM Join */

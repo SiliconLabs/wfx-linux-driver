@@ -312,6 +312,7 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 	hw->wiphy->max_scan_ssids = 2;
 	hw->wiphy->max_scan_ie_len = IEEE80211_MAX_DATA_LEN;
 
+	init_completion(&wdev->firmware_ready);
 	mutex_init(&wdev->wsm_cmd_mux);
 	mutex_init(&wdev->conf_mutex);
 	wdev->workqueue = create_singlethread_workqueue("wfx_wq");
@@ -337,11 +338,9 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 
 	init_waitqueue_head(&wdev->channel_switch_done);
 	init_waitqueue_head(&wdev->wsm_cmd_wq);
-	init_waitqueue_head(&wdev->wsm_startup_done);
 	init_waitqueue_head(&wdev->ps_mode_switch_done);
 	wsm_buf_init(&wdev->wsm_cmd_buf);
 	spin_lock_init(&wdev->wsm_cmd.lock);
-	wdev->wsm_cmd.done = 1;
 	tx_policy_init(wdev);
 
 	return hw;
@@ -447,9 +446,7 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 	// LDPC support was not yet tested
 	wdev->pdata.support_ldpc = false;
 
-	if (wait_event_interruptible_timeout(wdev->wsm_startup_done,
-					     wdev->firmware_ready,
-					     10 * HZ) <= 0) {
+	if (wait_for_completion_interruptible_timeout(&wdev->firmware_ready, 10 * HZ) <= 0) {
 		dev_err(wdev->pdev, "timeout while waiting for startup indication. IRQ configuration error?\n");
 		err = -ETIMEDOUT;
 		goto err2;
