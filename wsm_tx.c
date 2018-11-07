@@ -57,6 +57,7 @@ void init_wsm_cmd(struct wsm_cmd *wsm_cmd)
 {
 	init_completion(&wsm_cmd->ready);
 	init_completion(&wsm_cmd->done);
+	mutex_init(&wsm_cmd->lock);
 }
 
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
@@ -369,7 +370,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 		return 0;
 	}
 
-	mutex_lock(&wdev->wsm_cmd_mux);
+	mutex_lock(&wdev->wsm_cmd.lock);
 	WARN(wdev->wsm_cmd.buf_send, "Data locking error");
 
 	wdev->wsm_cmd.buf_send = request;
@@ -394,7 +395,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 	}
 
 	wdev->wsm_cmd.buf_send = NULL;
-	mutex_unlock(&wdev->wsm_cmd_mux);
+	mutex_unlock(&wdev->wsm_cmd.lock);
 
 	if (ret < 0)
 		dev_err(wdev->pdev, "WSM request %s (%#02x) returned error %d\n",

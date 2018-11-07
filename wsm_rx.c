@@ -37,7 +37,7 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 	int cmd = hdr->s.t.MsgId;
 	int len = hdr->MsgLen - 4; // drop header
 
-	WARN(!mutex_is_locked(&wdev->wsm_cmd_mux), "Data locking error");
+	WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
 
 	if (cmd != wdev->wsm_cmd.buf_send->s.b.Id) {
 		dev_warn(wdev->pdev, "Chip response mismatch request: %#.4X vs %#.4X\n",
@@ -384,11 +384,11 @@ static int wsm_generic_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 
 void wsm_lock_tx(struct wfx_dev *wdev)
 {
-	mutex_lock(&wdev->wsm_cmd_mux);
+	mutex_lock(&wdev->wsm_cmd.lock);
 	if (atomic_add_return(1, &wdev->tx_lock) == 1)
 		if (wsm_flush_tx(wdev))
 			pr_debug("[WSM] TX is locked.\n");
-	mutex_unlock(&wdev->wsm_cmd_mux);
+	mutex_unlock(&wdev->wsm_cmd.lock);
 }
 
 void wsm_lock_tx_async(struct wfx_dev *wdev)
@@ -750,7 +750,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	bool more = false;
 
 	if (try_wait_for_completion(&wdev->wsm_cmd.ready)) {
-		WARN(!mutex_is_locked(&wdev->wsm_cmd_mux), "Data locking error");
+		WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
 		*data = (u8 *) wdev->wsm_cmd.buf_send;
 		*tx_len = le16_to_cpu(wdev->wsm_cmd.buf_send->MsgLen);
 		*burst = 1;

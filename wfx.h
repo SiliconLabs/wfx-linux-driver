@@ -177,8 +177,6 @@ struct wfx_dev {
 	atomic_t				wait_for_scan;
 
 	/* WSM */
-	/* Mutex to protect wsm message sending */
-	struct mutex			wsm_cmd_mux;
 	struct wsm_cmd			wsm_cmd;
 	struct completion		firmware_ready;
 	HiStartupIndBody_t		wsm_caps;

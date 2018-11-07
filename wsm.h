@@ -162,6 +162,7 @@ struct wsm_protected_mgmt_policy {
 };
 
 struct wsm_cmd {
+	struct mutex      lock;
 	struct completion ready;
 	struct completion done;
 	HiMsgHdr_t        *buf_send;

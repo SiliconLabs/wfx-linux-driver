@@ -314,7 +314,6 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 
 	init_completion(&wdev->firmware_ready);
 	init_wsm_cmd(&wdev->wsm_cmd);
-	mutex_init(&wdev->wsm_cmd_mux);
 	mutex_init(&wdev->conf_mutex);
 	wdev->workqueue = create_singlethread_workqueue("wfx_wq");
 	sema_init(&wdev->scan.lock, 1);
