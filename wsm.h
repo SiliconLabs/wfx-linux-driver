@@ -343,7 +343,6 @@ static inline int wsm_set_protected_mgmt_policy(struct wfx_dev *wdev,
 						int Id)
 {
 	__le32 val = 0;
-	int ret;
 
 	if (arg->protectedMgmtEnable)
 		val |= cpu_to_le32(BIT(0));
@@ -351,9 +350,8 @@ static inline int wsm_set_protected_mgmt_policy(struct wfx_dev *wdev,
 		val |= cpu_to_le32(BIT(1));
 	if (arg->encryptionForAuthFrame)
 		val |= cpu_to_le32(BIT(2));
-	ret = wsm_write_mib(wdev, WSM_MIB_ID_PROTECTED_MGMT_POLICY,
-			    &val, sizeof(val), Id);
-	return ret;
+	return wsm_write_mib(wdev, WSM_MIB_ID_PROTECTED_MGMT_POLICY, &val,
+			     sizeof(val), Id);
 }
 
 static inline int wsm_set_block_ack_policy(struct wfx_dev *wdev,
