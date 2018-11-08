@@ -213,9 +213,9 @@ static int wfx_spi_probe(struct spi_device *func)
 		dev_warn(&func->dev, "try to load firmware anyway");
 	} else {
 		gpiod_set_value(bus->gpio_reset, 0);
-		udelay(500);
+		udelay(100);
 		gpiod_set_value(bus->gpio_reset, 1);
-		udelay(2000);
+		udelay(1000);
 	}
 
 	ret = wfx_core_probe(&wfx_spi_pdata, &wfx_spi_hwbus_ops,
