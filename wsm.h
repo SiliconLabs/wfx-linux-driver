@@ -249,9 +249,8 @@ static inline int wsm_set_beacon_wakeup_period(struct wfx_dev *wdev,
 
 	if (dtim_interval > 0xFF || listen_interval > 0xFFFF)
 		return -EINVAL;
-	else
-		return wsm_write_mib(wdev, WSM_MIB_ID_BEACON_WAKEUP_PERIOD,
-				     &val, sizeof(val), Id);
+	return wsm_write_mib(wdev, WSM_MIB_ID_BEACON_WAKEUP_PERIOD,
+			     &val, sizeof(val), Id);
 }
 
 static inline int wsm_set_rcpi_rssi_threshold(struct wfx_dev *wdev,
