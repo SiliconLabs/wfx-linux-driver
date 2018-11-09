@@ -190,7 +190,7 @@ static int wfx_spi_probe(struct spi_device *func)
 	dev_dbg(&func->dev, "SPI params: CS=%d, mode=%d bits/word=%d speed=%d",
 		func->chip_select, func->mode, func->bits_per_word, func->max_speed_hz);
 	if (func->bits_per_word != 16)
-		dev_info(&func->dev, "current setup if %dbits/word. You may improve performance using 16bits/word\n",
+		dev_info(&func->dev, "current setup is %d bits/word. You may improve performance using 16 bits/word\n",
 			 func->bits_per_word);
 	if (func->bits_per_word != 16 && func->bits_per_word != 8)
 		dev_warn(&func->dev, "unusual bits/word value: %d\n", func->bits_per_word);
