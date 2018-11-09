@@ -601,20 +601,15 @@ wfx_tx_h_wsm(struct wfx_vif	*wvif,
 	WsmHiTxReq_t *wsm;
 	uint32_t wsm_length = sizeof(WsmHiTxReq_t) - sizeof(uint32_t);
 
-	if (skb_headroom(t->skb) < wsm_length) {
-		wiphy_err(wvif->wdev->hw->wiphy,
-			  "Bug: no space allocated for WSM header. headroom: %d\n",
-			  skb_headroom(t->skb));
+	if (WARN(skb_headroom(t->skb) < wsm_length, "Not enough space for WSM headers"))
 		return NULL;
-	}
 
 	wsm = (WsmHiTxReq_t *)skb_push(t->skb, wsm_length);
 	t->txpriv.offset += wsm_length;
 	memset(wsm, 0, wsm_length);
 	wsm->Header.MsgLen = cpu_to_le16(t->skb->len);
-	wsm->Header.s.t.MsgId = WSM_HI_TX_REQ_ID; /* useless cpu_to_le16(WSM_HI_TX_REQ_ID); */
+	wsm->Header.s.t.MsgId = cpu_to_le16(WSM_HI_TX_REQ_ID);
 	wsm->Header.s.b.IntId = t->txpriv.vif_id;
-	/* wsm->Body.QueueId = (t->txpriv.raw_link_id << 2) | wsm_queue_id_to_wsm(t->queue); */
 	wsm->Body.QueueId.PerStaId = t->txpriv.raw_link_id;
 	wsm->Body.QueueId.QueueId = wsm_queue_id_to_wsm(t->queue);
 	return wsm;
