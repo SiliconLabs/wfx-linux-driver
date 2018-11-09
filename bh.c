@@ -31,13 +31,6 @@
 #define WF200_WAKEUP_WAIT_STEP_MAX 300  /*in us */
 #define WF200_WAKEUP_WAIT_MAX 2000      /*in us */
 
-/* an SPI message cannot be bigger than (2"12-1)*2 bytes "*2" to cvt to bytes*/
-#define MAX_CTRL_FRAME_LEN      (0x1000)
-#define DOWNLOAD_BLOCK_SIZE_WR  (MAX_CTRL_FRAME_LEN - 4)
-#define MAX_SZ_RD_WR_BUFFERS	(DOWNLOAD_BLOCK_SIZE_WR * 2)
-#define PIGGYBACK_CTRL_REG	(2)
-#define EFFECTIVE_BUF_SIZE	(MAX_SZ_RD_WR_BUFFERS - PIGGYBACK_CTRL_REG)
-
 #ifdef RASPBERRY_PI
 #define HIF_ERROR_DETECTION_8   0x55
 #define HIF_ERROR_DETECTION_16  0x5555
@@ -354,19 +347,12 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, uint32_t *ctrl_reg)
 	if (!read_len)
 		return 0;
 
-	if ((read_len < sizeof(HiMsgHdr_t)) ||
-	    (read_len > EFFECTIVE_BUF_SIZE)) {
-		wfx_err("Invalid read len: %zu (%08x)", read_len, *ctrl_reg);
-		goto err;
-	}
+	if (read_len < sizeof(HiMsgHdr_t))
+		return -1;
 
 	read_len = read_len + 2;
 
 	alloc_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, read_len);
-
-	/* Check if not exceeding wfx capabilities */
-	if (alloc_len > EFFECTIVE_BUF_SIZE)
-		wfx_err("Allocation exceeds wfx capabilities%zu\n", alloc_len);
 
 	skb_rx = dev_alloc_skb(alloc_len);
 	if (!skb_rx)
@@ -502,10 +488,6 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 	BUG_ON(le16_to_cpu(wsm->MsgLen) != tx_len);
 
 	tx_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, tx_len);
-
-	/* Check if not exceeding wfx capabilities */
-	if (tx_len > EFFECTIVE_BUF_SIZE)
-		wfx_warn("Write aligned len: %zu\n", tx_len);
 
 	wsm->s.t.MsgInfo &= 0xff ^ WSM_TX_SEQ(HI_MSG_SEQ_RANGE);
 	wsm->s.t.MsgInfo |= WSM_TX_SEQ(wdev->wsm_tx_seq);

@@ -206,7 +206,7 @@ int wfx_data_read(struct wfx_dev *wdev, void *buf, size_t len)
 	int ret, i;
 
 	WARN((long) buf & 3, "%s: unaligned buffer", __func__);
-	//WARN(len > MAX_SZ_RD_WR_BUFFERS, "%s: request exceed WFx capability", __func__);
+	WARN(len > round_down(0xFFF, 2) * sizeof(u16), "%s: request exceed WFx capability", __func__);
 	wdev->hwbus_ops->lock(wdev->hwbus_priv);
 	for (i = 0; i < 3; i++) {
 		ret = wdev->hwbus_ops->copy_from_io(wdev->hwbus_priv, WFX_REG_IN_OUT_QUEUE, buf, len);
@@ -230,7 +230,7 @@ int wfx_data_write(struct wfx_dev *wdev, const void *buf, size_t len)
 	int ret, i;
 
 	WARN((long) buf & 3, "%s: unaligned buffer", __func__);
-	//WARN(len > MAX_SZ_RD_WR_BUFFERS, "%s: request exceed WFx capability", __func__);
+	WARN(len > wdev->wsm_caps.SizeInpChBuf, "%s: request exceed WFx capability", __func__);
 	wdev->hwbus_ops->lock(wdev->hwbus_priv);
 	for (i = 0; i < 3; i++) {
 		ret = wdev->hwbus_ops->copy_to_io(wdev->hwbus_priv, WFX_REG_IN_OUT_QUEUE, buf, len);
