@@ -135,6 +135,10 @@ static int wsm_startup_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 	HiStartupIndBody_t *body = buf;
 
 	memcpy(&wdev->wsm_caps, body, sizeof(HiStartupIndBody_t));
+	le32_to_cpus(&wdev->wsm_caps.Status);
+	le16_to_cpus(&wdev->wsm_caps.HardwareId);
+	le16_to_cpus(&wdev->wsm_caps.NumInpChBufs);
+	le16_to_cpus(&wdev->wsm_caps.SizeInpChBuf);
 	if (body->Status || body->FirmwareType > 4) {
 		dev_err(wdev->pdev, "Received invalid startup indication");
 		return -EINVAL;
