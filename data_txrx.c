@@ -603,6 +603,11 @@ wfx_tx_h_wsm(struct wfx_vif	*wvif,
 
 	if (WARN(skb_headroom(t->skb) < wsm_length, "Not enough space for WSM headers"))
 		return NULL;
+	if (t->skb->len > wvif->wdev->wsm_caps.SizeInpChBuf) {
+		dev_info(wvif->wdev->pdev, "Requested frame size (%d) is larger than maximum supported (%d)\n",
+			 t->skb->len, wvif->wdev->wsm_caps.SizeInpChBuf);
+		return NULL;
+	}
 
 	wsm = (WsmHiTxReq_t *)skb_push(t->skb, wsm_length);
 	t->txpriv.offset += wsm_length;
