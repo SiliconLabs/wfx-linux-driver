@@ -2124,6 +2124,10 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 		wsm_set_rcpi_rssi_threshold(wdev, &threshold, wvif->Id);
 	}
 
+	if (changed & BSS_CHANGED_TXPOWER && info->txpower != wdev->output_power) {
+		wdev->output_power = info->txpower;
+		wsm_set_output_power(wvif->wdev, wdev->output_power * 10, wvif->Id);
+	}
 	mutex_unlock(&wdev->conf_mutex);
 
 	if (do_join) {
