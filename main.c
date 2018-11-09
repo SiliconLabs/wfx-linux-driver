@@ -482,7 +482,7 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 	if (macaddr)
 		ether_addr_copy(dev->wiphy->perm_addr, macaddr);
 	if (!is_valid_ether_addr(dev->wiphy->perm_addr))
-		wsm_get_station_id(wdev, dev->wiphy->perm_addr, NULL);
+		ether_addr_copy(dev->wiphy->perm_addr, wdev->wsm_caps.MacAddr0);
 	if (!is_valid_ether_addr(dev->wiphy->perm_addr)) {
 		dev_warn(wdev->pdev, "using random ethernet MAC\n");
 		eth_random_addr(dev->wiphy->perm_addr);

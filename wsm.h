@@ -294,19 +294,6 @@ static inline int wsm_get_counters_table(struct wfx_dev *wdev,
 			    arg, sizeof(*arg));
 }
 
-static inline int wsm_get_station_id(struct wfx_dev *wdev, u8 *mac1, u8 *mac2)
-{
-	int ret;
-	WsmHiMibMacAddresses_t msg;
-
-	ret = wsm_read_mib(wdev, WSM_MIB_ID_DOT11_MAC_ADDRESSES, &msg, sizeof(msg));
-	if (mac1)
-		ether_addr_copy(mac1, msg.MacAddr0);
-	if (mac2)
-		ether_addr_copy(mac2, msg.MacAddr1);
-	return ret;
-}
-
 static inline int wsm_set_station_id(struct wfx_dev *wdev, u8 *mac1, u8 *mac2)
 {
 	WsmHiMibMacAddresses_t msg = { };
