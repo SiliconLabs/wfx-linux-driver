@@ -922,7 +922,7 @@ void wfx_tx_confirm_cb(struct wfx_dev	*wdev,
 	    (arg->TxResultFlags.Requeue)) {
 		/* "Requeue" means "implicit suspend" */
 		WsmHiSuspendResumeTxIndBody_t suspend = {
-			.SuspendResumeFlags.ResumeOrSuspend	= 1,
+			.SuspendResumeFlags.ResumeOrSuspend	= 0,
 			.SuspendResumeFlags.CastType		= 1,
 		};
 

@@ -1734,11 +1734,11 @@ static void wfx_ps_notify(struct wfx_vif *wvif,
 		      bool ps)
 {
 	dev_info(wvif->wdev->pdev, "%s: %s STAs asleep: %.8X\n", __func__,
-		 ps ? "Stop" : "Start",
+		 ps ? "Start" : "Stop",
 		 wvif->sta_asleep_mask);
 
 	__wfx_sta_notify(wvif->wdev->hw, wvif->vif,
-			    ps ? STA_NOTIFY_SLEEP : STA_NOTIFY_AWAKE, 0);
+			    ps ? STA_NOTIFY_AWAKE : STA_NOTIFY_SLEEP, 0);
 }
 
 static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
@@ -2223,14 +2223,14 @@ void wfx_suspend_resume(struct wfx_dev *wdev,
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	pr_debug("[AP] %s: %s\n",
-		 arg->SuspendResumeFlags.ResumeOrSuspend ? "stop" : "start",
+		 arg->SuspendResumeFlags.ResumeOrSuspend ? "start" : "stop",
 		 arg->SuspendResumeFlags.CastType ? "broadcast" : "unicast");
 
 	if (arg->SuspendResumeFlags.CastType) {
 		bool cancel_tmo = false;
 
 		spin_lock_bh(&wvif->ps_state_lock);
-		if (arg->SuspendResumeFlags.ResumeOrSuspend) {
+		if (!arg->SuspendResumeFlags.ResumeOrSuspend) {
 			wvif->tx_multicast = false;
 		} else {
 			/* Firmware sends this indication every DTIM if there
@@ -2256,7 +2256,7 @@ void wfx_suspend_resume(struct wfx_dev *wdev,
 		wfx_ps_notify(wvif,
 			      arg->SuspendResumeFlags.ResumeOrSuspend);
 		spin_unlock_bh(&wvif->ps_state_lock);
-		if (!arg->SuspendResumeFlags.ResumeOrSuspend)
+		if (arg->SuspendResumeFlags.ResumeOrSuspend)
 			wfx_bh_wakeup(wdev);
 	}
 }
