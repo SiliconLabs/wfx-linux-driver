@@ -42,6 +42,9 @@
 #define NUM_NL80211_BANDS IEEE80211_NUM_BANDS
 #endif
 
+#define TU_TO_USEC(x) ((x) * 1024)
+#define TU_TO_MSEC(x) ((x) * 1024 / 1000)
+
 /* WFx indication error */
 #define INVALID_PDS_CONFIG_FILE    1
 #define JOIN_CNF_AUTH_FAILED       2

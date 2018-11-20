@@ -509,9 +509,10 @@ void wfx_set_beacon_wakeup_period_work(struct work_struct *work)
 	struct wfx_vif *wvif =
 		container_of(work, struct wfx_vif,
 			     set_beacon_wakeup_period_work);
-	unsigned period =
-		wvif->beacon_int * wvif->join_dtim_period > MAX_BEACON_SKIP_TIME_MS ? 1 : wvif->join_dtim_period;
+	unsigned period = wvif->join_dtim_period;
 
+	if (TU_TO_MSEC(wvif->beacon_int) * period > MAX_BEACON_SKIP_TIME_MS)
+		period = 1;
 	wsm_set_beacon_wakeup_period(wvif->wdev, period, period, wvif->Id);
 }
 
@@ -2143,8 +2144,7 @@ void wfx_multicast_start_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
 		container_of(work, struct wfx_vif, multicast_start_work);
-	long tmo = wvif->join_dtim_period *
-		   (wvif->beacon_int + 20) * HZ / 1024;
+	long tmo = wvif->join_dtim_period * TU_TO_JIFFIES(wvif->beacon_int + 20);
 
 	cancel_work_sync(&wvif->multicast_stop_work);
 
@@ -2240,7 +2240,7 @@ void wfx_suspend_resume(struct wfx_dev *wdev,
 			 */
 			wfx_pm_stay_awake(&wdev->pm_state,
 					  wvif->join_dtim_period *
-					  (wvif->beacon_int + 20) * HZ / 1024);
+					  TU_TO_JIFFIES(wvif->beacon_int + 20));
 			wvif->tx_multicast = (wvif->aid0_bit_set &&
 					      wvif->buffered_multicasts);
 			if (wvif->tx_multicast) {
