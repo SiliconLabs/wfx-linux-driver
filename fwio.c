@@ -329,34 +329,16 @@ int wfx_init_device(struct wfx_dev *wdev)
 		return -EIO;
 	}
 
-	ret = control_reg_write(wdev, CTRL_WLAN_WAKEUP);
-	if (ret < 0)
-		return -EIO;
-	start = ktime_get();
-	for (;;) {
-		ret = control_reg_read(wdev, &reg);
-		if (ret < 0) {
-			dev_err(wdev->pdev, "%s bus returned error during first read access. Bus configuration error?\n",
-					wdev->pdata.sdio ? "SDIO" : "SPI");
-			return -EIO;
-		}
-		if (reg == 0 || reg == ~0) {
-			dev_err(wdev->pdev, "chip mute. Bus configuration error or chip wasn't reset?\n");
-			return -EIO;
-		}
-		now = ktime_get();
-		if (reg & CTRL_WLAN_READY)
-			break;
-		if (ktime_after(now, ktime_add_ms(start, WAKEUP_TIMEOUT))) {
-			dev_err(wdev->pdev, "chip didn't wake up. Chip wasn't reset?\n");
-			return -ETIMEDOUT;
-		}
-	}
-	dev_dbg(wdev->pdev, "chip wake up after %lldus\n", ktime_us_delta(now, start));
-
 	ret = config_reg_read(wdev, &reg);
-	if (ret < 0)
+	if (ret < 0) {
+		dev_err(wdev->pdev, "%s bus returned error during first read access. Bus configuration error?\n",
+				wdev->pdata.sdio ? "SDIO" : "SPI");
 		return -EIO;
+	}
+	if (reg == 0 || reg == ~0) {
+		dev_err(wdev->pdev, "chip mute. Bus configuration error or chip wasn't reset?\n");
+		return -EIO;
+	}
 	dev_dbg(wdev->pdev, "initial config register value: %08x\n", reg);
 
 	wdev->hw_type = FIELD_GET(CFG_DEVICE_ID_TYPE, reg);
@@ -381,6 +363,22 @@ int wfx_init_device(struct wfx_dev *wdev)
 			return ret;
 		dev_dbg(wdev->pdev, "  index %02x: %08x\n", igpr_init_sequence[i] >> 24, reg);
 	}
+
+	ret = control_reg_write(wdev, CTRL_WLAN_WAKEUP);
+	if (ret < 0)
+		return -EIO;
+	start = ktime_get();
+	for (;;) {
+		ret = control_reg_read(wdev, &reg);
+		now = ktime_get();
+		if (reg & CTRL_WLAN_READY)
+			break;
+		if (ktime_after(now, ktime_add_ms(start, WAKEUP_TIMEOUT))) {
+			dev_err(wdev->pdev, "chip didn't wake up. Chip wasn't reset?\n");
+			return -ETIMEDOUT;
+		}
+	}
+	dev_dbg(wdev->pdev, "chip wake up after %lldus\n", ktime_us_delta(now, start));
 
 	ret = load_firmware(wdev);
 	if (ret < 0)
