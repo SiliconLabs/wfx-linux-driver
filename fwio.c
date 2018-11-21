@@ -311,7 +311,7 @@ static int init_otp(struct wfx_dev *wdev)
 int wfx_init_device(struct wfx_dev *wdev)
 {
 	static const u32 igpr_init_sequence[] = {
-		0x07208775, 0x082EC020, 0x093C3C3C, 0x0B322C44, 0x0CA06496,
+		0x07208775, 0x082EC020, 0x093C3C3C, 0x0B322C44, 0x0CA06497,
 	};
 	int ret, i;
 	ktime_t now, start;
