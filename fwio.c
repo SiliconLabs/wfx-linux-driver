@@ -303,11 +303,6 @@ static int load_firmware(struct wfx_dev *wdev)
 	return ret;
 }
 
-static int init_otp(struct wfx_dev *wdev)
-{
-	return 0;
-}
-
 int wfx_init_device(struct wfx_dev *wdev)
 {
 
@@ -359,9 +354,6 @@ int wfx_init_device(struct wfx_dev *wdev)
 	if (wdev->hw_type == 1)
 		dev_notice(wdev->pdev, "development hardware detected\n");
 
-	ret = init_otp(wdev);
-	if (ret < 0)
-		return ret;
 	for (i = 0; i < ARRAY_SIZE(igpr_init_sequence); i++) {
 		ret = igpr_reg_write(wdev, igpr_init_sequence[i].index, igpr_init_sequence[i].value);
 		if (ret < 0)
