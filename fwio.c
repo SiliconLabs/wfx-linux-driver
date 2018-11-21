@@ -310,8 +310,16 @@ static int init_otp(struct wfx_dev *wdev)
 
 int wfx_init_device(struct wfx_dev *wdev)
 {
-	static const u32 igpr_init_sequence[] = {
-		0x07208775, 0x082EC020, 0x093C3C3C, 0x0B322C44, 0x0CA06497,
+
+	static const struct {
+		int index;
+		u32 value;
+	} igpr_init_sequence[] = {
+		{ 0x07, 0x208775 },
+		{ 0x08, 0x2EC020 },
+		{ 0x09, 0x3C3C3C } ,
+		{ 0x0B, 0x322C44 },
+		{ 0x0C, 0xA06497 },
 	};
 	int ret, i;
 	ktime_t now, start;
@@ -355,10 +363,10 @@ int wfx_init_device(struct wfx_dev *wdev)
 	if (ret < 0)
 		return ret;
 	for (i = 0; i < ARRAY_SIZE(igpr_init_sequence); i++) {
-		ret = igpr_reg_write(wdev, igpr_init_sequence[i]);
+		ret = igpr_reg_write(wdev, igpr_init_sequence[i].index, igpr_init_sequence[i].value);
 		if (ret < 0)
 			return ret;
-		dev_dbg(wdev->pdev, "  index %02x: %08x\n", igpr_init_sequence[i] >> 24, igpr_init_sequence[i] & IGPR_VALUE);
+		dev_dbg(wdev->pdev, "  index %02x: %08x\n", igpr_init_sequence[i].index, igpr_init_sequence[i].value);
 	}
 
 	ret = control_reg_write(wdev, CTRL_WLAN_WAKEUP);

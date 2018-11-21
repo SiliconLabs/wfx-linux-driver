@@ -317,13 +317,23 @@ int control_reg_write_bits(struct wfx_dev *wdev, u32 mask, u32 val)
 	return write32_bits_locked(wdev, WFX_REG_CONTROL, mask, val);
 }
 
-int igpr_reg_read(struct wfx_dev *wdev, u32 *val)
+int igpr_reg_read(struct wfx_dev *wdev, int index, u32 *val)
 {
-	return read32_locked(wdev, WFX_REG_SET_GEN_R_W, val);
+	int ret;
+
+	*val = ~0; // Never return undefined value
+	ret = write32_locked(wdev, WFX_REG_SET_GEN_R_W, IGPR_RW | index << 24);
+	if (ret)
+		return ret;
+	ret = read32_locked(wdev, WFX_REG_SET_GEN_R_W, val);
+	if (ret)
+		return ret;
+	*val &= IGPR_VALUE;
+	return ret;
 }
 
-int igpr_reg_write(struct wfx_dev *wdev, u32 val)
+int igpr_reg_write(struct wfx_dev *wdev, int index, u32 val)
 {
-	return write32_locked(wdev, WFX_REG_SET_GEN_R_W, val);
+	return write32_locked(wdev, WFX_REG_SET_GEN_R_W, index << 24 | val);
 }
 
