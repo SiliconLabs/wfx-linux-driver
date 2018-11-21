@@ -303,20 +303,32 @@ static int load_firmware(struct wfx_dev *wdev)
 	return ret;
 }
 
-int wfx_init_device(struct wfx_dev *wdev)
+static int init_gpr(struct wfx_dev *wdev)
 {
-
+	int ret, i;
 	static const struct {
 		int index;
 		u32 value;
-	} igpr_init_sequence[] = {
+	} gpr_init[] = {
 		{ 0x07, 0x208775 },
 		{ 0x08, 0x2EC020 },
 		{ 0x09, 0x3C3C3C } ,
 		{ 0x0B, 0x322C44 },
 		{ 0x0C, 0xA06497 },
 	};
-	int ret, i;
+
+	for (i = 0; i < ARRAY_SIZE(gpr_init); i++) {
+		ret = igpr_reg_write(wdev, gpr_init[i].index, gpr_init[i].value);
+		if (ret < 0)
+			return ret;
+		dev_dbg(wdev->pdev, "  index %02x: %08x\n", gpr_init[i].index, gpr_init[i].value);
+	}
+	return 0;
+}
+
+int wfx_init_device(struct wfx_dev *wdev)
+{
+	int ret;
 	ktime_t now, start;
 	u32 reg;
 
@@ -354,12 +366,9 @@ int wfx_init_device(struct wfx_dev *wdev)
 	if (wdev->hw_type == 1)
 		dev_notice(wdev->pdev, "development hardware detected\n");
 
-	for (i = 0; i < ARRAY_SIZE(igpr_init_sequence); i++) {
-		ret = igpr_reg_write(wdev, igpr_init_sequence[i].index, igpr_init_sequence[i].value);
-		if (ret < 0)
-			return ret;
-		dev_dbg(wdev->pdev, "  index %02x: %08x\n", igpr_init_sequence[i].index, igpr_init_sequence[i].value);
-	}
+	ret = init_gpr(wdev);
+	if (ret < 0)
+		return ret;
 
 	ret = control_reg_write(wdev, CTRL_WLAN_WAKEUP);
 	if (ret < 0)
