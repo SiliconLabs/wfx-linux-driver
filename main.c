@@ -357,6 +357,12 @@ static int wfx_register_common(struct ieee80211_hw *dev)
 	struct wfx_dev *wdev = dev->priv;
 	int ret;
 
+#ifdef CONFIG_PM
+	ret = wfx_pm_init(&wdev->pm_state, wdev);
+	if (ret)
+		goto err2;
+#endif
+
 	ret = ieee80211_register_hw(dev);
 	if (ret)
 		goto err1;
@@ -364,12 +370,6 @@ static int wfx_register_common(struct ieee80211_hw *dev)
 	ret = wfx_debug_init(wdev);
 	if (ret)
 		goto err2;
-
-#ifdef CONFIG_PM
-	ret = wfx_pm_init(&wdev->pm_state, wdev);
-	if (ret)
-		goto err2;
-#endif
 
 	return ret;
 
