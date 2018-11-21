@@ -41,7 +41,7 @@ int ahb_reg_read(struct wfx_dev *wdev, u32 addr, u32 *val);
 int ahb_reg_write(struct wfx_dev *wdev, u32 addr, u32 val);
 
 #define CFG_ERR_SPI_FRAME          0x00000001 // only with SPI
-#define CFG_ERR_BUF_MISMATCH       0x00000001 // only with SDIO
+#define CFG_ERR_SDIO_BUF_MISMATCH  0x00000001 // only with SDIO
 #define CFG_ERR_BUF_UNDERRUN       0x00000002
 #define CFG_ERR_DATA_IN_TOO_LARGE  0x00000004
 #define CFG_ERR_HOST_NO_OUT_QUEUE  0x00000008
@@ -50,20 +50,20 @@ int ahb_reg_write(struct wfx_dev *wdev, u32 addr, u32 val);
 #define CFG_ERR_HOST_NO_IN_QUEUE   0x00000040
 #define CFG_ERR_HOST_CRC_MISS      0x00000080 // only with SDIO
 #define CFG_SPI_IGNORE_CS          0x00000080 // only with SPI
-#define CFG_SPI_WORD_MODE_MASK     0x00000300 // only with SPI. Bytes ordering:
-#define CFG_SPI_WORD_MODE0         0x00000000 //   B1,B0,B3,B2
-#define CFG_SPI_WORD_MODE1         0x00000100 //   B3,B2,B1,B0
-#define CFG_SPI_WORD_MODE2         0x00000200 //   B0,B1,B2,B3
+#define CFG_WORD_MODE_MASK         0x00000300 // Bytes ordering (only writable in SPI):
+#define     CFG_WORD_MODE0         0x00000000 //   B1,B0,B3,B2 (In SPI, access to CONFIG register always use this mode)
+#define     CFG_WORD_MODE1         0x00000100 //   B3,B2,B1,B0
+#define     CFG_WORD_MODE2         0x00000200 //   B0,B1,B2,B3 (SDIO)
 #define CFG_DIRECT_ACCESS_MODE     0x00000400 // Direct or queue access mode
 #define CFG_PREFETCH_AHB           0x00000800
 #define CFG_DISABLE_CPU_CLK        0x00001000
 #define CFG_PREFETCH_SRAM          0x00002000
 #define CFG_CPU_RESET              0x00004000
-#define CFG_SDIO_RESERVED1         0x00008000 // only with SDIO
+#define CFG_SDIO_DISABLE_IRQ       0x00008000 // only with SDIO
 #define CFG_IRQ_ENABLE_DATA        0x00010000
 #define CFG_IRQ_ENABLE_WRDY        0x00020000
-#define CFG_CLK_RISE_EDGE          0x00040000 // only with SDIO?
-#define CFG_SDIO_RESERVED0         0x00080000 // only with SDIO
+#define CFG_CLK_RISE_EDGE          0x00040000
+#define CFG_SDIO_DISABLE_CRC_CHK   0x00080000 // only with SDIO
 #define CFG_RESERVED               0x00F00000
 #define CFG_DEVICE_ID_MAJOR        0x07000000
 #define CFG_DEVICE_ID_RESERVED     0x78000000
