@@ -358,10 +358,7 @@ int wfx_init_device(struct wfx_dev *wdev)
 		ret = igpr_reg_write(wdev, igpr_init_sequence[i]);
 		if (ret < 0)
 			return ret;
-		ret = igpr_reg_read(wdev, &reg);
-		if (ret < 0)
-			return ret;
-		dev_dbg(wdev->pdev, "  index %02x: %08x\n", igpr_init_sequence[i] >> 24, reg);
+		dev_dbg(wdev->pdev, "  index %02x: %08x\n", igpr_init_sequence[i] >> 24, igpr_init_sequence[i] & IGPR_VALUE);
 	}
 
 	ret = control_reg_write(wdev, CTRL_WLAN_WAKEUP);
