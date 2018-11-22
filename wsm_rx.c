@@ -616,12 +616,9 @@ static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
 			action = do_probe;
 		} else if (ieee80211_has_protected(fctl) &&
 			   tx_info->control.hw_key &&
-		    tx_info->control.hw_key->keyidx !=
-		    wvif->wep_default_key_id &&
-		    (tx_info->control.hw_key->cipher ==
-		     WLAN_CIPHER_SUITE_WEP40 ||
-		     tx_info->control.hw_key->cipher ==
-		     WLAN_CIPHER_SUITE_WEP104)) {
+			   tx_info->control.hw_key->keyidx != wvif->wep_default_key_id &&
+			   (tx_info->control.hw_key->cipher == WLAN_CIPHER_SUITE_WEP40 ||
+			    tx_info->control.hw_key->cipher == WLAN_CIPHER_SUITE_WEP104)) {
 			action = do_wep;
 		}
 	}
