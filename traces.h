@@ -117,7 +117,7 @@ DECLARE_EVENT_CLASS(wsm_data,
 		__field(int, if_id)
 		__field(int, mib)
 		__field(bool, is_longer)
-		__array(u8, buf, 64)
+		__array(u8, buf, 32)
 	),
 	TP_fast_assign(
 		int header_len;
@@ -136,8 +136,8 @@ DECLARE_EVENT_CLASS(wsm_data,
 			__entry->mib = -1;
 			header_len = 4;
 		}
-		__entry->is_longer =  __entry->msg_len - header_len > 64 ? true : false;
-		__entry->buf_len = min(64, __entry->msg_len - header_len);
+		__entry->is_longer =  __entry->msg_len - header_len > 32 ? true : false;
+		__entry->buf_len = min(32, __entry->msg_len - header_len);
 		memcpy(__entry->buf, ((char *) wsm_buf) + header_len, __entry->buf_len);
 	),
 	TP_printk("%d:%s_%s%s: %s%s (%d bytes)",
@@ -213,14 +213,14 @@ DECLARE_EVENT_CLASS(io_data,
 		__field(int, addr)
 		__field(int, msg_len)
 		__field(int, buf_len)
-		__array(u8, buf, 64)
+		__array(u8, buf, 32)
 		__array(u8, addr_str, 10)
 	),
 	TP_fast_assign(
 		__entry->reg = reg;
 		__entry->addr = addr;
 		__entry->msg_len = len;
-		__entry->buf_len = min(64, __entry->msg_len);
+		__entry->buf_len = min(32, __entry->msg_len);
 		memcpy(__entry->buf, io_buf, __entry->buf_len);
 		if (addr >= 0)
 			snprintf(__entry->addr_str, 10, "/%08x", addr);
