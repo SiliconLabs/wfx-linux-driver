@@ -816,12 +816,10 @@ void wfx_tx(struct ieee80211_hw *dev,
 	sta = rcu_dereference(t.sta);
 
 	spin_lock_bh(&wvif->ps_state_lock);
-	{
-		tid_update = wfx_tx_h_pm_state(wvif, &t);
-		BUG_ON(wfx_queue_put(&wdev->tx_queue[t.queue],
-					t.skb, &t.txpriv));
-	}
+	tid_update = wfx_tx_h_pm_state(wvif, &t);
+	ret = wfx_queue_put(&wdev->tx_queue[t.queue], t.skb, &t.txpriv);
 	spin_unlock_bh(&wvif->ps_state_lock);
+	BUG_ON(ret);
 
 	if (tid_update && sta)
 		ieee80211_sta_set_buffered(sta, t.txpriv.tid, true);
