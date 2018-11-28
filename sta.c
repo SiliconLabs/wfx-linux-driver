@@ -1702,8 +1702,7 @@ static void __wfx_sta_notify(struct ieee80211_hw *dev,
 		if (prev) {
 			wvif->sta_asleep_mask &= ~bit;
 			wvif->pspoll_mask &= ~bit;
-			if (wvif->tx_multicast && link_id &&
-			    !wvif->sta_asleep_mask)
+			if (link_id && !wvif->sta_asleep_mask)
 				queue_work(wdev->workqueue,
 					   &wvif->multicast_stop_work);
 			wfx_bh_wakeup(wdev);
