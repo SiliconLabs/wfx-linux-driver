@@ -687,12 +687,8 @@ static int wfx_get_prio_queue(struct wfx_vif *wvif,
 	/* override winner if bursting */
 	if (winner >= 0 && wvif->wdev->tx_burst_idx >= 0 &&
 	    winner != wvif->wdev->tx_burst_idx &&
-	    !wfx_queue_get_num_queued(
-		    &wvif->wdev->tx_queue[winner],
-		    link_id_map & urgent) &&
-	    wfx_queue_get_num_queued(
-		    &wvif->wdev->tx_queue[wvif->wdev->tx_burst_idx],
-		    link_id_map))
+	    !wfx_queue_get_num_queued(&wvif->wdev->tx_queue[winner], link_id_map & urgent) &&
+	    wfx_queue_get_num_queued(&wvif->wdev->tx_queue[wvif->wdev->tx_burst_idx], link_id_map))
 		winner = wvif->wdev->tx_burst_idx;
 
 	return winner;
@@ -712,8 +708,7 @@ static int wsm_get_tx_queue_and_mask(struct wfx_dev	*wdev,
 	/* Search for a queue with multicast frames buffered */
 	if (wvif->tx_multicast) {
 		tx_allowed_mask = BIT(WFX_LINK_ID_AFTER_DTIM);
-		idx = wfx_get_prio_queue(wvif,
-				tx_allowed_mask, &total);
+		idx = wfx_get_prio_queue(wvif, tx_allowed_mask, &total);
 		if (idx >= 0) {
 			*more = total > 1;
 			goto found;
@@ -729,8 +724,7 @@ static int wsm_get_tx_queue_and_mask(struct wfx_dev	*wdev,
 	} else {
 		tx_allowed_mask |= BIT(WFX_LINK_ID_AFTER_DTIM);
 	}
-	idx = wfx_get_prio_queue(wvif,
-			tx_allowed_mask, &total);
+	idx = wfx_get_prio_queue(wvif, tx_allowed_mask, &total);
 	if (idx < 0)
 		return -ENOENT;
 
