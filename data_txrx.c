@@ -897,8 +897,7 @@ done:
 void wfx_tx_confirm_cb(struct wfx_dev	*wdev,
 		       WsmHiTxCnfBody_t		*arg)
 {
-	// FIXME: Get interface id from WSM buffer
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
+	struct wfx_vif *wvif;
 	u8 queue_id = wfx_queue_get_queue_id(arg->PacketId);
 	struct wfx_queue *queue = &wdev->tx_queue[queue_id];
 	struct sk_buff *skb;
@@ -913,6 +912,8 @@ void wfx_tx_confirm_cb(struct wfx_dev	*wdev,
 		dev_warn(wdev->pdev, "Received unknown packet_id from chip\n");
 		return;
 	}
+
+	wvif = wdev_to_wvif(wdev, txpriv->vif_id);
 
 	if (wvif->mode == NL80211_IFTYPE_UNSPECIFIED) {
 		/* STA is stopped. */
