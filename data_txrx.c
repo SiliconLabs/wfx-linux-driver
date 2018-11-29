@@ -903,44 +903,45 @@ void wfx_tx_confirm_cb(struct wfx_dev	*wdev,
 	struct wfx_queue *queue = &wdev->tx_queue[queue_id];
 	struct sk_buff *skb;
 	const struct wfx_txpriv *txpriv;
+	int ret;
 
 	pr_debug("[TX] TX confirm: status=%d, ack_failure=%d.\n",
 		 arg->Status, arg->AckFailures);
+
+	ret = wfx_queue_get_skb(queue, arg->PacketId, &skb, &txpriv);
+	if (ret) {
+		dev_warn(wdev->pdev, "Received unknown packet_id from chip\n");
+		return;
+	}
 
 	if (wvif->mode == NL80211_IFTYPE_UNSPECIFIED) {
 		/* STA is stopped. */
 		return;
 	}
 
-	if (WARN_ON(queue_id >= 4))
-		return;
-
-	if (arg->Status)
-		pr_debug("TX failed: %d.\n", arg->Status);
-
-	if ((arg->Status == WSM_REQUEUE) &&
-	    (arg->TxResultFlags.Requeue)) {
+	if (arg->Status == WSM_REQUEUE) {
 		/* "Requeue" means "implicit suspend" */
 		WsmHiSuspendResumeTxIndBody_t suspend = {
 			.SuspendResumeFlags.ResumeOrSuspend	= 0,
 			.SuspendResumeFlags.CastType		= 1,
 		};
 
+		WARN(!arg->TxResultFlags.Requeue, "Incoherent Status and ResultFlags");
+
 		wfx_suspend_resume(wdev, &suspend);
 		dev_warn(wdev->pdev, "Requeue is known to be broken. sta_id %d (try %d). STAs asleep: 0x%.8X\n",
-			   0,
+			   txpriv->link_id,
 			   wfx_queue_get_generation(arg->PacketId) + 1,
 			   wvif->sta_asleep_mask);
 		wfx_queue_requeue(queue, arg->PacketId);
-		spin_lock_bh(&wvif->ps_state_lock);
-		wvif->buffered_multicasts = true;
-		if (wvif->sta_asleep_mask) {
-			queue_work(wdev->workqueue,
-				   &wvif->multicast_start_work);
+		if (!txpriv->link_id) { // Is multicast?
+			spin_lock_bh(&wvif->ps_state_lock);
+			wvif->buffered_multicasts = true;
+			if (wvif->sta_asleep_mask)
+				queue_work(wdev->workqueue, &wvif->multicast_start_work);
+			spin_unlock_bh(&wvif->ps_state_lock);
 		}
-		spin_unlock_bh(&wvif->ps_state_lock);
-	} else if (!wfx_queue_get_skb(queue, arg->PacketId,
-					 &skb, &txpriv)) {
+	} else {
 		struct ieee80211_tx_info *tx = IEEE80211_SKB_CB(skb);
 		int tx_count = arg->AckFailures;
 		u8 ht_flags = 0;
