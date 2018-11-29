@@ -904,9 +904,6 @@ void wfx_tx_confirm_cb(struct wfx_dev	*wdev,
 	const struct wfx_txpriv *txpriv;
 	int ret;
 
-	pr_debug("[TX] TX confirm: status=%d, ack_failure=%d.\n",
-		 arg->Status, arg->AckFailures);
-
 	ret = wfx_queue_get_skb(queue, arg->PacketId, &skb, &txpriv);
 	if (ret) {
 		dev_warn(wdev->pdev, "Received unknown packet_id from chip\n");
