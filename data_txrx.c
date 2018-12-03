@@ -684,7 +684,7 @@ wfx_tx_h_rate_policy(struct wfx_dev	*wdev,
 	 *
 	 * Bit 5: 0 (lgi), 1 (sgi)
 	 */
-	if (t->rate->flags & IEEE80211_TX_RC_SHORT_GI)
+	if (t->rate->flags & IEEE80211_TX_RC_SHORT_GI || wfx_ht_shortGi(&wdev->ht_info))
 		wsm->Body.HtTxParameters.ShortGi = 1;
 
 	/* LDPC (Low-Density Parity-Check code)

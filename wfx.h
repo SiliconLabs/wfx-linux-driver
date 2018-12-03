@@ -355,7 +355,7 @@ static inline int wfx_ht_fecCoding(const struct wfx_ht_info *ht_info)
 }
 
 /* 802.11n HT capability: IEEE80211_HT_CAP_SGI_20.
- * Device supports Short Guard    Interval on 20MHz channels.
+ * Device supports Short Guard Interval on 20MHz channels.
  */
 static inline int wfx_ht_shortGi(const struct wfx_ht_info *ht_info)
 {
