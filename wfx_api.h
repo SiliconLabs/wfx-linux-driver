@@ -56,7 +56,8 @@ typedef __le32 __les32;
 #define API_UID_SIZE                                    8         
 #define API_MAC_ADDR0_SIZE                              6         
 #define API_MAC_ADDR1_SIZE                              6         
-#define API_RESERVED2_SIZE                              8         
+#define API_DISABLED_CHANNEL_LIST_SIZE                  2         
+#define API_RESERVED2_SIZE                              6         
 #define API_FIRMWARE_LABEL_SIZE                         128       
 #define API_PDS_DATA_SIZE                               1         
 #define API_KEY_VALUE_SIZE                              32        
@@ -798,6 +799,12 @@ typedef struct __attribute__((__packed__)) wsm_hi_ie_flags_s {
         u8       Reserved1 : 5;                    /*Reserved*/      
         u8       Reserved2;                        /*Reserved*/      
 } WsmHiIeFlags_t;
+
+typedef struct __attribute__((__packed__)) wsm_hi_map_link_flags_s {
+        u8       MapDirection : 1;                 /*0 to map, 1 to unmap type: wsm*/
+        u8       Mfpc : 1;                         /*Set to 1 if STA advertised MFPC bit*/
+        u8       Reserved : 6;                     /*Reserved*/      
+} WsmHiMapLinkFlags_t;
 
 typedef struct __attribute__((__packed__)) wsm_hi_wep_pairwise_key_s {
         u8       PeerAddress[WSM_API_PEER_ADDRESS_SIZE];   /*MAC address of the peer station type: sl_configure_ind_status*/
@@ -1559,6 +1566,7 @@ typedef struct __attribute__((__packed__)) HiStartupIndBody_s {
         u8       FirmwareMinor;      
         u8       FirmwareMajor;      
         u8       FirmwareType;                     /*ETF, WFM, WSM*/ 
+        u8       DisabledChannelList[API_DISABLED_CHANNEL_LIST_SIZE];   /*=OTP Disabled channel list info*/
         u8       Reserved2[API_RESERVED2_SIZE];
         u8       FirmwareLabel[API_FIRMWARE_LABEL_SIZE];   /*Null terminated text string.*/
 } HiStartupIndBody_t;
@@ -2232,7 +2240,7 @@ typedef struct __attribute__((__packed__)) WsmHiUpdateIeCnf_s {
 /* Map mac_address to link_id */
 typedef struct __attribute__((__packed__)) WsmHiMapLinkReqBody_s {
         u8       MacAddr[WSM_API_MAC_ADDR_SIZE];   /*MAC address of the remote device*/
-        u8       Flags;              
+        WsmHiMapLinkFlags_t MapLinkFlags;       
         u8       PeerStaId;          
 } WsmHiMapLinkReqBody_t;
 

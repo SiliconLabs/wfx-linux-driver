@@ -387,7 +387,7 @@ int wsm_map_link(struct wfx_dev *wdev, u8 *mac_addr, int flags, int sta_id, int 
 
 	if (mac_addr)
 		ether_addr_copy(body->MacAddr, mac_addr);
-	body->Flags = flags;
+	body->MapLinkFlags = *(WsmHiMapLinkFlags_t *) &flags;
 	body->PeerStaId = sta_id;
 	wfx_fill_header(hdr, Id, WSM_HI_MAP_LINK_REQ_ID, sizeof(*body));
 	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
