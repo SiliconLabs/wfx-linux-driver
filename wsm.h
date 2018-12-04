@@ -143,10 +143,9 @@ struct wsm_edca_params {
 };
 
 struct wsm_rx_filter {
-	bool	promiscuous;
 	bool	bssid;
-	bool	fcs;
 	bool	probeResponder;
+	bool    keepAlive;
 };
 
 struct wsm_operational_mode {
@@ -263,14 +262,12 @@ static inline int wsm_set_rx_filter(struct wfx_dev *wdev,
 {
 	__le32 val = 0;
 
-	if (arg->promiscuous)
-		val |= cpu_to_le32(BIT(0));
 	if (arg->bssid)
 		val |= cpu_to_le32(BIT(1));
-	if (arg->fcs)
-		val |= cpu_to_le32(BIT(2));
 	if (arg->probeResponder)
 		val |= cpu_to_le32(BIT(3));
+	if (arg->keepAlive)
+		val |= cpu_to_le32(BIT(4));
 	return wsm_write_mib(wdev, WSM_MIB_ID_RX_FILTER, &val, sizeof(val), Id);
 }
 
@@ -406,18 +403,6 @@ static inline int wsm_keep_alive_period(struct wfx_dev *wdev,
 	return wsm_write_mib(wdev, WSM_MIB_ID_KEEP_ALIVE_PERIOD,
 			     &arg, sizeof(arg), Id);
 };
-
-static inline int wsm_set_bssid_filtering(struct wfx_dev *wdev,
-					  bool enabled,
-					  int Id)
-{
-	WsmHiMibDisableBssidFilter_t arg = {
-		.Filter = !enabled,
-	};
-
-	return wsm_write_mib(wdev, WSM_MIB_ID_DISABLE_BSSID_FILTER,
-			     &arg, sizeof(arg), Id);
-}
 
 static inline int wsm_set_multicast_filter(struct wfx_dev *wdev,
 					   WsmHiMibGrpAddrTable_t *fp,

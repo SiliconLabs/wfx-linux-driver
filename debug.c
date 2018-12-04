@@ -201,13 +201,12 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 			   " (switching)" : "");
 	}
 
-	if (wvif->rx_filter.promiscuous)
-		seq_puts(seq,   "Filter:     promisc\n");
-	else if (wvif->rx_filter.fcs)
-		seq_puts(seq,   "Filter:     fcs\n");
-
 	if (wvif->rx_filter.bssid)
 		seq_puts(seq,   "Filter:     bssid\n");
+	if (wvif->rx_filter.keepAlive)
+		seq_puts(seq,   "Filter:     keepAlive\n");
+	if (wvif->rx_filter.probeResponder)
+		seq_puts(seq,   "Filter:     probeResponder\n");
 
 	if (!wvif->disable_beacon_filter)
 		seq_puts(seq,   "Filter:     beacons\n");

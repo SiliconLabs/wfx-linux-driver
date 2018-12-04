@@ -434,10 +434,9 @@ int wfx_config(struct ieee80211_hw *dev, u32 changed)
 void wfx_update_filtering(struct wfx_vif *wvif)
 {
 	int ret;
-	bool bssid_filtering = !wvif->rx_filter.bssid;
 	bool is_p2p = wvif->vif && wvif->vif->p2p;
 	bool is_sta = wvif->vif && NL80211_IFTYPE_STATION == wvif->vif->type;
-
+	struct wsm_rx_filter l_rx_filter;
 	static WsmHiMibBcnFilterEnable_t bf_ctrl;
 	static WsmHiMibBcnFilterTable_t bf_tbl = {
 		.IeTable[0].IeId	= WLAN_EID_VENDOR_SPECIFIC,
@@ -457,10 +456,12 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 		.IeTable[2].HasAppeared = 1,
 	};
 
+	memcpy(&l_rx_filter, &wvif->rx_filter, sizeof(l_rx_filter));
+
 	if (wvif->join_status == WFX_JOIN_STATUS_PASSIVE)
 		return;
 	else if (wvif->join_status == WFX_JOIN_STATUS_MONITOR)
-		bssid_filtering = false;
+		l_rx_filter.bssid = true;
 
 	if (wvif->disable_beacon_filter) {
 		bf_ctrl.Enable = 0;
@@ -477,15 +478,13 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 		bf_tbl.NumOfInfoElmts = cpu_to_le32(3);
 	}
 	if (is_p2p)
-		bssid_filtering = false;
+		l_rx_filter.bssid = true;
 
-	ret = wsm_set_rx_filter(wvif->wdev, &wvif->rx_filter, wvif->Id);
+	ret = wsm_set_rx_filter(wvif->wdev, &l_rx_filter, wvif->Id);
 	if (!ret)
 		ret = wsm_set_beacon_filter_table(wvif->wdev, &bf_tbl, wvif->Id);
 	if (!ret)
 		ret = wsm_beacon_filter_control(wvif->wdev, bf_ctrl.Enable, bf_ctrl.BcnCount, wvif->Id);
-	if (!ret)
-		ret = wsm_set_bssid_filtering(wvif->wdev, bssid_filtering, wvif->Id);
 	if (!ret)
 		ret = wsm_set_multicast_filter(wvif->wdev, &wvif->multicast_filter, wvif->Id);
 	if (ret)
@@ -580,11 +579,8 @@ void wfx_configure_filter(struct ieee80211_hw *dev,
 	down(&wdev->scan.lock);
 	mutex_lock(&wdev->conf_mutex);
 
-	wvif->rx_filter.promiscuous = 0;
-
 	wvif->rx_filter.bssid = (*total_flags & (FIF_OTHER_BSS |
-			FIF_PROBE_REQ)) ? 1 : 0;
-	wvif->rx_filter.fcs = (*total_flags & FIF_FCSFAIL) ? 1 : 0;
+			FIF_PROBE_REQ)) ? 1 : 0; /* set wvif->rx_filter.bssid */
 
 	wvif->disable_beacon_filter = !(*total_flags &
 					(FIF_BCN_PRBRESP_PROMISC |
@@ -593,7 +589,7 @@ void wfx_configure_filter(struct ieee80211_hw *dev,
 	if (wvif->listening != listening) {
 		wvif->listening = listening;
 		wsm_lock_tx(wdev);
-		wfx_update_listening(wvif, listening);
+		wfx_update_listening(wvif, listening); /* set wvif->rx_filter.probeResponder */
 		wsm_unlock_tx(wdev);
 	}
 	wfx_update_filtering(wvif);
