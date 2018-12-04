@@ -695,8 +695,9 @@ wfx_tx_h_rate_policy(struct wfx_dev	*wdev,
 	 *
 	 * Bit 4: 0 (BCC), 1(LDPC)
 	 */
-	if (t->tx_info->flags & IEEE80211_TX_CTL_LDPC && wdev->pdata.support_ldpc)
-		wsm->Body.HtTxParameters.FecCoding = 1;
+	if (t->tx_info->flags & IEEE80211_TX_CTL_LDPC || wfx_ht_fecCoding(&wdev->ht_info))
+		if (wdev->pdata.support_ldpc)
+			wsm->Body.HtTxParameters.FecCoding = 1;
 
 	/* Transmit STBC (Space-Time Block Coding)
 	 *
