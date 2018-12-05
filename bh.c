@@ -255,7 +255,6 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 		int error = wfx_bh_read_ctrl_reg(wdev, &Control_reg, 2);
 
 		if (error) {
-			wfx_info("[BH] ##### %s ctrl_reg read error.\n", __func__);
 			ret = 0;
 		} else if (!(Control_reg & CTRL_WLAN_READY)) {
 			wfx_info("[BH] ##### %s can't wakeup.\n", __func__);
