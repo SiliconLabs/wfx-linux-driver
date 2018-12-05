@@ -74,8 +74,6 @@ static int wfx_bh_read_ctrl_reg(struct wfx_dev *wdev, u32 *ctrl_reg,
 	return ret;
 }
 
-typedef int (*wfx_wsm_handler)(struct wfx_dev *wdev, u8 *data, size_t size);
-
 int wfx_register_bh(struct wfx_dev *wdev)
 {
 	int err = 0;
