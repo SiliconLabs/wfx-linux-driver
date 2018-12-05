@@ -151,8 +151,7 @@ static int wsm_startup_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 
 static int wsm_receive_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf, struct sk_buff **skb_p)
 {
-	// FIXME: Get interface id from wsm_buf or if_id
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	WsmHiRxIndBody_t *body = buf;
 	struct ieee80211_hdr *frame;
 	__le16 fctl;
