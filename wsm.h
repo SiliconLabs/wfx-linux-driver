@@ -99,7 +99,7 @@
 #define WSM_START_MODE_AP		(0)	/* Mini AP */
 #define WSM_START_MODE_P2P_GO		(1)	/* P2P GO */
 #define WSM_START_MODE_P2P_DEV		(2)	/* P2P device */
-#define WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES	1
+#define WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES	2
 #define WSM_FILTER_PORT_TYPE_DST	(0)
 #define WSM_FILTER_PORT_TYPE_SRC	(1)
 /* #define WSM_TX_SEQ_MAX               (7) equivalent to HI_MSG_SEQ_RANGE */
