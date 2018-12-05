@@ -363,6 +363,38 @@ static inline int wsm_set_tx_rate_retry_policy(struct wfx_dev *wdev,
 			     size, Id);
 }
 
+static inline int wsm_set_mac_addr_condition(struct wfx_dev *wdev,
+                        WsmHiMibMacAddrDataFrameCondition_t *arg,
+                        int Id)
+{
+    return wsm_write_mib(wdev, WSM_MIB_ID_MAC_ADDR_DATAFRAME_CONDITION,
+                 arg, sizeof(*arg), Id);
+}
+
+static inline int wsm_set_uc_mc_bc_condition(struct wfx_dev *wdev,
+                      WsmHiMibUcMcBcDataFrameCondition_t *arg,
+                      int Id)
+{
+    return wsm_write_mib(wdev, WSM_MIB_ID_UC_MC_BC_DATAFRAME_CONDITION,
+                 arg, sizeof(*arg), Id);
+}
+
+static inline int wsm_set_config_data_filter(struct wfx_dev *wdev,
+                      WsmHiMibConfigDataFilter_t *arg,
+                      int Id)
+{
+    return wsm_write_mib(wdev, WSM_MIB_ID_CONFIG_DATA_FILTER,
+                 arg, sizeof(*arg), Id);
+}
+
+static inline int wsm_set_data_filtering(struct wfx_dev *wdev,
+                      WsmHiMibSetDataFiltering_t *arg,
+                      int Id)
+{
+    return wsm_write_mib(wdev, WSM_MIB_ID_SET_DATA_FILTERING,
+                 arg, sizeof(*arg), Id);
+}
+
 static inline int wsm_keep_alive_period(struct wfx_dev *wdev,
 					int period,
 					int Id)
