@@ -18,7 +18,6 @@
 	wsm_msg_cnf_name(EDCA_PARAMS),          \
 	wsm_msg_cnf_name(JOIN),                 \
 	wsm_msg_cnf_name(MAP_LINK),             \
-	wsm_msg_cnf_name(MULTI_TRANSMIT),       \
 	wsm_msg_cnf_name(READ_MIB),             \
 	wsm_msg_cnf_name(REMOVE_KEY),           \
 	wsm_msg_cnf_name(RESET),                \
@@ -27,83 +26,76 @@
 	wsm_msg_cnf_name(START),                \
 	wsm_msg_cnf_name(START_SCAN),           \
 	wsm_msg_cnf_name(STOP_SCAN),            \
-	wsm_msg_cnf_name(SWITCH_CHANNEL),       \
 	wsm_msg_cnf_name(TX),                   \
 	wsm_msg_cnf_name(TX_QUEUE_PARAMS),      \
+	wsm_msg_cnf_name(MULTI_TRANSMIT),       \
 	wsm_msg_cnf_name(UPDATE_IE),            \
 	wsm_msg_cnf_name(WRITE_MIB),            \
-	wsm_msg_ind_name(BA_TIMEOUT),           \
-	wsm_msg_ind_name(DEBUG),                \
 	wsm_msg_ind_name(EVENT),                \
 	wsm_msg_ind_name(JOIN_COMPLETE),        \
 	wsm_msg_ind_name(RX),                   \
 	wsm_msg_ind_name(SCAN_CMPL),            \
 	wsm_msg_ind_name(SET_PM_MODE_CMPL),     \
 	wsm_msg_ind_name(SUSPEND_RESUME_TX),    \
-	low_msg_cnf_name(CONTROL_GPIO),         \
-	low_msg_cnf_name(SHUT_DOWN),            \
 	low_msg_cnf_name(CONFIGURATION),        \
+	low_msg_cnf_name(CONTROL_GPIO),         \
+	low_msg_cnf_name(PREVENT_ROLLBACK),     \
 	low_msg_cnf_name(SET_SL_MAC_KEY),       \
-	low_msg_cnf_name(SL_EXCHANGE_PUB_KEYS), \
 	low_msg_cnf_name(SL_CONFIGURE),         \
-	low_msg_ind_name(EXCEPTION),            \
+	low_msg_cnf_name(SL_EXCHANGE_PUB_KEYS), \
 	low_msg_ind_name(ERROR),                \
-	low_msg_ind_name(STARTUP),              \
-	low_msg_ind_name(GENERIC)
+	low_msg_ind_name(EXCEPTION),            \
+	low_msg_ind_name(GENERIC),              \
+	low_msg_ind_name(STARTUP)
 
 #define wsm_msg_list _wsm_msg_list
 
 #define wsm_mib_name(mib) { WSM_MIB_ID_##mib, "/" #mib }
-#define wsm_mib_list                                  \
-	wsm_mib_name(DOT11_MAC_ADDRESSES),            \
-	wsm_mib_name(DOT11_MAX_TRANSMIT_LIFETIME),    \
-	wsm_mib_name(DOT11_MAX_RECEIVE_LIFETIME),     \
-	wsm_mib_name(DOT11_SLOT_TIME),                \
-	wsm_mib_name(DOT11_GROUP_ADDRESSES_TABLE),    \
-	wsm_mib_name(DOT11_WEP_DEFAULT_KEY_ID),       \
-	wsm_mib_name(DOT11_CURRENT_TX_POWER_LEVEL),   \
-	wsm_mib_name(DOT11_RTS_THRESHOLD),            \
-	wsm_mib_name(NON_ERP_PROTECTION),             \
+#define _wsm_mib_list                                 \
 	wsm_mib_name(ARP_IP_ADDRESSES_TABLE),         \
-	wsm_mib_name(TEMPLATE_FRAME),                 \
-	wsm_mib_name(RX_FILTER),                      \
-	wsm_mib_name(BEACON_FILTER_TABLE),            \
-	wsm_mib_name(BEACON_FILTER_ENABLE),           \
-	wsm_mib_name(OPERATIONAL_POWER_MODE),         \
-	wsm_mib_name(BEACON_WAKEUP_PERIOD),           \
-	wsm_mib_name(RCPI_RSSI_THRESHOLD),            \
-	wsm_mib_name(STATISTICS_TABLE),               \
-	wsm_mib_name(IBSS_PS_CONFIG),                 \
-	wsm_mib_name(COUNTERS_TABLE),                 \
-	wsm_mib_name(BLOCK_ACK_INFO),                 \
-	wsm_mib_name(BLOCK_ACK_POLICY),               \
-	wsm_mib_name(OVERRIDE_INTERNAL_TX_RATE),      \
-	wsm_mib_name(SET_ASSOCIATION_MODE),           \
-	wsm_mib_name(UPDATE_EPTA_CONFIG_DATA),        \
-	wsm_mib_name(SELECT_CCA_METHOD),              \
-	wsm_mib_name(SET_UAPSD_INFORMATION),          \
-	wsm_mib_name(SET_AUTO_CALIBRATION_MODE),      \
-	wsm_mib_name(SET_TX_RATE_RETRY_POLICY),       \
-	wsm_mib_name(SET_HOST_MSG_TYPE_FILTER),       \
-	wsm_mib_name(P2P_FIND_INFO),                  \
-	wsm_mib_name(P2P_PS_MODE_INFO),               \
-	wsm_mib_name(SET_ETHERTYPE_DATAFRAME_FILTER), \
-	wsm_mib_name(SET_UDPPORT_DATAFRAME_FILTER),   \
-	wsm_mib_name(SET_MAGIC_DATAFRAME_FILTER),     \
-	wsm_mib_name(PROTECTED_MGMT_POLICY),          \
-	wsm_mib_name(SET_HT_PROTECTION),              \
-	wsm_mib_name(SET_MULTI_MSG),                  \
-	wsm_mib_name(KEEP_ALIVE_PERIOD),              \
-	wsm_mib_name(DISABLE_BSSID_FILTER),           \
-	wsm_mib_name(QUIET_INTERVAL_MARGIN),          \
 	wsm_mib_name(ARP_KEEP_ALIVE_PERIOD),          \
-	wsm_mib_name(PSEUDO_RATE_CONFIG),             \
-	wsm_mib_name(MAC_ADDRESS_FILTERING),          \
-	wsm_mib_name(IPV4_ADDRESS_FILTERING),         \
-	wsm_mib_name(IPV6_ADDRESS_FILTERING),         \
-	wsm_mib_name(FORWARDING_OFFLOAD),             \
+	wsm_mib_name(BEACON_FILTER_ENABLE),           \
+	wsm_mib_name(BEACON_FILTER_TABLE),            \
+	wsm_mib_name(BEACON_WAKEUP_PERIOD),           \
+	wsm_mib_name(BLOCK_ACK_POLICY),               \
+	wsm_mib_name(CONFIG_DATA_FILTER),             \
+	wsm_mib_name(COUNTERS_TABLE),                 \
+	wsm_mib_name(CURRENT_TX_POWER_LEVEL),         \
+	wsm_mib_name(DOT11_MAC_ADDRESS),              \
+	wsm_mib_name(DOT11_MAX_RECEIVE_LIFETIME),     \
+	wsm_mib_name(DOT11_MAX_TRANSMIT_MSDU_LIFETIME), \
+	wsm_mib_name(DOT11_RTS_THRESHOLD),            \
+	wsm_mib_name(DOT11_WEP_DEFAULT_KEY_ID),       \
+	wsm_mib_name(GL_BLOCK_ACK_INFO),              \
+	wsm_mib_name(GL_OPERATIONAL_POWER_MODE),      \
+	wsm_mib_name(GL_SET_MULTI_MSG),               \
+	wsm_mib_name(INACTIVITY_TIMER),               \
+	wsm_mib_name(INTERFACE_PROTECTION),           \
+	wsm_mib_name(IPV4_ADDR_DATAFRAME_CONDITION),  \
+	wsm_mib_name(IPV6_ADDR_DATAFRAME_CONDITION),  \
+	wsm_mib_name(KEEP_ALIVE_PERIOD),              \
+	wsm_mib_name(MAC_ADDR_DATAFRAME_CONDITION),   \
+	wsm_mib_name(NON_ERP_PROTECTION),             \
 	wsm_mib_name(NS_IP_ADDRESSES_TABLE),          \
-	wsm_mib_name(INACTIVITY_TIMER)
+	wsm_mib_name(OVERRIDE_INTERNAL_TX_RATE),      \
+	wsm_mib_name(PROTECTED_MGMT_POLICY),          \
+	wsm_mib_name(RX_FILTER),                      \
+	wsm_mib_name(RCPI_RSSI_THRESHOLD),            \
+	wsm_mib_name(SET_ASSOCIATION_MODE),           \
+	wsm_mib_name(SET_DATA_FILTERING),             \
+	wsm_mib_name(ETHERTYPE_DATAFRAME_CONDITION),  \
+	wsm_mib_name(SET_HT_PROTECTION),              \
+	wsm_mib_name(MAGIC_DATAFRAME_CONDITION),      \
+	wsm_mib_name(SET_TX_RATE_RETRY_POLICY),       \
+	wsm_mib_name(SET_UAPSD_INFORMATION),          \
+	wsm_mib_name(PORT_DATAFRAME_CONDITION),       \
+	wsm_mib_name(SLOT_TIME),                      \
+	wsm_mib_name(STATISTICS_TABLE),               \
+	wsm_mib_name(TEMPLATE_FRAME),                 \
+	wsm_mib_name(TSF_COUNTER),                    \
+	wsm_mib_name(UC_MC_BC_DATAFRAME_CONDITION)
+
+#define wsm_mib_list _wsm_mib_list
 
 DECLARE_EVENT_CLASS(wsm_data,
 	TP_PROTO(u16 *wsm_buf, bool is_recv),
