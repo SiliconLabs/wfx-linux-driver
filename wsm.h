@@ -215,7 +215,7 @@ static inline int wsm_set_output_power(struct wfx_dev *wdev,
 {
 	__le32 val = cpu_to_le32(power_level);
 
-	return wsm_write_mib(wdev, WSM_MIB_ID_DOT11_CURRENT_TX_POWER_LEVEL,
+	return wsm_write_mib(wdev, WSM_MIB_ID_CURRENT_TX_POWER_LEVEL,
 			     &val, sizeof(val), Id);
 }
 
@@ -306,7 +306,7 @@ static inline int wsm_set_operational_mode(struct wfx_dev *wdev,
 		val |= BIT(4);
 	if (arg->perform_ant_diversity)
 		val |= BIT(5);
-	return wsm_write_mib(wdev, WSM_MIB_ID_OPERATIONAL_POWER_MODE, &val,
+	return wsm_write_mib(wdev, WSM_MIB_ID_GL_OPERATIONAL_POWER_MODE, &val,
 			     sizeof(val), Id);
 }
 
@@ -420,7 +420,7 @@ static inline int wsm_use_multi_tx_conf(struct wfx_dev *wdev,
 {
 	__le32 arg = enabled ? cpu_to_le32(1) : 0;
 
-	return wsm_write_mib(wdev, WSM_MIB_ID_SET_MULTI_MSG,
+	return wsm_write_mib(wdev, WSM_MIB_ID_GL_SET_MULTI_MSG,
 			     &arg, sizeof(arg), Id);
 }
 
