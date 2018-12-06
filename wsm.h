@@ -150,7 +150,7 @@ struct wsm_rx_filter {
 };
 
 struct wsm_operational_mode {
-	WsmOpPowerMode_t	power_mode;
+	WsmOpPowerMode		power_mode;
 	int			disable_more_flag_usage;
 	int			perform_ant_diversity;
 };
@@ -444,7 +444,7 @@ static inline int wsm_slot_time(struct wfx_dev *wdev, int val, int Id)
 {
 	__le32 arg = cpu_to_le32(val);
 
-	return wsm_write_mib(wdev, WSM_MIB_ID_DOT11_SLOT_TIME,
+	return wsm_write_mib(wdev, WSM_MIB_ID_SLOT_TIME,
 			     &arg, sizeof(arg), Id);
 }
 
