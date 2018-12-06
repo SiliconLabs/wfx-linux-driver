@@ -251,6 +251,7 @@ struct wfx_vif {
 	struct wsm_edca_params	edca;
 	struct wsm_tx_queue_params	tx_queue_params;
 	struct wfx_link_entry	link_id_db[WFX_MAX_STA_IN_AP_MODE];
+	struct wfx_grp_addr_table	multicast_filter;
 
 	/* work: initiate in wfx_vif_setup */
 	struct work_struct	join_complete_work;
@@ -279,7 +280,6 @@ struct wfx_vif {
 	WsmHiSetPmModeReqBody_t		firmware_ps_mode;
 	WsmHiMibSetUapsdInformation_t	uapsd_info;
 	WsmHiMibSetAssociationMode_t	association_mode;
-	WsmHiMibGrpAddrTable_t		multicast_filter;
 	WsmHiAddKeyReqBody_t		keys[WSM_KEY_MAX_INDEX + 1];
 
 	/* spinlock/mutex */

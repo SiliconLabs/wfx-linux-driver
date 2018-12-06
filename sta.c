@@ -431,6 +431,57 @@ int wfx_config(struct ieee80211_hw *dev, u32 changed)
 	return ret;
 }
 
+static inline int wfx_set_multicast_filter(struct wfx_dev *wdev,
+					   struct wfx_grp_addr_table *fp,
+					   int Id)
+{
+    WsmHiMibConfigDataFilter_t FilterConfig = {0};
+    WsmHiMibSetDataFiltering_t DataFiltering = {0};
+    WsmHiMibMacAddrDataFrameCondition_t MacAddrCond = {0};
+    WsmHiMibUcMcBcDataFrameCondition_t UcMcBcCond = {0};
+    int index = 0;
+    int ret = 0;
+
+	if(!fp->enable)
+	{
+	    DataFiltering.Enable = 0;
+	    return wsm_set_data_filtering(wdev, &DataFiltering, Id);
+	}
+
+	// A1 Address match on list
+	for(index = 0; index < fp->num_addresses; index++)
+	{
+	    MacAddrCond.ConditionIdx = index;
+	    MacAddrCond.AddressType = WSM_MAC_ADDR_A1;
+	    ether_addr_copy(MacAddrCond.MacAddress, fp->address_list[index]);
+	    if((ret = wsm_set_mac_addr_condition(wdev, &MacAddrCond, Id)) <= 0)
+	        return ret;
+	    FilterConfig.MacCond |= (1<<index);
+	    pr_debug("[STA] Multicast Match addr[%d]: %pM\n", index, MacAddrCond.MacAddress);
+	}
+
+	// Accept unicast and broadcast
+	UcMcBcCond.ConditionIdx = 0;
+	UcMcBcCond.Param.bits.TypeUnicast = 1;
+	UcMcBcCond.Param.bits.TypeBroadcast = 1;
+	if((ret = wsm_set_uc_mc_bc_condition(wdev, &UcMcBcCond, Id)) <= 0)
+		return ret;
+
+	FilterConfig.UcMcBcCond = 1;
+	FilterConfig.FilterIdx = 0; // TODO #define MULTICAST_FILTERING 0
+	FilterConfig.Enable = 1;
+
+	if((ret = wsm_set_config_data_filter(wdev, &FilterConfig, Id)) <= 0)
+		return ret;
+
+	// discard all data frames except match filter
+	DataFiltering.Enable = 1;
+	DataFiltering.DefaultFilter = 1; // discard all
+	ret = wsm_set_data_filtering(wdev, &DataFiltering, Id);
+
+	return ret;
+}
+
 void wfx_update_filtering(struct wfx_vif *wvif)
 {
 	int ret;
@@ -486,7 +537,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	if (!ret)
 		ret = wsm_beacon_filter_control(wvif->wdev, bf_ctrl.Enable, bf_ctrl.BcnCount, wvif->Id);
 	if (!ret)
-		ret = wsm_set_multicast_filter(wvif->wdev, &wvif->multicast_filter, wvif->Id);
+		ret = wfx_set_multicast_filter(wvif->wdev, &wvif->multicast_filter, wvif->Id);
 	if (ret)
 		wiphy_err(wvif->wdev->hw->wiphy,
 			  "Update filtering failed: %d.\n", ret);
@@ -534,13 +585,13 @@ u64 wfx_prepare_multicast(struct ieee80211_hw *hw,
 	wvif->has_multicast_subscription = false;
 	memset(&wvif->multicast_filter, 0x00, sizeof(wvif->multicast_filter));
 
-	if (netdev_hw_addr_list_count(mc_list) > ARRAY_SIZE(wvif->multicast_filter.AddressList))
+	if (netdev_hw_addr_list_count(mc_list) > ARRAY_SIZE(wvif->multicast_filter.address_list))
 		return 0;
 
 	/* Enable if requested */
 	netdev_hw_addr_list_for_each(ha, mc_list) {
 		pr_debug("[STA] multicast: %pM\n", ha->addr);
-		ether_addr_copy(wvif->multicast_filter.AddressList[count].MacAddr,
+		ether_addr_copy(wvif->multicast_filter.address_list[count],
 				ha->addr);
 		if (!ether_addr_equal(ha->addr, broadcast_ipv4) &&
 		    !ether_addr_equal(ha->addr, broadcast_ipv6))
@@ -549,8 +600,8 @@ u64 wfx_prepare_multicast(struct ieee80211_hw *hw,
 	}
 
 	if (count) {
-		wvif->multicast_filter.Enable = cpu_to_le32(1);
-		wvif->multicast_filter.NumOfAddresses = cpu_to_le32(count);
+		wvif->multicast_filter.enable = cpu_to_le32(1);
+		wvif->multicast_filter.num_addresses = cpu_to_le32(count);
 	}
 
 	return netdev_hw_addr_list_count(mc_list);

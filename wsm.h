@@ -404,14 +404,6 @@ static inline int wsm_keep_alive_period(struct wfx_dev *wdev,
 			     &arg, sizeof(arg), Id);
 };
 
-static inline int wsm_set_multicast_filter(struct wfx_dev *wdev,
-					   WsmHiMibGrpAddrTable_t *fp,
-					   int Id)
-{
-	return wsm_write_mib(wdev, WSM_MIB_ID_DOT11_GROUP_ADDRESSES_TABLE,
-			     fp, sizeof(*fp), Id);
-}
-
 static inline int wsm_set_arp_ipv4_filter(struct wfx_dev *wdev,
 					  WsmHiMibArpIpAddrTable_t *fp,
 					  int Id)
