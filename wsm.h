@@ -368,13 +368,6 @@ static inline int wsm_set_ether_type_filter(struct wfx_dev *wdev,
 			     arg, sizeof(*arg), Id);
 }
 
-static inline int wsm_set_udp_port_filter(struct wfx_dev *wdev,
-					  WsmHiMibUdpPortDataFrameFilterSet_t *arg,
-					  int Id)
-{
-	return wsm_write_mib(wdev, WSM_MIB_ID_SET_UDPPORT_DATAFRAME_FILTER,
-			     arg, sizeof(*arg), Id);
-}
 
 static inline int wsm_keep_alive_period(struct wfx_dev *wdev,
 					int period,
