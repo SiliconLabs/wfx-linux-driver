@@ -161,6 +161,12 @@ struct wsm_protected_mgmt_policy {
 	bool	encryptionForAuthFrame;
 };
 
+struct wfx_grp_addr_table {
+	bool enable;
+	int num_addresses;
+	u8 address_list[8][ETH_ALEN];
+};
+
 struct wsm_cmd {
 	struct mutex      lock;
 	struct completion ready;
