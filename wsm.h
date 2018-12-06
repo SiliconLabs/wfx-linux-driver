@@ -360,15 +360,6 @@ static inline int wsm_set_tx_rate_retry_policy(struct wfx_dev *wdev,
 			     size, Id);
 }
 
-static inline int wsm_set_ether_type_filter(struct wfx_dev *wdev,
-					    WsmHiMibEtherTypeDataFrameFilterSet_t *arg,
-					    int Id)
-{
-	return wsm_write_mib(wdev, WSM_MIB_ID_SET_ETHERTYPE_DATAFRAME_FILTER,
-			     arg, sizeof(*arg), Id);
-}
-
-
 static inline int wsm_keep_alive_period(struct wfx_dev *wdev,
 					int period,
 					int Id)
