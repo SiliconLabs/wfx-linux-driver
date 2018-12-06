@@ -1056,9 +1056,6 @@ void wfx_event_handler(struct work_struct *work)
 			wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
 			cancel_work_sync(&wvif->unjoin_work);
 			break;
-		case WSM_EVENT_IND_RADAR:
-			wiphy_info(wvif->wdev->hw->wiphy, "radar pulse detected\n");
-			break;
 		case WSM_EVENT_IND_RCPI_RSSI:
 		{
 			/* RSSI: signed Q8.0, RCPI: unsigned Q7.1
