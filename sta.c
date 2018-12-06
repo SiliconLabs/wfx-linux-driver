@@ -89,7 +89,6 @@ int wfx_start(struct ieee80211_hw *dev)
 	struct wfx_dev *wdev = dev->priv;
 	int ret = 0;
 
-	wfx_pm_stay_awake(&wdev->pm_state, HZ);
 	pr_debug("[STA] wfx_start\n");
 	mutex_lock(&wdev->conf_mutex);
 
@@ -1320,10 +1319,6 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	wsm_flush_tx(wvif->wdev);
 	pr_debug("[STA] flush Tx done in %s(%d)\n", __func__, __LINE__);
 
-	/* Stay Awake for Join and Auth Timeouts and a bit more */
-	wfx_pm_stay_awake(&wvif->wdev->pm_state,
-			     WFX_JOIN_TIMEOUT + WFX_AUTH_TIMEOUT);
-
 	pr_debug("[STA] ready to wfx_update_listening in %s(%d)\n", __func__,
 		 __LINE__);
 
@@ -2229,14 +2224,6 @@ void wfx_suspend_resume(struct wfx_dev *wdev,
 		if (!arg->SuspendResumeFlags.ResumeOrSuspend) {
 			wvif->tx_multicast = false;
 		} else {
-			/* Firmware sends this indication every DTIM if there
-			 * is a STA in powersave connected. There is no reason
-			 * to suspend, following wakeup will consume much more
-			 * power than it could be saved.
-			 */
-			wfx_pm_stay_awake(&wdev->pm_state,
-					  wvif->join_dtim_period *
-					  TU_TO_JIFFIES(wvif->beacon_int + 20));
 			wvif->tx_multicast = (wvif->aid0_bit_set &&
 					      wvif->buffered_multicasts);
 			if (wvif->tx_multicast) {

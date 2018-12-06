@@ -25,7 +25,6 @@
 #include <linux/spi/spi.h>
 #include <linux/interrupt.h>
 #include <linux/of.h>
-#include <linux/pm.h>
 
 #include "wfx.h"
 #include "hwbus.h"
@@ -162,18 +161,12 @@ static size_t wfx_spi_align_size(struct hwbus_priv *self, size_t size)
 	return ALIGN(size, 4);
 }
 
-static int wfx_spi_pm(struct hwbus_priv *self, bool suspend)
-{
-	return irq_set_irq_wake(self->func->irq, suspend);
-}
-
 static struct hwbus_ops wfx_spi_hwbus_ops = {
 	.copy_from_io = wfx_spi_copy_from_io,
 	.copy_to_io = wfx_spi_copy_to_io,
 	.lock			= wfx_spi_lock,
 	.unlock			= wfx_spi_unlock,
 	.align_size		= wfx_spi_align_size,
-	.power_mgmt		= wfx_spi_pm,
 };
 
 static int wfx_spi_probe(struct spi_device *func)
@@ -236,21 +229,6 @@ static int wfx_spi_disconnect(struct spi_device *func)
 	return 0;
 }
 
-#ifdef CONFIG_PM_SLEEP
-static int wfx_spi_suspend(struct device *dev)
-{
-	struct hwbus_priv *self = spi_get_drvdata(to_spi_device(dev));
-
-	if (!wfx_can_suspend(self->core))
-		return -EAGAIN;
-	return 0;
-}
-#endif
-
-static const struct dev_pm_ops wfx_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(wfx_spi_suspend, NULL)
-};
-
 /*
  * For dynamic driver binding, kernel does use OF to match driver. It only use
  * modalias and modalias is a copy of 'compatible' DT node with vendor
@@ -275,7 +253,6 @@ MODULE_DEVICE_TABLE(of, wfx_spi_of_match);
 struct spi_driver wfx_spi_driver = {
 	.driver = {
 		.name = "wfx-spi",
-		.pm = &wfx_pm_ops,
 		.of_match_table = of_match_ptr(wfx_spi_of_match),
 	},
 	.id_table = wfx_spi_id,

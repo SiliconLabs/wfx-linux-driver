@@ -38,7 +38,6 @@ struct hwbus_ops {
 	void (*lock)(struct hwbus_priv *self);
 	void (*unlock)(struct hwbus_priv *self);
 	size_t (*align_size)(struct hwbus_priv *self, size_t size);
-	int (*power_mgmt)(struct hwbus_priv *self, bool suspend);
 };
 
 #endif /* WFX_HWBUS_H */

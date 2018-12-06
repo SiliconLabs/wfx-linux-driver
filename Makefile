@@ -41,7 +41,6 @@ wfx-y := \
 		scan.o \
 		debug.o
 wfx-$(CONFIG_NL80211_TESTMODE) += testmode.o
-wfx-$(CONFIG_PM) += pm.o
 wfx-$(CONFIG_SPI) += wfx_spi.o
 wfx-$(subst m,y,$(CONFIG_MMC)) += wfx_sdio.o
 

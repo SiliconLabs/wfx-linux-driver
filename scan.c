@@ -23,7 +23,6 @@
 #include "scan.h"
 #include "wfx.h"
 #include "sta.h"
-#include "pm.h"
 
 static void wfx_scan_restart_delayed(struct wfx_dev *wdev);
 
@@ -52,7 +51,6 @@ static int wfx_scan_start(struct wfx_dev *wdev, struct wsm_scan *scan)
 	atomic_set(&wdev->scan.in_progress, 1);
 	atomic_set(&wdev->wait_for_scan, 1);
 
-	wfx_pm_stay_awake(&wdev->pm_state, msecs_to_jiffies(tmo));
 	queue_delayed_work(wdev->workqueue, &wdev->scan.timeout,
 			   msecs_to_jiffies(tmo));
 	ret = wsm_scan(wdev, scan, 0);

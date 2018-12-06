@@ -170,10 +170,6 @@ static const unsigned long wfx_ttl[] = {
 static const struct ieee80211_ops wfx_ops = {
 	.start			= wfx_start,
 	.stop			= wfx_stop,
-#ifdef CONFIG_PM /* CONFIG_PM */
-	.suspend		= wfx_wow_suspend,
-	.resume			= wfx_wow_resume,
-#endif /* CONFIG_PM */
 	.add_interface		= wfx_add_interface,
 	.change_interface	= wfx_change_interface,
 	.remove_interface	= wfx_remove_interface,
@@ -197,14 +193,6 @@ static const struct ieee80211_ops wfx_ops = {
 	.testmode_cmd		= wfx_testmode_command,
 #endif
 };
-
-#ifdef CONFIG_PM
-static const struct wiphy_wowlan_support wfx_wowlan_support = {
-	/* Support only for limited wowlan functionalities */
-	.flags = WIPHY_WOWLAN_ANY | WIPHY_WOWLAN_DISCONNECT,
-};
-
-#endif
 
 struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *label)
 {
@@ -278,10 +266,6 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 					  BIT(NL80211_IFTYPE_P2P_CLIENT) |
 					  BIT(NL80211_IFTYPE_P2P_GO);
 
-#ifdef CONFIG_PM
-	hw->wiphy->wowlan = &wfx_wowlan_support;
-#endif
-
 	hw->wiphy->flags |= WIPHY_FLAG_AP_UAPSD;
 
 	hw->queues = 4;
@@ -353,12 +337,6 @@ static int wfx_register_common(struct ieee80211_hw *dev)
 	struct wfx_dev *wdev = dev->priv;
 	int ret;
 
-#ifdef CONFIG_PM
-	ret = wfx_pm_init(&wdev->pm_state, wdev);
-	if (ret)
-		goto err2;
-#endif
-
 	ret = ieee80211_register_hw(dev);
 	if (ret)
 		goto err1;
@@ -402,9 +380,6 @@ static void wfx_unregister_common(struct ieee80211_hw *dev)
 		wfx_queue_deinit(&wdev->tx_queue[i]);
 
 	wfx_queue_stats_deinit(&wdev->tx_queue_stats);
-#ifdef CONFIG_PM
-	wfx_pm_deinit(&wdev->pm_state);
-#endif
 }
 
 int wfx_core_probe(const struct wfx_platform_data *pdata,

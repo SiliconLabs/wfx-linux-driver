@@ -33,7 +33,6 @@
 #include "wsm.h"
 #include "scan.h"
 #include "data_txrx.h"
-#include "pm.h"
 
 #if (KERNEL_VERSION(4, 7, 0) > LINUX_VERSION_CODE)
 #define nl80211_band ieee80211_band
@@ -150,9 +149,6 @@ struct wfx_dev {
 	wait_queue_head_t		channel_switch_done;
 	u8				long_frame_max_tx_count;
 	u8				short_frame_max_tx_count;
-
-	struct wfx_pm_state		pm_state;
-
 
 	/* BH */
 	atomic_t				bh_rx; /* record that the IRQ triggered */

@@ -134,8 +134,6 @@ static void __wfx_queue_gc(struct wfx_queue *queue,
 		} else if (item) {
 			unsigned long tmo = item->queue_timestamp + queue->ttl;
 			mod_timer(&queue->gc, tmo);
-			wfx_pm_stay_awake(&stats->wdev->pm_state,
-					     tmo - jiffies);
 		}
 	}
 }

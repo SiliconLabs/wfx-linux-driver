@@ -154,18 +154,12 @@ static size_t wfx_sdio_align_size(struct hwbus_priv *self, size_t size)
 	return sdio_align_size(self->func, size);
 }
 
-static int wfx_sdio_pm(struct hwbus_priv *self, bool suspend)
-{
-	return 0;
-}
-
 static struct hwbus_ops wfx_sdio_hwbus_ops = {
 	.copy_from_io = wfx_sdio_copy_from_io,
 	.copy_to_io = wfx_sdio_copy_to_io,
 	.lock			= wfx_sdio_lock,
 	.unlock			= wfx_sdio_unlock,
 	.align_size		= wfx_sdio_align_size,
-	.power_mgmt		= wfx_sdio_pm,
 };
 
 static const struct of_device_id wfx_sdio_of_match[];
@@ -240,29 +234,6 @@ static void wfx_sdio_remove(struct sdio_func *func)
 	sdio_release_host(func);
 }
 
-#ifdef CONFIG_PM_SLEEP
-static int wfx_sdio_suspend(struct device *dev)
-{
-	int ret;
-	struct sdio_func *func = dev_to_sdio_func(dev);
-	struct hwbus_priv *self = sdio_get_drvdata(func);
-
-	if (!wfx_can_suspend(self->core))
-		return -EAGAIN;
-
-	/* Notify SDIO that wfx will remain powered during suspend */
-	ret = sdio_set_host_pm_flags(func, MMC_PM_KEEP_POWER);
-	if (ret)
-		dev_err(dev, "Error setting SDIO pm flags: %i\n", ret);
-
-	return ret;
-}
-#endif
-
-static const struct dev_pm_ops wfx_pm_ops = {
-	SET_SYSTEM_SLEEP_PM_OPS(wfx_sdio_suspend, NULL)
-};
-
 #define SDIO_VENDOR_ID_SILABS        0x0000
 #define SDIO_DEVICE_ID_SILABS_WF200  0x1000
 static const struct sdio_device_id wfx_sdio_ids[] = {
@@ -288,7 +259,6 @@ struct sdio_driver wfx_sdio_driver = {
 	.remove = wfx_sdio_remove,
 	.drv = {
 		.owner = THIS_MODULE,
-		.pm = &wfx_pm_ops,
 		.of_match_table = of_match_ptr(wfx_sdio_of_match),
 	}
 };

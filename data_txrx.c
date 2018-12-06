@@ -1065,7 +1065,6 @@ void wfx_rx_cb(struct wfx_vif	*wvif,
 	struct ieee80211_hdr *frame = (struct ieee80211_hdr *)skb->data;
 	struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *)skb->data;
 	struct wfx_link_entry *entry = NULL;
-	unsigned long grace_period;
 
 	bool early_data = false;
 	bool p2p = wvif->vif && wvif->vif->p2p;
@@ -1254,18 +1253,6 @@ void wfx_rx_cb(struct wfx_vif	*wvif,
 				   &wvif->update_filtering_work);
 		}
 	}
-
-	/* Stay awake after frame is received to give
-	 * userspace chance to react and acquire appropriate
-	 * wakelock.
-	 */
-	if (ieee80211_is_auth(frame->frame_control))
-		grace_period = 5 * HZ;
-	else if (ieee80211_is_deauth(frame->frame_control))
-		grace_period = 5 * HZ;
-	else
-		grace_period = 1 * HZ;
-	wfx_pm_stay_awake(&wvif->wdev->pm_state, grace_period);
 
 	if (early_data) {
 		spin_lock_bh(&wvif->ps_state_lock);
