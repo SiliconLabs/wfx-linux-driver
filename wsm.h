@@ -407,7 +407,7 @@ static inline int wsm_set_arp_ipv4_filter(struct wfx_dev *wdev,
 }
 
 static inline int wsm_set_p2p_ps_modeinfo(struct wfx_dev *wdev,
-					  WsmHiMibP2PPsModeInfo_t *mi,
+					  WsmHiMibP2pPsModeInfo_t *mi,
 					  int Id)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_P2P_PS_MODE_INFO,
