@@ -2329,12 +2329,9 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 		.ChannelNumber		= wvif->wdev->channel->hw_value,
 		.BeaconInterval		= conf->beacon_int,
 		.DTIMPeriod		= conf->dtim_period,
-		.PreambleType		= conf->use_short_preamble ?
-					  WSM_PREAMBLE_SHORT :
-					  WSM_PREAMBLE_LONG,
+		.PreambleType		= conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
 		.ProbeDelay		= 100,
-		.BasicRateSet		= wfx_rate_mask_to_wsm(wvif->wdev,
-				conf->basic_rates),
+		.BasicRateSet		= wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
 	};
 	struct wsm_operational_mode mode = {
 		.power_mode = wvif->wdev->pdata.power_mode,
