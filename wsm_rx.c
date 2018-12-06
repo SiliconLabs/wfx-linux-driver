@@ -364,15 +364,15 @@ static int wsm_generic_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 {
 	HiGenericIndBody_t *body = buf;
 
-	switch (body->IndicationId) {
-	case  HI_GENERIC_INDICATION_ID_RAW:
+	switch (body->IndicationType) {
+	case  HI_GENERIC_INDICATION_TYPE_RAW:
 		/* Not used yet */
 		break;
-	case HI_GENERIC_INDICATION_ID_STRING:
+	case HI_GENERIC_INDICATION_TYPE_STRING:
 		/* Display received message */
 		wfx_info("%s", (char *) body->IndicationData.RawData);
 		break;
-	case HI_GENERIC_INDICATION_ID_RX_STATS:
+	case HI_GENERIC_INDICATION_TYPE_RX_STATS:
 		pr_rx_stats(&body->IndicationData.RxStats);
 		break;
 	default:
