@@ -56,19 +56,65 @@ static inline void wsm_alloc_tx_buffer(struct wfx_dev *wdev)
 	++wdev->hw_bufs_used;
 }
 
+#ifdef _NO_PROD
+uint32_t cpt_read = 0;
+uint32_t cpt_err = 0;
+
+#endif
 static int wfx_bh_read_ctrl_reg(struct wfx_dev *wdev, u32 *ctrl_reg,
 				uint8_t caller_id)
 {
 	int ret;
 
+#ifdef _NO_PROD
+	cpt_read++;
+#endif
 	ret = control_reg_read(wdev, ctrl_reg);
 	if (ret) {
+#ifdef _NO_PROD
+		cpt_err++;
+		wfx_warn(
+			"[BH] id=%d *** ctrl_reg read error=%d  %08x (%d/%d) ***\n", caller_id, ret, *ctrl_reg, cpt_err,
+			cpt_read);
+		/* in sdio when read is done in IT we sometimes get a read error=-84.
+		 * As pin wakeup is set to 1 in the IT just before this read
+		 * then after a 2ms delay, the 2d read below is ok */
+#endif
 		udelay(WF200_WAKEUP_WAIT_MAX);
 		pr_debug("[BH] *** 2d try ctrl_reg read ***\n");
 		ret = control_reg_read(wdev, ctrl_reg);
+#ifdef _NO_PROD
+#if 1
 		if (ret)
 			wfx_err("[BH] id=%d Failed to read control register\n",
 				caller_id);
+#else
+		if (ret || (*ctrl_reg & CTRL_WLAN_READY) == 0) {
+			if (wdev->sleep_activated) {
+				gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
+				udelay(1000);
+				gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
+				udelay(2000);
+				/*pr_debug("[BH] *** 3d try ctrl_reg read after a wake down/up***\n"); */
+				wfx_warn(
+					"[BH] *** 3d try ctrl_reg read after a wake down/up ***\n");
+				ret = control_reg_read(wdev, ctrl_reg);
+				if (ret || (*ctrl_reg & CTRL_WLAN_READY) == 0)
+					wfx_err(
+						"[BH] id=%d Failed to read control register\n",
+						caller_id);
+			} else {
+				wfx_err(
+					"[BH] id=%d Failed to read control register\n",
+					caller_id);
+			}
+		}
+#endif
+#else
+		if (ret)
+			wfx_err("[BH] id=%d Failed to read control register\n",
+				caller_id);
+#endif
 	}
 
 	return ret;
@@ -234,6 +280,20 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 		dev_dbg(wdev->pdev, "%s: wake up chip", __func__);
 	}
 
+#ifdef _NO_PROD
+#if 0
+	int error = wfx_bh_read_ctrl_reg(wdev, &Control_reg);
+
+	if (error) {
+		wfx_info("[BH] ##### %s ctrl_reg read error before wait.\n",
+				__func__);
+		ret = 0;
+	} else {
+		wfx_info("[BH] ##### %s RDY=%d before wait\n", __func__,
+				Control_reg.U32CtrlReg & CTRL_WLAN_READY);
+	}
+#endif
+#endif
 	/* wait the IRQ indicating the device is ready*/
 #if 0
 	wait_event_interruptible_timeout(wdev->bh_wq,

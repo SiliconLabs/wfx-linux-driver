@@ -1990,6 +1990,13 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 
 				wvif->association_mode.MixedOrGreenfieldType =
 					wfx_ht_greenfield(&wdev->ht_info);
+#ifdef _NO_PROD
+				/*wvif->association_mode.ldpcCoding = */
+				/*    wfx_ht_fecCoding(&wvif->ht_info); */
+				/*wvif->association_mode.shortGi = */
+				/*    wfx_ht_shortGi(&wvif->ht_info); */
+				/* Setting flags through bitfields */
+#endif
 				wvif->association_mode.PreambtypeUse = 1;
 				wvif->association_mode.Mode = 1;
 				wvif->association_mode.Rateset = 1;
@@ -2022,6 +2029,10 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 					"[STA] Preamble: %d, Greenfield: %d, Aid: %d, Rates: 0x%.8X, Basic: 0x%.8X\n",
 					wvif->association_mode.PreambleType,
 					wvif->association_mode.MixedOrGreenfieldType,
+#ifdef _NO_PROD
+					/*wvif->association_mode.ldpcCoding, */
+					/*wvif->association_mode.shortGi, */
+#endif
 					wvif->bss_params.AID,
 					wvif->bss_params.OperationalRateSet,
 					wvif->association_mode.BasicRateSet);
