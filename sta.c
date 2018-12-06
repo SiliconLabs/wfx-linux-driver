@@ -94,7 +94,7 @@ int wfx_start(struct ieee80211_hw *dev)
 
 	ether_addr_copy(wdev->mac_addr, dev->wiphy->perm_addr);
 
-	ret = wsm_set_macaddr(wdev, wdev->mac_addr, NULL);
+	ret = wsm_set_macaddr(wdev, wdev->mac_addr, 0);
 	if (ret)
 		goto out;
 
@@ -236,7 +236,7 @@ int wfx_add_interface(struct ieee80211_hw *dev,
 	wvif->Id = 0;
 	wvif->mode = vif->type;
 	ether_addr_copy(wdev->mac_addr, vif->addr);
-	ret = wsm_set_macaddr(wdev, wdev->mac_addr, NULL);
+	ret = wsm_set_macaddr(wdev, wdev->mac_addr, wvif->Id);
 	wfx_vif_setup(wvif);
 	mutex_unlock(&wdev->conf_mutex);
 	wsm_set_edca_params(wdev, &wvif->edca.params, wvif->Id);
@@ -294,7 +294,7 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 	eth_zero_addr(wdev->mac_addr);
 	wfx_free_keys(wvif);
 
-	wsm_set_macaddr(wdev, wdev->mac_addr, NULL);
+	wsm_set_macaddr(wdev, wdev->mac_addr, wvif->Id);
 
 	wvif->listening = false;
 	wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
@@ -1232,7 +1232,6 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	WsmHiJoinReqBody_t join = {
 		.Mode		= conf->ibss_joined ?
 				  WSM_MODE_IBSS : WSM_MODE_BSS,
-		.JoinFlags.UseMacAddrIf = wvif->Id,
 		.PreambleType	= WSM_PREAMBLE_LONG,
 		.ProbeForJoin	= 1,
 		.AtimWindow	= 0,
@@ -1451,7 +1450,7 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 	wsm_reset(wvif->wdev, true, wvif->Id);
 	wsm_set_output_power(wvif->wdev, wvif->wdev->output_power * 10, wvif->Id);
 	wvif->join_dtim_period = 0;
-	wsm_set_macaddr(wvif->wdev, wvif->wdev->mac_addr, NULL);
+	wsm_set_macaddr(wvif->wdev, wvif->wdev->mac_addr, wvif->Id);
 	wfx_free_event_queue(wvif);
 	cancel_work_sync(&wvif->event_handler);
 	wfx_update_listening(wvif, wvif->listening);
@@ -2266,7 +2265,6 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 	int ret;
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 	WsmHiStartReqBody_t start = {
-			.IndexMacUse	= wvif->Id,
 		.Band			= WSM_PHY_BAND_2_4G,
 		.ChannelNumber		= wvif->wdev->channel->hw_value,
 		.BeaconInterval		= conf->beacon_int,

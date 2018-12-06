@@ -249,15 +249,12 @@ static inline int wsm_get_counters_table(struct wfx_dev *wdev,
 			    arg, sizeof(*arg));
 }
 
-static inline int wsm_set_macaddr(struct wfx_dev *wdev, u8 *mac1, u8 *mac2)
+static inline int wsm_set_macaddr(struct wfx_dev *wdev, u8 *mac, int Id)
 {
-	WsmHiMibMacAddresses_t msg = { };
+	WsmHiMibMacAddress_t msg = { };
 
-	if (mac1)
-		ether_addr_copy(msg.MacAddr0, mac1);
-	if (mac2)
-		ether_addr_copy(msg.MacAddr1, mac2);
-	return wsm_write_mib(wdev, WSM_MIB_ID_DOT11_MAC_ADDRESSES, &msg, sizeof(msg), -1);
+	ether_addr_copy(msg.MacAddr, mac);
+	return wsm_write_mib(wdev, WSM_MIB_ID_DOT11_MAC_ADDRESS, &msg, sizeof(msg), Id);
 }
 
 static inline int wsm_set_rx_filter(struct wfx_dev *wdev,
