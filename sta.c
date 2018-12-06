@@ -536,7 +536,7 @@ u64 wfx_prepare_multicast(struct ieee80211_hw *hw,
 	wvif->has_multicast_subscription = false;
 	memset(&wvif->multicast_filter, 0x00, sizeof(wvif->multicast_filter));
 
-	if (netdev_hw_addr_list_count(mc_list) > WSM_MAX_GRP_ADDRTABLE_ENTRIES)
+	if (netdev_hw_addr_list_count(mc_list) > ARRAY_SIZE(wvif->multicast_filter.AddressList))
 		return 0;
 
 	/* Enable if requested */
