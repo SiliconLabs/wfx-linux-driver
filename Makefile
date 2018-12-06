@@ -13,6 +13,9 @@ install: modules_install
 	@echo "Make sure depmod is up-to-date:"
 	depmod
 
+%.o: %.c
+	$(MAKE) -C $(KDIR) M=$(shell pwd) $@
+
 modules modules_install clean help:
 	$(MAKE) -C $(KDIR) M=$(shell pwd) $@
 
