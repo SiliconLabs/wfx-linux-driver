@@ -615,7 +615,7 @@ wfx_tx_h_wsm(struct wfx_vif	*wvif,
 	wsm->Header.MsgLen = cpu_to_le16(t->skb->len);
 	wsm->Header.s.t.MsgId = cpu_to_le16(WSM_HI_TX_REQ_ID);
 	wsm->Header.s.b.IntId = t->txpriv.vif_id;
-	wsm->Body.QueueId.PerStaId = t->txpriv.raw_link_id;
+	wsm->Body.QueueId.PeerStaId = t->txpriv.raw_link_id;
 	wsm->Body.QueueId.QueueId = wsm_queue_id_to_wsm(t->queue);
 	return wsm;
 }
