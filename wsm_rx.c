@@ -133,8 +133,10 @@ static int wsm_startup_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 		return -EINVAL;
 	}
 
-	dev_info(wdev->pdev, "Firmware \"%s\" started. API: %.2x caps: %#.8X\n",
-		 body->FirmwareLabel, body->ApiVersion,
+	dev_info(wdev->pdev, "Firmware \"%s\" started. Version: %d.%d.%d API: %.2x caps: %#.8X\n",
+		 body->FirmwareLabel,
+		 body->FirmwareMajor, body->FirmwareMinor, body->FirmwareBuild,
+		 body->ApiVersion,
 		 *((uint32_t *) &body->Capabilities));
 
 	/* Disable unsupported frequency bands */
