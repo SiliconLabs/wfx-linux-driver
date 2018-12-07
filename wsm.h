@@ -285,8 +285,7 @@ static inline int wsm_beacon_filter_control(struct wfx_dev *wdev, int enable,
 }
 
 static inline int wsm_set_operational_mode(struct wfx_dev *wdev,
-					   const struct wsm_operational_mode *arg,
-					   int Id)
+					   const struct wsm_operational_mode *arg)
 {
 	u8 val = arg->power_mode;
 
@@ -294,8 +293,8 @@ static inline int wsm_set_operational_mode(struct wfx_dev *wdev,
 		val |= BIT(4);
 	if (arg->perform_ant_diversity)
 		val |= BIT(5);
-	return wsm_write_mib(wdev, WSM_MIB_ID_GL_OPERATIONAL_POWER_MODE, &val,
-			     sizeof(val), Id);
+	return wsm_write_mib(wdev, WSM_MIB_ID_GL_OPERATIONAL_POWER_MODE,
+			     &val, sizeof(val), -1);
 }
 
 static inline int wsm_set_template_frame(struct wfx_dev *wdev,
@@ -408,13 +407,12 @@ static inline int wsm_set_arp_ipv4_filter(struct wfx_dev *wdev,
 
 
 static inline int wsm_use_multi_tx_conf(struct wfx_dev *wdev,
-					bool enabled,
-					int Id)
+					bool enabled)
 {
 	__le32 arg = enabled ? cpu_to_le32(1) : 0;
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_GL_SET_MULTI_MSG,
-			     &arg, sizeof(arg), Id);
+			     &arg, sizeof(arg), -1);
 }
 
 static inline int wsm_set_uapsd_info(struct wfx_dev *wdev,

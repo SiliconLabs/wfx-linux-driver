@@ -400,7 +400,7 @@ int wfx_config(struct ieee80211_hw *dev, u32 changed)
 			wfx_disable_listening(wvif);
 			wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
 		}
-		wsm_set_operational_mode(wdev, &mode, wvif->Id);
+		wsm_set_operational_mode(wdev, &mode);
 		wsm_unlock_tx(wdev);
 	}
 
@@ -2332,7 +2332,7 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 		wvif->join_status = WFX_JOIN_STATUS_AP;
 		wfx_update_filtering(wvif);
 	}
-	wsm_set_operational_mode(wvif->wdev, &mode, wvif->Id);
+	wsm_set_operational_mode(wvif->wdev, &mode);
 	return ret;
 }
 

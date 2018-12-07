@@ -447,12 +447,12 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 		dev_dbg(wdev->pdev, "enable 'quiescent' power mode with gpio %d and PDS file %s\n",
 			desc_to_gpio(wdev->pdata.gpio_wakeup), wdev->pdata.file_pds);
 	}
-
 	mode.disable_more_flag_usage = true;
 	mode.power_mode = wdev->pdata.power_mode;
-	wsm_set_operational_mode(wdev, &mode, -1);
+	wsm_set_operational_mode(wdev, &mode);
 
-	wsm_use_multi_tx_conf(wdev, true, -1);
+	wsm_use_multi_tx_conf(wdev, true);
+
 	eth_zero_addr(dev->wiphy->perm_addr);
 	macaddr = of_get_mac_address(pdev->of_node);
 	if (macaddr)
