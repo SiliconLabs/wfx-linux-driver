@@ -421,6 +421,12 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 		err = -ETIMEDOUT;
 		goto err2;
 	}
+
+	if (wdev->wsm_caps.ApiVersionMajor != 1) {
+		dev_err(wdev->pdev, "Unsupported firmware API version (expect 1 while firmware return %d)\n", wdev->wsm_caps.ApiVersionMajor);
+		goto err2;
+	}
+
 	msleep(100);
 
 	dev_dbg(wdev->pdev, "sending configuration file %s", wdev->pdata.file_pds);
