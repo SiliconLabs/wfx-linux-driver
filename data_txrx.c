@@ -761,7 +761,7 @@ void wfx_tx(struct ieee80211_hw *dev,
 	struct ieee80211_sta *sta;
 	WsmHiTxReq_t *wsm;
 	bool tid_update = 0;
-	WsmHiTxFlags_t flags = { 0, 0, 0, 0 };
+	WsmHiTxFlags_t flags = { };
 	int ret;
 
 	if (wdev->bh_error)
