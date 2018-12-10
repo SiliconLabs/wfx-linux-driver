@@ -55,7 +55,7 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 
 	// Legacy chip have a special management for this case.
 	// Is it still necessary?
-	WARN_ON(status && wvif->join_status >= WFX_JOIN_STATUS_JOINING);
+	WARN_ON(status && wvif && wvif->join_status >= WFX_JOIN_STATUS_JOINING);
 
 	if (!wdev->wsm_cmd.async) {
 		complete(&wdev->wsm_cmd.done);
