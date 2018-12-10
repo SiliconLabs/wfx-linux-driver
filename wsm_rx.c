@@ -31,7 +31,6 @@
 
 static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	// All confirm messages start with Status
 	int status = le32_to_cpu(*((__le32 *) buf));
 	int cmd = hdr->s.t.MsgId;
@@ -52,10 +51,6 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 			status = -EINVAL;
 	}
 	wdev->wsm_cmd.ret = status;
-
-	// Legacy chip have a special management for this case.
-	// Is it still necessary?
-	WARN_ON(status && wvif && wvif->join_status >= WFX_JOIN_STATUS_JOINING);
 
 	if (!wdev->wsm_cmd.async) {
 		complete(&wdev->wsm_cmd.done);
