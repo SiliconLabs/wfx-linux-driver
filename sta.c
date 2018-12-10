@@ -1501,7 +1501,6 @@ int wfx_enable_listening(struct wfx_vif *wvif)
 		.Band			= WSM_PHY_BAND_2_4G,
 		.BeaconInterval		= 100,
 		.DTIMPeriod		= 1,
-		.ProbeDelay		= 0,
 		.BasicRateSet		= 0x0F,
 	};
 
@@ -2295,7 +2294,6 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 		.BeaconInterval		= conf->beacon_int,
 		.DTIMPeriod		= conf->dtim_period,
 		.PreambleType		= conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
-		.ProbeDelay		= 100,
 		.BasicRateSet		= wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
 	};
 	struct wsm_operational_mode mode = {
