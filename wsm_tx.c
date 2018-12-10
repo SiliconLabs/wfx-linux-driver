@@ -40,7 +40,7 @@ static void wfx_fill_header(HiMsgHdr_t *hdr, int if_id, unsigned cmd, size_t siz
 	if (if_id == -1)
 		if_id = 0;
 
-	WARN(cmd > 0x3f, "Invalid WSM command %02x", cmd);
+	WARN(cmd > 0x3f, "Invalid WSM command %#.2x", cmd);
 	WARN(size > 0xFFF, "Requested buffer is too large: %zu bytes", size);
 	WARN(if_id > 0x3, "Invalid interface ID %d", if_id);
 
@@ -102,10 +102,10 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 	mutex_unlock(&wdev->wsm_cmd.lock);
 
 	if (ret < 0)
-		dev_err(wdev->pdev, "WSM request %s (%#02x) returned error %d\n",
+		dev_err(wdev->pdev, "WSM request %s (%#.2x) returned error %d\n",
 				get_wsm_name(cmd), cmd, ret);
 	if (ret > 0)
-		dev_warn(wdev->pdev, "WSM request %s (%#02x) returned status %d\n",
+		dev_warn(wdev->pdev, "WSM request %s (%#.2x) returned status %d\n",
 				get_wsm_name(cmd), cmd, ret);
 
 	return ret;
