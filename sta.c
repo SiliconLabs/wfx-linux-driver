@@ -1293,10 +1293,6 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	join.Band = WSM_PHY_BAND_2_4G;
 	memcpy(join.BSSID, bssid, sizeof(join.BSSID));
 
-	pr_debug("[STA] Join BSSID: %pM DTIM: %d, interval: %d\n",
-		 join.BSSID,
-		 join.DTIMPeriod, wvif->beacon_int);
-
 	if (!conf->ibss_joined) {
 		const u8 *ssidie;
 
@@ -1315,17 +1311,9 @@ static void wfx_do_join(struct wfx_vif *wvif)
 			wfx_rate_mask_to_wsm(wvif->wdev, 0xFF0);
 	}
 
-	pr_debug("[STA] ready to flush Tx in %s(%d)\n", __func__, __LINE__);
 	wsm_flush_tx(wvif->wdev);
-	pr_debug("[STA] flush Tx done in %s(%d)\n", __func__, __LINE__);
-
-	pr_debug("[STA] ready to wfx_update_listening in %s(%d)\n", __func__,
-		 __LINE__);
 
 	wfx_update_listening(wvif, false);
-
-	pr_debug("[STA] ready to Turn on Block ACKs in %s(%d)\n", __func__,
-		 __LINE__);
 
 	/* Turn on Block ACKs */
 	wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
