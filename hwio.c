@@ -31,22 +31,30 @@
 
 static int read32(struct wfx_dev *wdev, int reg, u32 *val)
 {
-	__le32 tmp;
 	int ret;
+	__le32 *tmp = kmalloc(sizeof(u32), GFP_KERNEL);
 
-	ret = wdev->hwbus_ops->copy_from_io(wdev->hwbus_priv, reg, &tmp, sizeof(u32));
+	*val = ~0; // Never return undefined value
+	if (!tmp)
+		return -ENOMEM;
+	ret = wdev->hwbus_ops->copy_from_io(wdev->hwbus_priv, reg, tmp, sizeof(u32));
 	if (ret >= 0)
-		*val = le32_to_cpu(tmp);
-	else
-		*val = ~0; // Never return undefined value
+		*val = le32_to_cpu(*tmp);
+	kfree(tmp);
 	return ret;
 }
 
 static int write32(struct wfx_dev *wdev, int reg, u32 val)
 {
-	__le32 tmp = cpu_to_le32(val);
+	int ret;
+	__le32 *tmp = kmalloc(sizeof(u32), GFP_KERNEL);
 
-	return wdev->hwbus_ops->copy_to_io(wdev->hwbus_priv, reg, &tmp, sizeof(u32));
+	if (!tmp)
+		return -ENOMEM;
+	*tmp = cpu_to_le32(val);
+	ret = wdev->hwbus_ops->copy_to_io(wdev->hwbus_priv, reg, tmp, sizeof(u32));
+	kfree(tmp);
+	return ret;
 }
 
 static int read32_locked(struct wfx_dev *wdev, int reg, u32 *val)
