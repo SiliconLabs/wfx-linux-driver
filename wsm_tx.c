@@ -361,7 +361,6 @@ int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg, int Id)
 
 	memcpy(body, arg, sizeof(*body));
 	cpu_to_le16s(&body->ChannelNumber);
-	cpu_to_le32s(&body->CTWindow);
 	cpu_to_le32s(&body->BeaconInterval);
 	cpu_to_le32s(&body->BasicRateSet);
 	wfx_fill_header(hdr, Id, WSM_HI_START_REQ_ID, sizeof(*body));
