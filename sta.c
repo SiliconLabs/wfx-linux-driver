@@ -1282,9 +1282,8 @@ static void wfx_do_join(struct wfx_vif *wvif)
 
 	join.BeaconInterval = wvif->beacon_int;
 
-	if (wvif->wdev->hw->conf.ps_dtim_period)
-		wvif->join_dtim_period = wvif->wdev->hw->conf.ps_dtim_period;
-	join.DTIMPeriod = wvif->join_dtim_period;
+	// DTIM period will be set on first Beacon
+	wvif->join_dtim_period = 0;
 
 	join.ChannelNumber = wvif->wdev->channel->hw_value;
 	join.Band = WSM_PHY_BAND_2_4G;
