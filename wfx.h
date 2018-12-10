@@ -299,9 +299,9 @@ struct wfx_vif {
 
 static inline struct wfx_vif *wdev_to_wvif(struct wfx_dev *wdev, int vif_id)
 {
-	WARN(vif_id, "Not yet supported");
+	WARN(vif_id != 0 && vif_id != 2, "Not yet supported");
 	if (!wdev->vif) {
-		dev_warn(wdev->pdev, "Requesting non-existant vif\n");
+		dev_warn(wdev->pdev, "Requesting non-existant vif: %d\n", vif_id);
 		return NULL;
 	}
 	return (struct wfx_vif *) wdev->vif->drv_priv;
