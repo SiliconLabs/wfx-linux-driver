@@ -35,7 +35,7 @@ static const struct trace_print_flags wsm_msg_print_map[] = {
 
 static const struct trace_print_flags wsm_mib_print_map[] = {
 	wsm_mib_list,
-	{ -1, NULL }
+	{ -1, "/unknown" }
 };
 
 static const struct trace_print_flags wfx_reg_print_map[] = {
@@ -57,12 +57,12 @@ static const char *get_symbol(unsigned long val,
 {
 	int i;
 
-	for (i = 0;  symbol_array[i].name; i++) {
+	for (i = 0; symbol_array[i].mask != -1; i++) {
 		if (val == symbol_array[i].mask)
 			return symbol_array[i].name;
 	}
 
-	return "unknown";
+	return symbol_array[i].name ? symbol_array[i].name : "unknown";
 }
 
 const char *get_wsm_name(unsigned long id)
