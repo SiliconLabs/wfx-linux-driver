@@ -60,7 +60,9 @@ static void *wfx_alloc_wsm(size_t body_len, HiMsgHdr_t **hdr)
 
 static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, size_t reply_len, bool async)
 {
+	const char *mib_name = "";
 	int cmd = request->s.b.Id;
+	int vif = request->s.b.IntId;
 	int ret;
 
 	WARN(wdev->wsm_cmd.buf_recv && wdev->wsm_cmd.async, "API usage error");
@@ -101,12 +103,14 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 	wdev->wsm_cmd.buf_send = NULL;
 	mutex_unlock(&wdev->wsm_cmd.lock);
 
+	if (ret && (cmd == WSM_HI_READ_MIB_REQ_ID || cmd == WSM_HI_WRITE_MIB_REQ_ID))
+		mib_name = get_mib_name(((uint16_t *) request)[2]);
 	if (ret < 0)
-		dev_err(wdev->pdev, "WSM request %s (%#.2x) returned error %d\n",
-				get_wsm_name(cmd), cmd, ret);
+		dev_err(wdev->pdev, "WSM request %s%s (%#.2x) on vif %d returned error %d\n",
+				get_wsm_name(cmd), mib_name, cmd, vif, ret);
 	if (ret > 0)
-		dev_warn(wdev->pdev, "WSM request %s (%#.2x) returned status %d\n",
-				get_wsm_name(cmd), cmd, ret);
+		dev_warn(wdev->pdev, "WSM request %s%s (%#.2x) on vif %d returned status %d\n",
+				get_wsm_name(cmd), mib_name, cmd, vif, ret);
 
 	return ret;
 }
