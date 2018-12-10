@@ -292,7 +292,6 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 	wvif->vif = NULL;
 	wvif->mode = NL80211_IFTYPE_MONITOR;
 	eth_zero_addr(wdev->mac_addr);
-	memset(&wvif->p2p_ps_modeinfo, 0, sizeof(wvif->p2p_ps_modeinfo));
 	wfx_free_keys(wvif);
 
 	wsm_set_macaddr(wdev, wdev->mac_addr, NULL);
@@ -2017,12 +2016,6 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 						&wvif->set_beacon_wakeup_period_work);
 					wfx_set_pm(wvif, &wvif->powersave_mode);
 				}
-				if (wvif->vif->p2p) {
-					pr_debug(
-						"[STA] Setting p2p powersave configuration.\n");
-					wsm_set_p2p_ps_modeinfo(wdev,
-								&wvif->p2p_ps_modeinfo, wvif->Id);
-				}
 			} else {
 				memset(&wvif->association_mode, 0,
 				       sizeof(wvif->association_mode));
@@ -2321,10 +2314,6 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 	ret = wsm_start(wvif->wdev, &start, wvif->Id);
 	if (!ret)
 		ret = wfx_upload_keys(wvif);
-	if (!ret && wvif->vif->p2p) {
-		pr_debug("[AP] Setting p2p powersave configuration.\n");
-		wsm_set_p2p_ps_modeinfo(wvif->wdev, &wvif->p2p_ps_modeinfo, wvif->Id);
-	}
 	if (!ret) {
 		wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
 		wvif->join_status = WFX_JOIN_STATUS_AP;

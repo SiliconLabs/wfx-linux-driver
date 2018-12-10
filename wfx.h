@@ -280,8 +280,6 @@ struct wfx_vif {
 	WsmHiMibSetUapsdInformation_t	uapsd_info;
 	WsmHiMibSetAssociationMode_t	association_mode;
 	WsmHiMibGrpAddrTable_t		multicast_filter;
-	/*Add support in mac80211 for psmode info per VIF */
-	WsmHiMibP2pPsModeInfo_t		p2p_ps_modeinfo;
 	WsmHiAddKeyReqBody_t		keys[WSM_KEY_MAX_INDEX + 1];
 
 	/* spinlock/mutex */
