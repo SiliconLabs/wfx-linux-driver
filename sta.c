@@ -1552,22 +1552,22 @@ int wfx_set_uapsd_param(struct wfx_vif		*wvif,
 	 *  VO [0,3], VI [1, 2], BE [2, 1], BK [3, 0]
 	 */
 
-	if (arg->uapsd_enable[0])
+	if (arg->uapsd_enable[IEEE80211_AC_VO])
 		wvif->uapsd_info.TrigVoice = 1;
 	else
 		wvif->uapsd_info.TrigVoice = 0;
 
-	if (arg->uapsd_enable[1])
+	if (arg->uapsd_enable[IEEE80211_AC_VI])
 		wvif->uapsd_info.TrigVideo = 1;
 	else
 		wvif->uapsd_info.TrigVideo = 0;
 
-	if (arg->uapsd_enable[2])
+	if (arg->uapsd_enable[IEEE80211_AC_BE])
 		wvif->uapsd_info.TrigBe = 1;
 	else
 		wvif->uapsd_info.TrigBe = 0;
 
-	if (arg->uapsd_enable[3])
+	if (arg->uapsd_enable[IEEE80211_AC_BK])
 		wvif->uapsd_info.TrigBckgrnd = 1;
 	else
 		wvif->uapsd_info.TrigBckgrnd = 0;
