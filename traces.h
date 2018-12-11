@@ -15,7 +15,7 @@
 #define _wsm_msg_list                           \
 	wsm_msg_cnf_name(ADD_KEY),              \
 	wsm_msg_cnf_name(BEACON_TRANSMIT),      \
-	wsm_msg_cnf_name(EDCA_PARAMS),          \
+	wsm_msg_cnf_name(EDCA_QUEUE_PARAMS),    \
 	wsm_msg_cnf_name(JOIN),                 \
 	wsm_msg_cnf_name(MAP_LINK),             \
 	wsm_msg_cnf_name(READ_MIB),             \
@@ -27,7 +27,6 @@
 	wsm_msg_cnf_name(START_SCAN),           \
 	wsm_msg_cnf_name(STOP_SCAN),            \
 	wsm_msg_cnf_name(TX),                   \
-	wsm_msg_cnf_name(TX_QUEUE_PARAMS),      \
 	wsm_msg_cnf_name(MULTI_TRANSMIT),       \
 	wsm_msg_cnf_name(UPDATE_IE),            \
 	wsm_msg_cnf_name(WRITE_MIB),            \

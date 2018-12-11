@@ -443,9 +443,8 @@ static const struct {
 	{ WSM_HI_READ_MIB_CNF_ID,        wsm_generic_confirm },
 	{ WSM_HI_WRITE_MIB_CNF_ID,       wsm_generic_confirm },
 	{ WSM_HI_MAP_LINK_CNF_ID,        wsm_generic_confirm },
-	{ WSM_HI_EDCA_PARAMS_CNF_ID,     wsm_generic_confirm },
+	{ WSM_HI_EDCA_QUEUE_PARAMS_CNF_ID, wsm_generic_confirm },
 	{ WSM_HI_BEACON_TRANSMIT_CNF_ID, wsm_generic_confirm },
-	{ WSM_HI_TX_QUEUE_PARAMS_CNF_ID, wsm_generic_confirm },
 	{ WSM_HI_SET_BSS_PARAMS_CNF_ID,  wsm_generic_confirm },
 	{ WSM_HI_SET_PM_MODE_CNF_ID,     wsm_generic_confirm },
 	{ WSM_HI_UPDATE_IE_CNF_ID,       wsm_generic_confirm },
@@ -590,21 +589,21 @@ static int wfx_get_prio_queue(struct wfx_vif *wvif,
 {
 	static const int urgent = BIT(WFX_LINK_ID_AFTER_DTIM) |
 		BIT(WFX_LINK_ID_UAPSD);
-	WsmHiEdcaParamsReqBody_t *edca;
+	WsmHiEdcaQueueParamsReqBody_t *edca;
 	unsigned score, best = -1;
 	int winner = -1;
 	int i;
 
-	edca = &wvif->edca.params;
 	for (i = 0; i < 4; ++i) {
 		int queued;
+		edca = &wvif->edca.params[i];
 		queued = wfx_queue_get_num_queued(&wvif->wdev->tx_queue[i],
 				link_id_map);
 		if (!queued)
 			continue;
 		*total += queued;
-		score = ((edca->AIFSN[i] + edca->CwMin[i]) << 16) +
-			((edca->CwMax[i] - edca->CwMin[i]) *
+		score = ((edca->AIFSN + edca->CwMin) << 16) +
+			((edca->CwMax - edca->CwMin) *
 			 (get_random_int() & 0xFFFF));
 		if (score < best && (winner < 0 || i != 3)) {
 			best = score;
@@ -736,7 +735,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 		*tx_len = le16_to_cpu(wsm->Header.MsgLen);
 
 		/* allow bursting if txop is set */
-		if (wvif->edca.params.TxOpLimit[queue_num])
+		if (wvif->edca.params[queue_num].TxOpLimit)
 			*burst = (int)wfx_queue_get_num_queued(queue, tx_allowed_mask) + 1;
 		else
 			*burst = 1;

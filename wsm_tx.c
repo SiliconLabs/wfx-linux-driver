@@ -302,39 +302,18 @@ int wsm_remove_key(struct wfx_dev *wdev, int idx, int Id)
 	return ret;
 }
 
-int wsm_set_tx_queue_params(struct wfx_dev *wdev, int queue_id, int ack_policy,
-			    int max_lifetime, int medium_time, int Id)
+int wsm_set_edca_queue_params(struct wfx_dev *wdev, const WsmHiEdcaQueueParamsReqBody_t *arg, int Id)
 {
 	int ret;
 	HiMsgHdr_t *hdr;
-	WsmHiTxQueueParamsReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	WsmHiEdcaQueueParamsReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
-	body->QueueId = wsm_queue_id_to_wsm(queue_id);
-	body->AckPolicy = ack_policy;
-	body->MaxTransmitLifetime = cpu_to_le32(max_lifetime);
-	body->AllowedMediumTime = cpu_to_le16(medium_time);
-	wfx_fill_header(hdr, Id, WSM_HI_TX_QUEUE_PARAMS_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
-	kfree(hdr);
-	return ret;
-}
-
-int wsm_set_edca_params(struct wfx_dev *wdev, const WsmHiEdcaParamsReqBody_t *arg, int Id)
-{
-	int ret, i, j;
-	HiMsgHdr_t *hdr;
-	WsmHiEdcaParamsReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
-
-	// NOTE: queues numerotation is inverted between WFx and Linux
-	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
-		j = IEEE80211_NUM_ACS - 1 - i;
-		body->AIFSN[i] = arg->AIFSN[j];
-		body->CwMin[i] = cpu_to_le16(arg->CwMin[j]);
-		body->CwMax[i] = cpu_to_le16(arg->CwMax[j]);
-		body->TxOpLimit[i] = cpu_to_le16(arg->TxOpLimit[j]);
-		body->MaxReceiveLifetime[i] = cpu_to_le32(arg->MaxReceiveLifetime[j]);
-	}
-	wfx_fill_header(hdr, Id, WSM_HI_EDCA_PARAMS_REQ_ID, sizeof(*body));
+	// NOTE: queues numerotation are not the same between WFx and Linux
+	memcpy(body, arg, sizeof(*body));
+	cpu_to_le16s(&body->CwMin);
+	cpu_to_le16s(&body->CwMax);
+	cpu_to_le16s(&body->TxOpLimit);
+	wfx_fill_header(hdr, Id, WSM_HI_EDCA_QUEUE_PARAMS_REQ_ID, sizeof(*body));
 	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;

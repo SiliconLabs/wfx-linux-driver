@@ -131,14 +131,9 @@ struct wfx_wsm_event {
 	WsmHiEventIndBody_t	evt;
 };
 
-struct wsm_tx_queue_params {
-	/* NOTE: index is a linux queue id. */
-	WsmHiTxQueueParamsReqBody_t params[4];
-};
-
 struct wsm_edca_params {
 	/* NOTE: index is a linux queue id. */
-	WsmHiEdcaParamsReqBody_t	params;
+	WsmHiEdcaQueueParamsReqBody_t	params[4];
 	bool				uapsd_enable[4];
 };
 
@@ -189,8 +184,7 @@ int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg, int Id)
 int wsm_set_bss_params(struct wfx_dev *wdev, const WsmHiSetBssParamsReqBody_t *arg, int Id);
 int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg, int Id);
 int wsm_remove_key(struct wfx_dev *wdev, int idx, int Id);
-int wsm_set_tx_queue_params(struct wfx_dev *wdev, int queue_id, int ack_policy, int max_lifetime, int medium_time, int Id);
-int wsm_set_edca_params(struct wfx_dev *wdev, const WsmHiEdcaParamsReqBody_t *arg, int Id);
+int wsm_set_edca_queue_params(struct wfx_dev *wdev, const WsmHiEdcaQueueParamsReqBody_t *arg, int Id);
 int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg, int Id);
 int wsm_beacon_transmit(struct wfx_dev *wdev, bool enable, int Id);
 int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame, const u8 *ies, size_t ies_len, int Id);

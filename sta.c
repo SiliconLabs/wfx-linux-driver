@@ -60,17 +60,6 @@ static void __wfx_sta_notify(struct ieee80211_hw *dev,
 			     enum sta_notify_cmd notify_cmd, int link_id);
 static int __wfx_flush(struct wfx_dev *wdev, bool drop);
 
-static void fill_edca(struct wsm_edca_params *edca, int queue, int aifs,
-		      int cw_min, int cw_max, int txop, int lifetime, bool enabled)
-{
-	edca->params.CwMin[queue] = cw_min;
-	edca->params.CwMax[queue] = cw_max;
-	edca->params.AIFSN[queue] = aifs;
-	edca->params.TxOpLimit[queue] = txop * TXOP_UNIT;
-	edca->params.MaxReceiveLifetime[queue] = lifetime;
-	edca->uapsd_enable[queue] = enabled;
-}
-
 static inline void __wfx_free_event_queue(struct list_head *list)
 {
 	struct wfx_wsm_event *event, *tmp;
@@ -201,7 +190,7 @@ void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 int wfx_add_interface(struct ieee80211_hw *dev,
 			 struct ieee80211_vif *vif)
 {
-	int ret;
+	int ret, i;
 	struct wfx_dev *wdev = dev->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 
@@ -239,7 +228,8 @@ int wfx_add_interface(struct ieee80211_hw *dev,
 	ret = wsm_set_macaddr(wdev, wdev->mac_addr, wvif->Id);
 	wfx_vif_setup(wvif);
 	mutex_unlock(&wdev->conf_mutex);
-	wsm_set_edca_params(wdev, &wvif->edca.params, wvif->Id);
+	for (i = 0; i < 4; i++)
+		wsm_set_edca_queue_params(wdev, &wvif->edca.params[i], wvif->Id);
 	wfx_set_uapsd_param(wvif, &wvif->edca);
 
 	return 0;
@@ -656,6 +646,7 @@ int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
 	int ret = 0;
 	/* To prevent re-applying PM request OID again and again*/
 	uint16_t old_uapsd_flags, new_uapsd_flags;
+	WsmHiEdcaQueueParamsReqBody_t *edca;
 
 	pr_debug("[STA] wfx_conf_tx\n");
 
@@ -663,23 +654,15 @@ int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
 
 	if (queue < dev->queues) {
 		old_uapsd_flags = *((uint16_t *) &wvif->uapsd_info);
+		edca = &wvif->edca.params[queue];
 
-		// FIXME: currently unused
-		wvif->tx_queue_params.params[queue].AckPolicy = 0;
-		wvif->tx_queue_params.params[queue].AllowedMediumTime = 0;
-		wvif->tx_queue_params.params[queue].MaxTransmitLifetime = 0;
-
-		ret = wsm_set_tx_queue_params(wdev, queue, 0, 0, 0, wvif->Id);
-		if (ret) {
-			ret = -EINVAL;
-			goto out;
-		}
-
-		fill_edca(&wvif->edca, queue, params->aifs,
-			     params->cw_min, params->cw_max,
-			     params->txop, 0xc8,
-			     params->uapsd);
-		ret = wsm_set_edca_params(wdev, &wvif->edca.params, wvif->Id);
+		wvif->edca.uapsd_enable[queue] = params->uapsd;
+		edca->AIFSN = params->aifs;
+		edca->CwMin = params->cw_min;
+		edca->CwMax = params->cw_max;
+		edca->TxOpLimit = params->txop;
+		edca->AllowedMediumTime = 0;
+		ret = wsm_set_edca_queue_params(wdev, edca, wvif->Id);
 		if (ret) {
 			ret = -EINVAL;
 			goto out;
@@ -2377,6 +2360,38 @@ static int wfx_update_beaconing(struct wfx_vif *wvif)
 
 static int wfx_vif_setup(struct wfx_vif *wvif)
 {
+	int i;
+	static const WsmHiEdcaQueueParamsReqBody_t default_edca_params[] = {
+		[IEEE80211_AC_VO] = {
+			.QueueId = WSM_QUEUE_ID_VOICE,
+			.AIFSN = 2,
+			.CwMin = 3,
+			.CwMax = 7,
+			.TxOpLimit = 47,
+		},
+		[IEEE80211_AC_VI] = {
+			.QueueId = WSM_QUEUE_ID_VIDEO,
+			.AIFSN = 2,
+			.CwMin = 7,
+			.CwMax = 15,
+			.TxOpLimit = 94,
+		},
+		[IEEE80211_AC_BE] = {
+			.QueueId = WSM_QUEUE_ID_BACKGROUND,
+			.AIFSN = 3,
+			.CwMin = 15,
+			.CwMax = 1023,
+			.TxOpLimit = 0,
+		},
+		[IEEE80211_AC_BK] = {
+			.QueueId = WSM_QUEUE_ID_BESTEFFORT,
+			.AIFSN = 7,
+			.CwMin = 15,
+			.CwMax = 1023,
+			.TxOpLimit = 0,
+		},
+	};
+
 	/* Spin lock */
 	spin_lock_init(&wvif->vif_lock);
 	spin_lock_init(&wvif->ps_state_lock);
@@ -2411,18 +2426,17 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	setup_timer(&wvif->mcast_timeout, wfx_mcast_timeout, (unsigned long) wvif);
 #endif
 
+	BUG_ON(ARRAY_SIZE(default_edca_params) != ARRAY_SIZE(wvif->edca.params));
+	for (i = 0; i < ARRAY_SIZE(default_edca_params); i++) {
+		memcpy(&wvif->edca.params[i], &default_edca_params[i], sizeof(default_edca_params[i]));
+		wvif->edca.uapsd_enable[i] = false;
+	}
+	memset(wvif->bssid, ~0, ETH_ALEN);
 	wvif->setbssparams_done = false;
 	wvif->power_set_true = 0;
 	wvif->user_power_set_true = 0;
 	wvif->user_pm_mode = 0;
 	wvif->htcap = false;
-	/* default EDCA */
-	fill_edca(&wvif->edca, 0, 0x0002, 0x0003, 0x0007, 47, 0xc8, false);
-	fill_edca(&wvif->edca, 1, 0x0002, 0x0007, 0x000f, 94, 0xc8, false);
-	fill_edca(&wvif->edca, 2, 0x0003, 0x000f, 0x03ff, 0, 0xc8, false);
-	fill_edca(&wvif->edca, 3, 0x0007, 0x000f, 0x03ff, 0, 0xc8, false);
-
-	memset(wvif->bssid, ~0, ETH_ALEN);
 	wvif->wep_default_key_id = -1;
 	wvif->cipherType = 0;
 	wvif->cqm_link_loss_count = 40;

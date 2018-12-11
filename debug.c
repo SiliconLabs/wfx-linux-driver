@@ -221,12 +221,11 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 			   "enabled" : "disabled");
 
 	for (i = 0; i < 4; ++i)
-		seq_printf(seq, "EDCA(%d):    %d, %d, %d, %d, %d\n", i,
-			   wvif->edca.params.CwMin[i],
-			   wvif->edca.params.CwMax[i],
-			   wvif->edca.params.AIFSN[i],
-			   wvif->edca.params.TxOpLimit[i],
-			   wvif->edca.params.MaxReceiveLifetime[i]);
+		seq_printf(seq, "EDCA(%d):    %d, %d, %d, %d\n", i,
+			   wvif->edca.params[i].CwMin,
+			   wvif->edca.params[i].CwMax,
+			   wvif->edca.params[i].AIFSN,
+			   wvif->edca.params[i].TxOpLimit);
 
 	if (wvif->join_status == WFX_JOIN_STATUS_STA) {
 		static const char *pm_mode = "unknown";

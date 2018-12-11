@@ -249,7 +249,6 @@ struct wfx_vif {
 
 	struct wsm_rx_filter	rx_filter;
 	struct wsm_edca_params	edca;
-	struct wsm_tx_queue_params	tx_queue_params;
 	struct wfx_link_entry	link_id_db[WFX_MAX_STA_IN_AP_MODE];
 	struct wfx_grp_addr_table	multicast_filter;
 
