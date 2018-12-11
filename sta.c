@@ -2084,7 +2084,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 					info->cqm_rssi_hyst;
 				threshold.LowerThreshold =
 					info->cqm_rssi_thold;
-				threshold.Use = 1;
+				threshold.RcpiRssi = 1;
 			} else {
 				threshold.UpperThreshold =
 					(info->cqm_rssi_thold +
@@ -2099,7 +2099,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 			threshold.Upperthresh = 1;
 			threshold.Lowerthresh = 1;
 			if (wvif->cqm_use_rssi)
-				threshold.Use = 1;
+				threshold.RcpiRssi = 1;
 		}
 		wsm_set_rcpi_rssi_threshold(wdev, &threshold, wvif->Id);
 	}
