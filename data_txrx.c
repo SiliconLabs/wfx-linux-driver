@@ -1221,7 +1221,7 @@ void wfx_rx_cb(struct wfx_vif	*wvif,
 		wfx_debug_rxed_agg(wvif->wdev);
 
 	if (ieee80211_is_action(frame->frame_control) &&
-	    (arg->RxFlags.MatchStationid)) {
+	    (arg->RxFlags.MatchUcAddr)) {
 		if (wfx_handle_action_rx(wvif->wdev, skb))
 			return;
 	} else if (ieee80211_is_beacon(frame->frame_control) &&
