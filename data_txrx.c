@@ -367,6 +367,7 @@ static int tx_policy_upload(struct wfx_dev *wdev)
 	WsmHiMibSetTxRateRetryPolicy_t arg = {
 		.NumTxRatePolicy	= 0,
 	};
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	spin_lock_bh(&cache->lock);
 
@@ -397,7 +398,7 @@ static int tx_policy_upload(struct wfx_dev *wdev)
 	spin_unlock_bh(&cache->lock);
 	wfx_debug_tx_cache_miss(wdev);
 	pr_debug("[TX policy] Upload %d policies\n", arg.NumTxRatePolicy);
-	return wsm_set_tx_rate_retry_policy(wdev, &arg, -1);
+	return wsm_set_tx_rate_retry_policy(wdev, &arg, wvif->Id);
 }
 
 void tx_policy_upload_work(struct work_struct *work)
