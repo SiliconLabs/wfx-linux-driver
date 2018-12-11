@@ -101,7 +101,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	p = (WsmHiMibTemplateFrame_t *)skb_push(skb, 4);
 	p->FrameType = WSM_TMPLT_PRBREQ;
 	p->FrameLength = cpu_to_le16(skb->len - 4);
-	ret = wsm_set_template_frame(wdev, p, -1);
+	ret = wsm_set_template_frame(wdev, p, wvif->Id);
 	skb_pull(skb, 4);
 
 	if (!ret)
@@ -265,7 +265,7 @@ void wfx_scan_work(struct work_struct *work)
 		    wdev->scan.output_power != first->max_power) {
 			wdev->scan.output_power = first->max_power;
 			wsm_set_output_power(wdev,
-					     wdev->scan.output_power * 10, -1);
+					     wdev->scan.output_power * 10, wvif->Id);
 		}
 		wdev->scan.status = wfx_scan_start(wdev, &scan);
 		kfree(scan.ch);
@@ -350,6 +350,7 @@ void wfx_scan_timeout(struct work_struct *work)
 {
 	struct wfx_dev *wdev =
 		container_of(work, struct wfx_dev, scan.timeout.work);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	if (atomic_xchg(&wdev->scan.in_progress, 0)) {
 		if (wdev->scan.status > 0) {
@@ -359,7 +360,7 @@ void wfx_scan_timeout(struct work_struct *work)
 				   "Timeout waiting for scan complete notification.\n");
 			wdev->scan.status = -ETIMEDOUT;
 			wdev->scan.curr = wdev->scan.end;
-			wsm_stop_scan(wdev, -1);
+			wsm_stop_scan(wdev, wvif->Id);
 		}
 		wfx_scan_complete(wdev);
 	}
@@ -455,7 +456,7 @@ void wfx_probe_work(struct work_struct *work)
 	p->FrameType = WSM_TMPLT_PRBREQ;
 	p->FrameLength = cpu_to_le16(skb->len - 4);
 
-	ret = wsm_set_template_frame(wdev, p, -1);
+	ret = wsm_set_template_frame(wdev, p, wvif->Id);
 	skb_pull(skb, 4);
 	wdev->scan.direct_probe = 1;
 	if (!ret) {
