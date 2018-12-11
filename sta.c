@@ -1488,20 +1488,16 @@ void wfx_unjoin_work(struct work_struct *work)
 int wfx_enable_listening(struct wfx_vif *wvif)
 {
 	WsmHiStartReqBody_t start = {
-		.Mode = {
-				.StartMode	= WSM_START_MODE_P2P_DEV | (wvif->Id << 4),
-			},
 		.Band			= WSM_PHY_BAND_2_4G,
 		.BeaconInterval		= 100,
 		.DTIMPeriod		= 1,
 		.BasicRateSet		= 0x0F,
 	};
 
+
 	if (wvif->wdev->channel) {
-		start.Band = WSM_PHY_BAND_2_4G;
 		start.ChannelNumber = wvif->wdev->channel->hw_value;
 	} else {
-		start.Band = WSM_PHY_BAND_2_4G;
 		start.ChannelNumber = 1;
 	}
 
@@ -2270,12 +2266,7 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 	int ret;
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 	WsmHiStartReqBody_t start = {
-		.Mode = {
-			.StartMode	= wvif->vif->p2p ?
-					  WSM_START_MODE_P2P_GO :
-					  WSM_START_MODE_AP,
 			.IndexMacUse	= wvif->Id,
-		},
 		.Band			= WSM_PHY_BAND_2_4G,
 		.ChannelNumber		= wvif->wdev->channel->hw_value,
 		.BeaconInterval		= conf->beacon_int,
@@ -2287,6 +2278,7 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 		.power_mode = wvif->wdev->pdata.power_mode,
 		.disable_more_flag_usage = true,
 	};
+
 
 	memset(start.Ssid, 0, sizeof(start.Ssid));
 	if (!conf->hidden_ssid) {
