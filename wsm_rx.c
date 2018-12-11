@@ -772,7 +772,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 			hdr->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
 		pr_debug("[WSM] Tx sta_id=%d >>> frame_ctrl=0x%.4x  tx_len=%zu, %p %c\n",
 			txpriv->link_id, hdr->frame_control, *tx_len, *data,
-			wsm->Body.More ? 'M' : ' ');
+			wsm->Body.DataFlags.More ? 'M' : ' ');
 		++count;
 		break;
 	}

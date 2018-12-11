@@ -552,19 +552,15 @@ wfx_tx_h_crypt(struct wfx_vif	*wvif,
 static int
 wfx_tx_h_align(struct wfx_vif	*wvif,
 		  struct wfx_txinfo *t,
-	       WsmHiTxFlags_t		*flags)
+	       WsmHiDataFlags_t		*flags)
 {
 	size_t offset = (size_t)t->skb->data & 3;
 
 	if (!offset)
 		return 0;
 
-	if (offset & 1) {
-		wiphy_err(wvif->wdev->hw->wiphy,
-			  "Bug: attempt to transmit a frame with wrong alignment: %zu\n",
-			  offset);
-		return -EINVAL;
-	}
+	if (offset & 1)
+		dev_warn(wvif->wdev->pdev, "Attempt to transmit an unaligned frame\n");
 
 	if (skb_headroom(t->skb) < offset) {
 		wiphy_err(wvif->wdev->hw->wiphy,
@@ -575,7 +571,7 @@ wfx_tx_h_align(struct wfx_vif	*wvif,
 	skb_push(t->skb, offset);
 	t->hdrlen += offset;
 	t->txpriv.offset += offset;
-	flags->Offset = 1;
+	flags->FcOffset = offset;
 	wfx_debug_tx_align(wvif->wdev);
 	return 0;
 }
@@ -761,7 +757,7 @@ void wfx_tx(struct ieee80211_hw *dev,
 	struct ieee80211_sta *sta;
 	WsmHiTxReq_t *wsm;
 	bool tid_update = 0;
-	WsmHiTxFlags_t flags = { };
+	WsmHiDataFlags_t flags = { };
 	int ret;
 
 	if (wdev->bh_error)
@@ -808,7 +804,7 @@ void wfx_tx(struct ieee80211_hw *dev,
 		ret = -ENOMEM;
 		goto drop;
 	}
-	wsm->Body.TxFlags = flags;
+	wsm->Body.DataFlags.FcOffset = flags.FcOffset;
 	ret = wfx_tx_h_rate_policy(wdev, &t, wsm);
 	if (ret)
 		goto drop;
