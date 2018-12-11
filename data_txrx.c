@@ -1206,16 +1206,6 @@ void wfx_rx_cb(struct wfx_vif	*wvif,
 		skb_pull(skb, iv_len);
 	}
 
-	/* Remove TSF from the end of frame */
-	if (arg->RxFlags.Timestamp) {
-		memcpy(&hdr->mactime, skb->data + skb->len - 8, 8);
-		hdr->mactime = le64_to_cpu(hdr->mactime);
-		if (skb->len >= 8)
-			skb_trim(skb, skb->len - 8);
-	} else {
-		hdr->mactime = 0;
-	}
-
 	wfx_debug_rxed(wvif->wdev);
 	if (arg->RxFlags.InAggr)
 		wfx_debug_rxed_agg(wvif->wdev);
