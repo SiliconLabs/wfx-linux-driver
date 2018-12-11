@@ -162,7 +162,6 @@ void wfx_scan_work(struct work_struct *work)
 	struct ieee80211_channel **it;
 	struct wsm_scan scan = {
 		.scan_req.ScanType.Type		= 0,    /* WSM_SCAN_TYPE_FG, */
-		.scan_req.ScanFlags.Split	= 1,    /* WSM_SCAN_FLAG_SPLIT_METHOD,*/
 	};
 	bool first_run = (wdev->scan.begin == wdev->scan.curr &&
 			  wdev->scan.begin != wdev->scan.end);
