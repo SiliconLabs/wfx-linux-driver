@@ -40,7 +40,6 @@
 	wsm_msg_ind_name(SCAN_CMPL),            \
 	wsm_msg_ind_name(SET_PM_MODE_CMPL),     \
 	wsm_msg_ind_name(SUSPEND_RESUME_TX),    \
-	wsm_msg_ind_name(SWITCH_CHANNEL),       \
 	low_msg_cnf_name(CONTROL_GPIO),         \
 	low_msg_cnf_name(SHUT_DOWN),            \
 	low_msg_cnf_name(CONFIGURATION),        \
