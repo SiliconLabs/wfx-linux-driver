@@ -1300,12 +1300,6 @@ static void wfx_do_join(struct wfx_vif *wvif)
 		rcu_read_unlock();
 	}
 
-	if (wvif->vif->p2p) {
-		join.JoinFlags.P2P = 1;
-		join.BasicRateSet =
-			wfx_rate_mask_to_wsm(wvif->wdev, 0xFF0);
-	}
-
 	wsm_flush_tx(wvif->wdev);
 
 	wfx_update_listening(wvif, false);
