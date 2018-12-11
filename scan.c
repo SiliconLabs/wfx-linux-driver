@@ -40,11 +40,6 @@ static int wfx_scan_start(struct wfx_dev *wdev, struct wsm_scan *scan)
 	default:
 		break;
 	}
-	wiphy_dbg(wdev->hw->wiphy,
-		  "[SCAN] hw req, type %d, %d channels, flags: Fbg %d, Split %d, Pre %d, TxMod %d.\n",
-		  scan->scan_req.ScanType.Type, scan->scan_req.NumOfChannels, scan->scan_req.ScanFlags.Fbg,
-		  scan->scan_req.ScanFlags.Split, scan->scan_req.ScanFlags.Pre,
-		  scan->scan_req.ScanFlags.TxMod);
 
 	tmo += scan->scan_req.NumOfChannels *
 	       ((20 * (scan->scan_req.MaxChannelTime)) + 10);
