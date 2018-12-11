@@ -121,7 +121,7 @@ int sram_write_dma_safe(struct wfx_dev *wdev, u32 addr, const u8 *buf, size_t le
  */
 static int get_keyset_offset(struct wfx_dev *wdev, const u8 *firmware)
 {
-	/* SDIO hosts does not all correctly support unaligned buffers */
+	/* SDIO hosts do not all correctly support unaligned buffers */
 	u8 buf[PTE_INFO_SIZE] __aligned(sizeof(void *));
 	u32 keyset_chip;
 	int keyset_file;
@@ -168,7 +168,7 @@ static int wait_ncp_status(struct wfx_dev *wdev, u32 status)
 	if (ktime_compare(time_zero, now))
 		dev_dbg(wdev->pdev, "chip answer after %lldus\n", ktime_us_delta(now, start));
 	else
-		dev_dbg(wdev->pdev, "chip answer immediatly\n");
+		dev_dbg(wdev->pdev, "chip answer immediately\n");
 	return 0;
 }
 
