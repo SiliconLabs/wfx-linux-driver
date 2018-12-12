@@ -1024,7 +1024,7 @@ static void wfx_notify_buffered_tx(struct wfx_vif *wvif,
 
 		spin_lock_bh(&wvif->ps_state_lock);
 		if (!buffered[tid])
-			dev_err(wvif->wdev->pdev, "wfx_notify_buffered_tx: inconsistent tid");
+			dev_err(wvif->wdev->pdev, "wfx_notify_buffered_tx: inconsistent tid (%d)\n", tid);
 		else
 			still_buffered = --buffered[tid];
 		spin_unlock_bh(&wvif->ps_state_lock);
