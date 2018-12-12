@@ -214,26 +214,33 @@ static int indirect_write_locked(struct wfx_dev *wdev, int reg, u32 addr, const 
 
 static int indirect_read32_locked(struct wfx_dev *wdev, int reg, u32 addr, u32 *val)
 {
-	__le32 tmp;
 	int ret;
+	__le32 *tmp = kmalloc(sizeof(u32), GFP_KERNEL);
 
+	if (!tmp)
+		return -ENOMEM;
 	wdev->hwbus_ops->lock(wdev->hwbus_priv);
-	ret = indirect_read(wdev, reg, addr, &tmp, sizeof(u32));
-	*val = cpu_to_le32(tmp);
+	ret = indirect_read(wdev, reg, addr, tmp, sizeof(u32));
+	*val = cpu_to_le32(*tmp);
 	_trace_io_ind_read32(reg, addr, *val);
 	wdev->hwbus_ops->unlock(wdev->hwbus_priv);
+	kfree(tmp);
 	return ret;
 }
 
 static int indirect_write32_locked(struct wfx_dev *wdev, int reg, u32 addr, u32 val)
 {
-	__le32 tmp = cpu_to_le32(val);
 	int ret;
+	__le32 *tmp = kmalloc(sizeof(u32), GFP_KERNEL);
 
+	if (!tmp)
+		return -ENOMEM;
+	*tmp = cpu_to_le32(val);
 	wdev->hwbus_ops->lock(wdev->hwbus_priv);
-	ret = indirect_write(wdev, reg, addr, &tmp, sizeof(u32));
+	ret = indirect_write(wdev, reg, addr, tmp, sizeof(u32));
 	_trace_io_ind_write32(reg, addr, val);
 	wdev->hwbus_ops->unlock(wdev->hwbus_priv);
+	kfree(tmp);
 	return ret;
 }
 
