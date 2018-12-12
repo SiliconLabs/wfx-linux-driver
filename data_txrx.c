@@ -907,7 +907,7 @@ void wfx_tx_confirm_cb(struct wfx_dev	*wdev,
 
 	ret = wfx_queue_get_skb(queue, arg->PacketId, &skb, &txpriv);
 	if (ret) {
-		dev_warn(wdev->pdev, "Received unknown packet_id from chip\n");
+		dev_warn(wdev->pdev, "Received unknown packet_id (%#.8x) from chip\n", arg->PacketId);
 		return;
 	}
 
