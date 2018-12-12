@@ -232,7 +232,6 @@ int load_firmware_secure(struct wfx_dev *wdev, const u8 *fw_file, u32 fw_len)
 	int ret;
 
 	CHECK(sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_READY));
-	CHECK(config_reg_write_bits(wdev, CFG_CPU_RESET | CFG_DISABLE_CPU_CLK, 0));
 	CHECK(wait_ncp_status(wdev, NCP_INFO_READY));
 
 	CHECK(sram_buf_read(wdev, WFX_BOOTLOADER_LABEL, buf, BOOTLOADER_LABEL_SIZE));
@@ -386,10 +385,12 @@ int wfx_init_device(struct wfx_dev *wdev)
 	}
 	dev_dbg(wdev->pdev, "chip wake up after %lldus\n", ktime_us_delta(now, start));
 
+	ret = config_reg_write_bits(wdev, CFG_CPU_RESET | CFG_DISABLE_CPU_CLK, 0);
+	if (ret < 0)
+		return ret;
 	ret = load_firmware(wdev);
 	if (ret < 0)
 		return ret;
-
 	ret = config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_DATA);
 	if (ret < 0)
 		return ret;
