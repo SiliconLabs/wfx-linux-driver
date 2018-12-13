@@ -403,13 +403,14 @@ int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame,
 {
 	int ret;
 	HiMsgHdr_t *hdr;
-	WsmHiUpdateIeReqBody_t *body = wfx_alloc_wsm(sizeof(*body) + ies_len, &hdr);
-	u8 *ptr = (u8 *) body + sizeof(*body);
+	// sizeof(WsmHiUpdateIeReqBody_t) is wider than necessary
+	int buf_len = sizeof(WsmHiIeFlags_t) + sizeof(u16) + ies_len;
+	WsmHiUpdateIeReqBody_t *body = wfx_alloc_wsm(buf_len, &hdr);
 
 	memcpy(&body->IeFlags, target_frame, sizeof(WsmHiIeFlags_t));
 	body->NumIEs = cpu_to_le16(1);
-	memcpy(ptr, ies, ies_len);
-	wfx_fill_header(hdr, Id, WSM_HI_UPDATE_IE_REQ_ID, sizeof(*body) + ies_len);
+	memcpy(body->IE, ies, ies_len);
+	wfx_fill_header(hdr, Id, WSM_HI_UPDATE_IE_REQ_ID, buf_len);
 	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
