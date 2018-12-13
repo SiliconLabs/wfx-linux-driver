@@ -279,14 +279,6 @@ static int wsm_dbg_info_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *
 	return 0;
 }
 
-static int wsm_ba_timeout_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
-{
-	WsmHiBaTimeoutIndBody_t *body = buf;
-
-	wfx_info("BlockACK timeout, tid %d, addr %pM\n", body->TID, body->TransmitAddress);
-
-	return 0;
-}
 
 static int wsm_suspend_resume_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
@@ -517,7 +509,6 @@ static const struct {
 	{ WSM_HI_EVENT_IND_ID,           wsm_event_indication },
 	{ WSM_HI_SET_PM_MODE_CMPL_IND_ID, wsm_set_pm_indication },
 	{ WSM_HI_DEBUG_IND_ID,           wsm_dbg_info_indication },
-	{ WSM_HI_BA_TIMEOUT_IND_ID,      wsm_ba_timeout_indication },
 	{ WSM_HI_JOIN_COMPLETE_IND_ID,   wsm_join_complete_indication },
 	{ WSM_HI_SCAN_CMPL_IND_ID,       wsm_scan_complete_indication },
 	{ WSM_HI_SWITCH_CHANNEL_IND_ID,  wsm_channel_switch_indication },
