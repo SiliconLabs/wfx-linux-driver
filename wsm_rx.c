@@ -419,29 +419,9 @@ void wsm_unlock_tx(struct wfx_dev *wdev)
 
 static int wsm_exception_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	HiExceptionIndBody_t *body = buf;
 	size_t len = hdr->MsgLen - 4; // drop header
-	static const char * const reason_str[] = {
-		"undefined instruction",
-		"prefetch abort",
-		"data abort",
-		"unknown error",
-	};
-
-	if (len < sizeof(HiExceptionIndBody_t)) {
-		dev_err(wdev->pdev, "Firmware exception.\n");
-		print_hex_dump_bytes("Exception: ", DUMP_PREFIX_NONE, buf, len);
-		return -EINVAL;
-	}
-
-	if (body->Reason < 4) {
-		dev_err(wdev->pdev, "Firmware exception: %s\n",
-			reason_str[body->Reason]);
-		return -1;
-	}
-
-	dev_err(wdev->pdev, "Firmware assert: id %d, error code %X\n",
-		body->Reserved_1, body->Reserved_2);
+	dev_err(wdev->pdev, "Firmware exception.\n");
+	print_hex_dump_bytes("Dump: ", DUMP_PREFIX_NONE, buf, len);
 
 	return -1;
 }
