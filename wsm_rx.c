@@ -259,26 +259,6 @@ static int wsm_join_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, v
 	return 0;
 }
 
-static int wsm_dbg_info_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
-{
-	WsmHiDebugIndBody_t *body = buf;
-	int msgLen = hdr->MsgLen;
-
-	switch (body->DbgId) {
-	case 6:
-		wfx_err("dbg msg CPU profiling : cpu_load=%d\n",
-			body->DbgData.EptaRtStats.MsgStartIdentifier);
-		break;
-	case 7:
-		wfx_testmode_bs_buffer_add((uint8_t *) &body->DbgData, msgLen - 8);
-		break;
-	default:
-		break;
-	}
-
-	return 0;
-}
-
 
 static int wsm_suspend_resume_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
@@ -508,7 +488,6 @@ static const struct {
 	/* Indications */
 	{ WSM_HI_EVENT_IND_ID,           wsm_event_indication },
 	{ WSM_HI_SET_PM_MODE_CMPL_IND_ID, wsm_set_pm_indication },
-	{ WSM_HI_DEBUG_IND_ID,           wsm_dbg_info_indication },
 	{ WSM_HI_JOIN_COMPLETE_IND_ID,   wsm_join_complete_indication },
 	{ WSM_HI_SCAN_CMPL_IND_ID,       wsm_scan_complete_indication },
 	{ WSM_HI_SWITCH_CHANNEL_IND_ID,  wsm_channel_switch_indication },
