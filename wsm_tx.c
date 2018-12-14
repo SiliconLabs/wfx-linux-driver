@@ -38,7 +38,7 @@ void init_wsm_cmd(struct wsm_cmd *wsm_cmd)
 static void wfx_fill_header(HiMsgHdr_t *hdr, int if_id, unsigned cmd, size_t size)
 {
 	if (if_id == -1)
-		if_id = 0;
+		if_id = 2;
 
 	WARN(cmd > 0x3f, "Invalid WSM command %#.2x", cmd);
 	WARN(size > 0xFFF, "Requested buffer is too large: %zu bytes", size);
