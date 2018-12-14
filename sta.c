@@ -2377,14 +2377,14 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 			.TxOpLimit = 94,
 		},
 		[IEEE80211_AC_BE] = {
-			.QueueId = WSM_QUEUE_ID_BESTEFFORT,
+			.QueueId = WSM_QUEUE_ID_BACKGROUND,
 			.AIFSN = 3,
 			.CwMin = 15,
 			.CwMax = 1023,
 			.TxOpLimit = 0,
 		},
 		[IEEE80211_AC_BK] = {
-			.QueueId = WSM_QUEUE_ID_BACKGROUND,
+			.QueueId = WSM_QUEUE_ID_BESTEFFORT,
 			.AIFSN = 7,
 			.CwMin = 15,
 			.CwMax = 1023,
