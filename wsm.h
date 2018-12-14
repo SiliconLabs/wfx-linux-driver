@@ -463,26 +463,4 @@ static inline int wsm_rts_threshold(struct wfx_dev *wdev, int val, int Id)
 			     &arg, sizeof(arg), Id);
 }
 
-/* Queue mapping: WSM <---> linux					*/
-/* Linux: VO VI BE BK							*/
-/* WSM:   BE BK VI VO							*/
-static inline u8 wsm_queue_id_to_linux(u8 queue_id)
-{
-	static const u8 queue_mapping[] = {
-		2, 3, 1, 0
-	};
-
-	return queue_mapping[queue_id];
-}
-
-static inline u8 wsm_queue_id_to_wsm(u8 queue_id)
-{
-	static const u8 queue_mapping[] = {
-		3, 2, 0, 1
-	};
-
-	return queue_mapping[queue_id];
-}
-
-
 #endif /* WFX_HWIO_H */

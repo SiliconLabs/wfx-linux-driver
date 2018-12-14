@@ -544,8 +544,8 @@ typedef struct __attribute__((__packed__)) WsmHiScanCmplInd_s {
  * Used in message ::WsmHiEdcaQueueParamsReqBody_t and in ::WsmHiTxReqBody_t::QueueId
  * */
 typedef enum WsmQueueId_e {
-        WSM_QUEUE_ID_BESTEFFORT                    = 0x0,         ///<Best effort or legacy
-        WSM_QUEUE_ID_BACKGROUND                    = 0x1,         ///<Background
+        WSM_QUEUE_ID_BACKGROUND                    = 0x0,         ///<Background
+        WSM_QUEUE_ID_BESTEFFORT                    = 0x1,         ///<Best effort or legacy
         WSM_QUEUE_ID_VIDEO                         = 0x2,         ///<Video
         WSM_QUEUE_ID_VOICE                         = 0x3          ///<Voice
 } WsmQueueId;

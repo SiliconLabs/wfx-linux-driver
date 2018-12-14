@@ -613,7 +613,8 @@ wfx_tx_h_wsm(struct wfx_vif	*wvif,
 	wsm->Header.s.t.MsgId = cpu_to_le16(WSM_HI_TX_REQ_ID);
 	wsm->Header.s.b.IntId = t->txpriv.vif_id;
 	wsm->Body.QueueId.PeerStaId = t->txpriv.raw_link_id;
-	wsm->Body.QueueId.QueueId = wsm_queue_id_to_wsm(t->queue);
+	// Queue index are inverted between WSM and Linux
+	wsm->Body.QueueId.QueueId = 3 - t->queue;
 	return wsm;
 }
 
