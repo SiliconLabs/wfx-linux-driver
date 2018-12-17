@@ -137,8 +137,7 @@ int wsm_reset(struct wfx_dev *wdev, bool reset_stat, int Id)
 	HiMsgHdr_t *hdr;
 	WsmHiResetReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
-	// FIXME: API logic is inverted
-	body->ResetFlags.ResetStat = reset_stat ? 0 : 1;
+	body->ResetFlags.ResetStat = reset_stat;
 	wfx_fill_header(hdr, Id, WSM_HI_RESET_REQ_ID, sizeof(*body));
 	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
