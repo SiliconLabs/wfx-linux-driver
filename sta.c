@@ -1390,8 +1390,8 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	} else if (mfpr == 0) {
 		/* PMF capable but not required */
 		mgmt_policy.protectedMgmtEnable = 1;
-	mgmt_policy.unprotectedMgmtFramesAllowed = 1;
-	mgmt_policy.encryptionForAuthFrame = 1;
+		mgmt_policy.unprotectedMgmtFramesAllowed = 1;
+		mgmt_policy.encryptionForAuthFrame = 1;
 	} else {
 		/* PMF required */
 		mgmt_policy.protectedMgmtEnable = 1;
