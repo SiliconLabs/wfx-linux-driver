@@ -103,7 +103,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 	mutex_unlock(&wdev->wsm_cmd.lock);
 
 	if (ret && (cmd == WSM_HI_READ_MIB_REQ_ID || cmd == WSM_HI_WRITE_MIB_REQ_ID))
-		mib_name = get_mib_name(((uint16_t *) request)[2]);
+		mib_name = get_mib_name(((u16 *) request)[2]);
 	if (ret < 0)
 		dev_err(wdev->pdev, "WSM request %s%s (%#.2x) on vif %d returned error %d\n",
 				get_wsm_name(cmd), mib_name, cmd, vif, ret);

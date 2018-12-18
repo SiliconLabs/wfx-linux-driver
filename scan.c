@@ -379,7 +379,7 @@ void wfx_probe_work(struct work_struct *work)
 	WsmHiSsidDef_t ssids[1] = { {
 					    .SSIDLength = 0,
 	} };
-	uint8_t ch[WSM_API_CHANNEL_LIST_SIZE] = {
+	u8 ch[WSM_API_CHANNEL_LIST_SIZE] = {
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct wsm_scan scan = {
 		.scan_req.ScanType.Type		= 0, /* WSM_SCAN_TYPE_FG, */

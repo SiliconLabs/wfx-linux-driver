@@ -648,7 +648,7 @@ int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 	int ret = 0;
 	/* To prevent re-applying PM request OID again and again*/
-	uint16_t old_uapsd_flags, new_uapsd_flags;
+	u16 old_uapsd_flags, new_uapsd_flags;
 	WsmHiEdcaQueueParamsReqBody_t *edca;
 
 	pr_debug("[STA] wfx_conf_tx\n");
@@ -656,7 +656,7 @@ int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
 	mutex_lock(&wdev->conf_mutex);
 
 	if (queue < dev->queues) {
-		old_uapsd_flags = *((uint16_t *) &wvif->uapsd_info);
+		old_uapsd_flags = *((u16 *) &wvif->uapsd_info);
 		edca = &wvif->edca.params[queue];
 
 		wvif->edca.uapsd_enable[queue] = params->uapsd;
@@ -673,7 +673,7 @@ int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
 
 		if (wvif->mode == NL80211_IFTYPE_STATION) {
 			ret = wfx_set_uapsd_param(wvif, &wvif->edca);
-			new_uapsd_flags = *((uint16_t *) &wvif->uapsd_info);
+			new_uapsd_flags = *((u16 *) &wvif->uapsd_info);
 			if (!ret && wvif->setbssparams_done &&
 			    wvif->join_status == WFX_JOIN_STATUS_STA &&
 			    /* (old_uapsd_flags != le16_to_cpu(wvif->uapsd_info.uapsd_flags))) */
@@ -701,7 +701,7 @@ int wfx_get_stats(struct ieee80211_hw *dev,
 int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 {
 	WsmHiSetPmModeReqBody_t pm = *arg;
-	uint16_t uapsd_flags;
+	u16 uapsd_flags;
 	int ret;
 
 	memcpy(&uapsd_flags, &wvif->uapsd_info, sizeof(uapsd_flags));
@@ -2064,7 +2064,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 
 	/* ERP Slottime */
 	if (changed & (BSS_CHANGED_ASSOC | BSS_CHANGED_ERP_SLOT)) {
-		uint32_t slot_time = info->use_short_slot ? 9 : 20;
+		u32 slot_time = info->use_short_slot ? 9 : 20;
 
 		pr_debug("[STA] Slot time: %d us.\n", slot_time);
 		wsm_slot_time(wdev, slot_time, wvif->Id);

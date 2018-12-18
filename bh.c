@@ -317,7 +317,7 @@ static int wfx_check_pending_rx(struct wfx_dev	*wdev,
 	return *ctrl_reg_ptr & CTRL_NEXT_LEN_MASK;
 }
 
-static int wfx_bh_rx_helper(struct wfx_dev *wdev, uint32_t *ctrl_reg)
+static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 {
 	size_t read_len = 0;
 	struct sk_buff *skb_rx = NULL;
@@ -357,7 +357,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, uint32_t *ctrl_reg)
 	 * Most of the HIF messages have a pair length
 	 */
 	if (!wdev->pdata.sdio)
-		((uint16_t *)data)[alloc_len / 2 - 1] = HIF_ERROR_DETECTION_16;
+		((u16 *) data)[alloc_len / 2 - 1] = HIF_ERROR_DETECTION_16;
 #endif
 	if (wfx_data_read(wdev, data, alloc_len)) {
 		dev_err(wdev->pdev, "bh: rx blew up, len %zu\n", alloc_len);
@@ -366,7 +366,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, uint32_t *ctrl_reg)
 
 	/* update ctrl_reg with the u16 piggybacked value */
 	*ctrl_reg =
-		(uint32_t)le16_to_cpu(((__le16 *)data)[alloc_len / 2 - 1]);
+		(u32) le16_to_cpu(((__le16 *)data)[alloc_len / 2 - 1]);
 
 #ifdef RASPBERRY_PI
 	if (!wdev->pdata.sdio && data[alloc_len - 2] == HIF_ERROR_DETECTION_8) {
@@ -612,7 +612,7 @@ rx:
 		done = 0;
 		while (pending_rx && (done < 32)) {
 			/* ctrl_reg is updated in wfx_bh_rx_helper() using the piggy backing */
-			ret = wfx_bh_rx_helper(wdev, (uint32_t *) &ctrl_reg);
+			ret = wfx_bh_rx_helper(wdev, (u32 *) &ctrl_reg);
 			if (ret < 0)
 				break;
 			pending_rx = ctrl_reg & CTRL_NEXT_LEN_MASK;

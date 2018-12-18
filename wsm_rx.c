@@ -131,7 +131,7 @@ static int wsm_startup_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 		 body->FirmwareLabel,
 		 body->FirmwareMajor, body->FirmwareMinor, body->FirmwareBuild,
 		 body->ApiVersionMajor, body->ApiVersionMinor,
-		 *((uint32_t *) &body->Capabilities));
+		 *((u32 *) &body->Capabilities));
 
 	/* Disable unsupported frequency bands */
 /*    if (!(wdev->wsm_caps.FirmwareCap & 0x1)) */
@@ -166,7 +166,7 @@ static int wsm_receive_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 
 	fctl = frame->frame_control;
 	pr_debug("[WSM] \t\t rx_flags=0x%.8X, frame_ctrl=0x%.4X\n",
-		 *((uint32_t *)&body->RxFlags), le16_to_cpu(fctl));
+		 *((u32 *)&body->RxFlags), le16_to_cpu(fctl));
 
 
 	sta_id = body->RxFlags.PeerStaId;
@@ -196,7 +196,7 @@ static int wsm_event_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 	memcpy(&event->evt, body, sizeof(WsmHiEventIndBody_t));
 
 	pr_debug("[WSM] Event: %d(%d)\n",
-		 event->evt.EventId, *((uint32_t *)&event->evt.EventData));
+		 event->evt.EventId, *((u32 *)&event->evt.EventData));
 
 	spin_lock(&wvif->event_queue_lock);
 	first = list_empty(&wvif->event_queue);

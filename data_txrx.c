@@ -596,7 +596,7 @@ wfx_tx_h_wsm(struct wfx_vif	*wvif,
 		struct wfx_txinfo *t)
 {
 	WsmHiTxReq_t *wsm;
-	uint32_t wsm_length = sizeof(WsmHiTxReq_t) - sizeof(uint32_t);
+	u32 wsm_length = sizeof(WsmHiTxReq_t) - sizeof(u32);
 
 	if (WARN(skb_headroom(t->skb) < wsm_length, "Not enough space for WSM headers"))
 		return NULL;
