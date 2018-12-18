@@ -56,18 +56,6 @@ static inline void wsm_alloc_tx_buffer(struct wfx_dev *wdev)
 	++wdev->hw_bufs_used;
 }
 
-static int wfx_bh_read_ctrl_reg(struct wfx_dev *wdev, u32 *ctrl_reg)
-{
-	int ret;
-
-	ret = control_reg_read(wdev, ctrl_reg);
-	if (ret)
-		dev_err(wdev->pdev, "%pS: failed to read control register: %d\n",
-			(void *) __builtin_return_address(0), ret);
-
-	return ret;
-}
-
 int wfx_register_bh(struct wfx_dev *wdev)
 {
 	int err = 0;
@@ -139,7 +127,7 @@ void wfx_irq_handler(struct wfx_dev *wdev)
 		wfx_prevent_device_to_sleep(wdev);
 
 	if (wdev->pdata.sdio)
-		wfx_bh_read_ctrl_reg(wdev, &ctrl_reg);
+		control_reg_read(wdev, &ctrl_reg);
 
 	atomic_set(&wdev->bh_rx, 1);
 	pr_debug("[BH] %s IRQ wake_up work queue.\n", __func__);
@@ -244,7 +232,7 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 	if (atomic_read(&wdev->device_can_sleep) == 1) { /* timeout */
 		/* no IRQ then maybe the device was not sleeping
 		 * try to read the control register */
-		int error = wfx_bh_read_ctrl_reg(wdev, &Control_reg);
+		int error = control_reg_read(wdev, &Control_reg);
 
 		if (error || !Control_reg || Control_reg == ~0) {
 			ret = 0;
@@ -311,7 +299,7 @@ static int wfx_check_pending_rx(struct wfx_dev	*wdev,
 		if (wfx_device_wakeup(wdev) <= 0)
 			return -1; /* wake-up error */
 
-	if (wfx_bh_read_ctrl_reg(wdev, ctrl_reg_ptr))
+	if (control_reg_read(wdev, ctrl_reg_ptr))
 		return -2; /* read error */
 
 	return *ctrl_reg_ptr & CTRL_NEXT_LEN_MASK;
