@@ -6,209 +6,207 @@ Loading and probing
 
 The WFx chip series can be connected via SPI or via SDIO.
 
-SPI
-~~~
 
-You have to declare WFx chip in your device tree.
+### SPI
+
+You have to declare the WFx chip in your device tree.
 
 Required properties:
-- compatible: Should be "silabs,wfx-spi". "siliconlabs,wfx-wlan-spi" is also
+- `compatible`: Should be `silabs,wfx-spi`. `siliconlabs,wfx-wlan-spi` is also
       accepted for legacy purpose.
-- reg: Chip select address of device
-- spi-max-frequency: Maximum SPI clocking speed of device in Hz
-- interrupts-extended: Should contain interrupt line (interrupt-parent +
-      interrupt can also been used). Trigger should be IRQ_TYPE_EDGE_RISING.
+- `reg`: Chip select address of device
+- `spi-max-frequency`: Maximum SPI clocking speed of device in Hz
+- `interrupts-extended`: Should contain interrupt line (`interrupt-parent` +
+      `interrupt` can also been used). Trigger should be `IRQ_TYPE_EDGE_RISING`.
 
 Optional properties:
-- reset-gpios: phandle of gpio that will be used to reset chip during probe.
+- `reset-gpios`: phandle of gpio that will be used to reset chip during probe.
       Without this property, you may encounter issues with warm boot.
 
-Please consult Documentation/devicetree/bindings/spi/spi-bus.txt for optional
+Please consult `Documentation/devicetree/bindings/spi/spi-bus.txt` for optional
 SPI connection related properties,
 
 Example:
 
-&spi1 {
-	wfx {
-		compatible = "silabs,wfx-spi";
-		pinctrl-names = "default";
-		pinctrl-0 = <&wfx_irq &wfx_gpios>;
-		interrupts-extended = <&gpio 16 IRQ_TYPE_EDGE_RISING>;
-		wakeup-gpios = <&gpio 12 GPIO_ACTIVE_HIGH>;
-		reset-gpios = <&gpio 13 GPIO_ACTIVE_HIGH>;
-		reg = <0>;
-		spi-max-frequency = <42000000>;
-	};
-};
+    &spi1 {
+    	wfx {
+    		compatible = "silabs,wfx-spi";
+    		pinctrl-names = "default";
+    		pinctrl-0 = <&wfx_irq &wfx_gpios>;
+    		interrupts-extended = <&gpio 16 IRQ_TYPE_EDGE_RISING>;
+    		wakeup-gpios = <&gpio 12 GPIO_ACTIVE_HIGH>;
+    		reset-gpios = <&gpio 13 GPIO_ACTIVE_HIGH>;
+    		reg = <0>;
+    		spi-max-frequency = <42000000>;
+    	};
+    };
 
-SDIO
-~~~~
 
-Driver is able to detect a WFx chip on SDIO bus by matching its Vendor ID and
-Product ID. However, driver will only provide limited features. Thus declaring
-Wfx chip in device tree is strongly recommended (and may become mandatory in the
-future).
+### SDIO
+
+The driver is able to detect a WFx chip on SDIO bus by matching its Vendor ID
+and Product ID. However, driver will only provide limited features in this
+case. Thus declaring Wfx chip in device tree is strongly recommended (and may
+become mandatory in the future).
 
 Required properties:
-- compatible: Should be "silabs,wfx-sdio"
-- reg: Should be 1
+- `compatible`: Should be `"silabs,wfx-sdio"`
+- `reg`: Should be 1
 
-In addition, it is recommended to declare a "mmc-pwrseq" on SDIO host above WFx.
-Without it, you may encounter issues with warm boot. mmc-pwrseq should be
-compatible with mmc-pwrseq-simple. Please consult
-Documentation/devicetree/bindings/mmc/mmc-pwrseq-simple.txt for more
-informations.
+In addition, it is recommended to declare a `mmc-pwrseq` on SDIO host above
+WFx.  Without it, you may encounter issues with warm boot. mmc-pwrseq should be
+compatible with `mmc-pwrseq-simple`. Please consult
+`Documentation/devicetree/bindings/mmc/mmc-pwrseq-simple.txt` for more
+information.
 
 Example:
 
-/ {
-	wfx_pwrseq: wfx_pwrseq {
-		compatible = "mmc-pwrseq-simple";
-		pinctrl-names = "default";
-		pinctrl-0 = <&wfx_reset>;
-		reset-gpios = <&gpio 13 GPIO_ACTIVE_LOW>;
-	};
-};
+    / {
+    	wfx_pwrseq: wfx_pwrseq {
+    		compatible = "mmc-pwrseq-simple";
+    		pinctrl-names = "default";
+    		pinctrl-0 = <&wfx_reset>;
+    		reset-gpios = <&gpio 13 GPIO_ACTIVE_LOW>;
+    	};
+    };
+    
+    &mmc1 {
+    	mmc-pwrseq = <&wfx_pwrseq>;
+    	#address-size = <1>;
+    	#size = <0>;
+    
+    	mmc@1 {
+    		compatible = "silabs,wfx-sdio";
+    		reg = <1>;
+    		pinctrl-names = "default";
+    		pinctrl-0 = <&wfx_wakeup>;
+    		wakeup-gpios = <&gpio 12 GPIO_ACTIVE_HIGH>;
+    	};
+    };
 
-&mmc1 {
-	mmc-pwrseq = <&wfx_pwrseq>;
-	#address-size = <1>;
-	#size = <0>;
-
-	mmc@1 {
-		compatible = "silabs,wfx-sdio";
-		reg = <1>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&wfx_wakeup>;
-		wakeup-gpios = <&gpio 12 GPIO_ACTIVE_HIGH>;
-	};
-};
-
-Notice that `#address-size` and `#size` shoud already defined in node `mmc1`,
+Note that `#address-size` and `#size` shoud already be defined in node `mmc1`,
 but it is rarely the case.
 
-Common properties
-~~~~~~~~~~~~~~~~~
+
+### Common properties
 
 Some properties are recognized either by SPI and SDIO versions:
-- wakeup-gpios: phandle of gpio that will be used to wake-up chip. Without this
-      property, driver will disable most of power saving features
-- config-file: Driver uses a default configuration file. "config-file" allows to
-      overload it. Only necessary for development/debug purpose.
+- `wakeup-gpios`: phandle of gpio that will be used to wake-up chip. Without
+      this property, driver will disable most of power saving features
+- `config-file`: Driver uses a default PDS configuration file. `config-file`
+      allows to overload it. Only necessary for development/debug purpose.
 
-wfx driver also supports mac-address and local-mac-address as described in
-Documentation/devicetree/binding/net/ethernet.txt
+WFx driver also supports `mac-address` and `local-mac-address` as described in
+`Documentation/devicetree/binding/net/ethernet.txt`
 
-How to change MAC address?
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+### How to change MAC address?
 
 WFx follows standard rules related to MAC addresses under Linux. You can set
 them in device tree or once driver is loaded with:
 
-    $ ip link set wlan0 address 02:01:02:03:04:08
+    $ ip link set wlan0 address 01:02:03:04:05:06
 
 Advanced driver usage
 ---------------------
 
-How to get error messages?
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+### How to get error messages?
 
-Run `dmesg` to display all message generated by wfx (or any drivers). Notice
+Run `dmesg` to display all message generated by WFx (or any drivers). Notice
 that `dmesg -w` allow to display driver messages as they arrive.
 
-Reset device without rebooting target
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In order to reset device, device tree should correctly declare reset-gpio
+### Reset device without rebooting target
+
+In order to reset device, device tree should correctly declare `reset-gpio`
 (directly in device node for SPI and using `mmc-pwrseq` for SDIO). Once done,
 it is possible to dynamically bind and unbind device.
 
 For spi, it is possible to just unbind the device:
 
-   $ ls /sys/bus/spi/drivers/wfx-spi/
-   ...
-   /sys/bus/spi/drivers/wfx-spi/spi0.0
-   ...
-   $ echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/unbind
-   $ echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/bind
+    $ ls /sys/bus/spi/drivers/wfx-spi/
+    ...
+    /sys/bus/spi/drivers/wfx-spi/spi0.0
+    ...
+    $ echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/unbind
+    $ echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/bind
 
-For sdio, it is necessary to unbind the whole bus:
+For sdio, it is necessary to unbind the whole sdio bus:
 
-   $ ls /sys/bus/platform/drivers/mmc-bcm2835
-   ...
-   /sys/bus/platform/drivers/mmc-bcm2835/3f300000.mmc
-   ...
-   $ echo 3f300000.mmc > /sys/bus/platform/drivers/mmc-bcm2835/unbind
-   $ echo 3f300000.mmc > /sys/bus/platform/drivers/mmc-bcm2835/bind
+    $ ls /sys/bus/platform/drivers/mmc-bcm2835
+    ...
+    /sys/bus/platform/drivers/mmc-bcm2835/3f300000.mmc
+    ...
+    $ echo 3f300000.mmc > /sys/bus/platform/drivers/mmc-bcm2835/unbind
+    $ echo 3f300000.mmc > /sys/bus/platform/drivers/mmc-bcm2835/bind
 
-Note: reloading wfx driver allows to reset chip on SPI bus, but it does not work
+Note: reloading WFx driver allows to reset chip on SPI bus, but it does not work
 on SDIO bus.
 
 
-Using spidev besides wfx-spi
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+### Using `spidev` besides `wfx-spi`
 
-It is possible to declare your device compatible with both "silabs,wfx-spi" and
-"spidev" (ie. using '/dev/spi0.0'). In this case, you will be able to use
-alternatively both drivers without rebooting nor changing device tree.
+It is possible to declare your device compatible with both `silabs,wfx-spi` and
+`spidev` (ie. using `/dev/spi0.0`). In this case, you will be able to use
+alternatively both drivers without rebooting or changing device tree.
 
 In order to avoid automatic handling of device by spidev, we suggest to
 blacklist spidev:
 
-   echo blacklist spidev > /etc/modprobe.d/silabs.conf
+    echo blacklist spidev > /etc/modprobe.d/silabs.conf
 
-You can load spidev latter with:
+You can load spidev later with:
 
-   modprobe spidev
+    modprobe spidev
 
 Next, it is possible to bind/unbind device from/to wfx/spidev driver.
 
-To make /dev/spi0.0 appear:
+To make `/dev/spi0.0` appear:
 
-   echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/unbind
-   echo spi0.0 > /sys/bus/spi/drivers/spidev/bind
+    echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/unbind
+    echo spi0.0 > /sys/bus/spi/drivers/spidev/bind
 
-To make wlan0 appear:
+To make `wlan0` appear:
 
-   echo spi0.0 > /sys/bus/spi/drivers/spidev/unbind
-   echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/bind
+    echo spi0.0 > /sys/bus/spi/drivers/spidev/unbind
+    echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/bind
 
-Controlling gpio manually
-~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When device is not binded, you can control reset gpio manually:
+### Controlling gpio manually
 
-   echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/unbind
-   echo 13 > /sys/class/gpio/export
-   echo out > /sys/class/gpio/gpio13/direction
-   echo 0 > /sys/class/gpio/gpio13/value
-   echo 1 > /sys/class/gpio/gpio13/value
+When device is not binded, you can control the reset gpio manually:
 
-Wfx driver normally takes over reset gpio on device binding. However, it is
-possible to change this behavior by passing gpio-reset=-1 as parameter:
+    echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/unbind
+    echo 13 > /sys/class/gpio/export
+    echo out > /sys/class/gpio/gpio13/direction
+    echo 0 > /sys/class/gpio/gpio13/value
+    echo 1 > /sys/class/gpio/gpio13/value
 
-   modprobe wfx gpio-reset=-1
+The WFx driver normally takes over the reset gpio on device binding. However,
+it is possible to change this behavior by passing `gpio-reset=-1` as parameter:
 
-It is also possible to change this parameter without unloading driver with:
+    modprobe wfx gpio-reset=-1
 
-   echo -1 > /sys/module/wfx/parameters/gpio_reset
+It is also possible to change this parameter without unloading the driver with:
 
-However, you have to unbind/bind device in order to take into account with new
+    echo -1 > /sys/module/wfx/parameters/gpio_reset
+
+However, you have to unbind/bind device in order to take into account any new
 value.
 
-Of course, you can also remove reset-gpio attribute from device tree.
+Of course, you can also remove `reset-gpio` attribute from device tree.
 
-Loading PDS
-~~~~~~~~~~~
 
-You send PDS fragment to chip using /sys/kernel/debug/ieee80211/phy*/wfx/send_pds
+### Loading PDS
+
+You send PDS fragment to chip using `/sys/kernel/debug/ieee80211/phy*/wfx/send_pds`
 
 You can directly execute pds_compress on this file:
 
-   pds_compress YOUR.pds.in /sys/kernel/debug/ieee80211/phy*/wfx/send_pds
+    pds_compress YOUR.pds.in /sys/kernel/debug/ieee80211/phy*/wfx/send_pds
 
-Enable/Disable UAPSD
-~~~~~~~~~~~~~~~~~~~~
+
+### Enable/Disable UAPSD
 
 For some tests, UAPSD is required. You can enable it with:
 
@@ -218,21 +216,20 @@ Obviously, you can disable UAPSD with:
 
     echo 0 > /sys/kernel/debug/ieee80211/phy1/netdev:wlan0/uapsd_queue
 
-Debug
------
+Debugging
+---------
 
-How to enable dev_dbg()?
-~~~~~~~~~~~~~~~~~~~~~~~~
+### How to enable dev_dbg()?
 
 By default, traces defined with `dev_dbg()` are not displayed. The easiest way
 to enable them is to add `#define DEBUG` on top of files you want to trace. It
-is also possible to enable all traces by setting Makefile variable ccflags=y to
--DDEBUG in ccflags-y but it is insane since it enables too much traces.
+is also possible to enable all traces by setting the `Makefile` variable
+`ccflags-y` to `-DDEBUG` but it is insane since it enables too much traces.
 
 It is possible to dynamically enable traces. This way allows to enable/disable
 each trace. For example:
 
-   echo 'file sta.c line 1603 +p' > /sys/kernel/debug/dynamic_debug/control
+    echo 'file sta.c line 1603 +p' > /sys/kernel/debug/dynamic_debug/control
 
 You can also pass `dyndbg=p` to `modprobe` to enable messages during module
 loading.
@@ -243,17 +240,17 @@ All features of dynamic debug are described in
 Of course, you need to run `dmesg` (or even better `dmesg -w`) to display
 messages.
 
-How to trace events?
-~~~~~~~~~~~~~~~~~~~~
+
+### How to trace events?
 
 Tracers allow to trace plenty of useful events from kernel. It is described in
 `Documentation/trace/events.txt`.
 
-You can get list of tracepoints implemented by WFX with:
+You can get a list of tracepoints implemented by WFx with:
 
     $ ls /sys/kernel/debug/tracing/events/wfx/
 
-Thus, you can trace all bus transfer with:
+Thus, you can trace all bus transfers with:
 
     $ echo 1 > /sys/kernel/debug/tracing/events/wfx/io_read/enable
     $ echo 1 > /sys/kernel/debug/tracing/events/wfx/io_read32/enable
@@ -268,7 +265,7 @@ Thus, you can trace all bus transfer with:
     kworker/2:0H-23    [002] .... 429125.079749: io_write32: CONFIG: 01070000
     <Ctrl+C>
 
-Notice, `tee` command can replace serie of 'echo X > file':
+Notice, the `tee` command can replace a serie of `echo X > file`:
 
     $ echo 1 | tee /sys/kernel/debug/tracing/events/wfx/io_*/enable
 
@@ -276,7 +273,7 @@ Disable traces with:
 
     $ echo 0 > /sys/kernel/debug/tracing/events/enable
 
-It can be more conveniant to follow higher level HIF message:
+It can be more convenient to follow higher level HIF messages:
 
     $ echo 1 | tee /sys/kernel/debug/tracing/events/wfx/wsm_*/enable
     $ cat /sys/kernel/debug/tracing/trace_pipe
@@ -287,8 +284,9 @@ It can be more conveniant to follow higher level HIF message:
     kworker/2:0H-23    [002] .... 429125.080412: wsm_send: 56:START_SCAN_REQ: 00 00 02 00 00 00 00 00 02...
     <Ctrl+C>
 
-It can also be convenient to trace IRQ associated to WFx chip. In this case, we
-want to trace all IRQ and add a filter to only show IRQ related to WFx:
+It can also be convenient to trace IRQs associated to the WFx chip. In this
+case, we want to trace all IRQs and add a filter to only show IRQs related to
+WFx:
 
     $ echo 'name == "wfx"' >  /sys/kernel/debug/tracing/events/irq/irq_handler_entry/filter
     $ echo 1 > /sys/kernel/debug/tracing/events/irq/irq_handler_entry/enable
@@ -329,21 +327,22 @@ It is also possible to trace requests from mac80211 stack to WFx driver:
     wpa_supplicant-156 [002] .... 429945.702647: drv_get_survey: phy0 idx:0
     wpa_supplicant-156 [002] .... 429945.702664: drv_return_int: phy0 - -95
 
-Notice that there is no real way to trace event during module loading. The best
-to defer probing, setup traces and finally request probe manually:
+Note that there is no real way to trace event during module loading. The best
+solution is to defer probing, setup traces and finally request probe manually:
 
     $ modprobe wfx async_probe
     $ echo 1 | tee /sys/kernel/debug/tracing/events/wfx/wsm_*/enable
     $ cat /sys/kernel/debug/tracing/trace_pipe &
     $ echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/bind
 
-(see also this patch: https://lore.kernel.org/patchwork/patch/240185/)
+(see also [this patch][1])
 
 Also note that `perf` command provides an alternative way to access to
 tracepoints.
 
-How to use gdb
-~~~~~~~~~~~~~~
+[1]: https://lore.kernel.org/patchwork/patch/240185/
+
+### How to use gdb
 
 Before to start, you need to install `gdb-multiarch`:
 
@@ -362,85 +361,85 @@ then reboot your work station.
 
 Next, follow these steps:
 
-    1. Connect uart between your workstation and your target
-    2. Make sure uart is not used by WFx chip (check your PDS)
-    3. Make sure uart is not used as console by host. Check /proc/cmdline does
-       not contains `console=ttyAMA0,115200`. Remove 'console=serial0,115200'
-       from `/boot/cmdline.txt` if necessary.
-    4. Make sure you have compiled/deployed your own kernel (it is possible to not
-       compile kernel yourself, it simplifies things a lot)
-    5. Connect to your target using ssh
-    6. Configure kgdb to use serial line:
+ 1. Connect uart between your workstation and your target
+ 2. Make sure uart is not used by WFx chip (check your PDS)
+ 3. Make sure uart is not used as console by host. Check `/proc/cmdline` does
+    not contains `console=ttyAMA0,115200`. Remove 'console=serial0,115200'
+    from `/boot/cmdline.txt` if necessary.
+ 4. Make sure you have compiled/deployed your own kernel (it is possible to not
+    compile kernel yourself, it simplifies things a lot)
+ 5. Connect to your target using ssh
+ 6. Configure kgdb to use serial line:
 
-        $ echo ttyAMA0,115200 > /sys/module/kgdboc/parameters/kgdboc
+         $ echo ttyAMA0,115200 > /sys/module/kgdboc/parameters/kgdboc
 
-    7. Load wfx module
+ 7. Load WFx module
 
-        $ modprobe wfx
+         $ modprobe wfx
 
-    8. Break kernel execution:
+ 8. Break kernel execution:
 
-        $ echo g > /proc/sysrq-trigger
+         $ echo g > /proc/sysrq-trigger
 
-    9. Run `gdb` on `vmlinux` file from your build directory
+ 9. Run `gdb` on `vmlinux` file from your build directory
 
-        $ gdb-multiarch vmlinux
+         $ gdb-multiarch vmlinux
 
-    10. Under gdb, connect to target
+ 10. Under gdb, connect to target
 
-        (gdb) set remotebaud 115200
-        (gdb) target remote /dev/ttyUSB0
-        Remote debugging using /dev/ttyUSB0
-        kgdb_breakpoint () at kernel/debug/debug_core.c:1071
-        1071            arch_kgdb_breakpoint();
+         (gdb) set remotebaud 115200
+         (gdb) target remote /dev/ttyUSB0
+         Remote debugging using /dev/ttyUSB0
+         kgdb_breakpoint () at kernel/debug/debug_core.c:1071
+         1071            arch_kgdb_breakpoint();
 
-    11. Load symbols from all loaded modules (note that `lx-symbols` does not
-        recognize `~`)
+ 11. Load symbols from all loaded modules (note that `lx-symbols` does not
+     recognize `~`)
 
-        (gdb) lx-symbols /home/jerome/wfx/wfx_linux_driver
-        loading vmlinux
-        scanning for modules in /home/jerome/wfx/wfx_linux_driver
-        scanning for modules in /home/jerome/wfx/wfx_linux_kernel
-        loading @0x7f111000: /home/jerome/wfx/wfx_linux_driver/wfx.ko
-        loading @0x7f10a000: /home/jerome/wfx/wfx_linux_kernel/drivers/spi/spidev.ko
-        [...]
+          (gdb) lx-symbols /home/jerome/wfx/wfx_linux_driver
+          loading vmlinux
+          scanning for modules in /home/jerome/wfx/wfx_linux_driver
+          scanning for modules in /home/jerome/wfx/wfx_linux_kernel
+          loading @0x7f111000: /home/jerome/wfx/wfx_linux_driver/wfx.ko
+          loading @0x7f10a000: /home/jerome/wfx/wfx_linux_kernel/drivers/spi/spidev.ko
+          [...]
 
 
-     12. Place a breakpoint:
+  12. Place a breakpoint:
 
-        (gdb) b wfx_scan_start
-        Breakpoint 1 at 0x7f136664: file /home/jerome/wfx/wfx_linux_driver/scan.c, line 32.
+          (gdb) b wfx_scan_start
+          Breakpoint 1 at 0x7f136664: file /home/jerome/wfx/wfx_linux_driver/scan.c, line 32.
 
-     13. Continue execution:
+  13. Continue execution:
 
-        (gdb) c
+          (gdb) c
 
-      14. End with:
+  14. End with:
 
-        (gdb) detach
+          (gdb) detach
 
-Note that it is possible to use it inside eclipse, however, process is far to
-be easy and many things must be done manually.
+Note that it is possible to use it inside eclipse, however, process is far from
+being easy and many things must be done manually.
 
 Architecture
 ------------
 
-wfx_sdio.c, wfx_spi.c and hwbus.h provide abstraction from bus access. They are
-in charge of driver registration, device probing and low-level access to
-hardware.
+ * `wfx_sdio.c`, `wfx_spi.c` and `hwbus.h` provide abstraction from bus access.
+   They are in charge of driver registration, device probing and low-level
+   access to hardware.
 
-No function directly accesses hardware, they use abstraction provided by
-hwio.c and hwio.h. Most of these functions are only used during device
-initialisation. fwio.c and fwio_sb.c are in charge of firmware loading. Once
-started, only wfx_data_read and wfx_data_write are really used during device
-runtime.
+ * No function directly accesses hardware, they use abstraction provided by
+   `hwio.c` and `hwio.h`. Most of these functions are only used during device
+   initialisation. `fwio.c` and `fwio_fpga.c` are in charge of firmware
+   loading.  Once started, only `wfx_data_read` and `wfx_data_write` are really
+   used during device runtime.
 
-The only user of wfx_data_{read,write} is a thread launched by bh.c. This thread
-schedules data from/to device.
+ * The only user of `wfx_data_{read,write}` is a thread launched by `bh.c`.
+   This thread schedules data from/to device.
 
-wsm_rx.c and wsm_tx.c provide a high layer interface to bh thread. It manages
-asynchronous communication with bh thread.
+ * `wsm_rx.c` and `wsm_tx.c` provide a high layer interface to bh thread. It
+   manages asynchronous communication with bh thread.
 
-sta.c, scan.c and data_txrx.c provide interfaces with kernel API.
+ * `sta.c`, `scan.c` and `data_txrx.c` provide interfaces with kernel API.
 
 
