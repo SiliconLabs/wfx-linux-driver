@@ -153,12 +153,12 @@ static int get_keyset_offset(struct wfx_dev *wdev, const u8 *firmware)
 
 static int wait_ncp_status(struct wfx_dev *wdev, u32 status)
 {
-	ktime_t time_zero, now, start;
+	ktime_t now, start;
 	u32 reg;
 	int ret;
 
-	now = time_zero = ns_to_ktime(0);
 	start = ktime_get();
+	now = start;
 	for (;;) {
 		ret = sram_reg_read(wdev, WFX_DCA_NCP_STATUS, &reg);
 		if (ret < 0)
@@ -169,7 +169,7 @@ static int wait_ncp_status(struct wfx_dev *wdev, u32 status)
 		if (ktime_after(now, ktime_add_ms(start, DCA_TIMEOUT)))
 			return -ETIMEDOUT;
 	}
-	if (ktime_compare(time_zero, now))
+	if (ktime_compare(now, start))
 		dev_dbg(wdev->pdev, "chip answer after %lldus\n", ktime_us_delta(now, start));
 	else
 		dev_dbg(wdev->pdev, "chip answer immediately\n");
@@ -180,9 +180,8 @@ static int upload_firmware(struct wfx_dev *wdev, const u8 *data, size_t len)
 {
 	int ret;
 	u32 offs, bytes_done;
-	ktime_t time_zero, now, start;
+	ktime_t now, start;
 
-	time_zero = ns_to_ktime(0);
 	if (len % DNLD_BLOCK_SIZE) {
 		dev_err(wdev->pdev, "firmware size is not aligned. Buffer overrun will occur\n");
 		return -EIO;
@@ -190,7 +189,7 @@ static int upload_firmware(struct wfx_dev *wdev, const u8 *data, size_t len)
 	offs = 0;
 	while (offs < len) {
 		start = ktime_get();
-		now = time_zero;
+		now = start;
 		for (;;) {
 			ret = sram_reg_read(wdev, WFX_DCA_GET, &bytes_done);
 			if (ret < 0)
@@ -201,7 +200,7 @@ static int upload_firmware(struct wfx_dev *wdev, const u8 *data, size_t len)
 			if (ktime_after(now, ktime_add_ms(start, DCA_TIMEOUT)))
 				return -ETIMEDOUT;
 		}
-		if (ktime_compare(now, time_zero))
+		if (ktime_compare(now, start))
 			dev_dbg(wdev->pdev, "answer after %lldus\n", ktime_us_delta(now, start));
 
 		ret = sram_write_dma_safe(wdev, WFX_DNLD_FIFO + (offs % DNLD_FIFO_SIZE),
