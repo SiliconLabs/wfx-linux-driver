@@ -430,43 +430,43 @@ static inline int wfx_set_multicast_filter(struct wfx_dev *wdev,
 					   struct wfx_grp_addr_table *fp,
 					   int Id)
 {
-    WsmHiMibConfigDataFilter_t FilterConfig = {0};
-    WsmHiMibSetDataFiltering_t DataFiltering = {0};
-    WsmHiMibMacAddrDataFrameCondition_t MacAddrCond = {0};
-    WsmHiMibUcMcBcDataFrameCondition_t UcMcBcCond = {0};
-    int index = 0;
-    int ret = 0;
+	int i, ret;
+	WsmHiMibConfigDataFilter_t FilterConfig = { };
+	WsmHiMibSetDataFiltering_t DataFiltering = { };
+	WsmHiMibMacAddrDataFrameCondition_t MacAddrCond = { };
+	WsmHiMibUcMcBcDataFrameCondition_t UcMcBcCond = { };
 
-	if(!fp->enable)
-	{
-	    DataFiltering.Enable = 0;
-	    return wsm_set_data_filtering(wdev, &DataFiltering, Id);
+	if (!fp->enable) {
+		DataFiltering.Enable = 0;
+		return wsm_set_data_filtering(wdev, &DataFiltering, Id);
 	}
 
 	// A1 Address match on list
-	for(index = 0; index < fp->num_addresses; index++)
-	{
-	    MacAddrCond.ConditionIdx = index;
-	    MacAddrCond.AddressType = WSM_MAC_ADDR_A1;
-	    ether_addr_copy(MacAddrCond.MacAddress, fp->address_list[index]);
-	    if((ret = wsm_set_mac_addr_condition(wdev, &MacAddrCond, Id)) <= 0)
-	        return ret;
-	    FilterConfig.MacCond |= (1<<index);
-	    pr_debug("[STA] Multicast Match addr[%d]: %pM\n", index, MacAddrCond.MacAddress);
+	for (i = 0; i < fp->num_addresses; i++) {
+		MacAddrCond.ConditionIdx = i;
+		MacAddrCond.AddressType = WSM_MAC_ADDR_A1;
+		ether_addr_copy(MacAddrCond.MacAddress, fp->address_list[i]);
+		ret = wsm_set_mac_addr_condition(wdev, &MacAddrCond, Id);
+		if (ret <= 0)
+			return ret;
+		FilterConfig.MacCond |= 1 << i;
+		pr_debug("[STA] Multicast Match addr[%d]: %pM\n", i, MacAddrCond.MacAddress);
 	}
 
 	// Accept unicast and broadcast
 	UcMcBcCond.ConditionIdx = 0;
 	UcMcBcCond.Param.bits.TypeUnicast = 1;
 	UcMcBcCond.Param.bits.TypeBroadcast = 1;
-	if((ret = wsm_set_uc_mc_bc_condition(wdev, &UcMcBcCond, Id)) <= 0)
+	ret = wsm_set_uc_mc_bc_condition(wdev, &UcMcBcCond, Id);
+	if (ret <= 0)
 		return ret;
 
 	FilterConfig.UcMcBcCond = 1;
 	FilterConfig.FilterIdx = 0; // TODO #define MULTICAST_FILTERING 0
 	FilterConfig.Enable = 1;
 
-	if((ret = wsm_set_config_data_filter(wdev, &FilterConfig, Id)) <= 0)
+	ret = wsm_set_config_data_filter(wdev, &FilterConfig, Id);
+	if (ret <= 0)
 		return ret;
 
 	// discard all data frames except match filter
