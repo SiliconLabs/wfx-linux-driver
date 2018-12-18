@@ -626,7 +626,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	}
 	if (!wvif) {
 		// May happen during unregister
-		dev_dbg(wdev->pdev, "%s: non-existant vif", __func__);
+		dev_dbg(wdev->pdev, "%s: non-existent vif", __func__);
 		return 0;
 	}
 	for (;;) {
