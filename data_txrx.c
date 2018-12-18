@@ -639,7 +639,7 @@ wfx_tx_h_rate_policy(struct wfx_dev	*wdev,
 	wsm->Body.MaxTxRate = t->rate->hw_value;
 	// correct the max TX rate if needed when using the IBSS mode
 	if (conf->ibss_joined && wsm->Body.MaxTxRate == 0)
-		wsm->Body.MaxTxRate = 10; // 24M
+		wsm->Body.MaxTxRate = WSM_TRANSMIT_RATE_24;
 
 	/* HT rate
 	 * mac80211_rate_control_flags: IEEE80211_TX_RC_MCS
