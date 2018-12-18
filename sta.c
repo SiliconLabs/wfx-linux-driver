@@ -1497,6 +1497,7 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 	wvif->setbssparams_done = false;
 	memset(&wvif->firmware_ps_mode, 0,
 	       sizeof(wvif->firmware_ps_mode));
+	memset(&wvif->wdev->ht_info, 0, sizeof(wvif->wdev->ht_info));
 
 	pr_debug("[STA] Unjoin completed.\n");
 
