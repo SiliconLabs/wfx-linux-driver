@@ -364,7 +364,7 @@ static int wsm_exception_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void 
 
 static const struct {
 	int msg_id;
-	int (* handler)(struct wfx_dev *, HiMsgHdr_t *, void *);
+	int (*handler)(struct wfx_dev *, HiMsgHdr_t *, void *);
 } wsm_handlers[] = {
 	/* Confirmations */
 	{ WSM_HI_TX_CNF_ID,              wsm_tx_confirm },
@@ -397,7 +397,7 @@ static const struct {
 	{ HI_EXCEPTION_IND_ID,           wsm_exception_indication },
 	// FIXME: allocate skb_p from wsm_receive_indication and make it generic
 	//{ WSM_HI_RX_IND_ID,            wsm_receive_indication },
- };
+};
 
 int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm, struct sk_buff **skb_p)
 {
