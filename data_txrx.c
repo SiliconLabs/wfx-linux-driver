@@ -1116,7 +1116,7 @@ void wfx_rx_cb(struct wfx_vif	*wvif,
 	}
 
 	if (skb->len < sizeof(struct ieee80211_pspoll)) {
-		wiphy_warn(wvif->wdev->hw->wiphy, "Mailformed SDU rx'ed. Size is lesser than IEEE header.\n");
+		wiphy_warn(wvif->wdev->hw->wiphy, "Malformed SDU rx'ed. Size is lesser than IEEE header.\n");
 		goto drop;
 	}
 

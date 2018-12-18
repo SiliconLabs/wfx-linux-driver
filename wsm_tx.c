@@ -205,7 +205,7 @@ int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id)
 	WARN(arg->scan_req.NumOfSSIDs > 2, "Invalid params");
 	WARN(arg->scan_req.Band > 1, "Invalid params");
 
-	// FIXME: This API is unecessary complex, fixing NumOfChannels and
+	// FIXME: This API is unnecessary complex, fixing NumOfChannels and
 	// adding a member SsidDef at end of WsmHiStartScanReqBody_t would
 	// simplify that a lot.
 	memcpy(body, &arg->scan_req, sizeof(*body));

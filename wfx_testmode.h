@@ -39,7 +39,7 @@ enum wfx_testmode_attr {
 };
 
 enum wfx_testmode_type {
-	__WFX_TM_ATTR_TYPE_INVALD	= 0,
+	__WFX_TM_ATTR_TYPE_INVALID	= 0,
 	WFX_TM_ATTR_TYPE_REGISTER	= 1,
 	WFX_TM_ATTR_TYPE_UAPSD		= 2,
 	WFX_TM_ATTR_TYPE_BITSTEAM	= 4,
