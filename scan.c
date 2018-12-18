@@ -186,7 +186,7 @@ void wfx_scan_work(struct work_struct *work)
 		}
 	}
 
-	if (!wdev->scan.req || (wdev->scan.curr == wdev->scan.end)) {
+	if (!wdev->scan.req || wdev->scan.curr == wdev->scan.end) {
 		if (wdev->scan.output_power != wdev->output_power)
 			wsm_set_output_power(wdev, wdev->output_power * 10, 0);
 

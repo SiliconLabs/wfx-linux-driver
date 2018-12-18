@@ -138,7 +138,7 @@ void wfx_irq_handler(struct wfx_dev *wdev)
 	if (atomic_read(&wdev->device_can_sleep))
 		wfx_prevent_device_to_sleep(wdev);
 
-	if (wdev->pdata.sdio == true)
+	if (wdev->pdata.sdio)
 		wfx_bh_read_ctrl_reg(wdev, &ctrl_reg);
 
 	atomic_set(&wdev->bh_rx, 1);
@@ -262,7 +262,7 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 	}
 
 	/* device is awake, remove the IRQ on data available */
-	if (wdev->pdata.sdio == true && ret == 1)
+	if (wdev->pdata.sdio && ret == 1)
 		config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_WRDY);
 
 	return ret;
@@ -356,7 +356,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, uint32_t *ctrl_reg)
 	 * The last bytes are set to a defined impair value
 	 * Most of the HIF messages have a pair length
 	 */
-	if (wdev->pdata.sdio == false)
+	if (!wdev->pdata.sdio)
 		((uint16_t *)data)[alloc_len / 2 - 1] = HIF_ERROR_DETECTION_16;
 #endif
 	if (wfx_data_read(wdev, data, alloc_len)) {
@@ -369,7 +369,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, uint32_t *ctrl_reg)
 		(uint32_t)le16_to_cpu(((__le16 *)data)[alloc_len / 2 - 1]);
 
 #ifdef RASPBERRY_PI
-	if (wdev->pdata.sdio == false && data[alloc_len - 2] == HIF_ERROR_DETECTION_8) {
+	if (!wdev->pdata.sdio && data[alloc_len - 2] == HIF_ERROR_DETECTION_8) {
 		/* If the last byte has not been overwritten,
 		 * the control register is set to 0 to cause
 		 * a new read of this register in the bh loop*/
@@ -506,7 +506,7 @@ static int wfx_bh(void *arg)
 	struct wfx_dev *wdev = arg;
 
 	for (;;) {
-		if ((!pending_rx) && ((!pending_tx) || (wdev->hw_bufs_used >= wdev->wsm_caps.NumInpChBufs))) {
+		if (!pending_rx && (!pending_tx || wdev->hw_bufs_used >= wdev->wsm_caps.NumInpChBufs)) {
 			/* enable IRQ on Rx data available to wake us up */
 			config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY);
 
@@ -544,7 +544,7 @@ static int wfx_bh(void *arg)
 			/* because of the ctrl_reg read in SDIO IRQ we want to disable the IRQ when possible
 			 * if device is already awake then we can update the IRQ enable now
 			 * else we do it when we wake-up the device*/
-			if (wdev->pdata.sdio == true && !atomic_read(&wdev->device_can_sleep))
+			if (wdev->pdata.sdio && !atomic_read(&wdev->device_can_sleep))
 				config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_WRDY);
 
 			pr_debug("[BH] - rx: %d, tx: %d, term: %d, bh_err: %d, suspend: %d, status: %ld , conf_mutex: %d\n",
@@ -578,7 +578,7 @@ static int wfx_bh(void *arg)
 					timeout = timestamp + WSM_CMD_LAST_CHANCE_TIMEOUT + 1 * HZ  - jiffies;
 
 					/* And terminate BH thread if the frame is "stuck" */
-					if (pending && (timeout < 0)) {
+					if (pending && timeout < 0) {
 						wiphy_warn(wdev->hw->wiphy, "Timeout waiting for TX confirm (%d/%d pending, %ld vs %lu).\n",
 							wdev->hw_bufs_used, pending, timestamp, jiffies);
 					}

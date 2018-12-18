@@ -117,8 +117,7 @@ static int wfx_spi_copy_to_io(struct hwbus_priv *self, unsigned int addr,
 
 	cpu_to_le16s(&regaddr);
 
-	if (self->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
-	{
+	if (self->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN)) {
 		swab16s(&regaddr);
 		for (i = 0; i < count / 2; i++)
 			swab16s(&src16[i]);

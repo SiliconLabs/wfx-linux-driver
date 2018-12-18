@@ -334,7 +334,7 @@ int wfx_queue_put(struct wfx_queue *queue,
 		/* TX may happen in parallel sometimes.
 		 * Leave extra queue slots so we don't overflow.
 		 */
-		if (queue->overfull == false &&
+		if (!queue->overfull &&
 		    queue->num_queued >=
 		    (queue->capacity - (num_present_cpus() - 1))) {
 			queue->overfull = true;

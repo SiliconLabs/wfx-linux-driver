@@ -356,8 +356,8 @@ int wfx_config(struct ieee80211_hw *dev, u32 changed)
 		wsm_set_output_power(wdev, wdev->output_power * 10, wvif->Id);
 	}
 
-	if ((changed & IEEE80211_CONF_CHANGE_CHANNEL) &&
-	    (wdev->channel != conf->chandef.chan)) {
+	if (changed & IEEE80211_CONF_CHANGE_CHANNEL &&
+	    wdev->channel != conf->chandef.chan) {
 		struct ieee80211_channel *ch = conf->chandef.chan;
 
 		pr_debug("[STA] Freq %d (wsm ch: %d).\n",
@@ -399,8 +399,8 @@ int wfx_config(struct ieee80211_hw *dev, u32 changed)
 
 		wsm_lock_tx(wdev);
 		/* Disable p2p-dev mode forced by TX request */
-		if ((wvif->join_status == WFX_JOIN_STATUS_MONITOR) &&
-		    (conf->flags & IEEE80211_CONF_IDLE) &&
+		if (wvif->join_status == WFX_JOIN_STATUS_MONITOR &&
+		    conf->flags & IEEE80211_CONF_IDLE &&
 		    !wvif->listening) {
 			wfx_disable_listening(wvif);
 			wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
@@ -675,9 +675,9 @@ int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
 			ret = wfx_set_uapsd_param(wvif, &wvif->edca);
 			new_uapsd_flags = *((uint16_t *) &wvif->uapsd_info);
 			if (!ret && wvif->setbssparams_done &&
-			    (wvif->join_status == WFX_JOIN_STATUS_STA) &&
+			    wvif->join_status == WFX_JOIN_STATUS_STA &&
 			    /* (old_uapsd_flags != le16_to_cpu(wvif->uapsd_info.uapsd_flags))) */
-			    (old_uapsd_flags != new_uapsd_flags))
+			    old_uapsd_flags != new_uapsd_flags)
 				ret = wfx_set_pm(wvif, &wvif->powersave_mode);
 		}
 	} else {
@@ -1355,7 +1355,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	if (bss)
 		rsnie = ieee80211_bss_get_ie(bss, WLAN_EID_RSN);
 
-	if (rsnie != NULL) {
+	if (rsnie) {
 		/* 2. Retrieve Pairwise Cipher Count */
 		pairwiseCount =
 			(u16 *)(rsnie + PAIRWISE_CIPHER_SUITE_COUNT_OFFSET);
@@ -1896,8 +1896,8 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 		wsm_unlock_tx(wdev);
 	}
 
-	if ((changed & BSS_CHANGED_ASSOC) && (info->assoc == 0)
-	    && ((wvif->join_status == WFX_JOIN_STATUS_STA) || (wvif->join_status == WFX_JOIN_STATUS_IBSS))) {
+	if (changed & BSS_CHANGED_ASSOC && !info->assoc &&
+	    (wvif->join_status == WFX_JOIN_STATUS_STA || wvif->join_status == WFX_JOIN_STATUS_IBSS)) {
 		/* Shedule unjoin work */
 		pr_debug("[WSM] Issue unjoin command\n");
 		wsm_lock_tx_async(wdev);
@@ -1918,11 +1918,8 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 		}
 
 		if (changed &
-		    (BSS_CHANGED_ASSOC |
-		     BSS_CHANGED_BSSID |
-		     BSS_CHANGED_IBSS |
-		     BSS_CHANGED_BASIC_RATES |
-		     BSS_CHANGED_HT)) {
+		    (BSS_CHANGED_ASSOC | BSS_CHANGED_BSSID |
+		     BSS_CHANGED_IBSS | BSS_CHANGED_BASIC_RATES | BSS_CHANGED_HT)) {
 			pr_debug("BSS_CHANGED_ASSOC %d\n", info->assoc);
 			if (info->assoc) {
 				if (wvif->join_status <

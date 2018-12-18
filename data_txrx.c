@@ -638,7 +638,7 @@ wfx_tx_h_rate_policy(struct wfx_dev	*wdev,
 		&t->tx_info->control.rates[0]),
 	wsm->Body.MaxTxRate = t->rate->hw_value;
 	// correct the max TX rate if needed when using the IBSS mode
-	if ((conf->ibss_joined) && (wsm->Body.MaxTxRate == 0))
+	if (conf->ibss_joined && wsm->Body.MaxTxRate == 0)
 		wsm->Body.MaxTxRate = 10; // 24M
 
 	/* HT rate
@@ -1092,7 +1092,7 @@ void wfx_rx_cb(struct wfx_vif	*wvif,
 
 	if (link_id && p2p &&
 	    ieee80211_is_action(frame->frame_control) &&
-	    (mgmt->u.action.category == WLAN_CATEGORY_PUBLIC)) {
+	    mgmt->u.action.category == WLAN_CATEGORY_PUBLIC) {
 		/* Link ID already exists for the ACTION frame.
 		 * Reset and Remap
 		 */
@@ -1208,8 +1208,7 @@ void wfx_rx_cb(struct wfx_vif	*wvif,
 	if (arg->RxFlags.InAggr)
 		wfx_debug_rxed_agg(wvif->wdev);
 
-	if (ieee80211_is_action(frame->frame_control) &&
-	    (arg->RxFlags.MatchUcAddr)) {
+	if (ieee80211_is_action(frame->frame_control) && arg->RxFlags.MatchUcAddr) {
 		if (wfx_handle_action_rx(wvif->wdev, skb))
 			return;
 	} else if (ieee80211_is_beacon(frame->frame_control) &&

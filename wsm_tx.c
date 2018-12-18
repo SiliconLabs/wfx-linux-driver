@@ -67,9 +67,8 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 
 	WARN(wdev->wsm_cmd.buf_recv && wdev->wsm_cmd.async, "API usage error");
 
-	if (wdev->bh_error) {
+	if (wdev->bh_error)
 		return 0;
-	}
 
 	mutex_lock(&wdev->wsm_cmd.lock);
 	WARN(wdev->wsm_cmd.buf_send, "Data locking error");
