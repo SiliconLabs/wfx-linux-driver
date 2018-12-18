@@ -1865,11 +1865,8 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 	}
 
 	if (changed &
-	    (BSS_CHANGED_BEACON |
-	     BSS_CHANGED_AP_PROBE_RESP |
-	     BSS_CHANGED_BSSID |
-	     BSS_CHANGED_SSID |
-	     BSS_CHANGED_IBSS)) {
+	    (BSS_CHANGED_BEACON | BSS_CHANGED_AP_PROBE_RESP |
+	     BSS_CHANGED_BSSID | BSS_CHANGED_SSID | BSS_CHANGED_IBSS)) {
 		pr_debug("BSS_CHANGED_BEACON\n");
 		wvif->beacon_int = info->beacon_int;
 		wfx_update_beaconing(wvif);
