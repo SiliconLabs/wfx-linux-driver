@@ -91,9 +91,7 @@ static void wfx_queue_post_gc(struct wfx_queue_stats *stats,
 static void wfx_queue_register_post_gc(struct list_head *gc_list,
 					  struct wfx_queue_item *item)
 {
-	struct wfx_queue_item *gc_item;
-	gc_item = kmalloc(sizeof(struct wfx_queue_item),
-			GFP_ATOMIC);
+	struct wfx_queue_item *gc_item = kmalloc(sizeof(*gc_item), GFP_ATOMIC);
 	BUG_ON(!gc_item);
 	memcpy(gc_item, item, sizeof(struct wfx_queue_item));
 	list_add_tail(&gc_item->head, gc_list);
