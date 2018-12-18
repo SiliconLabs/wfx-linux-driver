@@ -1838,33 +1838,30 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 
 	if (changed & BSS_CHANGED_ARP_FILTER) {
 		WsmHiMibArpIpAddrTable_t filter = { 0 };
-        nb_arp_addr = info->arp_addr_cnt;
+		nb_arp_addr = info->arp_addr_cnt;
 		pr_debug("[STA] BSS_CHANGED_ARP_FILTER cnt: %d\n", nb_arp_addr);
 
-        /* This configuration is not supported by firmware - remove filters */
-        if (nb_arp_addr <= 0 || nb_arp_addr > WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES) {
-            pr_debug("[STA] This arp filter configuration is not possible!\n");
-            nb_arp_addr = 0;
-        }
+		/* This configuration is not supported by firmware - remove filters */
+		if (nb_arp_addr <= 0 || nb_arp_addr > WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES) {
+			pr_debug("[STA] This arp filter configuration is not possible!\n");
+			nb_arp_addr = 0;
+		}
 
-        for (i = 0; i < WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES; i++) {
-            filter.ConditionIdx = i;
-            if(i < nb_arp_addr)
-            {
-                /* Caution: type of arp_addr_list[i] is __be32 */
-                memcpy(filter.Ipv4Address, &info->arp_addr_list[i], sizeof(filter.Ipv4Address));
-                filter.ArpEnable = WSM_ARP_NS_FILTERING_ENABLE;
-                pr_debug("[STA] arp ip filter %d enable\n", filter.ConditionIdx);
-                pr_debug("[STA] addr[%d]: %d.%d.%d.%d\n", i, filter.Ipv4Address[0],
-                        filter.Ipv4Address[1], filter.Ipv4Address[2], filter.Ipv4Address[3]);
-            }
-            else
-            {
-                filter.ArpEnable = WSM_ARP_NS_FILTERING_DISABLE;
-                pr_debug("[STA] arp ip filter %d disable\n", filter.ConditionIdx);
-            }
-            wsm_set_arp_ipv4_filter(wdev, &filter, wvif->Id);
-        }
+		for (i = 0; i < WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES; i++) {
+			filter.ConditionIdx = i;
+			if (i < nb_arp_addr) {
+				/* Caution: type of arp_addr_list[i] is __be32 */
+				memcpy(filter.Ipv4Address, &info->arp_addr_list[i], sizeof(filter.Ipv4Address));
+				filter.ArpEnable = WSM_ARP_NS_FILTERING_ENABLE;
+				pr_debug("[STA] arp ip filter %d enable\n", filter.ConditionIdx);
+				pr_debug("[STA] addr[%d]: %d.%d.%d.%d\n", i, filter.Ipv4Address[0],
+						filter.Ipv4Address[1], filter.Ipv4Address[2], filter.Ipv4Address[3]);
+			} else {
+				filter.ArpEnable = WSM_ARP_NS_FILTERING_DISABLE;
+				pr_debug("[STA] arp ip filter %d disable\n", filter.ConditionIdx);
+			}
+			wsm_set_arp_ipv4_filter(wdev, &filter, wvif->Id);
+		}
 	}
 
 	if (changed &
