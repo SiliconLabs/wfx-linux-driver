@@ -1827,8 +1827,8 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 	struct wfx_dev *wdev = dev->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 	bool do_join = false;
-	int i = 0;
-	int nb_arp_addr = 0;
+	int i;
+	int nb_arp_addr;
 
 	mutex_lock(&wdev->conf_mutex);
 
