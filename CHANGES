@@ -1,3 +1,21 @@
+Changes in 2.0
+--------------
+
+  * Use new API to communicate with WFx00 firmware. Thus, version 2.0 is
+    incompatible with firmwares < 2.0
+  * New architecture for API handling
+  * API error handling improvements
+  * CHANGES and README files are now in public release
+  * Fix multiple timing issues in AP when stations enable power saving
+  * Fix compatibility with CONFIG_VMAP_STACK
+  * Fix possible race contditions during chip initialisation
+  * Fix issue with Short GI negociation. Short GI was not enabled even if
+    remote support it
+  * Fix issue with Tx power. Tx power was correctly restored after a scan
+  * Fix issue with HT features. HT features was not always reseted between
+    sessions
+  * Report error if configured MTU is not supported (> 1500 bytes)
+
 Changes in 1.6
 --------------
 
