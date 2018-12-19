@@ -121,14 +121,18 @@ int sram_write_dma_safe(struct wfx_dev *wdev, u32 addr, const u8 *buf, size_t le
  */
 static int get_keyset_offset(struct wfx_dev *wdev, const u8 *firmware)
 {
-	/* SDIO hosts do not all correctly support unaligned buffers */
-	u8 buf[PTE_INFO_SIZE] __aligned(sizeof(void *));
+	u8 *buf;
 	u32 keyset_chip;
 	int keyset_file;
 	int start_offset;
 
+	buf = kmalloc(PTE_INFO_SIZE, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 	sram_buf_read(wdev, WFX_PTE_INFO, buf, PTE_INFO_SIZE);
 	keyset_chip = buf[PTE_INFO_KEYSET_IDX];
+	kfree(buf);
+
 	if (memcmp(firmware, "KEYSET", 6) != 0) {
 		// Legacy firmware format
 		start_offset = 0;
@@ -225,8 +229,7 @@ static int upload_firmware(struct wfx_dev *wdev, const u8 *data, size_t len)
 int load_firmware_secure(struct wfx_dev *wdev, const u8 *fw_file, u32 fw_len)
 {
 	const int header_size = FW_SIGNATURE_SIZE + FW_HASH_SIZE;
-	/* SDIO hosts does not all correctly support unaligned buffers */
-	u8 buf[BOOTLOADER_LABEL_SIZE + 1] __aligned(sizeof(void *));
+	u8 *buf;
 	ktime_t start;
 	u32 val32;
 	int ret;
@@ -234,9 +237,13 @@ int load_firmware_secure(struct wfx_dev *wdev, const u8 *fw_file, u32 fw_len)
 	CHECK(sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_READY));
 	CHECK(wait_ncp_status(wdev, NCP_INFO_READY));
 
+	buf = kmalloc(BOOTLOADER_LABEL_SIZE + 1, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 	CHECK(sram_buf_read(wdev, WFX_BOOTLOADER_LABEL, buf, BOOTLOADER_LABEL_SIZE));
 	buf[BOOTLOADER_LABEL_SIZE] = 0;
 	dev_dbg(wdev->pdev, "bootloader: \"%s\"\n", buf);
+	kfree(buf);
 
 	ret = get_keyset_offset(wdev, fw_file);
 	if (ret < 0)
