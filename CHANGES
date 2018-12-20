@@ -8,11 +8,11 @@ Changes in 2.0
   * CHANGES and README files are now in public release
   * Fix multiple timing issues in AP when stations enable power saving
   * Fix compatibility with CONFIG_VMAP_STACK
-  * Fix possible race contditions during chip initialisation
-  * Fix issue with Short GI negociation. Short GI was not enabled even if
+  * Fix possible race conditions during chip initialization
+  * Fix issue with Short GI negotiation. Short GI was not enabled even if
     remote support it
   * Fix issue with Tx power. Tx power was correctly restored after a scan
-  * Fix issue with HT features. HT features was not always reseted between
+  * Fix issue with HT features. HT features was not always reset between
     sessions
   * Report error if configured MTU is not supported (> 1500 bytes)
 
