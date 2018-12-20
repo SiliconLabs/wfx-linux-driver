@@ -557,7 +557,7 @@ static int wfx_get_prio_queue(struct wfx_vif *wvif,
 	return winner;
 }
 
-static int wsm_get_tx_queue_and_mask(struct wfx_dev	*wdev,
+static int wsm_get_tx_queue_and_mask(struct wfx_vif *wvif,
 				     struct wfx_queue **queue_p,
 				     u32 *tx_allowed_mask_p,
 				     bool *more)
@@ -565,8 +565,6 @@ static int wsm_get_tx_queue_and_mask(struct wfx_dev	*wdev,
 	int idx;
 	u32 tx_allowed_mask;
 	int total = 0;
-	// FIXME: Get interface id from wsm_buf or if_id
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	/* Search for a queue with multicast frames buffered */
 	if (wvif->tx_multicast) {
@@ -592,7 +590,7 @@ static int wsm_get_tx_queue_and_mask(struct wfx_dev	*wdev,
 		return -ENOENT;
 
 found:
-	*queue_p = &wdev->tx_queue[idx];
+	*queue_p = &wvif->wdev->tx_queue[idx];
 	*tx_allowed_mask_p = tx_allowed_mask;
 	return 0;
 }
@@ -641,7 +639,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 
 		spin_lock_bh(&wvif->ps_state_lock);
 
-		ret = wsm_get_tx_queue_and_mask(wdev, &queue, &tx_allowed_mask, &more);
+		ret = wsm_get_tx_queue_and_mask(wvif, &queue, &tx_allowed_mask, &more);
 		queue_num = queue - wdev->tx_queue;
 
 		if (wvif->buffered_multicasts && (ret || !more) &&
