@@ -338,7 +338,12 @@ solution is to defer probing, setup traces and finally request probe manually:
 (see also [this patch][1])
 
 Also note that `perf` command provides an alternative way to access to
-tracepoints.
+tracepoints:
+
+    $ perf trace --no-syscalls --event 'wfx:*' sleep 10
+
+However, for our needs, features are more limited than
+`/sys/kernel/debug/tracing` interface.
 
 [1]: https://lore.kernel.org/patchwork/patch/240185/
 
