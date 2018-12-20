@@ -1020,13 +1020,12 @@ void wfx_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		  u32 queues, bool drop)
 {
 	struct wfx_dev *wdev = hw->priv;
-	struct wfx_vif *wvif = NULL;
+	struct wfx_vif *wvif;
 
 	pr_debug("[STA] wfx_flush\n");
 
-	if (vif)
+	if (vif) {
 		wvif = (struct wfx_vif *) vif->drv_priv;
-	if (wvif) {
 		if (wvif->mode == NL80211_IFTYPE_MONITOR)
 			drop = true;
 		if (wvif->mode == NL80211_IFTYPE_AP && !wvif->enable_beacon)
