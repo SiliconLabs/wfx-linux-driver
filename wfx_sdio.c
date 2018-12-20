@@ -180,7 +180,7 @@ static int wfx_sdio_probe(struct sdio_func *func,
 		return -ENOMEM;
 
 	if (!np) {
-		dev_warn(&func->dev, "No DT defined. Features will be limited.");
+		dev_warn(&func->dev, "Device is not declared in DT. Features will be limited.");
 		// FIXME: ignore VID/PID and only rely on device tree
 		// return -ENODEV;
 	} else if (!of_match_node(wfx_sdio_of_match, np)) {
