@@ -279,7 +279,6 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 	default:
 		break;
 	}
-	wvif->vif = NULL;
 	wvif->mode = NL80211_IFTYPE_MONITOR;
 	eth_zero_addr(wdev->mac_addr);
 	wfx_free_keys(wvif);
@@ -288,8 +287,13 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 
 	wvif->listening = false;
 	wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
-	if (!__wfx_flush(wdev, true))
+	if (!__wfx_flush(wdev, true)) {
+		wdev->vif = NULL;
 		wsm_unlock_tx(wdev);
+	} else {
+		wdev->vif = NULL;
+	}
+	wvif->vif = NULL;
 	cancel_delayed_work_sync(&wvif->join_timeout);
 	wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
 	cancel_work_sync(&wvif->unjoin_work);
@@ -307,7 +311,6 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 	wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
 	wvif->join_pending = false;
 
-	wdev->vif = NULL;
 
 	mutex_unlock(&wdev->conf_mutex);
 }
