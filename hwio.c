@@ -26,7 +26,15 @@
 #define ENABLE_BUS_RETRY
 
 /*
- * Internal helpers
+ * Internal helpers.
+ *
+ * About CONFIG_VMAP_STACK:
+ * When CONFIG_VMAP_STACK is enabled, it is not possible to run DMA on stack
+ * allocated data. Functions below that work with registers (aka functions
+ * ending with "32") automatically reallocate buffers with kmalloc. However,
+ * functions that work with arbitrary length buffers let's caller to handle
+ * memory location. In doubt, enable CONFIG_DEBUG_SG to detect badly located
+ * buffer.
  */
 
 static int read32(struct wfx_dev *wdev, int reg, u32 *val)
