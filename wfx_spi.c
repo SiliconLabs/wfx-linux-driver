@@ -179,7 +179,7 @@ static int wfx_spi_probe(struct spi_device *func)
 	ret = spi_setup(func);
 	if (ret)
 		return ret;
-	// Trace below is also displayed by spi_setup() is compiled with DEBUG
+	// Trace below is also displayed by spi_setup() if compiled with DEBUG
 	dev_dbg(&func->dev, "SPI params: CS=%d, mode=%d bits/word=%d speed=%d",
 		func->chip_select, func->mode, func->bits_per_word, func->max_speed_hz);
 	if (func->bits_per_word != 16)

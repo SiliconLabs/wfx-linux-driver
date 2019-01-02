@@ -423,7 +423,7 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 	}
 
 	if (wdev->wsm_caps.ApiVersionMajor != 1) {
-		dev_err(wdev->pdev, "Unsupported firmware API version (expect 1 while firmware return %d)\n", wdev->wsm_caps.ApiVersionMajor);
+		dev_err(wdev->pdev, "Unsupported firmware API version (expect 1 while firmware returns %d)\n", wdev->wsm_caps.ApiVersionMajor);
 		goto err2;
 	}
 
@@ -460,10 +460,10 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 	if (!is_valid_ether_addr(dev->wiphy->perm_addr))
 		ether_addr_copy(dev->wiphy->perm_addr, wdev->wsm_caps.MacAddr0);
 	if (!is_valid_ether_addr(dev->wiphy->perm_addr)) {
-		dev_warn(wdev->pdev, "using random ethernet MAC\n");
+		dev_warn(wdev->pdev, "using random MAC address\n");
 		eth_random_addr(dev->wiphy->perm_addr);
 	}
-	dev_info(wdev->pdev, "ethernet MAC: %pM\n", dev->wiphy->perm_addr);
+	dev_info(wdev->pdev, "MAC address: %pM\n", dev->wiphy->perm_addr);
 
 	err = wfx_register_common(dev);
 	if (err)

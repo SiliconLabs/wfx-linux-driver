@@ -1173,7 +1173,7 @@ int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len)
 				return -EINVAL;
 			}
 			if (ret == -ETIMEDOUT) {
-				dev_err(wdev->pdev, "PDS bytes %d to %d: chip didn't replied (corrupted file?)\n", start, i);
+				dev_err(wdev->pdev, "PDS bytes %d to %d: chip didn't reply (corrupted file?)\n", start, i);
 				return ret;
 			}
 			if (ret) {
