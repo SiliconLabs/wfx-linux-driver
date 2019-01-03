@@ -28,13 +28,14 @@ else
 
 CFLAGS_debug.o = -I$(src)
 
+
 wfx-y := \
+		hwio.o \
+		bh.o \
 		fwio.o \
 		data_txrx.o \
 		main.o \
 		queue.o \
-		hwio.o \
-		bh.o \
 		wsm_tx.o \
 		wsm_rx.o \
 		sta.o \
