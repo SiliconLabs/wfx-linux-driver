@@ -127,7 +127,7 @@ static int wsm_startup_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 		return -EINVAL;
 	}
 
-	dev_info(wdev->pdev, "Firmware \"%s\" started. Version: %d.%d.%d API: %d.%d caps: %#.8X\n",
+	dev_info(wdev->pdev, "Firmware \"%s\" started. Version: %d.%d.%d API: %d.%d caps: 0x%.8X\n",
 		 body->FirmwareLabel,
 		 body->FirmwareMajor, body->FirmwareMinor, body->FirmwareBuild,
 		 body->ApiVersionMajor, body->ApiVersionMinor,
