@@ -208,13 +208,14 @@ You can directly execute pds_compress on this file:
 
 ### Enable/Disable UAPSD
 
-For some tests, UAPSD is required. You can enable it with:
+For some tests, UAPSD is required. To get it, you need a kernel compiled with
+`CONFIG_MAC80211_DEBUGFS`. Next, you can enable UAPSD with:
 
-    echo 0xF > /sys/kernel/debug/ieee80211/phy1/netdev:wlan0/uapsd_queue
+    echo 0xF > /sys/kernel/debug/ieee80211/phy*/netdev:wlan0/uapsd_queue
 
 Obviously, you can disable UAPSD with:
 
-    echo 0 > /sys/kernel/debug/ieee80211/phy1/netdev:wlan0/uapsd_queue
+    echo 0 > /sys/kernel/debug/ieee80211/phy*/netdev:wlan0/uapsd_queue
 
 Debugging
 ---------
