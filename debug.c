@@ -224,14 +224,14 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 	}
 
 	if (wvif->rx_filter.bssid)
-		seq_puts(seq,   "Filter:     bssid\n");
+		seq_puts(seq, "Filter:     bssid\n");
 	if (wvif->rx_filter.keepAlive)
-		seq_puts(seq,   "Filter:     keepAlive\n");
+		seq_puts(seq, "Filter:     keepAlive\n");
 	if (wvif->rx_filter.probeResponder)
-		seq_puts(seq,   "Filter:     probeResponder\n");
+		seq_puts(seq, "Filter:     probeResponder\n");
 
 	if (!wvif->disable_beacon_filter)
-		seq_puts(seq,   "Filter:     beacons\n");
+		seq_puts(seq, "Filter:     beacons\n");
 
 	if (wvif->enable_beacon ||
 	    wvif->mode == NL80211_IFTYPE_AP ||
@@ -239,8 +239,7 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 	    wvif->mode == NL80211_IFTYPE_MESH_POINT ||
 	    wvif->mode == NL80211_IFTYPE_P2P_GO)
 		seq_printf(seq, "Beaconing:  %s\n",
-			   wvif->enable_beacon ?
-			   "enabled" : "disabled");
+			   wvif->enable_beacon ? "enabled" : "disabled");
 
 	for (i = 0; i < 4; ++i)
 		seq_printf(seq, "EDCA(%d):    %d, %d, %d, %d\n", i,
@@ -250,19 +249,6 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 			   wvif->edca.params[i].TxOpLimit);
 
 	if (wvif->join_status == WFX_JOIN_STATUS_STA) {
-		static const char *pm_mode = "unknown";
-
-		switch (wvif->powersave_mode.PmMode.PmMode) {
-		case 0:
-			pm_mode = "off";
-			break;
-		case 1:
-			if (wvif->powersave_mode.PmMode.FastPsm)
-				pm_mode = "dynamic";
-			else
-				pm_mode = "on";
-			break;
-		}
 		seq_printf(seq, "Preamble:   %s\n",
 			   wfx_debug_preamble[wvif->association_mode.PreambleType]);
 		seq_printf(seq, "AMPDU spcn: %d\n",
@@ -275,7 +261,14 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 			   wvif->bss_params.AID);
 		seq_printf(seq, "Rates:      0x%.8X\n",
 			   wvif->bss_params.OperationalRateSet);
-		seq_printf(seq, "Powersave WiFi:  %s\n", pm_mode);
+		seq_printf(seq, "Powersave WiFi:  ");
+		if (wvif->powersave_mode.PmMode.PmMode)
+			if (wvif->powersave_mode.PmMode.FastPsm)
+				seq_puts(seq, "dynamic\n");
+			else
+				seq_puts(seq, "on\n");
+		else
+			seq_puts(seq, "off\n");
 	}
 
 	seq_printf(seq, "HT:         %s\n",
