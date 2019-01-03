@@ -194,6 +194,8 @@ struct wfx_dev {
 	int			ps_mode_switch_in_progress;
 	wait_queue_head_t	ps_mode_switch_done;
 
+	/* For debugfs 'rx_stats' file */
+	HiRxStats_t rx_stats;
 };
 
 struct wfx_vif {

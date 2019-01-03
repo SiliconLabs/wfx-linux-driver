@@ -263,49 +263,6 @@ static int wsm_error_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 	return 0;
 }
 
-static void pr_rx_stats(HiRxStats_t *rx_stats)
-{
-	u32 *rx = rx_stats->NbRxByRate;
-	u16 *per = rx_stats->Per;
-	s16 *rssi = rx_stats->Rssi;
-	s16 *snr = rx_stats->Snr;
-	s16 *cfo = rx_stats->Cfo;
-
-	pr_info("Receiving new Rx statistics t = %dus:\n", rx_stats->Date);
-	pr_info("#Frames: %d, PER (x10000): %d, Throughput: %dKbps/s\n",
-		rx_stats->NbRxFrame, rx_stats->PerTotal, rx_stats->Throughput);
-	pr_info("Low power clock frequency: %uHz. External: %s\n",
-		rx_stats->PwrClkFreq, rx_stats->IsExtPwrClk ? "yes" : "no");
-	pr_info("              %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s %5s\n",
-		"1M", "2M", "5.5M", "11M", "6M", "9M", "12M", "18M", "24M",
-		"36M", "48M", "54M", "MCS0", "MCS1", "MCS2", "MCS3", "MCS4",
-		"MCS5", "MCS6", "MCS7");
-	pr_info("#Frames:      %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d\n",
-		rx[0], rx[1], rx[2], rx[3], rx[6], rx[7], rx[8], rx[9], rx[10],
-		rx[11], rx[12], rx[13], rx[14], rx[15], rx[16], rx[17], rx[18],
-		rx[19], rx[20], rx[21]);
-	pr_info("PER (x10000): %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d\n",
-		per[0], per[1], per[2], per[3], per[6], per[7], per[8], per[9],
-		per[10], per[11], per[12], per[13], per[14], per[15], per[16],
-		per[17], per[18], per[19], per[20], per[21]);
-	pr_info("RSSI (dBm):   %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d\n",
-		rssi[0] / 100, rssi[1] / 100, rssi[2] / 100, rssi[3] / 100,
-		rssi[6] / 100, rssi[7] / 100, rssi[8] / 100, rssi[9] / 100,
-		rssi[10] / 100, rssi[11] / 100, rssi[12] / 100, rssi[13] / 100,
-		rssi[14] / 100, rssi[15] / 100, rssi[16] / 100, rssi[17] / 100,
-		rssi[18] / 100, rssi[19] / 100, rssi[20] / 100, rssi[21] / 100);
-	pr_info("SNR (dB):     %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d\n",
-		snr[0] / 100, snr[1] / 100, snr[2] / 100, snr[3] / 100,
-		snr[6] / 100, snr[7] / 100, snr[8] / 100, snr[9] / 100,
-		snr[10] / 100, snr[11] / 100, snr[12] / 100, snr[13] / 100,
-		snr[14] / 100, snr[15] / 100, snr[16] / 100, snr[17] / 100,
-		snr[18] / 100, snr[19] / 100, snr[20] / 100, snr[21] / 100);
-	pr_info("CFO (kHz):    %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d %5d\n",
-		cfo[0], cfo[1], cfo[2], cfo[3], cfo[6], cfo[7], cfo[8], cfo[9],
-		cfo[10], cfo[11], cfo[12], cfo[13], cfo[14], cfo[15], cfo[16],
-		cfo[17], cfo[18], cfo[19], cfo[20], cfo[21]);
-}
-
 static int wsm_generic_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
 	HiGenericIndBody_t *body = buf;
@@ -319,7 +276,7 @@ static int wsm_generic_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 		wfx_info("%s", (char *) body->IndicationData.RawData);
 		break;
 	case HI_GENERIC_INDICATION_TYPE_RX_STATS:
-		pr_rx_stats(&body->IndicationData.RxStats);
+		memcpy(&wdev->rx_stats, &body->IndicationData.RxStats, sizeof(wdev->rx_stats));
 		break;
 	default:
 		wfx_err("wrong type in generic_ind\n");
