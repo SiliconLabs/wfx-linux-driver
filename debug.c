@@ -566,7 +566,7 @@ void wfx_dbg_filter_wsm(struct wfx_dev *wdev, void *buf)
 	}
 }
 
-static ssize_t wfx_pds_write(struct file *file, const char __user *user_buf,
+static ssize_t wfx_send_pds_write(struct file *file, const char __user *user_buf,
 			     size_t count, loff_t *ppos)
 {
 	struct wfx_dev *wdev = file->private_data;
@@ -588,9 +588,9 @@ static ssize_t wfx_pds_write(struct file *file, const char __user *user_buf,
 	return count;
 }
 
-static const struct file_operations fops_pds = {
+static const struct file_operations wfx_send_pds_fops = {
 	.open = simple_open,
-	.write = wfx_pds_write,
+	.write = wfx_send_pds_write,
 };
 
 int wfx_debug_init(struct wfx_dev *wdev)
@@ -607,7 +607,7 @@ int wfx_debug_init(struct wfx_dev *wdev)
 	debugfs_create_file("status", 0400, d, wdev, &wfx_status_fops);
 	debugfs_create_file("counters", 0400, d, wdev, &wfx_counters_fops);
 	debugfs_create_file("rx_stats", 0400, d, wdev, &wfx_rx_stats_fops);
-	debugfs_create_file("send_pds", 0200, d, wdev, &fops_pds);
+	debugfs_create_file("send_pds", 0200, d, wdev, &wfx_send_pds_fops);
 
 	d = debugfs_create_dir("wsm_params", d);
 	INIT_LIST_HEAD(&wdev->debug->dbg_params_active);
