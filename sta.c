@@ -245,20 +245,20 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 	LIST_HEAD(list);
 	int i;
 
-	pr_debug("[STA] wfx_remove_interface : join_status= %d\n",
-		 wvif->join_status);
+	pr_debug("[STA] wfx_remove_interface : state= %d\n",
+		 wvif->state);
 
 	mutex_lock(&wdev->conf_mutex);
-	switch (wvif->join_status) {
-	case WFX_JOIN_STATUS_JOINING:
-	case WFX_JOIN_STATUS_PRE_STA:
-	case WFX_JOIN_STATUS_STA:
-	case WFX_JOIN_STATUS_IBSS:
+	switch (wvif->state) {
+	case WFX_STATE_JOINING:
+	case WFX_STATE_PRE_STA:
+	case WFX_STATE_STA:
+	case WFX_STATE_IBSS:
 		wsm_lock_tx(wdev);
 		if (queue_work(wdev->workqueue, &wvif->unjoin_work) <= 0)
 			wsm_unlock_tx(wdev);
 		break;
-	case WFX_JOIN_STATUS_AP:
+	case WFX_STATE_AP:
 		for (i = 0; wvif->link_id_map; ++i) {
 			if (wvif->link_id_map & BIT(i)) {
 				wfx_unmap_link(wvif, i);
@@ -275,7 +275,7 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 		/* reset.link_id = 0; */
 		wsm_reset(wdev, false, wvif->Id);
 		break;
-	case WFX_JOIN_STATUS_MONITOR:
+	case WFX_STATE_MONITOR:
 		wfx_update_listening(wvif, false);
 		break;
 	default:
@@ -288,7 +288,7 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 	wsm_set_macaddr(wdev, wdev->mac_addr, wvif->Id);
 
 	wvif->listening = false;
-	wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
+	wvif->state = WFX_STATE_PASSIVE;
 	if (!__wfx_flush(wdev, true)) {
 		wdev->vif = NULL;
 		wsm_unlock_tx(wdev);
@@ -310,7 +310,7 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 	spin_unlock(&wvif->event_queue_lock);
 	__wfx_free_event_queue(&list);
 
-	wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
+	wvif->state = WFX_STATE_PASSIVE;
 	wvif->join_pending = false;
 
 
@@ -387,7 +387,7 @@ int wfx_config(struct ieee80211_hw *dev, u32 changed)
 			wvif->powersave_mode.FastPsmIdlePeriod =
 					conf->dynamic_ps_timeout << 1;
 
-		if (wvif->join_status == WFX_JOIN_STATUS_STA &&
+		if (wvif->state == WFX_STATE_STA &&
 		    wvif->bss_params.AID)
 			wfx_set_pm(wvif, &wvif->powersave_mode);
 	}
@@ -399,11 +399,11 @@ int wfx_config(struct ieee80211_hw *dev, u32 changed)
 
 		wsm_lock_tx(wdev);
 		/* Disable p2p-dev mode forced by TX request */
-		if (wvif->join_status == WFX_JOIN_STATUS_MONITOR &&
+		if (wvif->state == WFX_STATE_MONITOR &&
 		    conf->flags & IEEE80211_CONF_IDLE &&
 		    !wvif->listening) {
 			wfx_disable_listening(wvif);
-			wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
+			wvif->state = WFX_STATE_PASSIVE;
 		}
 		wsm_set_operational_mode(wdev, &mode);
 		wsm_unlock_tx(wdev);
@@ -504,9 +504,9 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 
 	memcpy(&l_rx_filter, &wvif->rx_filter, sizeof(l_rx_filter));
 
-	if (wvif->join_status == WFX_JOIN_STATUS_PASSIVE)
+	if (wvif->state == WFX_STATE_PASSIVE)
 		return;
-	else if (wvif->join_status == WFX_JOIN_STATUS_MONITOR)
+	else if (wvif->state == WFX_STATE_MONITOR)
 		l_rx_filter.bssid = true;
 
 	if (wvif->disable_beacon_filter) {
@@ -675,7 +675,7 @@ int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
 			ret = wfx_set_uapsd_param(wvif, &wvif->edca);
 			new_uapsd_flags = *((u16 *) &wvif->uapsd_info);
 			if (!ret && wvif->setbssparams_done &&
-			    wvif->join_status == WFX_JOIN_STATUS_STA &&
+			    wvif->state == WFX_STATE_STA &&
 			    /* (old_uapsd_flags != le16_to_cpu(wvif->uapsd_info.uapsd_flags))) */
 			    old_uapsd_flags != new_uapsd_flags)
 				ret = wfx_set_pm(wvif, &wvif->powersave_mode);
@@ -1213,15 +1213,15 @@ static void wfx_join_complete(struct wfx_vif *wvif)
 
 	wvif->join_pending = false;
 	if (wvif->join_complete_status) {
-		wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
+		wvif->state = WFX_STATE_PASSIVE;
 		wfx_update_listening(wvif, wvif->listening);
 		wfx_do_unjoin(wvif);
 		ieee80211_connection_loss(wvif->vif);
 	} else {
 		if (wvif->mode == NL80211_IFTYPE_ADHOC)
-			wvif->join_status = WFX_JOIN_STATUS_IBSS;
+			wvif->state = WFX_STATE_IBSS;
 		else
-			wvif->join_status = WFX_JOIN_STATUS_PRE_STA;
+			wvif->state = WFX_STATE_PRE_STA;
 	}
 	wsm_unlock_tx(wvif->wdev); /* Clearing the lock held before do_join() */
 }
@@ -1277,7 +1277,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 		return;
 	}
 
-	if (wvif->join_status)
+	if (wvif->state)
 		wfx_do_unjoin(wvif);
 
 	bssid = wvif->vif->bss_conf.bssid;
@@ -1340,7 +1340,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 
 	/* Set up timeout */
 	if (join.JoinFlags.ForceWithInd) {
-		wvif->join_status = WFX_JOIN_STATUS_JOINING;
+		wvif->state = WFX_STATE_JOINING;
 		queue_delayed_work(wvif->wdev->workqueue,
 				   &wvif->join_timeout,
 				   WFX_JOIN_TIMEOUT);
@@ -1466,15 +1466,15 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 
 	wvif->delayed_link_loss = false;
 
-	if (!wvif->join_status)
+	if (!wvif->state)
 		goto done;
 
-	if (wvif->join_status == WFX_JOIN_STATUS_AP)
+	if (wvif->state == WFX_STATE_AP)
 		goto done;
 
 	cancel_work_sync(&wvif->update_filtering_work);
 	cancel_work_sync(&wvif->set_beacon_wakeup_period_work);
-	wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
+	wvif->state = WFX_STATE_PASSIVE;
 
 	/* Unjoin is a reset. */
 	wsm_flush_tx(wvif->wdev);
@@ -1545,15 +1545,15 @@ int wfx_disable_listening(struct wfx_vif *wvif)
 void wfx_update_listening(struct wfx_vif *wvif, bool enabled)
 {
 	if (enabled) {
-		if (wvif->join_status == WFX_JOIN_STATUS_PASSIVE) {
+		if (wvif->state == WFX_STATE_PASSIVE) {
 			if (!wfx_enable_listening(wvif))
-				wvif->join_status = WFX_JOIN_STATUS_MONITOR;
+				wvif->state = WFX_STATE_MONITOR;
 			wsm_set_probe_responder(wvif, true);
 		}
 	} else {
-		if (wvif->join_status == WFX_JOIN_STATUS_MONITOR) {
+		if (wvif->state == WFX_STATE_MONITOR) {
 			if (!wfx_disable_listening(wvif))
-				wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
+				wvif->state = WFX_STATE_PASSIVE;
 			wsm_set_probe_responder(wvif, false);
 		}
 	}
@@ -1891,7 +1891,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 	}
 
 	if (changed & BSS_CHANGED_ASSOC && !info->assoc &&
-	    (wvif->join_status == WFX_JOIN_STATUS_STA || wvif->join_status == WFX_JOIN_STATUS_IBSS)) {
+	    (wvif->state == WFX_STATE_STA || wvif->state == WFX_STATE_IBSS)) {
 		/* Shedule unjoin work */
 		pr_debug("[WSM] Issue unjoin command\n");
 		wsm_lock_tx_async(wdev);
@@ -1902,7 +1902,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 			pr_debug("CHANGED_BEACON_INT\n");
 			if (info->ibss_joined)
 				do_join = true;
-			else if (wvif->join_status == WFX_JOIN_STATUS_AP)
+			else if (wvif->state == WFX_STATE_AP)
 				wfx_update_beaconing(wvif);
 		}
 
@@ -1916,14 +1916,14 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 		     BSS_CHANGED_IBSS | BSS_CHANGED_BASIC_RATES | BSS_CHANGED_HT)) {
 			pr_debug("BSS_CHANGED_ASSOC %d\n", info->assoc);
 			if (info->assoc) {
-				if (wvif->join_status <
-				    WFX_JOIN_STATUS_PRE_STA) {
+				if (wvif->state <
+				    WFX_STATE_PRE_STA) {
 					ieee80211_connection_loss(vif);
 					mutex_unlock(&wdev->conf_mutex);
 					return;
-				} else if (wvif->join_status ==
-				    WFX_JOIN_STATUS_PRE_STA) {
-					wvif->join_status = WFX_JOIN_STATUS_STA;
+				} else if (wvif->state ==
+				    WFX_STATE_PRE_STA) {
+					wvif->state = WFX_STATE_STA;
 				}
 			} else {
 				do_join = true;
@@ -2323,7 +2323,7 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 		ret = wfx_upload_keys(wvif);
 	if (!ret) {
 		wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
-		wvif->join_status = WFX_JOIN_STATUS_AP;
+		wvif->state = WFX_STATE_AP;
 		wfx_update_filtering(wvif);
 	}
 	wsm_set_operational_mode(wvif->wdev, &mode);
@@ -2335,18 +2335,18 @@ static int wfx_update_beaconing(struct wfx_vif *wvif)
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 
 	if (wvif->mode == NL80211_IFTYPE_AP) {
-		if (wvif->join_status != WFX_JOIN_STATUS_AP ||
+		if (wvif->state != WFX_STATE_AP ||
 		    wvif->beacon_int != conf->beacon_int) {
 			pr_debug("ap restarting\n");
 			wsm_lock_tx(wvif->wdev);
-			if (wvif->join_status != WFX_JOIN_STATUS_PASSIVE)
+			if (wvif->state != WFX_STATE_PASSIVE)
 				wsm_reset(wvif->wdev, false, wvif->Id);
-			wvif->join_status = WFX_JOIN_STATUS_PASSIVE;
+			wvif->state = WFX_STATE_PASSIVE;
 			wfx_start_ap(wvif);
 			wsm_unlock_tx(wvif->wdev);
 		} else {
-			pr_debug("ap started join_status: %d\n",
-				 wvif->join_status);
+			pr_debug("ap started state: %d\n",
+				 wvif->state);
 	}
 	}
 	return 0;

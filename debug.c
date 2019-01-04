@@ -102,8 +102,8 @@ const char *get_fw_type(unsigned long id)
 	return get_symbol(id, wfx_fw_types_print_map);
 }
 
-/* join_status */
-static const char * const wfx_debug_join_status[] = {
+/* state */
+static const char * const wfx_debug_state[] = {
 	"passive",
 	"monitor",
 	"station (joining)",
@@ -214,7 +214,7 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 		   wfx_debug_mode(wvif->mode),
 		   wvif->listening ? " (listening)" : "");
 	seq_printf(seq, "Join state: %s\n",
-		   wfx_debug_join_status[wvif->join_status]);
+		   wfx_debug_state[wvif->state]);
 
 	if (wdev->channel) {
 		seq_printf(seq, "Channel:    %d%s\n",
@@ -248,7 +248,7 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 			   wvif->edca.params[i].AIFSN,
 			   wvif->edca.params[i].TxOpLimit);
 
-	if (wvif->join_status == WFX_JOIN_STATUS_STA) {
+	if (wvif->state == WFX_STATE_STA) {
 		seq_printf(seq, "Preamble:   %s\n",
 			   wfx_debug_preamble[wvif->association_mode.PreambleType]);
 		seq_printf(seq, "AMPDU spcn: %d\n",

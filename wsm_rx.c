@@ -432,13 +432,13 @@ static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
 
 	switch (wvif->mode) {
 	case NL80211_IFTYPE_STATION:
-		if (wvif->join_status == WFX_JOIN_STATUS_MONITOR)
+		if (wvif->state == WFX_STATE_MONITOR)
 			action = do_tx;
-		else if (wvif->join_status < WFX_JOIN_STATUS_PRE_STA)
+		else if (wvif->state < WFX_STATE_PRE_STA)
 			action = do_drop;
 		break;
 	case NL80211_IFTYPE_AP:
-		if (!wvif->join_status) {
+		if (!wvif->state) {
 			action = do_drop;
 		} else if (!(BIT(txpriv->raw_link_id) &
 		      (BIT(0) | wvif->link_id_map))) {
@@ -454,7 +454,7 @@ static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
 		}
 		break;
 	case NL80211_IFTYPE_ADHOC:
-		if (wvif->join_status != WFX_JOIN_STATUS_IBSS)
+		if (wvif->state != WFX_STATE_IBSS)
 			action = do_drop;
 		break;
 	case NL80211_IFTYPE_MESH_POINT:

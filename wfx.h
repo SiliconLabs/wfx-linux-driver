@@ -49,14 +49,14 @@
 #define JOIN_CNF_AUTH_FAILED       2
 
 /* Please keep order */
-enum wfx_join_status {
-	WFX_JOIN_STATUS_PASSIVE = 0,
-	WFX_JOIN_STATUS_MONITOR,
-	WFX_JOIN_STATUS_JOINING,
-	WFX_JOIN_STATUS_PRE_STA,
-	WFX_JOIN_STATUS_STA,
-	WFX_JOIN_STATUS_IBSS,
-	WFX_JOIN_STATUS_AP,
+enum wfx_state {
+	WFX_STATE_PASSIVE = 0,
+	WFX_STATE_MONITOR,
+	WFX_STATE_JOINING,
+	WFX_STATE_PRE_STA,
+	WFX_STATE_STA,
+	WFX_STATE_IBSS,
+	WFX_STATE_AP,
 };
 
 /* Please keep order */
@@ -243,7 +243,7 @@ struct wfx_vif {
 	/* TX/RX and security */
 	s8			wep_default_key_id;
 
-	enum wfx_join_status	join_status;
+	enum wfx_state	state;
 
 	struct wsm_rx_filter	rx_filter;
 	struct wsm_edca_params	edca;

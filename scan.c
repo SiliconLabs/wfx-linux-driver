@@ -33,9 +33,9 @@ static int wfx_scan_start(struct wfx_dev *wdev, struct wsm_scan *scan)
 
 	int tmo = 200;
 
-	switch (wvif->join_status) {
-	case WFX_JOIN_STATUS_PRE_STA:
-	case WFX_JOIN_STATUS_JOINING:
+	switch (wvif->state) {
+	case WFX_STATE_PRE_STA:
+	case WFX_STATE_JOINING:
 		return -EBUSY;
 	default:
 		break;
@@ -74,7 +74,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 		return -EINVAL;
 
 	/* Scan when P2P_GO corrupt firmware MiniAP mode */
-	if (wvif->join_status == WFX_JOIN_STATUS_AP)
+	if (wvif->state == WFX_STATE_AP)
 		return -EOPNOTSUPP;
 
 	if (req->n_ssids == 1 && !req->ssids[0].ssid_len)
@@ -175,13 +175,13 @@ void wfx_scan_work(struct work_struct *work)
 	mutex_lock(&wdev->conf_mutex);
 
 	if (first_run) {
-		if (wvif->join_status == WFX_JOIN_STATUS_STA &&
+		if (wvif->state == WFX_STATE_STA &&
 		    !(wvif->powersave_mode.PmMode.PmMode)) {
 			WsmHiSetPmModeReqBody_t pm = wvif->powersave_mode;
 
 			pm.PmMode.PmMode = 1;
 			wfx_set_pm(wvif, &pm);
-		} else if (wvif->join_status == WFX_JOIN_STATUS_MONITOR) {
+		} else if (wvif->state == WFX_STATE_MONITOR) {
 			wfx_disable_listening(wvif);
 		}
 	}
@@ -207,7 +207,7 @@ void wfx_scan_work(struct work_struct *work)
 		mutex_unlock(&wdev->conf_mutex);
 		__ieee80211_scan_completed_compat(wdev->hw, wdev->scan.status ? 1 : 0);
 		up(&wdev->scan.lock);
-		if (wvif->join_status == WFX_JOIN_STATUS_STA &&
+		if (wvif->state == WFX_STATE_STA &&
 		    !(wvif->powersave_mode.PmMode.PmMode))
 			wfx_set_pm(wvif, &wvif->powersave_mode);
 		return;
@@ -238,7 +238,7 @@ void wfx_scan_work(struct work_struct *work)
 		scan.ssids = &wdev->scan.ssids[0];
 		scan.scan_req.NumOfChannels = it - wdev->scan.curr;
 		scan.scan_req.ProbeDelay = 100;
-		if (wvif->join_status == WFX_JOIN_STATUS_STA) {
+		if (wvif->state == WFX_STATE_STA) {
 			scan.scan_req.ScanType.Type = 1;        /* WSM_SCAN_TYPE_BG; */
 			scan.scan_req.ScanFlags.Fbg = 1;        /* WSM_SCAN_FLAG_FORCE_BACKGROUND */
 		}
@@ -286,7 +286,7 @@ static void wfx_scan_restart_delayed(struct wfx_dev *wdev)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
-	if (wvif->join_status == WFX_JOIN_STATUS_MONITOR) {
+	if (wvif->state == WFX_STATE_MONITOR) {
 		wfx_enable_listening(wvif);
 		wfx_update_filtering(wvif);
 	}
@@ -419,8 +419,8 @@ void wfx_probe_work(struct work_struct *work)
 	wsm = (WsmHiTxReq_t *)skb->data;
 	scan.scan_req.MaxTransmitRate = wsm->Body.MaxTxRate;
 	scan.scan_req.Band = WSM_PHY_BAND_2_4G;
-	if (wvif->join_status == WFX_JOIN_STATUS_STA ||
-	    wvif->join_status == WFX_JOIN_STATUS_IBSS) {
+	if (wvif->state == WFX_STATE_STA ||
+	    wvif->state == WFX_STATE_IBSS) {
 		scan.scan_req.ScanType.Type = 1;        /* WSM_SCAN_TYPE_BG; */
 		scan.scan_req.ScanFlags.Fbg = 1;        /* WSM_SCAN_FLAG_FORCE_BACKGROUND */
 	}
@@ -449,7 +449,7 @@ void wfx_probe_work(struct work_struct *work)
 			skb_trim(skb, skb->len - ssids[0].SSIDLength);
 		}
 	}
-	if (wvif->join_status == WFX_JOIN_STATUS_MONITOR)
+	if (wvif->state == WFX_STATE_MONITOR)
 		wfx_disable_listening(wvif);
 
 	p = (WsmHiMibTemplateFrame_t *)skb_push(skb, 4);

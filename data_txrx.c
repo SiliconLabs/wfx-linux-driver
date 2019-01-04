@@ -857,7 +857,7 @@ static int wfx_handle_pspoll(struct wfx_vif	*wvif,
 	int drop = 1;
 	int i;
 
-	if (wvif->join_status != WFX_JOIN_STATUS_AP)
+	if (wvif->state != WFX_STATE_AP)
 		goto done;
 	if (!ether_addr_equal(wvif->vif->addr, pspoll->bssid))
 		goto done;
@@ -1424,7 +1424,7 @@ void wfx_link_id_gc_work(struct work_struct *work)
 	u32 mask;
 	int i;
 
-	if (wvif->join_status != WFX_JOIN_STATUS_AP)
+	if (wvif->state != WFX_STATE_AP)
 		return;
 
 	wsm_lock_tx(wvif->wdev);
