@@ -269,21 +269,17 @@ static int wsm_generic_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 
 	switch (body->IndicationType) {
 	case  HI_GENERIC_INDICATION_TYPE_RAW:
-		/* Not used yet */
-		break;
+		return 0;
 	case HI_GENERIC_INDICATION_TYPE_STRING:
-		/* Display received message */
-		wfx_info("%s", (char *) body->IndicationData.RawData);
-		break;
+		dev_info(wdev->pdev, "%s", (char *) body->IndicationData.RawData);
+		return 0;
 	case HI_GENERIC_INDICATION_TYPE_RX_STATS:
 		memcpy(&wdev->rx_stats, &body->IndicationData.RxStats, sizeof(wdev->rx_stats));
-		break;
+		return 0;
 	default:
-		wfx_err("wrong type in generic_ind\n");
-		return -1;
+		dev_err(wdev->pdev, "generic_indication: unknown indication type: %#.8x\n", body->IndicationType);
+		return -EIO;
 	}
-
-	return 0;
 }
 
 void wsm_lock_tx(struct wfx_dev *wdev)
