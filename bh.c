@@ -179,20 +179,17 @@ int wfx_bh_resume(struct wfx_dev *wdev)
 }
 
 /*
- * it returns -1 in case of error
+ * it returns -EINVAL in case of error
  * and 1 if we must try to Tx because we have just released buffers whereas all were used.
  */
 int wsm_release_tx_buffer(struct wfx_dev *wdev, int count)
 {
-	int ret = 0;
-	int hw_bufs_used = wdev->hw_bufs_used;
+	int ret = wdev->hw_bufs_used >= wdev->wsm_caps.NumInpChBufs ? 1 : 0;
 
 	wdev->hw_bufs_used -= count;
 	if (wdev->hw_bufs_used < 0) {
 		dev_warn(wdev->pdev, "wrong buffers use %d\n", wdev->hw_bufs_used);
-		ret = -1;
-	} else if (hw_bufs_used >= wdev->wsm_caps.NumInpChBufs) {
-		ret = 1;
+		ret = -EINVAL;
 	}
 	if (!wdev->hw_bufs_used)
 		wake_up(&wdev->bh_evt_wq);
