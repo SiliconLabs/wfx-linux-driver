@@ -232,7 +232,6 @@ static int wsm_join_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, v
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	WsmHiJoinCompleteIndBody_t *body = buf;
 
-	pr_debug("[WSM] Join complete indication, status: %d\n", body->Status);
 	wfx_join_complete_cb(wvif, body);
 
 	return 0;
