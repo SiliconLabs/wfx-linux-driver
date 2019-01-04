@@ -552,7 +552,7 @@ void wfx_set_beacon_wakeup_period_work(struct work_struct *work)
 	struct wfx_vif *wvif =
 		container_of(work, struct wfx_vif,
 			     set_beacon_wakeup_period_work);
-	unsigned period = wvif->join_dtim_period;
+	unsigned period = wvif->dtim_period;
 
 	wsm_set_beacon_wakeup_period(wvif->wdev, period, period, wvif->Id);
 }
@@ -1313,7 +1313,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	join.BeaconInterval = wvif->beacon_int;
 
 	// DTIM period will be set on first Beacon
-	wvif->join_dtim_period = 0;
+	wvif->dtim_period = 0;
 
 	join.ChannelNumber = wvif->wdev->channel->hw_value;
 	join.Band = WSM_PHY_BAND_2_4G;
@@ -1481,7 +1481,7 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 	wsm_keep_alive_period(wvif->wdev, 0, wvif->Id);
 	wsm_reset(wvif->wdev, false, wvif->Id);
 	wsm_set_output_power(wvif->wdev, wvif->wdev->output_power * 10, wvif->Id);
-	wvif->join_dtim_period = 0;
+	wvif->dtim_period = 0;
 	wsm_set_macaddr(wvif->wdev, wvif->wdev->mac_addr, wvif->Id);
 	wfx_free_event_queue(wvif);
 	cancel_work_sync(&wvif->event_handler);
@@ -1934,7 +1934,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 				int htprot = 0;
 
 				if (info->dtim_period)
-					wvif->join_dtim_period =
+					wvif->dtim_period =
 						info->dtim_period;
 				wvif->beacon_int = info->beacon_int;
 
@@ -2000,11 +2000,11 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 					wvif->cqm_beacon_loss_count;
 				wvif->bss_params.AID = info->aid;
 
-				if (wvif->join_dtim_period < 1)
-					wvif->join_dtim_period = 1;
+				if (wvif->dtim_period < 1)
+					wvif->dtim_period = 1;
 
 				pr_debug("[STA] DTIM %d, interval: %d\n",
-					 wvif->join_dtim_period,
+					 wvif->dtim_period,
 					 wvif->beacon_int);
 				pr_debug(
 					"[STA] Preamble: %d, Greenfield: %d, Aid: %d, Rates: 0x%.8X, Basic: 0x%.8X\n",
@@ -2123,7 +2123,7 @@ void wfx_multicast_start_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
 		container_of(work, struct wfx_vif, multicast_start_work);
-	long tmo = wvif->join_dtim_period * TU_TO_JIFFIES(wvif->beacon_int + 20);
+	long tmo = wvif->dtim_period * TU_TO_JIFFIES(wvif->beacon_int + 20);
 
 	cancel_work_sync(&wvif->multicast_stop_work);
 
@@ -2308,7 +2308,7 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 	}
 
 	wvif->beacon_int = conf->beacon_int;
-	wvif->join_dtim_period = conf->dtim_period;
+	wvif->dtim_period = conf->dtim_period;
 
 	memset(&wvif->link_id_db, 0, sizeof(wvif->link_id_db));
 

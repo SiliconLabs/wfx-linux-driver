@@ -1224,8 +1224,8 @@ void wfx_rx_cb(struct wfx_vif	*wvif,
 			struct ieee80211_tim_ie *tim =
 				(struct ieee80211_tim_ie *)&tim_ie[2];
 
-			if (wvif->join_dtim_period != tim->dtim_period) {
-				wvif->join_dtim_period = tim->dtim_period;
+			if (wvif->dtim_period != tim->dtim_period) {
+				wvif->dtim_period = tim->dtim_period;
 				queue_work(wvif->wdev->workqueue,
 					   &wvif->set_beacon_wakeup_period_work);
 			}

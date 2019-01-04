@@ -203,7 +203,7 @@ struct wfx_vif {
 	int			user_power_set_true;
 	int			cqm_link_loss_count;
 	int			cqm_beacon_loss_count;
-	int			join_dtim_period;
+	int			dtim_period;
 	int			beacon_int;
 	int			bss_loss_state;
 	int			delayed_link_loss;
