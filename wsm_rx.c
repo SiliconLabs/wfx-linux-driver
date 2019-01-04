@@ -77,21 +77,15 @@ static int wsm_multi_tx_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 	int ret = 0;
 	int i;
 
-	if (count <= 0) {
-		wfx_err(
-			"Number of transmit confirmation message payload error %d\n",
-			count);
+	if (count <= 0)
 		return -EINVAL;
-	}
 
 	if (count > 1) {
 		ret = wsm_release_tx_buffer(wdev, count - 1);
-		if (ret < 0) {
-			wfx_err("Can not release transmit buffer");
+		if (ret < 0)
 			return ret;
-		} else if (ret > 0) {
+		if (ret > 0)
 			wfx_bh_wakeup(wdev);
-	}
 	}
 
 	wfx_debug_txed_multi(wdev, count);
@@ -259,7 +253,7 @@ static int wsm_error_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 {
 	HiErrorIndBody_t *body = buf;
 
-	wfx_err(" : type 0x%x\n", body->Type);
+	dev_err(wdev->pdev, "asynchronous error: %d\n", body->Type);
 	return 0;
 }
 
@@ -313,7 +307,7 @@ bool wsm_flush_tx(struct wfx_dev *wdev)
 
 	if (wdev->bh_error) {
 		/* In case of failure do not wait for magic. */
-		wfx_err("[WSM] Fatal error occurred, will not flush TX.\n");
+		dev_err(wdev->pdev, "fatal error occurred. TX is not flushed.\n");
 		return false;
 	} else {
 		bool pending = false;
