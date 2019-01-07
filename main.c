@@ -44,6 +44,7 @@
 #include "testmode.h"
 
 MODULE_DESCRIPTION("Silicon Labs 802.11 Wireless LAN driver for WFx");
+MODULE_AUTHOR("Jérôme Pouiller <jerome.pouiller@silabs.com>");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(WFX_LABEL);
 // Legacy
