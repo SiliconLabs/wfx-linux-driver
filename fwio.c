@@ -31,6 +31,7 @@
 #include "wfx.h"
 #include "hwio.h"
 
+
 // Addresses below are in SRAM area
 #define WFX_DNLD_FIFO             0x09004000
 #define     DNLD_BLOCK_SIZE           0x0400
@@ -115,40 +116,47 @@ int sram_write_dma_safe(struct wfx_dev *wdev, u32 addr, const u8 *buf, size_t le
 	return ret;
 }
 
-/*
- * Decode keyset from firmware buffer and read accepted key from chip. Return
- * an error if keyset are incompatible else offset to use in file (0 or 8).
- */
-static int get_keyset_offset(struct wfx_dev *wdev, const u8 *firmware)
+int get_firmware(struct wfx_dev *wdev, u32 keyset_chip,
+		 const struct firmware **fw, int *file_offset)
 {
-	u8 *buf;
-	u32 keyset_chip;
 	int keyset_file;
-	int start_offset;
+	char filename[256];
+	const char *data;
+	int ret;
 
-	buf = kmalloc(PTE_INFO_SIZE, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
-	sram_buf_read(wdev, WFX_PTE_INFO, buf, PTE_INFO_SIZE);
-	keyset_chip = buf[PTE_INFO_KEYSET_IDX];
-	kfree(buf);
+	snprintf(filename, sizeof(filename), "%s_%02X.sec", wdev->pdata.file_fw, keyset_chip);
+	ret = request_firmware(fw, filename, wdev->pdev);
+	if (ret) {
+		dev_info(wdev->pdev, "can't load %s, falling back to %s.sec\n", filename, wdev->pdata.file_fw);
+		snprintf(filename, sizeof(filename), "%s.sec", wdev->pdata.file_fw);
+		ret = request_firmware(fw, filename, wdev->pdev);
+		if (ret) {
+			dev_err(wdev->pdev, "can't load %s\n", filename);
+			return ret;
+		}
+	}
 
-	if (memcmp(firmware, "KEYSET", 6) != 0) {
+	data = (*fw)->data;
+	if (memcmp(data, "KEYSET", 6) != 0) {
 		// Legacy firmware format
-		start_offset = 0;
+		*file_offset = 0;
 		keyset_file = 0x90;
 	} else {
-		start_offset = 8;
-		keyset_file = (hex_to_bin(firmware[6]) * 16) | hex_to_bin(firmware[7]);
-		if (keyset_file < 0)
+		*file_offset = 8;
+		keyset_file = (hex_to_bin(data[6]) * 16) | hex_to_bin(data[7]);
+		if (keyset_file < 0) {
+			dev_err(wdev->pdev, "%s corrupted\n", filename);
+			release_firmware(*fw);
 			return -EINVAL;
+		}
 	}
 	if (keyset_file != keyset_chip) {
 		dev_err(wdev->pdev, "firmware keyset is incompatible with chip (file: 0x%02X, chip: 0x%02X)\n",
 			keyset_file, keyset_chip);
+		release_firmware(*fw);
 		return -ENODEV;
 	}
-	return start_offset;
+	return 0;
 }
 
 static int wait_ncp_status(struct wfx_dev *wdev, u32 status)
@@ -218,6 +226,22 @@ static int upload_firmware(struct wfx_dev *wdev, const u8 *data, size_t len)
 	return 0;
 }
 
+static void print_boot_status(struct wfx_dev *wdev)
+{
+	u32 val32;
+
+	sram_reg_read(wdev, WFX_STATUS_INFO, &val32);
+	if (val32 == 0x12345678) {
+		dev_info(wdev->pdev, "no error reported by secure boot\n");
+	} else {
+		sram_reg_read(wdev, WFX_ERR_INFO, &val32);
+		if (val32 < ARRAY_SIZE(fwio_error_strings) && fwio_error_strings[val32])
+			dev_info(wdev->pdev, "secure boot error: %s\n", fwio_error_strings[val32]);
+		else
+			dev_info(wdev->pdev, "secure boot error: Unknown (0x%02x)\n", val32);
+	}
+}
+
 #define CHECK(function) \
 	do { \
 		ret = function; \
@@ -225,44 +249,44 @@ static int upload_firmware(struct wfx_dev *wdev, const u8 *data, size_t len)
 			goto error;\
 	} while (0)
 
-int load_firmware_secure(struct wfx_dev *wdev, const u8 *fw_file, u32 fw_len)
+int load_firmware_secure(struct wfx_dev *wdev)
 {
-	const int header_size = FW_SIGNATURE_SIZE + FW_HASH_SIZE;
-	u8 *buf;
+	const struct firmware *fw = NULL;
+	int header_size;
+	int fw_offset;
 	ktime_t start;
-	u32 val32;
+	u8 *buf;
 	int ret;
+
+	BUILD_BUG_ON(PTE_INFO_SIZE > BOOTLOADER_LABEL_SIZE);
+	buf = kmalloc(BOOTLOADER_LABEL_SIZE + 1, GFP_KERNEL);
+	if (!buf)
+		return -ENOMEM;
 
 	CHECK(sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_READY));
 	CHECK(wait_ncp_status(wdev, NCP_INFO_READY));
 
-	buf = kmalloc(BOOTLOADER_LABEL_SIZE + 1, GFP_KERNEL);
-	if (!buf)
-		return -ENOMEM;
 	CHECK(sram_buf_read(wdev, WFX_BOOTLOADER_LABEL, buf, BOOTLOADER_LABEL_SIZE));
 	buf[BOOTLOADER_LABEL_SIZE] = 0;
 	dev_dbg(wdev->pdev, "bootloader: \"%s\"\n", buf);
-	kfree(buf);
 
-	ret = get_keyset_offset(wdev, fw_file);
-	if (ret < 0)
-		goto error;
-	fw_file += ret;
-	fw_len -= ret;
+	CHECK(sram_buf_read(wdev, WFX_PTE_INFO, buf, PTE_INFO_SIZE));
+	CHECK(get_firmware(wdev, buf[PTE_INFO_KEYSET_IDX], &fw, &fw_offset));
+	header_size = fw_offset + FW_SIGNATURE_SIZE + FW_HASH_SIZE;
 
 	CHECK(sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_INFO_READ));
 	CHECK(wait_ncp_status(wdev, NCP_READY));
 
 	CHECK(sram_reg_write(wdev, WFX_DNLD_FIFO, 0xFFFFFFFF)); // Fifo init
 	CHECK(sram_write_dma_safe(wdev, WFX_DCA_FW_VERSION, "\x01\x00\x00\x00", FW_VERSION_SIZE));
-	CHECK(sram_write_dma_safe(wdev, WFX_DCA_FW_SIGNATURE, fw_file, FW_SIGNATURE_SIZE));
-	CHECK(sram_write_dma_safe(wdev, WFX_DCA_FW_HASH, fw_file + FW_SIGNATURE_SIZE, FW_HASH_SIZE));
-	CHECK(sram_reg_write(wdev, WFX_DCA_IMAGE_SIZE, fw_len - header_size));
+	CHECK(sram_write_dma_safe(wdev, WFX_DCA_FW_SIGNATURE, fw->data + fw_offset, FW_SIGNATURE_SIZE));
+	CHECK(sram_write_dma_safe(wdev, WFX_DCA_FW_HASH, fw->data + fw_offset + FW_SIGNATURE_SIZE, FW_HASH_SIZE));
+	CHECK(sram_reg_write(wdev, WFX_DCA_IMAGE_SIZE, fw->size - header_size));
 	CHECK(sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_UPLOAD_PENDING));
 	CHECK(wait_ncp_status(wdev, NCP_DOWNLOAD_PENDING));
 
 	start = ktime_get();
-	CHECK(upload_firmware(wdev, fw_file + header_size, fw_len - header_size));
+	CHECK(upload_firmware(wdev, fw->data + header_size, fw->size - header_size));
 	dev_dbg(wdev->pdev, "firmware load after %lldus\n", ktime_us_delta(ktime_get(), start));
 
 	CHECK(sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_UPLOAD_COMPLETE));
@@ -274,39 +298,15 @@ int load_firmware_secure(struct wfx_dev *wdev, const u8 *fw_file, u32 fw_len)
 		goto error;
 	CHECK(sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_OK_TO_JUMP));
 
-	return 0;
-
 error:
-	sram_reg_read(wdev, WFX_STATUS_INFO, &val32);
-	if (val32 == 0x12345678) {
-		dev_info(wdev->pdev, "no error reported by secure boot\n");
-	} else {
-		sram_reg_read(wdev, WFX_ERR_INFO, &val32);
-		if (val32 < ARRAY_SIZE(fwio_error_strings) && fwio_error_strings[val32])
-			dev_info(wdev->pdev, "secure boot error: %s\n", fwio_error_strings[val32]);
-		else
-			dev_info(wdev->pdev, "secure boot error: Unknown (0x%02x)\n", val32);
-	}
+	kfree(buf);
+	if (fw)
+		release_firmware(fw);
+	if (ret)
+		print_boot_status(wdev);
 	return ret;
 }
 #undef CHECK
-
-static int load_firmware(struct wfx_dev *wdev)
-{
-	const struct firmware *fw;
-	int ret;
-
-	ret = request_firmware(&fw, wdev->pdata.file_fw, wdev->pdev);
-	if (ret) {
-		dev_err(wdev->pdev, "can't load file %s\n", wdev->pdata.file_fw);
-		return ret;
-	}
-	ret = load_firmware_secure(wdev, fw->data, fw->size);
-	release_firmware(fw);
-	if (ret)
-		dev_err(wdev->pdev, "can't load firmware to device: %s\n", wdev->pdata.file_fw);
-	return ret;
-}
 
 static int init_gpr(struct wfx_dev *wdev)
 {
@@ -397,7 +397,7 @@ int wfx_init_device(struct wfx_dev *wdev)
 	ret = config_reg_write_bits(wdev, CFG_CPU_RESET | CFG_DISABLE_CPU_CLK, 0);
 	if (ret < 0)
 		return ret;
-	ret = load_firmware(wdev);
+	ret = load_firmware_secure(wdev);
 	if (ret < 0)
 		return ret;
 	ret = config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_DATA);
