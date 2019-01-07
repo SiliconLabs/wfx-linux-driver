@@ -691,7 +691,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 		bf_tbl->NumOfInfoElmts = 3;
 	}
 	if (is_p2p)
-		l_rx_filter.bssid = true;
+		l_rx_filter.bssid = false;
 
 	ret = wsm_set_rx_filter(wvif->wdev, &l_rx_filter, wvif->Id);
 	if (!ret)
@@ -751,7 +751,7 @@ void wfx_configure_filter(struct ieee80211_hw *hw,
 
 	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
 		down(&wvif->scan.lock);
-		wvif->rx_filter.bssid = (*total_flags & (FIF_OTHER_BSS | FIF_PROBE_REQ)) ? 1 : 0;
+		wvif->rx_filter.bssid = (*total_flags & (FIF_OTHER_BSS | FIF_PROBE_REQ)) ? 0 : 1;
 		wvif->disable_beacon_filter = !(*total_flags & FIF_PROBE_REQ);
 		wsm_fwd_probe_req(wvif, true);
 		wfx_update_filtering(wvif);
