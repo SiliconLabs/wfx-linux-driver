@@ -109,7 +109,6 @@
 #define WSM_TX_LINK_ID_MAX        (0x03)        /*max value but used as a MASK*/
 #define WSM_TX_LINK_ID(link_id)		\
 	((link_id & WSM_TX_LINK_ID_MAX) << 1)
-#define MAX_BEACON_SKIP_TIME_MS 1000
 #define WSM_CMD_LAST_CHANCE_TIMEOUT (HZ * 3 / 2)
 /* = sizeof(generic hi hdr) + sizeof(wsm hdr) + sizeof(alignment) */
 #define WSM_TX_EXTRA_HEADROOM (28)

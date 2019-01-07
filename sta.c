@@ -552,8 +552,6 @@ void wfx_set_beacon_wakeup_period_work(struct work_struct *work)
 			     set_beacon_wakeup_period_work);
 	unsigned period = wvif->join_dtim_period;
 
-	if (TU_TO_MSEC(wvif->beacon_int) * period > MAX_BEACON_SKIP_TIME_MS)
-		period = 1;
 	wsm_set_beacon_wakeup_period(wvif->wdev, period, period, wvif->Id);
 }
 
