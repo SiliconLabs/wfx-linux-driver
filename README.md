@@ -1,6 +1,34 @@
 Linux driver for Silicon Laboratories WFx00 series
 ==================================================
 
+Compiling and installing
+------------------------
+
+Compiling and installing the driver as a module is straightforward if your
+kernel sources is located in `/lib/modules/$(uname -r)/build`. Just change
+directory to driver source directory and run:
+
+   make
+   sudo make install
+
+If kernel sources is located somewhere else, change `KDIR` variable:
+
+   make KDIR=your_kernel_directory
+   sudo make KDIR=your_kernel_directory install
+
+Notice that driver is called `wfx.ko` and is installed in
+`/lib/modules/$(uname -r)/extra/`.
+
+On runtime, WF modules needs:
+- `/lib/firmware/wfm_wf200.sec`, the firmware
+- `/lib/firmware/wf200.pds`, configuration data of your hardware configuration.
+  Check [README for `wfx-firmware` repository][1] for more information.
+
+These files can be retrieved from [Github `wfx-firmware` repository][2]
+
+[1] https://github.com/SiliconLabs/wfx-firmware/blob/master/README_PDS.md
+[2] https://github.com/SiliconLabs/wfx-firmware
+
 Loading and probing
 -------------------
 
@@ -54,8 +82,8 @@ Required properties:
 - `reg`: Should be 1
 
 In addition, it is recommended to declare a `mmc-pwrseq` on SDIO host above
-WFx.  Without it, you may encounter issues with warm boot. mmc-pwrseq should be
-compatible with `mmc-pwrseq-simple`. Please consult
+WFx.  Without it, you may encounter issues with warm boot. `mmc-pwrseq` should
+be compatible with `mmc-pwrseq-simple`. Please consult
 `Documentation/devicetree/bindings/mmc/mmc-pwrseq-simple.txt` for more
 information.
 
@@ -93,8 +121,8 @@ but it is rarely the case.
 Some properties are recognized either by SPI and SDIO versions:
 - `wakeup-gpios`: phandle of gpio that will be used to wake-up chip. Without
       this property, driver will disable most of power saving features
-- `config-file`: Driver uses a default PDS configuration file. `config-file`
-      allows to overload it. Only necessary for development/debug purpose.
+- `config-file`: Use an alternative file as PDS. Default is `wf200.pds`. Only
+  necessary for development/debug purpose.
 
 WFx driver also supports `mac-address` and `local-mac-address` as described in
 `Documentation/devicetree/binding/net/ethernet.txt`
@@ -194,7 +222,7 @@ It is also possible to change this parameter without unloading the driver with:
 However, you have to unbind/bind device in order to take into account any new
 value.
 
-Of course, you can also remove `reset-gpio` attribute from device tree.
+Of course, you can also remove the `reset-gpio` attribute from device tree.
 
 
 ### Loading PDS
@@ -328,7 +356,7 @@ It is also possible to trace requests from mac80211 stack to WFx driver:
     wpa_supplicant-156 [002] .... 429945.702647: drv_get_survey: phy0 idx:0
     wpa_supplicant-156 [002] .... 429945.702664: drv_return_int: phy0 - -95
 
-Note that there is no real way to trace event during module loading. The best
+Note that there is no real way to trace events during module loading. The best
 solution is to defer probing, setup traces and finally request probe manually:
 
     $ modprobe wfx async_probe
