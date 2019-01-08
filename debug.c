@@ -20,6 +20,23 @@
 
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
+#include <linux/version.h>
+
+#if (KERNEL_VERSION(4, 17, 0) > LINUX_VERSION_CODE)
+#define DEFINE_SHOW_ATTRIBUTE(__name)					\
+static int __name ## _open(struct inode *inode, struct file *file)	\
+{									\
+	return single_open(file, __name ## _show, inode->i_private);	\
+}									\
+									\
+static const struct file_operations __name ## _fops = {			\
+	.owner		= THIS_MODULE,					\
+	.open		= __name ## _open,				\
+	.read		= seq_read,					\
+	.llseek		= seq_lseek,					\
+	.release	= single_release,				\
+}
+#endif
 
 #include "debug.h"
 #include "wfx.h"
@@ -358,20 +375,7 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 
 	return 0;
 }
-
-static int wfx_status_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, &wfx_status_show,
-		inode->i_private);
-}
-
-static const struct file_operations fops_status = {
-	.open = wfx_status_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-	.owner = THIS_MODULE,
-};
+DEFINE_SHOW_ATTRIBUTE(wfx_status);
 
 static int wfx_counters_show(struct seq_file *seq, void *v)
 {
@@ -413,20 +417,7 @@ static int wfx_counters_show(struct seq_file *seq, void *v)
 
 	return 0;
 }
-
-static int wfx_counters_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, &wfx_counters_show,
-		inode->i_private);
-}
-
-static const struct file_operations fops_counters = {
-	.open = wfx_counters_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-	.owner = THIS_MODULE,
-};
+DEFINE_SHOW_ATTRIBUTE(wfx_counters);
 
 static const char *channel_names[] = {
 	[0] = "1M",
@@ -477,18 +468,7 @@ static int wfx_rx_stats_show(struct seq_file *seq, void *v)
 
 	return 0;
 }
-
-static int wfx_rx_stats_open(struct inode *inode, struct file *file)
-{
-	return single_open(file, &wfx_rx_stats_show, inode->i_private);
-}
-
-static const struct file_operations fops_rx_stats = {
-	.open = wfx_rx_stats_open,
-	.read = seq_read,
-	.llseek = seq_lseek,
-	.release = single_release,
-};
+DEFINE_SHOW_ATTRIBUTE(wfx_rx_stats);
 
 struct wfx_dbg_param {
 	u16 filter_val;
@@ -624,10 +604,10 @@ int wfx_debug_init(struct wfx_dev *wdev)
 		return -ENOMEM;
 
 	d = debugfs_create_dir("wfx", wdev->hw->wiphy->debugfsdir);
-	debugfs_create_file("status", 0400, d, wdev, &fops_status);
-	debugfs_create_file("counters", 0400, d, wdev, &fops_counters);
+	debugfs_create_file("status", 0400, d, wdev, &wfx_status_fops);
+	debugfs_create_file("counters", 0400, d, wdev, &wfx_counters_fops);
+	debugfs_create_file("rx_stats", 0400, d, wdev, &wfx_rx_stats_fops);
 	debugfs_create_file("send_pds", 0200, d, wdev, &fops_pds);
-	debugfs_create_file("rx_stats", 0400, d, wdev, &fops_rx_stats);
 
 	d = debugfs_create_dir("wsm_params", d);
 	INIT_LIST_HEAD(&wdev->debug->dbg_params_active);
