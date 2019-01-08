@@ -101,7 +101,7 @@ struct wfx_platform_data {
 	int power_mode;
 	struct gpio_desc *gpio_wakeup;
 	bool support_ldpc;
-	bool hif_clkedge; /* if true HIF D_out is sampled on the rising edge of the clock (intended to be used in 50Mhz SDIO) */
+	bool use_rising_clk; /* if true HIF D_out is sampled on the rising edge of the clock (intended to be used in 50Mhz SDIO) */
 	bool sdio;
 };
 

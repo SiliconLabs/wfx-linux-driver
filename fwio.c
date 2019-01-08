@@ -343,7 +343,7 @@ int wfx_init_device(struct wfx_dev *wdev)
 	u32 reg;
 
 	reg = CFG_DIRECT_ACCESS_MODE | CFG_DISABLE_CPU_CLK | CFG_CPU_RESET;
-	if (wdev->pdata.hif_clkedge)
+	if (wdev->pdata.use_rising_clk)
 		reg |= CFG_CLK_RISE_EDGE;
 	ret = config_reg_write(wdev, reg);
 	if (ret < 0) {
