@@ -31,7 +31,6 @@
 #include "wfx.h"
 #include "hwio.h"
 
-
 // Addresses below are in SRAM area
 #define WFX_DNLD_FIFO             0x09004000
 #define     DNLD_BLOCK_SIZE           0x0400
