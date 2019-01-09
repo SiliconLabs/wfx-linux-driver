@@ -334,6 +334,7 @@ static int init_gpr(struct wfx_dev *wdev)
 int wfx_init_device(struct wfx_dev *wdev)
 {
 	int ret;
+	int wakeup_timeout = 50; // ms
 	ktime_t now, start;
 	u32 reg;
 
@@ -368,8 +369,10 @@ int wfx_init_device(struct wfx_dev *wdev)
 		dev_err(wdev->pdev, "bad hardware revision number: %d\n", wdev->hw_revision);
 		return -ENODEV;
 	}
-	if (wdev->hw_type == 1)
+	if (wdev->hw_type == 1) {
 		dev_notice(wdev->pdev, "development hardware detected\n");
+		wakeup_timeout = 2000;
+	}
 
 	ret = init_gpr(wdev);
 	if (ret < 0)
@@ -384,7 +387,7 @@ int wfx_init_device(struct wfx_dev *wdev)
 		now = ktime_get();
 		if (reg & CTRL_WLAN_READY)
 			break;
-		if (ktime_after(now, ktime_add_ms(start, WAKEUP_TIMEOUT))) {
+		if (ktime_after(now, ktime_add_ms(start, wakeup_timeout))) {
 			dev_err(wdev->pdev, "chip didn't wake up. Chip wasn't reset?\n");
 			return -ETIMEDOUT;
 		}
