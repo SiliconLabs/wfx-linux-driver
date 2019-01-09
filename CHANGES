@@ -1,3 +1,12 @@
+Changes in 2.0.3
+----------------
+
+  * Show power_mode value in debugfs
+  * Show rx_stats in debugfs
+  * Improve concurrency robustness while removing interface
+  * Fix support for DTIM > 1s
+  * Fix support for development hardware
+
 Changes in 2.0.2
 ----------------
 
