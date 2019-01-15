@@ -141,8 +141,6 @@ struct wfx_dev {
 	struct ieee80211_rate		*mcs_rates;
 	struct ieee80211_channel	*channel;
 	struct wfx_ht_info		ht_info;
-	int				channel_switch_in_progress;
-	wait_queue_head_t		channel_switch_done;
 	u8				long_frame_max_tx_count;
 	u8				short_frame_max_tx_count;
 

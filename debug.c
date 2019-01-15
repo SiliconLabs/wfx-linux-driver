@@ -215,13 +215,8 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 		   wvif->listening ? " (listening)" : "");
 	seq_printf(seq, "Join state: %s\n",
 		   wfx_debug_state[wvif->state]);
-
-	if (wdev->channel) {
-		seq_printf(seq, "Channel:    %d%s\n",
-			   wdev->channel->hw_value,
-			   wdev->channel_switch_in_progress ?
-			   " (switching)" : "");
-	}
+	seq_printf(seq, "Channel:    %d\n",
+		   wdev->channel ? wdev->channel->hw_value : -1);
 
 	if (wvif->rx_filter.bssid)
 		seq_puts(seq, "Filter:     bssid\n");
