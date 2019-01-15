@@ -341,12 +341,12 @@ int wfx_config(struct ieee80211_hw *dev, u32 changed)
 	}
 
 	if (changed & IEEE80211_CONF_CHANGE_CHANNEL &&
-	    wdev->channel != conf->chandef.chan) {
+	    wvif->channel != conf->chandef.chan) {
 		struct ieee80211_channel *ch = conf->chandef.chan;
 
 		pr_debug("[STA] Freq %d (wsm ch: %d).\n",
 			 ch->center_freq, ch->hw_value);
-		wdev->channel = ch;
+		wvif->channel = ch;
 	}
 
 	if (changed & IEEE80211_CONF_CHANGE_PS) {
@@ -1253,7 +1253,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 
 	bssid = wvif->vif->bss_conf.bssid;
 
-	bss = cfg80211_get_bss(wvif->wdev->hw->wiphy, wvif->wdev->channel, bssid, NULL, 0,
+	bss = cfg80211_get_bss(wvif->wdev->hw->wiphy, wvif->channel, bssid, NULL, 0,
 			       IEEE80211_BSS_TYPE_ANY, IEEE80211_PRIVACY_ANY);
 
 	if (!bss && !conf->ibss_joined) {
@@ -1284,7 +1284,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	// DTIM period will be set on first Beacon
 	wvif->dtim_period = 0;
 
-	join.ChannelNumber = wvif->wdev->channel->hw_value;
+	join.ChannelNumber = wvif->channel->hw_value;
 	join.Band = WSM_PHY_BAND_2_4G;
 	memcpy(join.BSSID, bssid, sizeof(join.BSSID));
 
@@ -1495,8 +1495,8 @@ int wfx_enable_listening(struct wfx_vif *wvif)
 	};
 
 
-	if (wvif->wdev->channel) {
-		start.ChannelNumber = wvif->wdev->channel->hw_value;
+	if (wvif->channel) {
+		start.ChannelNumber = wvif->channel->hw_value;
 	} else {
 		start.ChannelNumber = 1;
 	}
@@ -1910,13 +1910,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 				if (sta) {
 					wdev->ht_info.ht_cap = sta->ht_cap;
 					wvif->bss_params.OperationalRateSet =
-						wfx_rate_mask_to_wsm(wdev,
-								     sta->supp_rates[
-									     wdev
-									     ->
-									     channel
-									     ->
-									     band]);
+						wfx_rate_mask_to_wsm(wdev, sta->supp_rates[wvif->channel->band]);
 					wdev->ht_info.channel_type =
 						cfg80211_get_chandef_type(
 							&dev->conf.chandef);
@@ -2253,7 +2247,7 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 	WsmHiStartReqBody_t start = {
 		.Band			= WSM_PHY_BAND_2_4G,
-		.ChannelNumber		= wvif->wdev->channel->hw_value,
+		.ChannelNumber		= wvif->channel->hw_value,
 		.BeaconInterval		= conf->beacon_int,
 		.DTIMPeriod		= conf->dtim_period,
 		.PreambleType		= conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,

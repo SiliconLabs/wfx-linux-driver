@@ -135,7 +135,6 @@ struct wfx_dev {
 	/* BBP/MAC state */
 	struct ieee80211_rate		*rates;
 	struct ieee80211_rate		*mcs_rates;
-	struct ieee80211_channel	*channel;
 	struct wfx_ht_info		ht_info;
 	u8				long_frame_max_tx_count;
 	u8				short_frame_max_tx_count;
@@ -186,6 +185,7 @@ struct wfx_dev {
 struct wfx_vif {
 	struct wfx_dev		*wdev;
 	struct ieee80211_vif	*vif;
+	struct ieee80211_channel *channel;
 	int			Id;
 	int			mode;
 	int			power_set_true;

@@ -463,7 +463,7 @@ static const struct ieee80211_rate *wfx_get_tx_rate(struct wfx_vif *wvif,
 		return NULL;
 	if (rate->flags & IEEE80211_TX_RC_MCS)
 		return &wdev->mcs_rates[rate->idx];
-	return &wdev->hw->wiphy->bands[wdev->channel->band]->bitrates[rate->idx];
+	return &wdev->hw->wiphy->bands[wvif->channel->band]->bitrates[rate->idx];
 }
 
 static int wfx_tx_h_calc_link_ids(struct wfx_vif *wvif, struct wfx_txinfo *t)

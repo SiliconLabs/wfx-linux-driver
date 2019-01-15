@@ -412,7 +412,7 @@ void wfx_probe_work(struct work_struct *work)
 		scan.scan_req.ScanType.Type = 1;        /* WSM_SCAN_TYPE_BG; */
 		scan.scan_req.ScanFlags.Fbg = 1;        /* WSM_SCAN_FLAG_FORCE_BACKGROUND */
 	}
-	scan.scan_req.NumOfChannels = wdev->channel->hw_value;
+	scan.scan_req.NumOfChannels = wvif->channel->hw_value;
 
 	skb_pull(skb, txpriv->offset);
 

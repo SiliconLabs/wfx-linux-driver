@@ -216,7 +216,7 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 	seq_printf(seq, "Join state: %s\n",
 		   wfx_debug_state[wvif->state]);
 	seq_printf(seq, "Channel:    %d\n",
-		   wdev->channel ? wdev->channel->hw_value : -1);
+		   wvif->channel ? wvif->channel->hw_value : -1);
 
 	if (wvif->rx_filter.bssid)
 		seq_puts(seq, "Filter:     bssid\n");
