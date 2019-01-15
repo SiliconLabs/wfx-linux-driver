@@ -209,11 +209,6 @@ static int wsm_event_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 	return 0;
 }
 
-static int wsm_set_pm_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
-{
-	return 0;
-}
-
 static int wsm_scan_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
@@ -383,7 +378,7 @@ static const struct {
 	{ HI_CONFIGURATION_CNF_ID,       wsm_generic_confirm },
 	/* Indications */
 	{ WSM_HI_EVENT_IND_ID,           wsm_event_indication },
-	{ WSM_HI_SET_PM_MODE_CMPL_IND_ID, wsm_set_pm_indication },
+	{ WSM_HI_SET_PM_MODE_CMPL_IND_ID, NULL },
 	{ WSM_HI_JOIN_COMPLETE_IND_ID,   wsm_join_complete_indication },
 	{ WSM_HI_SCAN_CMPL_IND_ID,       wsm_scan_complete_indication },
 	{ WSM_HI_SUSPEND_RESUME_TX_IND_ID, wsm_suspend_resume_indication },
@@ -403,8 +398,12 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm, struct sk_buff **skb_p)
 	if (wsm_id == WSM_HI_RX_IND_ID)
 		return wsm_receive_indication(wdev, &wsm[0], &wsm[1], skb_p);
 	for (i = 0; i < ARRAY_SIZE(wsm_handlers); i++)
-		if (wsm_handlers[i].msg_id == wsm_id)
-			return wsm_handlers[i].handler(wdev, &wsm[0], &wsm[1]);
+		if (wsm_handlers[i].msg_id == wsm_id) {
+			if (wsm_handlers[i].handler)
+				return wsm_handlers[i].handler(wdev, &wsm[0], &wsm[1]);
+			else
+				return 0;
+		}
 	dev_err(wdev->pdev, "Unsupported WSM ID %02x\n", wsm_id);
 	return -EIO;
 }
