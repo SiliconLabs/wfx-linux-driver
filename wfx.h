@@ -260,7 +260,6 @@ struct wfx_vif {
 	/* API */
 	WsmHiSetPmModeReqBody_t		powersave_mode;
 	WsmHiSetBssParamsReqBody_t	bss_params;
-	WsmHiSetPmModeReqBody_t		firmware_ps_mode;
 	WsmHiMibSetUapsdInformation_t	uapsd_info;
 	WsmHiMibSetAssociationMode_t	association_mode;
 	WsmHiAddKeyReqBody_t		keys[WSM_KEY_MAX_INDEX + 1];

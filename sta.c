@@ -728,17 +728,11 @@ int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 	}
 
 	pr_debug("Set PM %d, %d\n", pm.PmMode.FastPsm, pm.PmMode.PmMode);
-	if (memcmp(&pm, &wvif->firmware_ps_mode,
-		   sizeof(WsmHiSetPmModeReqBody_t))) {
-		wvif->firmware_ps_mode = pm;
-		ret = wsm_set_pm(wvif->wdev, &pm, wvif->Id);
-		// FIXME: why ?
-		if (-ETIMEDOUT == wvif->scan.status)
-			wvif->scan.status = 1;
-		return ret;
-	} else {
-		return 0;
-	}
+	ret = wsm_set_pm(wvif->wdev, &pm, wvif->Id);
+	// FIXME: why ?
+	if (-ETIMEDOUT == wvif->scan.status)
+		wvif->scan.status = 1;
+	return ret;
 }
 
 int wfx_set_key(struct ieee80211_hw *dev, enum set_key_cmd cmd,
@@ -1498,8 +1492,6 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 	       sizeof(wvif->association_mode));
 	memset(&wvif->bss_params, 0, sizeof(wvif->bss_params));
 	wvif->setbssparams_done = false;
-	memset(&wvif->firmware_ps_mode, 0,
-	       sizeof(wvif->firmware_ps_mode));
 	memset(&wvif->wdev->ht_info, 0, sizeof(wvif->wdev->ht_info));
 
 	pr_debug("[STA] Unjoin completed.\n");
