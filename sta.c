@@ -188,6 +188,8 @@ void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 }
 
 int wfx_add_interface(struct ieee80211_hw *dev,
+	// FIXME: parameters are set by kernel juste after interface_add.
+	// Keep WsmHiEdcaQueueParamsReqBody_t blank?
 			 struct ieee80211_vif *vif)
 {
 	int ret, i;
@@ -661,7 +663,7 @@ int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
 		edca->AIFSN = params->aifs;
 		edca->CwMin = params->cw_min;
 		edca->CwMax = params->cw_max;
-		edca->TxOpLimit = params->txop;
+		edca->TxOpLimit = params->txop * TXOP_UNIT;
 		edca->AllowedMediumTime = 0;
 		ret = wsm_set_edca_queue_params(wdev, edca, wvif->Id);
 		if (ret) {
@@ -2369,28 +2371,28 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 			.AIFSN = 2,
 			.CwMin = 3,
 			.CwMax = 7,
-			.TxOpLimit = 47,
+			.TxOpLimit = TXOP_UNIT * 47,
 		},
 		[IEEE80211_AC_VI] = {
 			.QueueId = WSM_QUEUE_ID_VIDEO,
 			.AIFSN = 2,
 			.CwMin = 7,
 			.CwMax = 15,
-			.TxOpLimit = 94,
+			.TxOpLimit = TXOP_UNIT * 94,
 		},
 		[IEEE80211_AC_BE] = {
 			.QueueId = WSM_QUEUE_ID_BACKGROUND,
 			.AIFSN = 3,
 			.CwMin = 15,
 			.CwMax = 1023,
-			.TxOpLimit = 0,
+			.TxOpLimit = TXOP_UNIT * 0,
 		},
 		[IEEE80211_AC_BK] = {
 			.QueueId = WSM_QUEUE_ID_BESTEFFORT,
 			.AIFSN = 7,
 			.CwMin = 15,
 			.CwMax = 1023,
-			.TxOpLimit = 0,
+			.TxOpLimit = TXOP_UNIT * 0,
 		},
 	};
 
