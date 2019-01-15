@@ -184,10 +184,6 @@ struct wfx_dev {
 	struct tx_policy_cache tx_policy_cache;
 	struct work_struct tx_policy_upload_work;
 
-	/* legacy PS mode switch in suspend */
-	int			ps_mode_switch_in_progress;
-	wait_queue_head_t	ps_mode_switch_done;
-
 	/* For debugfs 'rx_stats' file */
 	HiRxStats_t rx_stats;
 };

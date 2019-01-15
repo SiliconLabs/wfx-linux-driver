@@ -211,10 +211,6 @@ static int wsm_event_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 
 static int wsm_set_pm_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
-	if (wdev->ps_mode_switch_in_progress) {
-		wdev->ps_mode_switch_in_progress = 0;
-		wake_up(&wdev->ps_mode_switch_done);
-	}
 	return 0;
 }
 
