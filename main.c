@@ -366,6 +366,7 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 		      struct device *pdev,
 		   struct wfx_dev **core)
 {
+	int i;
 	int err = -EINVAL;
 	struct ieee80211_hw *dev;
 	struct wfx_dev *wdev;
@@ -433,17 +434,22 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 
 	wsm_use_multi_tx_conf(wdev, true);
 
-	eth_zero_addr(dev->wiphy->perm_addr);
-	macaddr = of_get_mac_address(pdev->of_node);
-	if (macaddr)
-		ether_addr_copy(dev->wiphy->perm_addr, macaddr);
-	if (!is_valid_ether_addr(dev->wiphy->perm_addr))
-		ether_addr_copy(dev->wiphy->perm_addr, wdev->wsm_caps.MacAddr0);
-	if (!is_valid_ether_addr(dev->wiphy->perm_addr)) {
-		dev_warn(wdev->pdev, "using random MAC address\n");
-		eth_random_addr(dev->wiphy->perm_addr);
+	for (i = 0; i < ARRAY_SIZE(wdev->addresses); i++) {
+		eth_zero_addr(wdev->addresses[i].addr);
+		macaddr = of_get_mac_address(pdev->of_node);
+		if (macaddr) {
+			ether_addr_copy(wdev->addresses[i].addr, macaddr);
+			wdev->addresses[i].addr[ETH_ALEN - 1] += i;
+		}
+		ether_addr_copy(wdev->addresses[i].addr, wdev->wsm_caps.MacAddr[i]);
+		if (!is_valid_ether_addr(wdev->addresses[i].addr)) {
+			dev_warn(wdev->pdev, "using random MAC address\n");
+			eth_random_addr(wdev->addresses[i].addr);
+		}
+		dev_info(wdev->pdev, "MAC address %d: %pM\n", i, wdev->addresses[i].addr);
 	}
-	dev_info(wdev->pdev, "MAC address: %pM\n", dev->wiphy->perm_addr);
+	dev->wiphy->n_addresses = ARRAY_SIZE(wdev->addresses);
+	dev->wiphy->addresses = wdev->addresses;
 
 	err = wfx_register_common(dev);
 	if (err)

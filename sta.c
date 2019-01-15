@@ -74,21 +74,7 @@ static inline void __wfx_free_event_queue(struct list_head *list)
 
 int wfx_start(struct ieee80211_hw *dev)
 {
-	struct wfx_dev *wdev = dev->priv;
-	int ret = 0;
-
-	pr_debug("[STA] wfx_start\n");
-	mutex_lock(&wdev->conf_mutex);
-
-	ether_addr_copy(wdev->mac_addr, dev->wiphy->perm_addr);
-
-	ret = wsm_set_macaddr(wdev, wdev->mac_addr, 0);
-	if (ret)
-		goto out;
-
-out:
-	mutex_unlock(&wdev->conf_mutex);
-	return ret;
+	return 0;
 }
 
 /*This should stop WFx driver when receive a critical error.
@@ -224,8 +210,7 @@ int wfx_add_interface(struct ieee80211_hw *dev,
 	wvif->wdev = wdev;
 	wvif->Id = 0;
 	wvif->mode = vif->type;
-	ether_addr_copy(wdev->mac_addr, vif->addr);
-	ret = wsm_set_macaddr(wdev, wdev->mac_addr, wvif->Id);
+	ret = wsm_set_macaddr(wdev, vif->addr, wvif->Id);
 	wfx_vif_setup(wvif);
 	mutex_unlock(&wdev->conf_mutex);
 	for (i = 0; i < 4; i++)
@@ -280,10 +265,9 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 		break;
 	}
 	wvif->mode = NL80211_IFTYPE_MONITOR;
-	eth_zero_addr(wdev->mac_addr);
 	wfx_free_keys(wvif);
 
-	wsm_set_macaddr(wdev, wdev->mac_addr, wvif->Id);
+	wsm_set_macaddr(wdev, NULL, wvif->Id);
 
 	wvif->listening = false;
 	wvif->state = WFX_STATE_PASSIVE;
@@ -1462,7 +1446,7 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 	wsm_reset(wvif->wdev, false, wvif->Id);
 	wsm_set_output_power(wvif->wdev, wvif->wdev->output_power * 10, wvif->Id);
 	wvif->dtim_period = 0;
-	wsm_set_macaddr(wvif->wdev, wvif->wdev->mac_addr, wvif->Id);
+	wsm_set_macaddr(wvif->wdev, wvif->vif->addr, wvif->Id);
 	wfx_free_event_queue(wvif);
 	cancel_work_sync(&wvif->event_handler);
 	wfx_update_listening(wvif, wvif->listening);

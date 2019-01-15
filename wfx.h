@@ -110,13 +110,10 @@ struct wfx_dev {
 	struct device			*pdev;
 	struct ieee80211_hw		*hw;
 	struct ieee80211_vif		*vif;
+	struct mac_address		addresses[1];
 
 	/* Statistics */
 	struct ieee80211_low_level_stats stats;
-
-	/* MAC address affected to hardware. It may vary depending of mode of
-	 * operations */
-	u8 mac_addr[ETH_ALEN];
 
 	/* Hardware interface */
 	const struct hwbus_ops		*hwbus_ops;

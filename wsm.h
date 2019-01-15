@@ -245,7 +245,8 @@ static inline int wsm_set_macaddr(struct wfx_dev *wdev, u8 *mac, int Id)
 {
 	WsmHiMibMacAddress_t msg = { };
 
-	ether_addr_copy(msg.MacAddr, mac);
+	if (mac)
+		ether_addr_copy(msg.MacAddr, mac);
 	return wsm_write_mib(wdev, WSM_MIB_ID_DOT11_MAC_ADDRESS, &msg, sizeof(msg), Id);
 }
 

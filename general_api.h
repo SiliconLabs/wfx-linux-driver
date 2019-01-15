@@ -293,8 +293,7 @@ typedef struct __attribute__((__packed__)) HiStartupIndBody_s {
         uint16_t   SizeInpChBuf;                     ///<Tx Buffer size in bytes=request message max size (currently 1616 bytes).
         uint8_t    NumLinksAP;                       ///<number of STA that are supported in AP mode (currently 14)
         uint8_t    NumInterfaces;                    ///<number of interfaces (WIFI link : STA or AP) that can be created by the user (currently 2)
-        uint8_t    MacAddr0[API_MAC_ADDR_SIZE];      ///<1st MAC address derived from OTP
-        uint8_t    MacAddr1[API_MAC_ADDR_SIZE];      ///<2d MAC address derived from OTP
+        uint8_t    MacAddr[2][API_MAC_ADDR_SIZE];      ///<MAC addresses derived from OTP
         uint8_t    ApiVersionMinor;
         uint8_t    ApiVersionMajor;
         HiCapabilities_t Capabilities;
