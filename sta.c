@@ -483,21 +483,25 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	struct wsm_rx_filter l_rx_filter;
 	static WsmHiMibBcnFilterEnable_t bf_ctrl;
 	static WsmHiMibBcnFilterTable_t bf_tbl = {
-		.IeTable[0].IeId	= WLAN_EID_VENDOR_SPECIFIC,
-		.IeTable[0].HasChanged	= 1,
-		.IeTable[0].NoLonger	= 1,
-		.IeTable[0].HasAppeared = 1,
-		.IeTable[0].Oui[0] = 0x50,
-		.IeTable[0].Oui[1] = 0x6F,
-		.IeTable[0].Oui[2] = 0x9A,
-		.IeTable[1].IeId	= WLAN_EID_HT_OPERATION,
-		.IeTable[1].HasChanged	= 1,
-		.IeTable[1].NoLonger	= 1,
-		.IeTable[1].HasAppeared = 1,
-		.IeTable[2].IeId	= WLAN_EID_ERP_INFO,
-		.IeTable[2].HasChanged	= 1,
-		.IeTable[2].NoLonger	= 1,
-		.IeTable[2].HasAppeared = 1,
+		.IeTable = {
+			{
+				.IeId        = WLAN_EID_VENDOR_SPECIFIC,
+				.HasChanged  = 1,
+				.NoLonger    = 1,
+				.HasAppeared = 1,
+				.Oui         = { 0x50, 0x6F, 0x9A},
+			}, {
+				.IeId        = WLAN_EID_HT_OPERATION,
+				.HasChanged  = 1,
+				.NoLonger    = 1,
+				.HasAppeared = 1,
+			}, {
+				.IeId        = WLAN_EID_ERP_INFO,
+				.HasChanged  = 1,
+				.NoLonger    = 1,
+				.HasAppeared = 1,
+			}
+		}
 	};
 
 	memcpy(&l_rx_filter, &wvif->rx_filter, sizeof(l_rx_filter));
@@ -939,8 +943,7 @@ finally:
 
 void wfx_wep_key_work(struct work_struct *work)
 {
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, wep_key_work);
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, wep_key_work);
 	u8 queue_id = wfx_queue_get_queue_id(wvif->wdev->pending_frame_id);
 	struct wfx_queue *queue = &wvif->wdev->tx_queue[queue_id];
 	int wep_default_key_id = wvif->wep_default_key_id;
@@ -1257,13 +1260,11 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	struct cfg80211_bss *bss = NULL;
 	struct wsm_protected_mgmt_policy mgmt_policy;
 	WsmHiJoinReqBody_t join = {
-		.Mode		= conf->ibss_joined ?
-				  WSM_MODE_IBSS : WSM_MODE_BSS,
+		.Mode		= conf->ibss_joined ? WSM_MODE_IBSS : WSM_MODE_BSS,
 		.PreambleType	= WSM_PREAMBLE_LONG,
 		.ProbeForJoin	= 1,
 		.AtimWindow	= 0,
-		.BasicRateSet	= wfx_rate_mask_to_wsm(wvif->wdev,
-							  conf->basic_rates),
+		.BasicRateSet	= wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
 	};
 
 	if (delayed_work_pending(&wvif->join_timeout)) {
