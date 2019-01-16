@@ -256,10 +256,10 @@ void wfx_scan_work(struct work_struct *work)
 
 		if (wdev->scan.curr[0]->flags & IEEE80211_CHAN_NO_IR) {
 			scan.scan_req.MinChannelTime = 50;
-			scan.scan_req.MaxChannelTime = 100;
+			scan.scan_req.MaxChannelTime = 150;
 		} else {
 			scan.scan_req.MinChannelTime = 10;
-			scan.scan_req.MaxChannelTime = 25;
+			scan.scan_req.MaxChannelTime = 50;
 		}
 		if (!(first->flags & IEEE80211_CHAN_NO_IR) &&
 		    wdev->scan.output_power != first->max_power) {
