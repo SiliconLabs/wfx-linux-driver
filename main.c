@@ -60,39 +60,22 @@ int power_mode = -1;
 module_param(power_mode, int, 0644);
 MODULE_PARM_DESC(power_mode, "Force power save mode. 0: Disabled, 1: Allow doze, 2: Allow quiescent");
 
-#define wfx_a_rates        (wfx_rates + 4)
-#define wfx_a_rates_size    (ARRAY_SIZE(wfx_rates) - 4)
-#define wfx_g_rates        (wfx_rates + 0)
-#define wfx_g_rates_size    (ARRAY_SIZE(wfx_rates))
-#define wfx_n_rates        (wfx_mcs_rates)
-#define wfx_n_rates_size    (ARRAY_SIZE(wfx_mcs_rates))
-
-#define RATETAB_ENT(_rate, _rateid, _flags)		\
-	{						\
-		.bitrate	= (_rate),		\
-		.hw_value	= (_rateid),		\
-		.flags		= (_flags),		\
-	}
-
-#define CHAN2G(_channel, _freq, _flags) {            \
-		.band = NL80211_BAND_2GHZ,        \
-		.center_freq = (_freq),            \
-		.hw_value = (_channel),            \
-		.flags = (_flags),            \
-		.max_antenna_gain = 0,                \
-		.max_power = 30,                \
+#define RATETAB_ENT(_rate, _rateid, _flags) { \
+	.bitrate	= (_rate),   \
+	.hw_value	= (_rateid), \
+	.flags		= (_flags),  \
 }
 
 
 static struct ieee80211_rate wfx_rates[] = {
-	RATETAB_ENT(10,  0,   0),
-	RATETAB_ENT(20,  1,   0),
-	RATETAB_ENT(55,  2,   0),
-	RATETAB_ENT(110, 3,   0),
-	RATETAB_ENT(60,  6,  0),
-	RATETAB_ENT(90,  7,  0),
-	RATETAB_ENT(120, 8,  0),
-	RATETAB_ENT(180, 9,  0),
+	RATETAB_ENT( 10,  0, 0),
+	RATETAB_ENT( 20,  1, 0),
+	RATETAB_ENT( 55,  2, 0),
+	RATETAB_ENT(110,  3, 0),
+	RATETAB_ENT( 60,  6, 0),
+	RATETAB_ENT( 90,  7, 0),
+	RATETAB_ENT(120,  8, 0),
+	RATETAB_ENT(180,  9, 0),
 	RATETAB_ENT(240, 10, 0),
 	RATETAB_ENT(360, 11, 0),
 	RATETAB_ENT(480, 12, 0),
@@ -100,7 +83,7 @@ static struct ieee80211_rate wfx_rates[] = {
 };
 
 static struct ieee80211_rate wfx_mcs_rates[] = {
-	RATETAB_ENT(65,  14, IEEE80211_TX_RC_MCS),
+	RATETAB_ENT( 65, 14, IEEE80211_TX_RC_MCS),
 	RATETAB_ENT(130, 15, IEEE80211_TX_RC_MCS),
 	RATETAB_ENT(195, 16, IEEE80211_TX_RC_MCS),
 	RATETAB_ENT(260, 17, IEEE80211_TX_RC_MCS),
@@ -110,16 +93,25 @@ static struct ieee80211_rate wfx_mcs_rates[] = {
 	RATETAB_ENT(650, 21, IEEE80211_TX_RC_MCS),
 };
 
+#define CHAN2G(_channel, _freq, _flags) { \
+	.band = NL80211_BAND_2GHZ, \
+	.center_freq = (_freq),    \
+	.hw_value = (_channel),    \
+	.flags = (_flags),         \
+	.max_antenna_gain = 0,     \
+	.max_power = 30,           \
+}
+
 static struct ieee80211_channel wfx_2ghz_chantable[] = {
-	CHAN2G(1, 2412, 0),
-	CHAN2G(2, 2417, 0),
-	CHAN2G(3, 2422, 0),
-	CHAN2G(4, 2427, 0),
-	CHAN2G(5, 2432, 0),
-	CHAN2G(6, 2437, 0),
-	CHAN2G(7, 2442, 0),
-	CHAN2G(8, 2447, 0),
-	CHAN2G(9, 2452, 0),
+	CHAN2G( 1, 2412, 0),
+	CHAN2G( 2, 2417, 0),
+	CHAN2G( 3, 2422, 0),
+	CHAN2G( 4, 2427, 0),
+	CHAN2G( 5, 2432, 0),
+	CHAN2G( 6, 2437, 0),
+	CHAN2G( 7, 2442, 0),
+	CHAN2G( 8, 2447, 0),
+	CHAN2G( 9, 2452, 0),
 	CHAN2G(10, 2457, 0),
 	CHAN2G(11, 2462, 0),
 	CHAN2G(12, 2467, 0),
@@ -131,30 +123,18 @@ static struct ieee80211_channel wfx_2ghz_chantable[] = {
 static struct ieee80211_supported_band wfx_band_2ghz = {
 	.channels = wfx_2ghz_chantable,
 	.n_channels = ARRAY_SIZE(wfx_2ghz_chantable),
-	.bitrates = wfx_g_rates,
-	.n_bitrates = wfx_g_rates_size,
-
-	/**
-	 * LDPC: WFx driver supports only Transmit LDPC Tx.
-	 * IEEE80211_HT_CAP_LDPC_CODING should not be enabled
-	 *
-	 * SGI: WFx driver supports only Short GI for 20 MHZ
-	 * IEEE80211_HT_CAP_SGI_40 capability should not be enabled
-	 *
-	 *
-	 */
+	.bitrates = wfx_rates,
+	.n_bitrates = ARRAY_SIZE(wfx_rates),
 	.ht_cap = {
-		.cap			= IEEE80211_HT_CAP_GRN_FLD | /* Receive Greenfield */
-					  IEEE80211_HT_CAP_SGI_20 |  /* Receive Short GI for 20MHZ */
-					  (1 <<
-		IEEE80211_HT_CAP_RX_STBC_SHIFT) |                    /* Receive STBC for 20MHZ */
-			IEEE80211_HT_CAP_MAX_AMSDU,
+		// Receive caps
+		.cap = IEEE80211_HT_CAP_GRN_FLD | IEEE80211_HT_CAP_SGI_20 |
+		       IEEE80211_HT_CAP_MAX_AMSDU | (1 << IEEE80211_HT_CAP_RX_STBC_SHIFT),
 		.ht_supported = 1,
-		.ampdu_factor		= IEEE80211_HT_MAX_AMPDU_16K,
+		.ampdu_factor = IEEE80211_HT_MAX_AMPDU_16K,
 		.ampdu_density = IEEE80211_HT_MPDU_DENSITY_NONE,
 		.mcs = {
-			.rx_mask[0] = 0xFF,
-			.rx_highest = cpu_to_le16(0x41),
+			.rx_mask = { 0xFF }, // MCS0 to MCS7
+			.rx_highest = 65,
 			.tx_params = IEEE80211_HT_MCS_TX_DEFINED,
 		},
 	},
@@ -247,7 +227,7 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 	}
 
 	wdev->rates = wfx_rates;
-	wdev->mcs_rates = wfx_n_rates;
+	wdev->mcs_rates = wfx_mcs_rates;
 
 	ieee80211_hw_set(hw, NEED_DTIM_BEFORE_ASSOC);
 	ieee80211_hw_set(hw, TX_AMPDU_SETUP_IN_HW);
