@@ -29,11 +29,9 @@
 
 #define WF200_INVALID_RATE_ID (0xFF)
 
-static int wfx_handle_action_rx(struct wfx_dev *wdev,
-				   struct sk_buff *skb);
-static const struct ieee80211_rate *
-wfx_get_tx_rate(const struct wfx_dev		*wdev,
-		   const struct ieee80211_tx_rate *rate);
+static int wfx_handle_action_rx(struct wfx_dev *wdev, struct sk_buff *skb);
+static const struct ieee80211_rate *wfx_get_tx_rate(const struct wfx_dev *wdev,
+						    const struct ieee80211_tx_rate *rate);
 
 /* ******************************************************************** */
 /* TX queue lock / unlock						*/
@@ -73,9 +71,8 @@ static void tx_policy_dump(struct tx_policy *policy)
 		 policy->defined);
 }
 
-static void tx_policy_build(const struct wfx_dev *wdev,
-			    struct tx_policy *policy,
-	struct ieee80211_tx_rate *rates, size_t count)
+static void tx_policy_build(struct wfx_dev *wdev, struct tx_policy *policy,
+			    struct ieee80211_tx_rate *rates, size_t count)
 {
 	int i, j;
 	unsigned limit = wdev->short_frame_max_tx_count;
@@ -205,7 +202,7 @@ static void tx_policy_build(const struct wfx_dev *wdev,
 }
 
 static inline bool tx_policy_is_equal(const struct tx_policy *wanted,
-					const struct tx_policy *cached)
+				      const struct tx_policy *cached)
 {
 	size_t count = wanted->defined >> 1;
 	if (wanted->defined > cached->defined)
@@ -222,7 +219,7 @@ static inline bool tx_policy_is_equal(const struct tx_policy *wanted,
 }
 
 static int tx_policy_find(struct tx_policy_cache *cache,
-				const struct tx_policy *wanted)
+			  const struct tx_policy *wanted)
 {
 	/* O(n) complexity. Not so good, but there's only 8 entries in
 	 * the cache.
@@ -304,9 +301,8 @@ void tx_policy_init(struct wfx_dev *wdev)
 		list_add(&cache->cache[i].link, &cache->free);
 }
 
-static int tx_policy_get(struct wfx_dev *wdev,
-		  struct ieee80211_tx_rate *rates,
-		  size_t count, bool *renew)
+static int tx_policy_get(struct wfx_dev *wdev, struct ieee80211_tx_rate *rates,
+			 size_t count, bool *renew)
 {
 	int idx;
 	struct tx_policy_cache *cache = &wdev->tx_policy_cache;
@@ -430,9 +426,7 @@ struct wfx_txinfo {
 };
 
 /* Send map request message to firmware and save peer MAC address */
-int wfx_map_link(struct wfx_vif		*wvif,
-		 struct wfx_link_entry		*link_entry,
-		 int sta_id)
+int wfx_map_link(struct wfx_vif *wvif, struct wfx_link_entry *link_entry, int sta_id)
 {
 	int ret;
 
@@ -459,9 +453,8 @@ u32 wfx_rate_mask_to_wsm(struct wfx_dev *wdev, u32 rates)
 	return ret;
 }
 
-static const struct ieee80211_rate *
-wfx_get_tx_rate(const struct wfx_dev		*wdev,
-		   const struct ieee80211_tx_rate *rate)
+static const struct ieee80211_rate *wfx_get_tx_rate(const struct wfx_dev *wdev,
+						    const struct ieee80211_tx_rate *rate)
 {
 	if (rate->idx < 0)
 		return NULL;
@@ -470,9 +463,7 @@ wfx_get_tx_rate(const struct wfx_dev		*wdev,
 	return &wdev->hw->wiphy->bands[wdev->channel->band]->bitrates[rate->idx];
 }
 
-static int
-wfx_tx_h_calc_link_ids(struct wfx_vif	*wvif,
-			  struct wfx_txinfo *t)
+static int wfx_tx_h_calc_link_ids(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
 	if (t->sta && t->sta_priv->link_id) {
 		t->txpriv.raw_link_id =
@@ -508,9 +499,7 @@ wfx_tx_h_calc_link_ids(struct wfx_vif	*wvif,
 	return 0;
 }
 
-static void
-wfx_tx_h_pm(struct wfx_vif	*wvif,
-	       struct wfx_txinfo *t)
+static void wfx_tx_h_pm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
 	if (ieee80211_is_auth(t->hdr->frame_control)) {
 		u32 mask = ~BIT(t->txpriv.raw_link_id);
@@ -521,9 +510,7 @@ wfx_tx_h_pm(struct wfx_vif	*wvif,
 	}
 }
 
-static void
-wfx_tx_h_calc_tid(struct wfx_vif	*wvif,
-		     struct wfx_txinfo *t)
+static void wfx_tx_h_calc_tid(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
 	if (ieee80211_is_data_qos(t->hdr->frame_control)) {
 		u8 *qos = ieee80211_get_qos_ctl(t->hdr);
@@ -533,9 +520,7 @@ wfx_tx_h_calc_tid(struct wfx_vif	*wvif,
 	}
 }
 
-static int
-wfx_tx_h_crypt(struct wfx_vif	*wvif,
-		  struct wfx_txinfo *t)
+static int wfx_tx_h_crypt(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
 	if (!t->tx_info->control.hw_key ||
 	    !ieee80211_has_protected(t->hdr->frame_control))
@@ -550,10 +535,7 @@ wfx_tx_h_crypt(struct wfx_vif	*wvif,
 	return 0;
 }
 
-static int
-wfx_tx_h_align(struct wfx_vif	*wvif,
-		  struct wfx_txinfo *t,
-	       WsmHiDataFlags_t		*flags)
+static int wfx_tx_h_align(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiDataFlags_t *flags)
 {
 	size_t offset = (size_t)t->skb->data & 3;
 
@@ -577,9 +559,7 @@ wfx_tx_h_align(struct wfx_vif	*wvif,
 	return 0;
 }
 
-static int
-wfx_tx_h_action(struct wfx_vif	*wvif,
-		   struct wfx_txinfo *t)
+static int wfx_tx_h_action(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
 	struct ieee80211_mgmt *mgmt =
 		(struct ieee80211_mgmt *)t->hdr;
@@ -591,9 +571,7 @@ wfx_tx_h_action(struct wfx_vif	*wvif,
 }
 
 /* Add WSM header */
-static WsmHiTxReq_t *
-wfx_tx_h_wsm(struct wfx_vif	*wvif,
-		struct wfx_txinfo *t)
+static WsmHiTxReq_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
 	WsmHiTxReq_t *wsm;
 	u32 wsm_length = sizeof(WsmHiTxReq_t) - sizeof(u32);
@@ -618,10 +596,7 @@ wfx_tx_h_wsm(struct wfx_vif	*wvif,
 	return wsm;
 }
 
-static int
-wfx_tx_h_rate_policy(struct wfx_dev	*wdev,
-			struct wfx_txinfo *t,
-		     WsmHiTxReq_t	*wsm)
+static int wfx_tx_h_rate_policy(struct wfx_dev *wdev, struct wfx_txinfo *t, WsmHiTxReq_t *wsm)
 {
 	bool tx_policy_renew = false;
 	struct ieee80211_bss_conf *conf = &wdev->vif->bss_conf;
@@ -720,9 +695,7 @@ wfx_tx_h_rate_policy(struct wfx_dev	*wdev,
 	return 0;
 }
 
-static bool
-wfx_tx_h_pm_state(struct wfx_vif	*wvif,
-		     struct wfx_txinfo *t)
+static bool wfx_tx_h_pm_state(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
 	int was_buffered = 1;
 
@@ -742,9 +715,8 @@ wfx_tx_h_pm_state(struct wfx_vif	*wvif,
 
 /* ******************************************************************** */
 
-void wfx_tx(struct ieee80211_hw *dev,
-	       struct ieee80211_tx_control *control,
-	       struct sk_buff *skb)
+void wfx_tx(struct ieee80211_hw *dev, struct ieee80211_tx_control *control,
+	    struct sk_buff *skb)
 {
 	struct wfx_dev *wdev = dev->priv;
 	struct wfx_vif *wvif;
@@ -835,8 +807,7 @@ drop:
 
 /* ******************************************************************** */
 
-static int wfx_handle_action_rx(struct wfx_dev	*wdev,
-				   struct sk_buff *skb)
+static int wfx_handle_action_rx(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	struct ieee80211_mgmt *mgmt = (void *)skb->data;
 
@@ -847,8 +818,7 @@ static int wfx_handle_action_rx(struct wfx_dev	*wdev,
 	return 0;
 }
 
-static int wfx_handle_pspoll(struct wfx_vif	*wvif,
-				struct sk_buff *skb)
+static int wfx_handle_pspoll(struct wfx_vif *wvif, struct sk_buff *skb)
 {
 	struct ieee80211_sta *sta;
 	struct ieee80211_pspoll *pspoll = (struct ieee80211_pspoll *)skb->data;
@@ -893,8 +863,7 @@ done:
 
 /* ******************************************************************** */
 
-void wfx_tx_confirm_cb(struct wfx_dev	*wdev,
-		       WsmHiTxCnfBody_t		*arg)
+void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 {
 	struct wfx_vif *wvif;
 	u8 queue_id = wfx_queue_get_queue_id(arg->PacketId);
@@ -1008,8 +977,8 @@ void wfx_tx_confirm_cb(struct wfx_dev	*wdev,
 	wfx_bh_wakeup(wdev);
 }
 
-static void wfx_notify_buffered_tx(struct wfx_vif *wvif,
-			       struct sk_buff *skb, int link_id, int tid)
+static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
+				   int link_id, int tid)
 {
 	struct ieee80211_sta *sta;
 	struct ieee80211_hdr *hdr;
@@ -1038,9 +1007,8 @@ static void wfx_notify_buffered_tx(struct wfx_vif *wvif,
 	}
 }
 
-void wfx_skb_dtor(struct wfx_dev		*wdev,
-		     struct sk_buff *skb,
-		     const struct wfx_txpriv *txpriv)
+void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb,
+		  const struct wfx_txpriv *txpriv)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, txpriv->vif_id);
 
@@ -1053,10 +1021,8 @@ void wfx_skb_dtor(struct wfx_dev		*wdev,
 	ieee80211_tx_status(wdev->hw, skb);
 }
 
-void wfx_rx_cb(struct wfx_vif	*wvif,
-	       WsmHiRxIndBody_t		*arg,
-		  int link_id,
-		  struct sk_buff **skb_p)
+void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg,
+	       int link_id, struct sk_buff **skb_p)
 {
 	struct sk_buff *skb = *skb_p;
 	struct ieee80211_rx_status *hdr = IEEE80211_SKB_RXCB(skb);
