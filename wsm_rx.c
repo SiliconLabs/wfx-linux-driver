@@ -117,27 +117,15 @@ static int wsm_startup_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 {
 	HiStartupIndBody_t *body = buf;
 
+	if (body->Status || body->FirmwareType > 4) {
+		dev_err(wdev->pdev, "Received invalid startup indication");
+		return -EINVAL;
+	}
 	memcpy(&wdev->wsm_caps, body, sizeof(HiStartupIndBody_t));
 	le32_to_cpus(&wdev->wsm_caps.Status);
 	le16_to_cpus(&wdev->wsm_caps.HardwareId);
 	le16_to_cpus(&wdev->wsm_caps.NumInpChBufs);
 	le16_to_cpus(&wdev->wsm_caps.SizeInpChBuf);
-	if (body->Status || body->FirmwareType > 4) {
-		dev_err(wdev->pdev, "Received invalid startup indication");
-		return -EINVAL;
-	}
-
-	dev_info(wdev->pdev, "Firmware \"%s\" started. Version: %d.%d.%d API: %d.%d caps: 0x%.8X\n",
-		 body->FirmwareLabel,
-		 body->FirmwareMajor, body->FirmwareMinor, body->FirmwareBuild,
-		 body->ApiVersionMajor, body->ApiVersionMinor,
-		 *((u32 *) &body->Capabilities));
-
-	/* Disable unsupported frequency bands */
-/*    if (!(wdev->wsm_caps.FirmwareCap & 0x1)) */
-/*        wdev->hw->wiphy->bands[NL80211_BAND_2GHZ] = NULL; */
-/*    if (!(wdev->wsm_caps.FirmwareCap & 0x2)) */
-	wdev->hw->wiphy->bands[NL80211_BAND_5GHZ] = NULL;
 
 	complete(&wdev->firmware_ready);
 	return 0;

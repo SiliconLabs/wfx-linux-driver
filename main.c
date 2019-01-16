@@ -401,6 +401,12 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 		goto err2;
 	}
 
+	dev_info(wdev->pdev, "Firmware \"%s\" started. Version: %d.%d.%d API: %d.%d caps: 0x%.8X\n",
+		 wdev->wsm_caps.FirmwareLabel, wdev->wsm_caps.FirmwareMajor,
+		 wdev->wsm_caps.FirmwareMinor, wdev->wsm_caps.FirmwareBuild,
+		 wdev->wsm_caps.ApiVersionMajor, wdev->wsm_caps.ApiVersionMinor,
+		 *((u32 *) &wdev->wsm_caps.Capabilities));
+
 	if (wdev->wsm_caps.ApiVersionMajor != 1) {
 		dev_err(wdev->pdev, "Unsupported firmware API version (expect 1 while firmware returns %d)\n", wdev->wsm_caps.ApiVersionMajor);
 		goto err2;
