@@ -106,11 +106,10 @@ struct wfx_platform_data {
 };
 
 struct wfx_dev {
-	struct wfx_platform_data pdata;
-	/* interfaces to the rest of the stack */
+	struct wfx_platform_data	pdata;
+	struct device			*pdev;
 	struct ieee80211_hw		*hw;
 	struct ieee80211_vif		*vif;
-	struct device			*pdev;
 
 	/* Statistics */
 	struct ieee80211_low_level_stats stats;
