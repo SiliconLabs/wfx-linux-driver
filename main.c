@@ -66,7 +66,6 @@ MODULE_PARM_DESC(power_mode, "Force power save mode. 0: Disabled, 1: Allow doze,
 	.flags		= (_flags),  \
 }
 
-
 static struct ieee80211_rate wfx_rates[] = {
 	RATETAB_ENT( 10,  0, 0),
 	RATETAB_ENT( 20,  1, 0),
@@ -119,7 +118,6 @@ static struct ieee80211_channel wfx_2ghz_chantable[] = {
 	CHAN2G(14, 2484, 0),
 };
 
-
 static struct ieee80211_supported_band wfx_band_2ghz = {
 	.channels = wfx_2ghz_chantable,
 	.n_channels = ARRAY_SIZE(wfx_2ghz_chantable),
@@ -139,7 +137,6 @@ static struct ieee80211_supported_band wfx_band_2ghz = {
 		},
 	},
 };
-
 
 static const unsigned long wfx_ttl[] = {
 	1 * HZ,	/* VO */
