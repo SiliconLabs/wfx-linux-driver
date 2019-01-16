@@ -210,7 +210,6 @@ struct wfx_vif {
 	u32			erp_info;
 	u32			bss_loss_confirm_id;
 	u32			cipherType;
-	u32			rts_threshold;
 	u32			key_map;
 
 	bool			enable_beacon;

@@ -960,26 +960,14 @@ void wfx_wep_key_work(struct work_struct *work)
 
 int wfx_set_rts_threshold(struct ieee80211_hw *hw, u32 value)
 {
-	int ret = 0;
 	struct wfx_dev *wdev = hw->priv;
-	// FIXME: Interface id should not been hardcoded
+	// FIXME: Interface id should not been hardcoded. Apply to all vif.
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
-	pr_debug("[STA] wfx_set_rts_threshold = %d\n", value);
-
-	if (wvif->mode == NL80211_IFTYPE_UNSPECIFIED)
+	if (!wvif)
 		return 0;
 
-	if (wvif->rts_threshold == value)
-		return 0;
-
-	/* mutex_lock(&wdev->conf_mutex); */
-	ret = wsm_rts_threshold(wdev, value, wvif->Id);
-	if (!ret)
-		wvif->rts_threshold = value;
-	/* mutex_unlock(&wdev->conf_mutex); */
-
-	return ret;
+	return wsm_rts_threshold(wdev, value, wvif->Id);
 }
 
 /* If successful, LOCKS the TX queue! */
@@ -2424,7 +2412,6 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	wvif->cipherType = 0;
 	wvif->cqm_link_loss_count = 40;
 	wvif->cqm_beacon_loss_count = 20;
-	wvif->rts_threshold = 1000;
 
 	return 0;
 }
