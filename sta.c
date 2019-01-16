@@ -260,7 +260,6 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 		break;
 	}
 	wvif->mode = NL80211_IFTYPE_MONITOR;
-	memset(&wvif->p2p_ps_modeinfo, 0, sizeof(wvif->p2p_ps_modeinfo));
 	wfx_free_keys(wvif);
 
 	wsm_set_macaddr(wdev, NULL, wvif->Id);

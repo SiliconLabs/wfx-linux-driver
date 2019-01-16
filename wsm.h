@@ -405,7 +405,6 @@ static inline int wsm_set_arp_ipv4_filter(struct wfx_dev *wdev,
 			     fp, sizeof(*fp), Id);
 }
 
-
 static inline int wsm_use_multi_tx_conf(struct wfx_dev *wdev,
 					bool enabled)
 {
