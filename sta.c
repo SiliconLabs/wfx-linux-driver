@@ -323,6 +323,47 @@ int wfx_change_interface(struct ieee80211_hw *dev,
 	return ret;
 }
 
+int wfx_add_chanctx(struct ieee80211_hw *hw,
+		    struct ieee80211_chanctx_conf *conf)
+{
+	return 0;
+}
+
+void wfx_remove_chanctx(struct ieee80211_hw *hw,
+			struct ieee80211_chanctx_conf *conf)
+{
+}
+
+void wfx_change_chanctx(struct ieee80211_hw *hw,
+			struct ieee80211_chanctx_conf *conf,
+			u32 changed)
+{
+}
+
+int wfx_assign_vif_chanctx(struct ieee80211_hw *hw,
+			   struct ieee80211_vif *vif,
+			   struct ieee80211_chanctx_conf *conf)
+{
+	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
+	struct ieee80211_channel *ch = conf->def.chan;
+
+	WARN(wvif->channel, "Channel overwrite");
+	wvif->channel = ch;
+
+	return 0;
+}
+
+void wfx_unassign_vif_chanctx(struct ieee80211_hw *hw,
+		struct ieee80211_vif *vif,
+		struct ieee80211_chanctx_conf *conf)
+{
+	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
+	struct ieee80211_channel *ch = conf->def.chan;
+
+	WARN(wvif->channel != ch, "Channel mismatch");
+	wvif->channel = NULL;
+}
+
 int wfx_config(struct ieee80211_hw *dev, u32 changed)
 {
 	int ret = 0;
@@ -339,15 +380,6 @@ int wfx_config(struct ieee80211_hw *dev, u32 changed)
 		wdev->output_power = conf->power_level;
 		pr_debug("[STA] TX power: %d\n", wdev->output_power);
 		wsm_set_output_power(wdev, wdev->output_power * 10, wvif->Id);
-	}
-
-	if (changed & IEEE80211_CONF_CHANGE_CHANNEL &&
-	    wvif->channel != conf->chandef.chan) {
-		struct ieee80211_channel *ch = conf->chandef.chan;
-
-		pr_debug("[STA] Freq %d (wsm ch: %d).\n",
-			 ch->center_freq, ch->hw_value);
-		wvif->channel = ch;
 	}
 
 	if (changed & IEEE80211_CONF_CHANGE_PS) {

@@ -170,6 +170,11 @@ static const struct ieee80211_ops wfx_ops = {
 	.get_stats		= wfx_get_stats,
 	.ampdu_action		= wfx_ampdu_action,
 	.flush			= wfx_flush,
+	.add_chanctx		= wfx_add_chanctx,
+	.remove_chanctx		= wfx_remove_chanctx,
+	.change_chanctx		= wfx_change_chanctx,
+	.assign_vif_chanctx	= wfx_assign_vif_chanctx,
+	.unassign_vif_chanctx	= wfx_unassign_vif_chanctx,
 #ifdef CONFIG_NL80211_TESTMODE
 	.testmode_cmd		= wfx_testmode_command,
 #endif

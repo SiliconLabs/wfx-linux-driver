@@ -58,6 +58,11 @@ int wfx_ampdu_action(struct ieee80211_hw *, struct ieee80211_vif *, struct ieee8
 int wfx_ampdu_action(struct ieee80211_hw *, struct ieee80211_vif *, enum ieee80211_ampdu_mlme_action,
 		     struct ieee80211_sta *, u16, u16 *, u8, bool);
 #endif
+int wfx_add_chanctx(struct ieee80211_hw *hw, struct ieee80211_chanctx_conf *conf);
+void wfx_remove_chanctx(struct ieee80211_hw *hw, struct ieee80211_chanctx_conf *conf);
+void wfx_change_chanctx(struct ieee80211_hw *, struct ieee80211_chanctx_conf *, u32 changed);
+int wfx_assign_vif_chanctx(struct ieee80211_hw *, struct ieee80211_vif *, struct ieee80211_chanctx_conf *);
+void wfx_unassign_vif_chanctx(struct ieee80211_hw *, struct ieee80211_vif *, struct ieee80211_chanctx_conf *);
 
 
 
