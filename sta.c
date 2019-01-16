@@ -195,7 +195,6 @@ int wfx_add_interface(struct ieee80211_hw *dev,
 	struct wfx_dev *wdev = dev->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 
-
 	vif->driver_flags |= IEEE80211_VIF_BEACON_FILTER |
 			     IEEE80211_VIF_SUPPORTS_UAPSD |
 			     IEEE80211_VIF_SUPPORTS_CQM_RSSI;
