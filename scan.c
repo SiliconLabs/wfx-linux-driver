@@ -70,7 +70,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	int i, ret;
 	WsmHiMibTemplateFrame_t *p;
 
-	if (!wdev->vif)
+	if (!wvif)
 		return -EINVAL;
 
 	/* Scan when P2P_GO corrupt firmware MiniAP mode */
@@ -86,7 +86,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	if (req->n_ssids > WSM_API_SSID_DEF_SIZE)
 		return -EINVAL;
 
-	skb = ieee80211_probereq_get(hw, wdev->vif->addr, NULL, 0,
+	skb = ieee80211_probereq_get(hw, wvif->vif->addr, NULL, 0,
 		req->ie_len);
 	if (!skb)
 		return -ENOMEM;
