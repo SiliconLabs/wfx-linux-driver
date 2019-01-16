@@ -200,15 +200,19 @@ int wfx_add_interface(struct ieee80211_hw *dev,
 		return -EOPNOTSUPP;
 	}
 
-	if (wdev->vif) {
+	for (i = 0; i < ARRAY_SIZE(wdev->vif); i++) {
+		if (!wdev->vif[i]) {
+			wdev->vif[i] = vif;
+			wvif->Id = i;
+			break;
+		}
+	}
+	if (i == ARRAY_SIZE(wdev->vif)) {
 		mutex_unlock(&wdev->conf_mutex);
 		return -EOPNOTSUPP;
 	}
-
-	wdev->vif = vif;
 	wvif->vif = vif;
 	wvif->wdev = wdev;
-	wvif->Id = 0;
 	wvif->mode = vif->type;
 	ret = wsm_set_macaddr(wdev, vif->addr, wvif->Id);
 	wfx_vif_setup(wvif);
@@ -272,10 +276,10 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 	wvif->listening = false;
 	wvif->state = WFX_STATE_PASSIVE;
 	if (!__wfx_flush(wdev, true)) {
-		wdev->vif = NULL;
+		wdev->vif[wvif->Id] = NULL;
 		wsm_unlock_tx(wdev);
 	} else {
-		wdev->vif = NULL;
+		wdev->vif[wvif->Id] = NULL;
 	}
 	wvif->vif = NULL;
 	cancel_delayed_work_sync(&wvif->join_timeout);
