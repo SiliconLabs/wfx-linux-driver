@@ -156,8 +156,6 @@ struct wfx_dev {
 	int				hw_bufs_used;
 	bool					sleep_activated;
 
-	/* Scan status */
-	struct wfx_scan scan;
 	/* Keep wfx200 awake (WUP = 1) 1 second after each scan to avoid
 	 * FW issue with sleeping/waking up.
 	 */
@@ -232,6 +230,7 @@ struct wfx_vif {
 
 	enum wfx_state	state;
 
+	struct wfx_scan		scan;
 	struct wsm_rx_filter	rx_filter;
 	struct wsm_edca_params	edca;
 	struct wfx_link_entry	link_id_db[WFX_MAX_STA_IN_AP_MODE];

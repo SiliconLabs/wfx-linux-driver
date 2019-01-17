@@ -90,15 +90,6 @@ void wfx_stop(struct ieee80211_hw *dev)
 
 	wsm_lock_tx(wdev);
 
-	while (down_trylock(&wdev->scan.lock)) {
-		/* Scan is in progress. Force it to stop. */
-		wdev->scan.req = NULL;
-		schedule();
-	}
-	up(&wdev->scan.lock);
-
-	cancel_delayed_work_sync(&wdev->scan.probe_work);
-	cancel_delayed_work_sync(&wdev->scan.timeout);
 	flush_workqueue(wdev->workqueue);
 	mutex_lock(&wdev->conf_mutex);
 
@@ -282,6 +273,16 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 		wdev->vif[wvif->Id] = NULL;
 	}
 	wvif->vif = NULL;
+	while (down_trylock(&wvif->scan.lock)) {
+		/* Scan is in progress. Force it to stop. */
+		wvif->scan.req = NULL;
+		schedule();
+	}
+	up(&wvif->scan.lock);
+
+	cancel_delayed_work_sync(&wvif->scan.probe_work);
+	cancel_delayed_work_sync(&wvif->scan.timeout);
+
 	cancel_delayed_work_sync(&wvif->join_timeout);
 	wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
 	cancel_work_sync(&wvif->unjoin_work);
@@ -332,7 +333,7 @@ int wfx_config(struct ieee80211_hw *dev, u32 changed)
 
 	pr_debug("[STA] wfx_config:  %08x\n", changed);
 
-	down(&wdev->scan.lock);
+	down(&wvif->scan.lock);
 	mutex_lock(&wdev->conf_mutex);
 	if (changed & IEEE80211_CONF_CHANGE_POWER) {
 		wdev->output_power = conf->power_level;
@@ -406,7 +407,7 @@ int wfx_config(struct ieee80211_hw *dev, u32 changed)
 		spin_unlock_bh(&wdev->tx_policy_cache.lock);
 	}
 	mutex_unlock(&wdev->conf_mutex);
-	up(&wdev->scan.lock);
+	up(&wvif->scan.lock);
 	return ret;
 }
 
@@ -598,7 +599,7 @@ void wfx_configure_filter(struct ieee80211_hw *dev,
 
 	pr_debug("[STA] wfx_configure_filter : 0x%.8X\n", *total_flags);
 
-	down(&wdev->scan.lock);
+	down(&wvif->scan.lock);
 	mutex_lock(&wdev->conf_mutex);
 
 	wvif->rx_filter.bssid = (*total_flags & (FIF_OTHER_BSS |
@@ -616,7 +617,7 @@ void wfx_configure_filter(struct ieee80211_hw *dev,
 	}
 	wfx_update_filtering(wvif);
 	mutex_unlock(&wdev->conf_mutex);
-	up(&wdev->scan.lock);
+	up(&wvif->scan.lock);
 }
 
 int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
@@ -700,8 +701,8 @@ int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 		wvif->firmware_ps_mode = pm;
 		ret = wsm_set_pm(wvif->wdev, &pm, wvif->Id);
 		// FIXME: why ?
-		if (-ETIMEDOUT == wvif->wdev->scan.status)
-			wvif->wdev->scan.status = 1;
+		if (-ETIMEDOUT == wvif->scan.status)
+			wvif->scan.status = 1;
 		return ret;
 	} else {
 		return 0;
@@ -1042,9 +1043,9 @@ void wfx_event_handler(struct work_struct *work)
 		case WSM_EVENT_IND_BSSLOST:
 			pr_debug("[CQM] BSS lost.\n");
 			cancel_work_sync(&wvif->unjoin_work);
-			if (!down_trylock(&wvif->wdev->scan.lock)) {
+			if (!down_trylock(&wvif->scan.lock)) {
 				wfx_cqm_bssloss_sm(wvif, 1, 0, 0);
-				up(&wvif->wdev->scan.lock);
+				up(&wvif->scan.lock);
 			} else {
 				/* Scan is in progress. Delay reporting.
 				 * Scan complete will trigger bss_loss_work
@@ -1266,7 +1267,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	/* Under the conf lock: check scan status and
 	 * bail out if it is in progress.
 	 */
-	if (atomic_read(&wvif->wdev->scan.in_progress)) {
+	if (atomic_read(&wvif->scan.in_progress)) {
 		wsm_unlock_tx(wvif->wdev);
 		goto done_put;
 	}
@@ -1423,7 +1424,7 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 
 	mutex_lock(&wvif->wdev->conf_mutex);
 
-	if (atomic_read(&wvif->wdev->scan.in_progress)) {
+	if (atomic_read(&wvif->scan.in_progress)) {
 		if (wvif->delayed_unjoin)
 			wiphy_dbg(wvif->wdev->hw->wiphy,
 				  "Delayed unjoin is already scheduled.\n");
@@ -2377,6 +2378,12 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 #else
 	setup_timer(&wvif->mcast_timeout, wfx_mcast_timeout, (unsigned long) wvif);
 #endif
+
+	/* About scan */
+	sema_init(&wvif->scan.lock, 1);
+	INIT_WORK(&wvif->scan.work, wfx_scan_work);
+	INIT_DELAYED_WORK(&wvif->scan.probe_work, wfx_probe_work);
+	INIT_DELAYED_WORK(&wvif->scan.timeout, wfx_scan_timeout);
 
 	BUG_ON(ARRAY_SIZE(default_edca_params) != ARRAY_SIZE(wvif->edca.params));
 	for (i = 0; i < ARRAY_SIZE(default_edca_params); i++) {

@@ -280,10 +280,6 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 	init_wsm_cmd(&wdev->wsm_cmd);
 	mutex_init(&wdev->conf_mutex);
 	wdev->workqueue = create_singlethread_workqueue("wfx_wq");
-	sema_init(&wdev->scan.lock, 1);
-	INIT_WORK(&wdev->scan.work, wfx_scan_work);
-	INIT_DELAYED_WORK(&wdev->scan.probe_work, wfx_probe_work);
-	INIT_DELAYED_WORK(&wdev->scan.timeout, wfx_scan_timeout);
 
 	INIT_WORK(&wdev->tx_policy_upload_work, tx_policy_upload_work);
 	if (wfx_queue_stats_init(&wdev->tx_queue_stats, WFX_LINK_ID_MAX,

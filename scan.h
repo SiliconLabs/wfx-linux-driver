@@ -50,9 +50,8 @@ struct wfx_scan {
 
 void wfx_scan_work(struct work_struct *work);
 void wfx_scan_timeout(struct work_struct *work);
-void wfx_scan_complete_cb(struct wfx_dev *wdev, WsmHiScanCmplIndBody_t *arg);
-void wfx_scan_failed_cb(struct wfx_dev *wdev);
-
+void wfx_scan_complete_cb(struct wfx_vif *wvif, WsmHiScanCmplIndBody_t *arg);
+void wfx_scan_failed_cb(struct wfx_vif *wvif);
 void wfx_probe_work(struct work_struct *work);
 
 #endif /* WFX_SCAN_H */

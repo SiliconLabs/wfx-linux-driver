@@ -338,7 +338,7 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 	seq_printf(seq, "TX TTL:     %d\n",
 		   d->tx_ttl);
 	seq_printf(seq, "Scan:       %s\n",
-		   atomic_read(&wdev->scan.in_progress) ? "active" : "idle");
+		   atomic_read(&wvif->scan.in_progress) ? "active" : "idle");
 
 	seq_puts(seq, "\n");
 	for (i = 0; i < 4; ++i) {

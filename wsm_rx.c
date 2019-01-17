@@ -216,9 +216,10 @@ static int wsm_set_pm_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *bu
 
 static int wsm_scan_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	WsmHiScanCmplIndBody_t *body = buf;
 
-	wfx_scan_complete_cb(wdev, body);
+	wfx_scan_complete_cb(wvif, body);
 
 	return 0;
 }
@@ -487,7 +488,7 @@ static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
 		wsm_lock_tx_async(wvif->wdev);
 		wvif->wdev->pending_frame_id = wsm->Body.PacketId;
 		if (queue_delayed_work(wvif->wdev->workqueue,
-				       &wvif->wdev->scan.probe_work, 0) <= 0)
+				       &wvif->scan.probe_work, 0) <= 0)
 			wsm_unlock_tx(wvif->wdev);
 		handled = true;
 		break;

@@ -24,11 +24,10 @@
 #include "wfx.h"
 #include "sta.h"
 
-static void wfx_scan_restart_delayed(struct wfx_dev *wdev);
+static void wfx_scan_restart_delayed(struct wfx_vif *wvif);
 
-static int wfx_scan_start(struct wfx_dev *wdev, struct wsm_scan *scan)
+static int wfx_scan_start(struct wfx_vif *wvif, struct wsm_scan *scan)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 	int ret;
 
 	int tmo = 200;
@@ -43,18 +42,18 @@ static int wfx_scan_start(struct wfx_dev *wdev, struct wsm_scan *scan)
 
 	tmo += scan->scan_req.NumOfChannels *
 	       ((20 * (scan->scan_req.MaxChannelTime)) + 10);
-	atomic_set(&wdev->scan.in_progress, 1);
-	atomic_set(&wdev->wait_for_scan, 1);
+	atomic_set(&wvif->scan.in_progress, 1);
+	atomic_set(&wvif->wdev->wait_for_scan, 1);
 
-	queue_delayed_work(wdev->workqueue, &wdev->scan.timeout,
+	queue_delayed_work(wvif->wdev->workqueue, &wvif->scan.timeout,
 			   msecs_to_jiffies(tmo));
-	ret = wsm_scan(wdev, scan, 0);
+	ret = wsm_scan(wvif->wdev, scan, wvif->Id);
 	if (ret) {
-		wfx_scan_failed_cb(wdev);
-		atomic_set(&wdev->scan.in_progress, 0);
-		atomic_set(&wdev->wait_for_scan, 0);
-		cancel_delayed_work_sync(&wdev->scan.timeout);
-		wfx_scan_restart_delayed(wdev);
+		wfx_scan_failed_cb(wvif);
+		atomic_set(&wvif->scan.in_progress, 0);
+		atomic_set(&wvif->wdev->wait_for_scan, 0);
+		cancel_delayed_work_sync(&wvif->scan.timeout);
+		wfx_scan_restart_delayed(wvif);
 	}
 	return ret;
 }
@@ -64,7 +63,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 		   struct ieee80211_scan_request *hw_req)
 {
 	struct wfx_dev *wdev = hw->priv;
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
+	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 	struct cfg80211_scan_request *req = &hw_req->req;
 	struct sk_buff *skb;
 	int i, ret;
@@ -95,7 +94,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 		memcpy(skb_put(skb, req->ie_len), req->ie, req->ie_len);
 
 	/* will be unlocked in wfx_scan_work() */
-	down(&wdev->scan.lock);
+	down(&wvif->scan.lock);
 	mutex_lock(&wdev->conf_mutex);
 
 	p = (WsmHiMibTemplateFrame_t *)skb_push(skb, 4);
@@ -109,35 +108,35 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 		ret = wsm_set_probe_responder(wvif, true);
 	if (ret) {
 		mutex_unlock(&wdev->conf_mutex);
-		up(&wdev->scan.lock);
+		up(&wvif->scan.lock);
 		dev_kfree_skb(skb);
 		return ret;
 	}
 
 	wsm_lock_tx(wdev);
 
-	BUG_ON(wdev->scan.req);
-	wdev->scan.req = req;
-	wdev->scan.n_ssids = 0;
-	wdev->scan.status = 0;
-	wdev->scan.begin = &req->channels[0];
-	wdev->scan.curr = wdev->scan.begin;
-	wdev->scan.end = &req->channels[req->n_channels];
-	wdev->scan.output_power = wdev->output_power;
+	BUG_ON(wvif->scan.req);
+	wvif->scan.req = req;
+	wvif->scan.n_ssids = 0;
+	wvif->scan.status = 0;
+	wvif->scan.begin = &req->channels[0];
+	wvif->scan.curr = wvif->scan.begin;
+	wvif->scan.end = &req->channels[req->n_channels];
+	wvif->scan.output_power = wdev->output_power;
 
 	for (i = 0; i < req->n_ssids; ++i) {
-		WsmHiSsidDef_t *dst = &wdev->scan.ssids[wdev->scan.n_ssids];
+		WsmHiSsidDef_t *dst = &wvif->scan.ssids[wvif->scan.n_ssids];
 
 		memcpy(&dst->SSID[0], req->ssids[i].ssid, sizeof(dst->SSID));
 		dst->SSIDLength = req->ssids[i].ssid_len;
-		++wdev->scan.n_ssids;
+		++wvif->scan.n_ssids;
 	}
 
 	mutex_unlock(&wdev->conf_mutex);
 
 	if (skb)
 		dev_kfree_skb(skb);
-	queue_work(wdev->workqueue, &wdev->scan.work);
+	queue_work(wdev->workqueue, &wvif->scan.work);
 	return 0;
 }
 
@@ -156,15 +155,13 @@ static void __ieee80211_scan_completed_compat(struct ieee80211_hw *hw, bool abor
 
 void wfx_scan_work(struct work_struct *work)
 {
-	struct wfx_dev *wdev = container_of(work, struct wfx_dev,
-							scan.work);
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, scan.work);
 	struct ieee80211_channel **it;
 	struct wsm_scan scan = {
 		.scan_req.ScanType.Type		= 0,    /* WSM_SCAN_TYPE_FG, */
 	};
-	bool first_run = (wdev->scan.begin == wdev->scan.curr &&
-			  wdev->scan.begin != wdev->scan.end);
+	bool first_run = (wvif->scan.begin == wvif->scan.curr &&
+			  wvif->scan.begin != wvif->scan.end);
 	int i;
 
 	if (first_run) {
@@ -172,7 +169,7 @@ void wfx_scan_work(struct work_struct *work)
 			wfx_join_timeout(&wvif->join_timeout.work);
 	}
 
-	mutex_lock(&wdev->conf_mutex);
+	mutex_lock(&wvif->wdev->conf_mutex);
 
 	if (first_run) {
 		if (wvif->state == WFX_STATE_STA &&
@@ -186,36 +183,36 @@ void wfx_scan_work(struct work_struct *work)
 		}
 	}
 
-	if (!wdev->scan.req || wdev->scan.curr == wdev->scan.end) {
-		if (wdev->scan.output_power != wdev->output_power)
-			wsm_set_output_power(wdev, wdev->output_power * 10, 0);
+	if (!wvif->scan.req || wvif->scan.curr == wvif->scan.end) {
+		if (wvif->scan.output_power != wvif->wdev->output_power)
+			wsm_set_output_power(wvif->wdev, wvif->wdev->output_power * 10, wvif->Id);
 
-		if (wdev->scan.status < 0)
-			wiphy_warn(wdev->hw->wiphy,
+		if (wvif->scan.status < 0)
+			wiphy_warn(wvif->wdev->hw->wiphy,
 				   "[SCAN] Scan failed (%d).\n",
-				   wdev->scan.status);
-		else if (wdev->scan.req)
-			wiphy_dbg(wdev->hw->wiphy,
+				   wvif->scan.status);
+		else if (wvif->scan.req)
+			wiphy_dbg(wvif->wdev->hw->wiphy,
 				  "[SCAN] Scan completed.\n");
 		else
-			wiphy_dbg(wdev->hw->wiphy,
+			wiphy_dbg(wvif->wdev->hw->wiphy,
 				  "[SCAN] Scan canceled.\n");
 
-		wdev->scan.req = NULL;
-		wfx_scan_restart_delayed(wdev);
-		wsm_unlock_tx(wdev);
-		mutex_unlock(&wdev->conf_mutex);
-		__ieee80211_scan_completed_compat(wdev->hw, wdev->scan.status ? 1 : 0);
-		up(&wdev->scan.lock);
+		wvif->scan.req = NULL;
+		wfx_scan_restart_delayed(wvif);
+		wsm_unlock_tx(wvif->wdev);
+		mutex_unlock(&wvif->wdev->conf_mutex);
+		__ieee80211_scan_completed_compat(wvif->wdev->hw, wvif->scan.status ? 1 : 0);
+		up(&wvif->scan.lock);
 		if (wvif->state == WFX_STATE_STA &&
 		    !(wvif->powersave_mode.PmMode.PmMode))
 			wfx_set_pm(wvif, &wvif->powersave_mode);
 		return;
 	} else {
-		struct ieee80211_channel *first = *wdev->scan.curr;
+		struct ieee80211_channel *first = *wvif->scan.curr;
 
-		for (it = wdev->scan.curr + 1, i = 1;
-		     it != wdev->scan.end && i < WSM_API_CHANNEL_LIST_SIZE;
+		for (it = wvif->scan.curr + 1, i = 1;
+		     it != wvif->scan.end && i < WSM_API_CHANNEL_LIST_SIZE;
 		     ++it, ++i) {
 			if ((*it)->band != first->band)
 				break;
@@ -228,15 +225,15 @@ void wfx_scan_work(struct work_struct *work)
 		}
 		scan.scan_req.Band = first->band;
 
-		if (wdev->scan.req->no_cck)
+		if (wvif->scan.req->no_cck)
 			scan.scan_req.MaxTransmitRate = WSM_TRANSMIT_RATE_6;
 		else
 			scan.scan_req.MaxTransmitRate = WSM_TRANSMIT_RATE_1;
 		scan.scan_req.NumOfProbeRequests =
 			(first->flags & IEEE80211_CHAN_NO_IR) ? 0 : 2;
-		scan.scan_req.NumOfSSIDs = wdev->scan.n_ssids;
-		scan.ssids = &wdev->scan.ssids[0];
-		scan.scan_req.NumOfChannels = it - wdev->scan.curr;
+		scan.scan_req.NumOfSSIDs = wvif->scan.n_ssids;
+		scan.ssids = &wvif->scan.ssids[0];
+		scan.scan_req.NumOfChannels = it - wvif->scan.curr;
 		scan.scan_req.ProbeDelay = 100;
 		if (wvif->state == WFX_STATE_STA) {
 			scan.scan_req.ScanType.Type = 1;        /* WSM_SCAN_TYPE_BG; */
@@ -248,13 +245,13 @@ void wfx_scan_work(struct work_struct *work)
 			GFP_KERNEL);
 
 		if (!scan.ch) {
-			wdev->scan.status = -ENOMEM;
+			wvif->scan.status = -ENOMEM;
 			goto fail;
 		}
 		for (i = 0; i < scan.scan_req.NumOfChannels; ++i)
-			scan.ch[i] = wdev->scan.curr[i]->hw_value;
+			scan.ch[i] = wvif->scan.curr[i]->hw_value;
 
-		if (wdev->scan.curr[0]->flags & IEEE80211_CHAN_NO_IR) {
+		if (wvif->scan.curr[0]->flags & IEEE80211_CHAN_NO_IR) {
 			scan.scan_req.MinChannelTime = 50;
 			scan.scan_req.MaxChannelTime = 150;
 		} else {
@@ -262,30 +259,28 @@ void wfx_scan_work(struct work_struct *work)
 			scan.scan_req.MaxChannelTime = 50;
 		}
 		if (!(first->flags & IEEE80211_CHAN_NO_IR) &&
-		    wdev->scan.output_power != first->max_power) {
-			wdev->scan.output_power = first->max_power;
-			wsm_set_output_power(wdev,
-					     wdev->scan.output_power * 10, wvif->Id);
+		    wvif->scan.output_power != first->max_power) {
+			wvif->scan.output_power = first->max_power;
+			wsm_set_output_power(wvif->wdev,
+					     wvif->scan.output_power * 10, wvif->Id);
 		}
-		wdev->scan.status = wfx_scan_start(wdev, &scan);
+		wvif->scan.status = wfx_scan_start(wvif, &scan);
 		kfree(scan.ch);
-		if (wdev->scan.status)
+		if (wvif->scan.status)
 			goto fail;
-		wdev->scan.curr = it;
+		wvif->scan.curr = it;
 	}
-	mutex_unlock(&wdev->conf_mutex);
+	mutex_unlock(&wvif->wdev->conf_mutex);
 	return;
 
 fail:
-	wdev->scan.curr = wdev->scan.end;
-	mutex_unlock(&wdev->conf_mutex);
-	queue_work(wdev->workqueue, &wdev->scan.work);
+	wvif->scan.curr = wvif->scan.end;
+	mutex_unlock(&wvif->wdev->conf_mutex);
+	queue_work(wvif->wdev->workqueue, &wvif->scan.work);
 }
 
-static void wfx_scan_restart_delayed(struct wfx_dev *wdev)
+static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
-
 	if (wvif->state == WFX_STATE_MONITOR) {
 		wfx_enable_listening(wvif);
 		wfx_update_filtering(wvif);
@@ -293,74 +288,70 @@ static void wfx_scan_restart_delayed(struct wfx_dev *wdev)
 
 	if (wvif->delayed_unjoin) {
 		wvif->delayed_unjoin = false;
-		if (queue_work(wdev->workqueue, &wvif->unjoin_work) <= 0)
-			wsm_unlock_tx(wdev);
+		if (queue_work(wvif->wdev->workqueue, &wvif->unjoin_work) <= 0)
+			wsm_unlock_tx(wvif->wdev);
 	} else if (wvif->delayed_link_loss) {
-		wiphy_dbg(wdev->hw->wiphy, "[CQM] Requeue BSS loss.\n");
+		wiphy_dbg(wvif->wdev->hw->wiphy, "[CQM] Requeue BSS loss.\n");
 		wvif->delayed_link_loss = 0;
 		wfx_cqm_bssloss_sm(wvif, 1, 0, 0);
 	}
 }
 
-static void wfx_scan_complete(struct wfx_dev *wdev)
+static void wfx_scan_complete(struct wfx_vif *wvif)
 {
-	atomic_set(&wdev->wait_for_scan, 0);
+	atomic_set(&wvif->wdev->wait_for_scan, 0);
 
-	if (wdev->scan.direct_probe) {
-		wiphy_dbg(wdev->hw->wiphy, "[SCAN] Direct probe complete.\n");
-		wfx_scan_restart_delayed(wdev);
-		wdev->scan.direct_probe = 0;
-		up(&wdev->scan.lock);
-		wsm_unlock_tx(wdev);
+	if (wvif->scan.direct_probe) {
+		wiphy_dbg(wvif->wdev->hw->wiphy, "[SCAN] Direct probe complete.\n");
+		wfx_scan_restart_delayed(wvif);
+		wvif->scan.direct_probe = 0;
+		up(&wvif->scan.lock);
+		wsm_unlock_tx(wvif->wdev);
 	} else {
-		wfx_scan_work(&wdev->scan.work);
+		wfx_scan_work(&wvif->scan.work);
 	}
 }
 
-void wfx_scan_failed_cb(struct wfx_dev *wdev)
+void wfx_scan_failed_cb(struct wfx_vif *wvif)
 {
-	if (cancel_delayed_work_sync(&wdev->scan.timeout) > 0) {
-		wdev->scan.status = -EIO;
-		queue_delayed_work(wdev->workqueue, &wdev->scan.timeout, 0);
+	if (cancel_delayed_work_sync(&wvif->scan.timeout) > 0) {
+		wvif->scan.status = -EIO;
+		queue_delayed_work(wvif->wdev->workqueue, &wvif->scan.timeout, 0);
 	}
 }
 
-void wfx_scan_complete_cb(struct wfx_dev		*wdev,
+void wfx_scan_complete_cb(struct wfx_vif		*wvif,
 			  WsmHiScanCmplIndBody_t	*arg)
 {
-	if (cancel_delayed_work_sync(&wdev->scan.timeout) > 0) {
-		wdev->scan.status = 1;
-		queue_delayed_work(wdev->workqueue, &wdev->scan.timeout, 0);
+	if (cancel_delayed_work_sync(&wvif->scan.timeout) > 0) {
+		wvif->scan.status = 1;
+		queue_delayed_work(wvif->wdev->workqueue, &wvif->scan.timeout, 0);
 	}
 }
 
 void wfx_scan_timeout(struct work_struct *work)
 {
-	struct wfx_dev *wdev =
-		container_of(work, struct wfx_dev, scan.timeout.work);
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, scan.timeout.work);
 
-	if (atomic_xchg(&wdev->scan.in_progress, 0)) {
-		if (wdev->scan.status > 0) {
-			wdev->scan.status = 0;
-		} else if (!wdev->scan.status) {
-			wiphy_warn(wdev->hw->wiphy,
+	if (atomic_xchg(&wvif->scan.in_progress, 0)) {
+		if (wvif->scan.status > 0) {
+			wvif->scan.status = 0;
+		} else if (!wvif->scan.status) {
+			wiphy_warn(wvif->wdev->hw->wiphy,
 				   "Timeout waiting for scan complete notification.\n");
-			wdev->scan.status = -ETIMEDOUT;
-			wdev->scan.curr = wdev->scan.end;
-			wsm_stop_scan(wdev, wvif->Id);
+			wvif->scan.status = -ETIMEDOUT;
+			wvif->scan.curr = wvif->scan.end;
+			wsm_stop_scan(wvif->wdev, wvif->Id);
 		}
-		wfx_scan_complete(wdev);
+		wfx_scan_complete(wvif);
 	}
 }
 
 void wfx_probe_work(struct work_struct *work)
 {
-	struct wfx_dev *wdev =
-		container_of(work, struct wfx_dev, scan.probe_work.work);
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
-	u8 queue_id = wfx_queue_get_queue_id(wdev->pending_frame_id);
-	struct wfx_queue *queue = &wdev->tx_queue[queue_id];
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, scan.probe_work.work);
+	u8 queue_id = wfx_queue_get_queue_id(wvif->wdev->pending_frame_id);
+	struct wfx_queue *queue = &wvif->wdev->tx_queue[queue_id];
 	const struct wfx_txpriv *txpriv;
 	WsmHiTxReq_t *wsm;
 	struct sk_buff *skb;
@@ -384,24 +375,24 @@ void wfx_probe_work(struct work_struct *work)
 	int ret;
 	WsmHiMibTemplateFrame_t *p;
 
-	wiphy_dbg(wdev->hw->wiphy, "[SCAN] Direct probe work.\n");
+	wiphy_dbg(wvif->wdev->hw->wiphy, "[SCAN] Direct probe work.\n");
 
-	mutex_lock(&wdev->conf_mutex);
-	if (down_trylock(&wdev->scan.lock)) {
+	mutex_lock(&wvif->wdev->conf_mutex);
+	if (down_trylock(&wvif->scan.lock)) {
 		/* Scan is already in progress. Requeue self. */
 		schedule();
-		queue_delayed_work(wdev->workqueue, &wdev->scan.probe_work,
+		queue_delayed_work(wvif->wdev->workqueue, &wvif->scan.probe_work,
 				   msecs_to_jiffies(100));
-		mutex_unlock(&wdev->conf_mutex);
+		mutex_unlock(&wvif->wdev->conf_mutex);
 		return;
 	}
 
 	/* Make sure we still have a pending probe req */
-	if (wfx_queue_get_skb(queue, wdev->pending_frame_id,
+	if (wfx_queue_get_skb(queue, wvif->wdev->pending_frame_id,
 			      &skb, &txpriv)) {
-		up(&wdev->scan.lock);
-		mutex_unlock(&wdev->conf_mutex);
-		wsm_unlock_tx(wdev);
+		up(&wvif->scan.lock);
+		mutex_unlock(&wvif->wdev->conf_mutex);
+		wsm_unlock_tx(wvif->wdev);
 		return;
 	}
 	wsm = (WsmHiTxReq_t *)skb->data;
@@ -444,23 +435,23 @@ void wfx_probe_work(struct work_struct *work)
 	p->FrameType = WSM_TMPLT_PRBREQ;
 	p->FrameLength = cpu_to_le16(skb->len - 4);
 
-	ret = wsm_set_template_frame(wdev, p, wvif->Id);
+	ret = wsm_set_template_frame(wvif->wdev, p, wvif->Id);
 	skb_pull(skb, 4);
-	wdev->scan.direct_probe = 1;
+	wvif->scan.direct_probe = 1;
 	if (!ret) {
-		wsm_flush_tx(wdev);
-		ret = wfx_scan_start(wdev, &scan);
+		wsm_flush_tx(wvif->wdev);
+		ret = wfx_scan_start(wvif, &scan);
 	}
-	mutex_unlock(&wdev->conf_mutex);
+	mutex_unlock(&wvif->wdev->conf_mutex);
 
 	skb_push(skb, txpriv->offset);
 	if (!ret)
 		IEEE80211_SKB_CB(skb)->flags |= IEEE80211_TX_STAT_ACK;
-	BUG_ON(wfx_queue_remove(queue, wdev->pending_frame_id));
+	BUG_ON(wfx_queue_remove(queue, wvif->wdev->pending_frame_id));
 
 	if (ret) {
-		wdev->scan.direct_probe = 0;
-		up(&wdev->scan.lock);
-		wsm_unlock_tx(wdev);
+		wvif->scan.direct_probe = 0;
+		up(&wvif->scan.lock);
+		wsm_unlock_tx(wvif->wdev);
 	}
 }
