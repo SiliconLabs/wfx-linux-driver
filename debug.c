@@ -207,6 +207,9 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 		   wdev->wsm_caps.FirmwareLabel);
 	seq_printf(seq, "Power mode: %d\n",
 		   wdev->pdata.power_mode);
+	if (!wvif)
+		return 0;
+
 	seq_printf(seq, "Mode:       %s%s\n",
 		   wfx_debug_mode(wvif->mode),
 		   wvif->listening ? " (listening)" : "");
