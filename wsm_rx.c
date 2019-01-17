@@ -153,7 +153,6 @@ static int wsm_receive_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 
 	skb_pull(*skb_p, sizeof(WsmHiRxIndBody_t));
 
-
 	frame = (struct ieee80211_hdr *)(*skb_p)->data;
 
 	if (!body->RcpiRssi &&
@@ -161,13 +160,15 @@ static int wsm_receive_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 	     ieee80211_is_beacon(frame->frame_control)))
 		return 0;
 
+	/* If no RSSI subscription has been made,
+	 * convert RCPI to RSSI here
+	 */
 	if (!wvif->cqm_use_rssi)
 		body->RcpiRssi = body->RcpiRssi / 2 - 110;
 
 	fctl = frame->frame_control;
 	pr_debug("[WSM] \t\t rx_flags=0x%.8X, frame_ctrl=0x%.4X\n",
 		 *((u32 *)&body->RxFlags), le16_to_cpu(fctl));
-
 
 	sta_id = body->RxFlags.PeerStaId;
 
