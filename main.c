@@ -133,6 +133,21 @@ static const struct ieee80211_supported_band wfx_band_2ghz = {
 	},
 };
 
+static const struct ieee80211_iface_limit wdev_iface_limits[] = {
+	{ .max = 1, .types = BIT(NL80211_IFTYPE_STATION) },
+	{ .max = 1, .types = BIT(NL80211_IFTYPE_AP) },
+	{ .max = 1, .types = BIT(NL80211_IFTYPE_P2P_CLIENT) | BIT(NL80211_IFTYPE_P2P_GO) },
+};
+
+static const struct ieee80211_iface_combination wfx_iface_combinations[] = {
+	{
+		.num_different_channels = 2,
+		.max_interfaces = 2,
+		.limits = wdev_iface_limits,
+		.n_limits = ARRAY_SIZE(wdev_iface_limits),
+	}
+};
+
 static const unsigned long wfx_ttl[] = {
 	1 * HZ,	/* VO */
 	2 * HZ,	/* VI */
@@ -240,6 +255,8 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	hw->wiphy->flags |= WIPHY_FLAG_AP_UAPSD;
 	hw->wiphy->max_scan_ssids = 2;
 	hw->wiphy->max_scan_ie_len = IEEE80211_MAX_DATA_LEN;
+	hw->wiphy->n_iface_combinations = ARRAY_SIZE(wfx_iface_combinations);
+	hw->wiphy->iface_combinations = wfx_iface_combinations;
 	hw->wiphy->bands[NL80211_BAND_2GHZ] = devm_kmalloc(dev, sizeof(wfx_band_2ghz), GFP_KERNEL);
 	// FIXME: report OTP restriction here
 	// FIXME: also copy wfx_rates and wfx_2ghz_chantable
