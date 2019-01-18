@@ -333,11 +333,10 @@ static int init_gpr(struct wfx_dev *wdev)
 int wfx_init_device(struct wfx_dev *wdev)
 {
 	int ret;
+	int hw_revision, hw_type;
 	int wakeup_timeout = 50; // ms
 	ktime_t now, start;
 	u32 reg;
-
-	wdev->hw_revision = -1;
 
 	reg = CFG_DIRECT_ACCESS_MODE | CFG_DISABLE_CPU_CLK | CFG_CPU_RESET;
 	if (wdev->pdata.hif_clkedge)
@@ -361,14 +360,13 @@ int wfx_init_device(struct wfx_dev *wdev)
 	}
 	dev_dbg(wdev->pdev, "initial config register value: %08x\n", reg);
 
-	wdev->hw_type = FIELD_GET(CFG_DEVICE_ID_TYPE, reg);
-	wdev->hw_revision = FIELD_GET(CFG_DEVICE_ID_MAJOR, reg);
-
-	if (wdev->hw_revision == 0 || wdev->hw_revision > 2) {
-		dev_err(wdev->pdev, "bad hardware revision number: %d\n", wdev->hw_revision);
+	hw_revision = FIELD_GET(CFG_DEVICE_ID_MAJOR, reg);
+	if (hw_revision == 0 || hw_revision > 2) {
+		dev_err(wdev->pdev, "bad hardware revision number: %d\n", hw_revision);
 		return -ENODEV;
 	}
-	if (wdev->hw_type == 1) {
+	hw_type = FIELD_GET(CFG_DEVICE_ID_TYPE, reg);
+	if (hw_type == 1) {
 		dev_notice(wdev->pdev, "development hardware detected\n");
 		wakeup_timeout = 2000;
 	}

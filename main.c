@@ -234,7 +234,6 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 
 	wdev = hw->priv;
 	wdev->hw = hw;
-	wdev->hw_type = -1;
 	wdev->pdev = dev;
 	memcpy(&wdev->pdata, pdata, sizeof(*pdata));
 	of_property_read_string(dev->of_node, "config-file", &wdev->pdata.file_pds);

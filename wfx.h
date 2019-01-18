@@ -123,10 +123,6 @@ struct wfx_dev {
 	const struct hwbus_ops		*hwbus_ops;
 	struct hwbus_priv		*hwbus_priv;
 
-	/* Hardware information */
-	int				hw_type;
-	int			hw_revision;
-
 	struct wfx_debug_priv	*debug;
 
 	struct workqueue_struct		*workqueue;
