@@ -399,18 +399,6 @@ int wfx_init_device(struct wfx_dev *wdev)
 	ret = load_firmware_secure(wdev);
 	if (ret < 0)
 		return ret;
-	ret = config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_DATA);
-	if (ret < 0)
-		return ret;
-	ret = config_reg_write_bits(wdev, CFG_DIRECT_ACCESS_MODE, 0);
-	if (ret < 0)
-		goto error;
-	ret = config_reg_read(wdev, &reg);
-	if (ret < 0)
-		goto error;
-	dev_dbg(wdev->pdev, "final config register value: %08x\n", reg);
-	return ret;
-error:
-	config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, 0);
+	ret = config_reg_write_bits(wdev, CFG_DIRECT_ACCESS_MODE | CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_DATA);
 	return ret;
 }
