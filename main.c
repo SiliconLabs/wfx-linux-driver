@@ -206,7 +206,7 @@ struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *lab
 
 static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdata, struct device *dev)
 {
-	int i, band;
+	int i;
 	struct ieee80211_hw *hw;
 	struct wfx_dev *wdev;
 
@@ -260,23 +260,11 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 	hw->vif_data_size = sizeof(struct wfx_vif);
 	hw->sta_data_size = sizeof(struct wfx_sta_priv);
 
-	hw->wiphy->bands[NL80211_BAND_2GHZ] = &wfx_band_2ghz;
-
-	/* Channel params have to be cleared before registering wiphy again */
-	for (band = 0; band < NUM_NL80211_BANDS; band++) {
-		struct ieee80211_supported_band *sband = hw->wiphy->bands[band];
-
-		if (!sband)
-			continue;
-		for (i = 0; i < sband->n_channels; i++) {
-			sband->channels[i].flags = 0;
-			sband->channels[i].max_antenna_gain = 0;
-			sband->channels[i].max_power = 30;
-		}
-	}
-
 	hw->wiphy->max_scan_ssids = 2;
 	hw->wiphy->max_scan_ie_len = IEEE80211_MAX_DATA_LEN;
+	hw->wiphy->bands[NL80211_BAND_2GHZ] = devm_kmalloc(dev, sizeof(wfx_band_2ghz), GFP_KERNEL);
+	// FIXME: report OTP restriction here
+	memcpy(hw->wiphy->bands[NL80211_BAND_2GHZ], &wfx_band_2ghz, sizeof(wfx_band_2ghz));
 
 	init_completion(&wdev->firmware_ready);
 	init_wsm_cmd(&wdev->wsm_cmd);
