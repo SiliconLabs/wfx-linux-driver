@@ -213,23 +213,8 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 	hw = ieee80211_alloc_hw(sizeof(struct wfx_dev), &wfx_ops);
 	if (!hw)
 		return NULL;
+
 	SET_IEEE80211_DEV(hw, dev);
-
-	wdev = hw->priv;
-	wdev->hw = hw;
-	wdev->pdev = dev;
-	memcpy(&wdev->pdata, pdata, sizeof(*pdata));
-	of_property_read_string(dev->of_node, "config-file", &wdev->pdata.file_pds);
-	if (power_mode >= 0 && power_mode <= 2)
-		wdev->pdata.power_mode = power_mode;
-	wdev->pdata.gpio_wakeup = wfx_get_gpio(dev, gpio_wakeup, "wakeup");
-	if (!wdev->pdata.gpio_wakeup && wdev->pdata.power_mode == WSM_OP_POWER_MODE_QUIESCENT) {
-		wdev->pdata.power_mode = WSM_OP_POWER_MODE_DOZE;
-		dev_warn(wdev->pdev, "disable WSM_OP_POWER_MODE_QUIESCENT");
-	}
-
-	wdev->rates = wfx_rates;
-	wdev->mcs_rates = wfx_mcs_rates;
 
 	ieee80211_hw_set(hw, NEED_DTIM_BEFORE_ASSOC);
 	ieee80211_hw_set(hw, TX_AMPDU_SETUP_IN_HW);
@@ -241,30 +226,40 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 	ieee80211_hw_set(hw, SUPPORTS_PS);
 	ieee80211_hw_set(hw, MFP_CAPABLE);
 
-	hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
-					  BIT(NL80211_IFTYPE_ADHOC) |
-					  BIT(NL80211_IFTYPE_AP) |
-					  BIT(NL80211_IFTYPE_MESH_POINT) |
-					  BIT(NL80211_IFTYPE_P2P_CLIENT) |
-					  BIT(NL80211_IFTYPE_P2P_GO);
-
-	hw->wiphy->flags |= WIPHY_FLAG_AP_UAPSD;
-
-	hw->queues = 4;
-
-	hw->max_rates = 8;
-	hw->max_rate_tries = 15;
-	hw->extra_tx_headroom = WSM_TX_EXTRA_HEADROOM +
-		8;  /* TKIP IV */
-
 	hw->vif_data_size = sizeof(struct wfx_vif);
 	hw->sta_data_size = sizeof(struct wfx_sta_priv);
+	hw->queues = 4;
+	hw->max_rates = 8;
+	hw->max_rate_tries = 15;
+	hw->extra_tx_headroom = WSM_TX_EXTRA_HEADROOM + 8;  /* TKIP IV */
 
+	hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
+				     BIT(NL80211_IFTYPE_ADHOC) |
+				     BIT(NL80211_IFTYPE_AP) |
+				     BIT(NL80211_IFTYPE_MESH_POINT) |
+				     BIT(NL80211_IFTYPE_P2P_CLIENT) |
+				     BIT(NL80211_IFTYPE_P2P_GO);
+	hw->wiphy->flags |= WIPHY_FLAG_AP_UAPSD;
 	hw->wiphy->max_scan_ssids = 2;
 	hw->wiphy->max_scan_ie_len = IEEE80211_MAX_DATA_LEN;
 	hw->wiphy->bands[NL80211_BAND_2GHZ] = devm_kmalloc(dev, sizeof(wfx_band_2ghz), GFP_KERNEL);
 	// FIXME: report OTP restriction here
 	memcpy(hw->wiphy->bands[NL80211_BAND_2GHZ], &wfx_band_2ghz, sizeof(wfx_band_2ghz));
+
+	wdev = hw->priv;
+	wdev->hw = hw;
+	wdev->pdev = dev;
+	wdev->rates = wfx_rates;
+	wdev->mcs_rates = wfx_mcs_rates;
+	memcpy(&wdev->pdata, pdata, sizeof(*pdata));
+	of_property_read_string(dev->of_node, "config-file", &wdev->pdata.file_pds);
+	if (power_mode >= 0 && power_mode <= 2)
+		wdev->pdata.power_mode = power_mode;
+	wdev->pdata.gpio_wakeup = wfx_get_gpio(dev, gpio_wakeup, "wakeup");
+	if (!wdev->pdata.gpio_wakeup && wdev->pdata.power_mode == WSM_OP_POWER_MODE_QUIESCENT) {
+		wdev->pdata.power_mode = WSM_OP_POWER_MODE_DOZE;
+		dev_warn(wdev->pdev, "disable WSM_OP_POWER_MODE_QUIESCENT");
+	}
 
 	init_completion(&wdev->firmware_ready);
 	init_wsm_cmd(&wdev->wsm_cmd);
