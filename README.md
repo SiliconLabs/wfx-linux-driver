@@ -317,9 +317,13 @@ It can be more convenient to follow higher level HIF messages:
     kworker/2:0H-23    [002] .... 429125.080412: wsm_send: 56:START_SCAN_REQ: 00 00 02 00 00 00 00 00 02...
     <Ctrl+C>
 
-It can also be convenient to trace IRQs associated to the WFx chip. In this
-case, we want to trace all IRQs and add a filter to only show IRQs related to
-WFx:
+It is possible to filter events. For exemple, to remove Tx request, Tx
+confirmation and Rx indication from results, you can do:
+
+    $ echo 'msg_id != 4 && msg_id != 0x84' | tee /sys/kernel/debug/tracing/events/wfx/wsm_*/filter
+
+It can also be convenient to trace IRQs associated to the WFx chip. We will
+trace all IRQs and add a filter to only show IRQs related to WFx:
 
     $ echo 'name == "wfx"' >  /sys/kernel/debug/tracing/events/irq/irq_handler_entry/filter
     $ echo 1 > /sys/kernel/debug/tracing/events/irq/irq_handler_entry/enable
@@ -363,7 +367,8 @@ It is also possible to trace requests from mac80211 stack to WFx driver:
 Note that there is no real way to trace events during module loading. The best
 solution is to defer probing, setup traces and finally request probe manually:
 
-    $ modprobe wfx async_probe
+    $ echo 1 > /sys/bus/spi/drivers_autoprobe
+    $ modprobe wfx
     $ echo 1 | tee /sys/kernel/debug/tracing/events/wfx/wsm_*/enable
     $ cat /sys/kernel/debug/tracing/trace_pipe &
     $ echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/bind
