@@ -47,17 +47,14 @@ static const struct file_operations __name ## _fops = {			\
 
 static const struct trace_print_flags wsm_msg_print_map[] = {
 	wsm_msg_list,
-	{ -1, NULL }
 };
 
 static const struct trace_print_flags wsm_mib_print_map[] = {
 	wsm_mib_list,
-	{ -1, "/unknown" }
 };
 
 static const struct trace_print_flags wfx_reg_print_map[] = {
 	wfx_reg_list,
-	{ -1, NULL }
 };
 
 static const struct trace_print_flags wfx_fw_types_print_map[] = {
