@@ -146,7 +146,7 @@ wsm_msg_list_enum
 wsm_mib_list_enum
 
 #undef wsm_mib_name
-#define wsm_mib_name(mib) { WSM_MIB_ID_##mib, "/" #mib },
+#define wsm_mib_name(mib) { WSM_MIB_ID_##mib, #mib },
 #define wsm_mib_list wsm_mib_list_enum { -1, NULL }
 
 DECLARE_EVENT_CLASS(wsm_data,
@@ -183,10 +183,11 @@ DECLARE_EVENT_CLASS(wsm_data,
 		__entry->buf_len = min(32, __entry->msg_len - header_len);
 		memcpy(__entry->buf, ((char *) wsm_buf) + header_len, __entry->buf_len);
 	),
-	TP_printk("%d:%s_%s%s: %s%s (%d bytes)",
+	TP_printk("%d:%s_%s%s%s: %s%s (%d bytes)",
 		__entry->if_id,
 		__print_symbolic(__entry->msg_id, wsm_msg_list),
 		__entry->msg_type,
+		__entry->mib != -1 ? "/" : "",
 		__entry->mib != -1 ? __print_symbolic(__entry->mib, wsm_mib_list) : "",
 		__print_hex(__entry->buf, __entry->buf_len),
 		__entry->is_longer ? " ..." : "",

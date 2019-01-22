@@ -76,7 +76,7 @@ static const char *get_symbol(unsigned long val,
 			return symbol_array[i].name;
 	}
 
-	return symbol_array[i].name ? symbol_array[i].name : "unknown";
+	return "unknown";
 }
 
 const char *get_wsm_name(unsigned long id)

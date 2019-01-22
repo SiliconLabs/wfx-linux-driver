@@ -61,6 +61,7 @@ static void *wfx_alloc_wsm(size_t body_len, HiMsgHdr_t **hdr)
 static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, size_t reply_len, bool async)
 {
 	const char *mib_name = "";
+	const char *mib_sep = "";
 	int cmd = request->s.b.Id;
 	int vif = request->s.b.IntId;
 	int ret;
@@ -102,14 +103,18 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 	wdev->wsm_cmd.buf_send = NULL;
 	mutex_unlock(&wdev->wsm_cmd.lock);
 
-	if (ret && (cmd == WSM_HI_READ_MIB_REQ_ID || cmd == WSM_HI_WRITE_MIB_REQ_ID))
+	if (ret && (cmd == WSM_HI_READ_MIB_REQ_ID || cmd == WSM_HI_WRITE_MIB_REQ_ID)) {
 		mib_name = get_mib_name(((u16 *) request)[2]);
+		mib_sep = "/";
+	}
 	if (ret < 0)
-		dev_err(wdev->pdev, "WSM request %s%s (%#.2x) on vif %d returned error %d\n",
-				get_wsm_name(cmd), mib_name, cmd, vif, ret);
+		dev_err(wdev->pdev,
+			"WSM request %s%s%s (%#.2x) on vif %d returned error %d\n",
+			get_wsm_name(cmd), mib_sep, mib_name, cmd, vif, ret);
 	if (ret > 0)
-		dev_warn(wdev->pdev, "WSM request %s%s (%#.2x) on vif %d returned status %d\n",
-				get_wsm_name(cmd), mib_name, cmd, vif, ret);
+		dev_warn(wdev->pdev,
+			 "WSM request %s%s%s (%#.2x) on vif %d returned status %d\n",
+			 get_wsm_name(cmd), mib_sep, mib_name, cmd, vif, ret);
 
 	return ret;
 }
