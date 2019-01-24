@@ -562,12 +562,6 @@ void wfx_set_beacon_wakeup_period_work(struct work_struct *work)
 u64 wfx_prepare_multicast(struct ieee80211_hw *hw,
 			     struct netdev_hw_addr_list *mc_list)
 {
-	static u8 broadcast_ipv6[ETH_ALEN] = {
-		0x33, 0x33, 0x00, 0x00, 0x00, 0x01
-	};
-	static u8 broadcast_ipv4[ETH_ALEN] = {
-		0x01, 0x00, 0x5e, 0x00, 0x00, 0x01
-	};
 	struct wfx_dev *wdev = hw->priv;
 	struct netdev_hw_addr *ha;
 	int count = 0;
@@ -577,7 +571,6 @@ u64 wfx_prepare_multicast(struct ieee80211_hw *hw,
 	pr_debug("[STA] wfx_prepare_multicast\n");
 
 	/* Disable multicast filtering */
-	wvif->has_multicast_subscription = false;
 	memset(&wvif->multicast_filter, 0x00, sizeof(wvif->multicast_filter));
 
 	if (netdev_hw_addr_list_count(mc_list) > ARRAY_SIZE(wvif->multicast_filter.address_list))
@@ -588,9 +581,6 @@ u64 wfx_prepare_multicast(struct ieee80211_hw *hw,
 		pr_debug("[STA] multicast: %pM\n", ha->addr);
 		ether_addr_copy(wvif->multicast_filter.address_list[count],
 				ha->addr);
-		if (!ether_addr_equal(ha->addr, broadcast_ipv4) &&
-		    !ether_addr_equal(ha->addr, broadcast_ipv6))
-			wvif->has_multicast_subscription = true;
 		count++;
 	}
 

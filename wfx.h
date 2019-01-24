@@ -228,7 +228,6 @@ struct wfx_vif {
 	bool			tx_multicast;
 	bool			aid0_bit_set;
 	bool			delayed_unjoin;
-	bool			has_multicast_subscription;
 	bool			disable_beacon_filter;
 	bool			listening;
 	bool			cqm_use_rssi;
