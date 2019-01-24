@@ -52,7 +52,6 @@ static void wfx_do_join(struct wfx_vif *wvif);
 static void wfx_do_unjoin(struct wfx_vif *wvif);
 
 static int wfx_upload_beacon(struct wfx_vif *wvif);
-static int wfx_vif_setup(struct wfx_vif *wvif);
 static int wfx_start_ap(struct wfx_vif *wvif);
 static int wfx_update_beaconing(struct wfx_vif *wvif);
 static void __wfx_sta_notify(struct wfx_vif *wvif,
@@ -194,6 +193,90 @@ void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 		if (skb)
 			wfx_tx(wvif->wdev->hw, NULL, skb);
 	}
+}
+
+static int wfx_vif_setup(struct wfx_vif *wvif)
+{
+	int i;
+	static const WsmHiEdcaQueueParamsReqBody_t default_edca_params[] = {
+		[IEEE80211_AC_VO] = {
+			.QueueId = WSM_QUEUE_ID_VOICE,
+			.AIFSN = 2,
+			.CwMin = 3,
+			.CwMax = 7,
+			.TxOpLimit = TXOP_UNIT * 47,
+		},
+		[IEEE80211_AC_VI] = {
+			.QueueId = WSM_QUEUE_ID_VIDEO,
+			.AIFSN = 2,
+			.CwMin = 7,
+			.CwMax = 15,
+			.TxOpLimit = TXOP_UNIT * 94,
+		},
+		[IEEE80211_AC_BE] = {
+			.QueueId = WSM_QUEUE_ID_BACKGROUND,
+			.AIFSN = 3,
+			.CwMin = 15,
+			.CwMax = 1023,
+			.TxOpLimit = TXOP_UNIT * 0,
+		},
+		[IEEE80211_AC_BK] = {
+			.QueueId = WSM_QUEUE_ID_BESTEFFORT,
+			.AIFSN = 7,
+			.CwMin = 15,
+			.CwMax = 1023,
+			.TxOpLimit = TXOP_UNIT * 0,
+		},
+	};
+
+	/* Spin lock */
+	spin_lock_init(&wvif->ps_state_lock);
+	spin_lock_init(&wvif->event_queue_lock);
+	mutex_init(&wvif->bss_loss_lock);
+	/* STA Work*/
+	INIT_LIST_HEAD(&wvif->event_queue);
+	INIT_WORK(&wvif->event_handler, wfx_event_handler);
+	INIT_DELAYED_WORK(&wvif->join_timeout, wfx_join_timeout);
+	INIT_WORK(&wvif->unjoin_work, wfx_unjoin_work);
+	INIT_WORK(&wvif->join_complete_work, wfx_join_complete_work);
+	INIT_WORK(&wvif->wep_key_work, wfx_wep_key_work);
+	INIT_WORK(&wvif->bss_params_work, wfx_bss_params_work);
+	INIT_WORK(&wvif->set_beacon_wakeup_period_work, wfx_set_beacon_wakeup_period_work);
+	INIT_DELAYED_WORK(&wvif->bss_loss_work, wfx_bss_loss_work);
+
+	/* AP Work */
+	INIT_WORK(&wvif->link_id_work, wfx_link_id_work);
+	INIT_DELAYED_WORK(&wvif->link_id_gc_work, wfx_link_id_gc_work);
+	INIT_WORK(&wvif->linkid_reset_work, wfx_link_id_reset);
+	INIT_WORK(&wvif->update_filtering_work, wfx_update_filtering_work);
+
+	/* Optional */
+	INIT_WORK(&wvif->set_tim_work, wfx_set_tim_work);
+	INIT_WORK(&wvif->set_cts_work, wfx_set_cts_work);
+
+	INIT_WORK(&wvif->multicast_start_work, wfx_multicast_start_work);
+	INIT_WORK(&wvif->multicast_stop_work, wfx_multicast_stop_work);
+#if (KERNEL_VERSION(4, 14, 0) <= LINUX_VERSION_CODE)
+	timer_setup(&wvif->mcast_timeout, wfx_mcast_timeout, 0);
+#else
+	setup_timer(&wvif->mcast_timeout, wfx_mcast_timeout, (unsigned long) wvif);
+#endif
+
+	/* About scan */
+	sema_init(&wvif->scan.lock, 1);
+	INIT_WORK(&wvif->scan.work, wfx_scan_work);
+	INIT_DELAYED_WORK(&wvif->scan.probe_work, wfx_probe_work);
+	INIT_DELAYED_WORK(&wvif->scan.timeout, wfx_scan_timeout);
+
+	BUG_ON(ARRAY_SIZE(default_edca_params) != ARRAY_SIZE(wvif->edca.params));
+	for (i = 0; i < ARRAY_SIZE(default_edca_params); i++) {
+		memcpy(&wvif->edca.params[i], &default_edca_params[i], sizeof(default_edca_params[i]));
+		wvif->edca.uapsd_enable[i] = false;
+	}
+	wvif->setbssparams_done = false;
+	wvif->wep_default_key_id = -1;
+
+	return 0;
 }
 
 int wfx_add_interface(struct ieee80211_hw *dev,
@@ -2351,86 +2434,3 @@ static int wfx_update_beaconing(struct wfx_vif *wvif)
 	return 0;
 }
 
-static int wfx_vif_setup(struct wfx_vif *wvif)
-{
-	int i;
-	static const WsmHiEdcaQueueParamsReqBody_t default_edca_params[] = {
-		[IEEE80211_AC_VO] = {
-			.QueueId = WSM_QUEUE_ID_VOICE,
-			.AIFSN = 2,
-			.CwMin = 3,
-			.CwMax = 7,
-			.TxOpLimit = TXOP_UNIT * 47,
-		},
-		[IEEE80211_AC_VI] = {
-			.QueueId = WSM_QUEUE_ID_VIDEO,
-			.AIFSN = 2,
-			.CwMin = 7,
-			.CwMax = 15,
-			.TxOpLimit = TXOP_UNIT * 94,
-		},
-		[IEEE80211_AC_BE] = {
-			.QueueId = WSM_QUEUE_ID_BACKGROUND,
-			.AIFSN = 3,
-			.CwMin = 15,
-			.CwMax = 1023,
-			.TxOpLimit = TXOP_UNIT * 0,
-		},
-		[IEEE80211_AC_BK] = {
-			.QueueId = WSM_QUEUE_ID_BESTEFFORT,
-			.AIFSN = 7,
-			.CwMin = 15,
-			.CwMax = 1023,
-			.TxOpLimit = TXOP_UNIT * 0,
-		},
-	};
-
-	/* Spin lock */
-	spin_lock_init(&wvif->ps_state_lock);
-	spin_lock_init(&wvif->event_queue_lock);
-	mutex_init(&wvif->bss_loss_lock);
-	/* STA Work*/
-	INIT_LIST_HEAD(&wvif->event_queue);
-	INIT_WORK(&wvif->event_handler, wfx_event_handler);
-	INIT_DELAYED_WORK(&wvif->join_timeout, wfx_join_timeout);
-	INIT_WORK(&wvif->unjoin_work, wfx_unjoin_work);
-	INIT_WORK(&wvif->join_complete_work, wfx_join_complete_work);
-	INIT_WORK(&wvif->wep_key_work, wfx_wep_key_work);
-	INIT_WORK(&wvif->bss_params_work, wfx_bss_params_work);
-	INIT_WORK(&wvif->set_beacon_wakeup_period_work, wfx_set_beacon_wakeup_period_work);
-	INIT_DELAYED_WORK(&wvif->bss_loss_work, wfx_bss_loss_work);
-
-	/* AP Work */
-	INIT_WORK(&wvif->link_id_work, wfx_link_id_work);
-	INIT_DELAYED_WORK(&wvif->link_id_gc_work, wfx_link_id_gc_work);
-	INIT_WORK(&wvif->linkid_reset_work, wfx_link_id_reset);
-	INIT_WORK(&wvif->update_filtering_work, wfx_update_filtering_work);
-
-	/* Optional */
-	INIT_WORK(&wvif->set_tim_work, wfx_set_tim_work);
-	INIT_WORK(&wvif->set_cts_work, wfx_set_cts_work);
-
-	INIT_WORK(&wvif->multicast_start_work, wfx_multicast_start_work);
-	INIT_WORK(&wvif->multicast_stop_work, wfx_multicast_stop_work);
-#if (KERNEL_VERSION(4, 14, 0) <= LINUX_VERSION_CODE)
-	timer_setup(&wvif->mcast_timeout, wfx_mcast_timeout, 0);
-#else
-	setup_timer(&wvif->mcast_timeout, wfx_mcast_timeout, (unsigned long) wvif);
-#endif
-
-	/* About scan */
-	sema_init(&wvif->scan.lock, 1);
-	INIT_WORK(&wvif->scan.work, wfx_scan_work);
-	INIT_DELAYED_WORK(&wvif->scan.probe_work, wfx_probe_work);
-	INIT_DELAYED_WORK(&wvif->scan.timeout, wfx_scan_timeout);
-
-	BUG_ON(ARRAY_SIZE(default_edca_params) != ARRAY_SIZE(wvif->edca.params));
-	for (i = 0; i < ARRAY_SIZE(default_edca_params); i++) {
-		memcpy(&wvif->edca.params[i], &default_edca_params[i], sizeof(default_edca_params[i]));
-		wvif->edca.uapsd_enable[i] = false;
-	}
-	wvif->setbssparams_done = false;
-	wvif->wep_default_key_id = -1;
-
-	return 0;
-}
