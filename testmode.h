@@ -20,12 +20,8 @@
 #include <net/mac80211.h>
 
 #ifdef CONFIG_NL80211_TESTMODE
-int wfx_testmode_reply(struct wiphy *wiphy, const void *data, int len);
 int wfx_testmode_command(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			 void *data, int len);
-void wfx_testmode_bs_buffer_add(u8 *data, size_t len);
-#else
-static inline void wfx_testmode_bs_buffer_add(u8 *data, size_t len) { }
 #endif
 
 #endif /* WFX_TESTMODE_H */

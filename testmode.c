@@ -26,83 +26,6 @@
 #include "sta.h"
 #include "debug.h"
 
-#define TM_BS_BUFFER_LEN (1024)
-
-static u8 l_aui8_bs_buffer[TM_BS_BUFFER_LEN];
-static u16 l_ui16_bs_buffer_set;
-static u16 l_ui16_bs_buffer_get;
-
-static bool l_b_bs_pm_enable = true;
-
-void wfx_testmode_bs_buffer_add(u8 *pui8_Array, size_t s_Length)
-{
-	size_t s_LengthCopy;
-
-	if (!l_b_bs_pm_enable ||
-	    l_ui16_bs_buffer_set == TM_BS_BUFFER_LEN)
-		return;
-
-	s_LengthCopy =
-		min(s_Length,
-		    (size_t)(TM_BS_BUFFER_LEN - l_ui16_bs_buffer_set));
-
-	pr_warn("cpy %zu\n", s_LengthCopy);
-	memcpy(&l_aui8_bs_buffer[l_ui16_bs_buffer_set], pui8_Array,
-	       s_LengthCopy);
-
-	l_ui16_bs_buffer_set += s_LengthCopy;
-}
-
-static void wfx_testmode_bs_buffer_flush(struct sk_buff *skb)
-{
-	u16 ui16_nbDataToFlush = l_ui16_bs_buffer_set -
-				      l_ui16_bs_buffer_get;
-
-	pr_warn("cui16_nbDataToFlush %d\n", ui16_nbDataToFlush);
-	nla_put_u32(skb, WFX_TM_ATTR_BS_BUFF_LEN, ui16_nbDataToFlush);
-	nla_put(skb, WFX_TM_ATTR_BS_BUFF,
-		ui16_nbDataToFlush * sizeof(u8),
-		&l_aui8_bs_buffer[l_ui16_bs_buffer_get]);
-
-	l_ui16_bs_buffer_set = 0;
-	l_ui16_bs_buffer_get = l_ui16_bs_buffer_set;
-}
-
-static int wfx_testmode_bs(struct ieee80211_hw *hw, struct nlattr **p_tb)
-{
-	switch (nla_get_u32(p_tb[WFX_TM_ATTR_CMD])) {
-	case WFX_TM_CMD_BS_ENABLE:
-	{
-		/* Should not be called. */
-		l_b_bs_pm_enable = !l_b_bs_pm_enable;
-	}
-
-	case WFX_TM_CMD_BS_FLUSH:
-	{
-		int ret;
-		struct sk_buff *skb = cfg80211_testmode_alloc_reply_skb(
-			hw->wiphy,
-			sizeof(
-				u8) * l_ui16_bs_buffer_set);
-
-		if (!skb)
-			return -ENOMEM;
-
-		wfx_testmode_bs_buffer_flush(skb);
-
-		ret = cfg80211_testmode_reply(skb);
-
-		if (ret != 0)
-			pr_err("ret = %d\n", ret);
-		break;
-	}
-	default:
-		pr_info("BS testmode unknown\n");
-		break;
-	}
-	return 0;
-};
-
 
 /**
  * wfx_testmode_cmd -called when testmode command
@@ -136,10 +59,6 @@ int wfx_testmode_command(struct ieee80211_hw *hw,
 
 	dev_dbg(wdev->pdev, "testmode: received command %08x\n", nla_get_u32(tb[WFX_TM_ATTR_TYPE]));
 	switch (nla_get_u32(tb[WFX_TM_ATTR_TYPE])) {
-	case WFX_TM_ATTR_TYPE_BITSTEAM:
-		ret = wfx_testmode_bs(hw, tb);
-		break;
-
 	case WFX_TM_ATTR_TYPE_FW_TEST:
 		dev_warn(wdev->pdev, "reloading PDS from testmode is deprecated, prefer /sys/kernel/debug/ieee80211/phy0/wfx/send_pds\n");
 		/* FW tests are activated and configured by PDS. */
