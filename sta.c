@@ -2410,7 +2410,6 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	wvif->power_set_true = 0;
 	wvif->user_power_set_true = 0;
 	wvif->user_pm_mode = 0;
-	wvif->htcap = false;
 	wvif->wep_default_key_id = -1;
 	wvif->cipherType = 0;
 	wvif->cqm_link_loss_count = 40;

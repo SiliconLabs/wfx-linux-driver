@@ -213,7 +213,6 @@ struct wfx_vif {
 	u32			key_map;
 
 	bool			enable_beacon;
-	bool			htcap;
 	bool			setbssparams_done;
 	bool			buffered_multicasts;
 	bool			tx_multicast;
