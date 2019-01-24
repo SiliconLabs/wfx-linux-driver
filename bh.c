@@ -35,10 +35,6 @@
 #define HIF_ERROR_DETECTION_8   0x55
 #define HIF_ERROR_DETECTION_16  0x5555
 #endif
-/* Suspend state privates */
-enum wfx_bh_pm_state {
-	WFX_BH_RESUMED = 0, WFX_BH_SUSPEND, WFX_BH_SUSPENDED, WFX_BH_RESUME,
-};
 
 static int wfx_bh(void *arg);
 static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev);
@@ -74,7 +70,6 @@ int wfx_register_bh(struct wfx_dev *wdev)
 	atomic_set(&wdev->bh_rx, 0);
 	atomic_set(&wdev->bh_tx, 0);
 	atomic_set(&wdev->bh_term, 0);
-	atomic_set(&wdev->bh_suspend, WFX_BH_RESUMED);
 	wdev->bh_error = 0;
 	wdev->hw_bufs_used = 0;
 	atomic_set(&wdev->device_can_sleep, 0);
@@ -144,38 +139,6 @@ void wfx_bh_wakeup(struct wfx_dev *wdev)
 
 	if (atomic_add_return(1, &wdev->bh_tx) == 1)
 		wake_up(&wdev->bh_wq);
-}
-
-int wfx_bh_suspend(struct wfx_dev *wdev)
-{
-	pr_debug("[BH] suspend.\n");
-	if (wdev->bh_error) {
-		wiphy_warn(wdev->hw->wiphy, "BH error -- can't suspend\n");
-		return -EINVAL;
-	}
-
-	atomic_set(&wdev->bh_suspend, WFX_BH_SUSPEND);
-	wake_up(&wdev->bh_wq);
-	return wait_event_timeout(wdev->bh_evt_wq, wdev->bh_error ||
-				  (WFX_BH_SUSPENDED ==
-				   atomic_read(&wdev->bh_suspend)),
-		 1 * HZ) ? 0 : -ETIMEDOUT;
-}
-
-int wfx_bh_resume(struct wfx_dev *wdev)
-{
-	pr_debug("[BH] resume.\n");
-	if (wdev->bh_error) {
-		wiphy_warn(wdev->hw->wiphy, "BH error -- can't resume\n");
-		return -EINVAL;
-	}
-
-	atomic_set(&wdev->bh_suspend, WFX_BH_RESUME);
-	wake_up(&wdev->bh_wq);
-	return wait_event_timeout(wdev->bh_evt_wq, wdev->bh_error ||
-				  (WFX_BH_RESUMED ==
-				   atomic_read(&wdev->bh_suspend)),
-		1 * HZ) ? 0 : -ETIMEDOUT;
 }
 
 /*
@@ -481,7 +444,7 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
  */
 static int wfx_bh(void *arg)
 {
-	int term, suspend, irq_seen;
+	int term, irq_seen;
 	int tx_burst, tx_allowed;
 	long status;
 	int ret, done;
@@ -511,11 +474,10 @@ static int wfx_bh(void *arg)
 			}
 
 			status = wait_event_interruptible_timeout(wdev->bh_wq, ({
-				suspend = pending_tx ? 0 : atomic_read(&wdev->bh_suspend);
 				irq_seen = atomic_xchg(&wdev->bh_rx, 0);
 				pending_tx += atomic_xchg(&wdev->bh_tx, 0);
 				term = atomic_xchg(&wdev->bh_term, 0);
-				(irq_seen || pending_tx || term || suspend || wdev->bh_error);
+				(irq_seen || pending_tx || term || wdev->bh_error);
 			}), status);
 
 			/* bh_rx=1 means an IRQ triggered but it can be for Rx data to read or for the device coming out of sleep
@@ -532,8 +494,8 @@ static int wfx_bh(void *arg)
 			if (wdev->pdata.sdio && !atomic_read(&wdev->device_can_sleep))
 				config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_WRDY);
 
-			pr_debug("[BH] - rx: %d, tx: %d, term: %d, bh_err: %d, suspend: %d, status: %ld , conf_mutex: %d\n",
-				pending_rx, pending_tx, term, wdev->bh_error, suspend, status,
+			pr_debug("[BH] - rx: %d, tx: %d, term: %d, bh_err: %d, status: %ld , conf_mutex: %d\n",
+				pending_rx, pending_tx, term, wdev->bh_error, status,
 				mutex_is_locked(&wdev->conf_mutex));
 
 			/* Did an error occur? */
@@ -568,24 +530,6 @@ static int wfx_bh(void *arg)
 							wdev->hw_bufs_used, pending, timestamp, jiffies);
 					}
 				} /* end of timeout event */
-			} else if (suspend) {
-				pr_debug("[BH] Device suspend.\n");
-				if (wdev->sleep_activated) {
-					pr_debug("[BH] Device wakedown. Suspend.\n");
-					wfx_device_wakedown(wdev);
-				}
-
-				atomic_set(&wdev->bh_suspend, WFX_BH_SUSPENDED);
-				wake_up(&wdev->bh_evt_wq);
-				status = wait_event_interruptible(wdev->bh_wq, atomic_read(&wdev->bh_suspend) == WFX_BH_RESUME);
-				if (status < 0) {
-					wiphy_err(wdev->hw->wiphy, "Failed to wait for resume: %ld.\n",
-							status);
-					break;
-				}
-				pr_debug("[BH] Device resume.\n");
-				atomic_set(&wdev->bh_suspend, WFX_BH_RESUMED);
-				wake_up(&wdev->bh_evt_wq);
 			}
 		} /* end of the wait_event global processing */
 		dev_dbg(wdev->pdev, "bh: wait event\n");
