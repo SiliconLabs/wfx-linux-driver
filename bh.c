@@ -27,9 +27,9 @@
 #include "debug.h"
 #include "traces.h"
 
-#define WF200_WAKEUP_WAIT_STEP_MIN 250  /*in us */
-#define WF200_WAKEUP_WAIT_STEP_MAX 300  /*in us */
-#define WF200_WAKEUP_WAIT_MAX 2000      /*in us */
+#define WFX_WAKEUP_WAIT_STEP_MIN 250  /*in us */
+#define WFX_WAKEUP_WAIT_STEP_MAX 300  /*in us */
+#define WFX_WAKEUP_WAIT_MAX 2000      /*in us */
 
 #ifdef RASPBERRY_PI
 #define HIF_ERROR_DETECTION_8   0x55
@@ -221,10 +221,10 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 	 * requested, effective wait is ]n+1, n-1[ */
 #else
 	do {
-		usleep_range(WF200_WAKEUP_WAIT_STEP_MIN, WF200_WAKEUP_WAIT_STEP_MAX);
-		rdy_timeout += WF200_WAKEUP_WAIT_STEP_MIN;
+		usleep_range(WFX_WAKEUP_WAIT_STEP_MIN, WFX_WAKEUP_WAIT_STEP_MAX);
+		rdy_timeout += WFX_WAKEUP_WAIT_STEP_MIN;
 	} while (atomic_read(&wdev->device_can_sleep) &&
-		 (rdy_timeout < WF200_WAKEUP_WAIT_MAX));
+		 (rdy_timeout < WFX_WAKEUP_WAIT_MAX));
 #endif
 	if (atomic_read(&wdev->device_can_sleep) == 1) { /* timeout */
 		/* no IRQ then maybe the device was not sleeping
