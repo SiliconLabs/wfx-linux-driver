@@ -185,10 +185,6 @@ struct wfx_vif {
 	struct ieee80211_channel *channel;
 	int			Id;
 	int			mode;
-	int			power_set_true;
-	int			user_power_set_true;
-	int			cqm_link_loss_count;
-	int			cqm_beacon_loss_count;
 	int			dtim_period;
 	int			beacon_int;
 	int			bss_loss_state;
@@ -198,7 +194,6 @@ struct wfx_vif {
 
 	unsigned		cqm_rssi_hyst;
 
-	u8			user_pm_mode;
 	u8			bssid[ETH_ALEN];
 	u8			action_frame_sa[ETH_ALEN];
 	u8			action_linkid;

@@ -1963,8 +1963,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 				wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
 				cancel_work_sync(&wvif->unjoin_work);
 
-				wvif->bss_params.BeaconLostCount =
-					wvif->cqm_beacon_loss_count;
+				wvif->bss_params.BeaconLostCount = 20;
 				wvif->bss_params.AID = info->aid;
 
 				if (wvif->dtim_period < 1)
@@ -2399,13 +2398,8 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	}
 	memset(wvif->bssid, ~0, ETH_ALEN);
 	wvif->setbssparams_done = false;
-	wvif->power_set_true = 0;
-	wvif->user_power_set_true = 0;
-	wvif->user_pm_mode = 0;
 	wvif->wep_default_key_id = -1;
 	wvif->cipherType = 0;
-	wvif->cqm_link_loss_count = 40;
-	wvif->cqm_beacon_loss_count = 20;
 
 	return 0;
 }
