@@ -2395,7 +2395,6 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 		memcpy(&wvif->edca.params[i], &default_edca_params[i], sizeof(default_edca_params[i]));
 		wvif->edca.uapsd_enable[i] = false;
 	}
-	memset(wvif->bssid, ~0, ETH_ALEN);
 	wvif->setbssparams_done = false;
 	wvif->wep_default_key_id = -1;
 	wvif->cipherType = 0;
