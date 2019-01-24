@@ -27,7 +27,7 @@
 #include "sta.h"
 #include "debug.h"
 
-#define WF200_INVALID_RATE_ID (0xFF)
+#define WFX_INVALID_RATE_ID (0xFF)
 
 static int wfx_handle_action_rx(struct wfx_dev *wdev, struct sk_buff *skb);
 static const struct ieee80211_rate *wfx_get_tx_rate(const struct wfx_dev *wdev,
@@ -313,7 +313,7 @@ static int tx_policy_get(struct wfx_dev *wdev, struct ieee80211_tx_rate *rates,
 	spin_lock_bh(&cache->lock);
 	if (WARN_ON_ONCE(list_empty(&cache->free))) {
 		spin_unlock_bh(&cache->lock);
-		return WF200_INVALID_RATE_ID;
+		return WFX_INVALID_RATE_ID;
 	}
 	idx = tx_policy_find(cache, &wanted);
 	if (idx >= 0) {
@@ -604,7 +604,7 @@ static int wfx_tx_h_rate_policy(struct wfx_dev *wdev, struct wfx_txinfo *t, WsmH
 	t->txpriv.rate_id = tx_policy_get(wdev,
 		t->tx_info->control.rates, IEEE80211_TX_MAX_RATES,
 		&tx_policy_renew);
-	if (t->txpriv.rate_id == WF200_INVALID_RATE_ID)
+	if (t->txpriv.rate_id == WFX_INVALID_RATE_ID)
 		return -EFAULT;
 
 	wsm->Body.TxFlags.Txrate = t->txpriv.rate_id;
@@ -726,7 +726,7 @@ void wfx_tx(struct ieee80211_hw *dev, struct ieee80211_tx_control *control,
 		.tx_info = IEEE80211_SKB_CB(skb),
 		.hdr = (struct ieee80211_hdr *)skb->data,
 		.txpriv.tid = WFX_MAX_TID,
-		.txpriv.rate_id = WF200_INVALID_RATE_ID,
+		.txpriv.rate_id = WFX_INVALID_RATE_ID,
 	};
 	struct ieee80211_sta *sta;
 	WsmHiTxReq_t *wsm;
@@ -1013,7 +1013,7 @@ void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb,
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, txpriv->vif_id);
 
 	skb_pull(skb, txpriv->offset);
-	if (txpriv->rate_id != WF200_INVALID_RATE_ID) {
+	if (txpriv->rate_id != WFX_INVALID_RATE_ID) {
 		wfx_notify_buffered_tx(wvif, skb,
 					  txpriv->raw_link_id, txpriv->tid);
 		tx_policy_put(wdev, txpriv->rate_id);
