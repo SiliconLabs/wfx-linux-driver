@@ -51,9 +51,6 @@
 static void wfx_do_join(struct wfx_vif *wvif);
 static void wfx_do_unjoin(struct wfx_vif *wvif);
 
-static int wfx_upload_beacon(struct wfx_vif *wvif);
-static int wfx_start_ap(struct wfx_vif *wvif);
-static int wfx_update_beaconing(struct wfx_vif *wvif);
 static int __wfx_flush(struct wfx_dev *wdev, bool drop);
 
 static int wfx_alloc_key(struct wfx_vif *wvif)
@@ -1907,6 +1904,125 @@ void wfx_set_cts_work(struct work_struct *work)
 		wsm_update_ie(wvif->wdev, &target_frame, erp_ie, sizeof(erp_ie), wvif->Id);
 }
 
+static int wfx_start_ap(struct wfx_vif *wvif)
+{
+	int ret;
+	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
+	WsmHiStartReqBody_t start = {
+		.Band			= WSM_PHY_BAND_2_4G,
+		.ChannelNumber		= wvif->channel->hw_value,
+		.BeaconInterval		= conf->beacon_int,
+		.DTIMPeriod		= conf->dtim_period,
+		.PreambleType		= conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
+		.BasicRateSet		= wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
+	};
+	struct wsm_operational_mode mode = {
+		.power_mode = wvif->wdev->pdata.power_mode,
+		.disable_more_flag_usage = true,
+	};
+
+
+	memset(start.Ssid, 0, sizeof(start.Ssid));
+	if (!conf->hidden_ssid) {
+		start.SsidLength = conf->ssid_len;
+		memcpy(start.Ssid, conf->ssid, start.SsidLength);
+	}
+
+	wvif->beacon_int = conf->beacon_int;
+	wvif->dtim_period = conf->dtim_period;
+
+	memset(&wvif->link_id_db, 0, sizeof(wvif->link_id_db));
+
+	pr_debug("[AP] ch: %d(%d), bcn: %d(%d), brt: 0x%.8X, ssid: %.*s.\n",
+		 start.ChannelNumber, start.Band,
+		 start.BeaconInterval, start.DTIMPeriod,
+		 start.BasicRateSet,
+		 start.SsidLength, start.Ssid);
+	wvif->wdev->tx_burst_idx = -1;
+	ret = wsm_start(wvif->wdev, &start, wvif->Id);
+	if (!ret)
+		ret = wfx_upload_keys(wvif);
+	if (!ret) {
+		wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
+		wvif->state = WFX_STATE_AP;
+		wfx_update_filtering(wvif);
+	}
+	wsm_set_operational_mode(wvif->wdev, &mode);
+	return ret;
+}
+
+static int wfx_update_beaconing(struct wfx_vif *wvif)
+{
+	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
+
+	if (wvif->mode == NL80211_IFTYPE_AP) {
+		if (wvif->state != WFX_STATE_AP ||
+		    wvif->beacon_int != conf->beacon_int) {
+			pr_debug("ap restarting\n");
+			wsm_lock_tx(wvif->wdev);
+			if (wvif->state != WFX_STATE_PASSIVE)
+				wsm_reset(wvif->wdev, false, wvif->Id);
+			wvif->state = WFX_STATE_PASSIVE;
+			wfx_start_ap(wvif);
+			wsm_unlock_tx(wvif->wdev);
+		} else {
+			pr_debug("ap started state: %d\n",
+				 wvif->state);
+	}
+	}
+	return 0;
+}
+
+static int wfx_upload_beacon(struct wfx_vif *wvif)
+{
+	int ret = 0;
+	struct sk_buff *skb = NULL;
+	struct ieee80211_mgmt *mgmt;
+	WsmHiMibTemplateFrame_t *p;
+
+	if (wvif->mode == NL80211_IFTYPE_STATION ||
+	    wvif->mode == NL80211_IFTYPE_MONITOR ||
+	    wvif->mode == NL80211_IFTYPE_UNSPECIFIED)
+		goto done;
+
+	skb = ieee80211_beacon_get(wvif->wdev->hw, wvif->vif);
+
+	if (!skb)
+		return -ENOMEM;
+
+	p = (WsmHiMibTemplateFrame_t *)skb_push(skb, 4);
+	p->FrameType = WSM_TMPLT_BCN;
+	p->InitRate = WSM_TRANSMIT_RATE_1; /* 1Mbps DSSS */
+	if (wvif->vif->p2p)
+		p->InitRate = WSM_TRANSMIT_RATE_6;
+	p->FrameLength = cpu_to_le16(skb->len - 4);
+
+	ret = wsm_set_template_frame(wvif->wdev, p, wvif->Id);
+
+	skb_pull(skb, 4);
+
+	if (ret)
+		goto done;
+	mgmt = (void *)skb->data;
+	mgmt->frame_control =
+		cpu_to_le16(IEEE80211_FTYPE_MGMT |
+			      IEEE80211_STYPE_PROBE_RESP);
+
+	p->FrameType = WSM_TMPLT_PRBRES;
+
+	if (wvif->vif->p2p) {
+		ret = wsm_set_probe_responder(wvif, true);
+	} else {
+		ret = wsm_set_template_frame(wvif->wdev, p, wvif->Id);
+		wsm_set_probe_responder(wvif, false);
+	}
+
+done:
+	if (!skb)
+		dev_kfree_skb(skb);
+	return ret;
+}
+
 void wfx_bss_info_changed(struct ieee80211_hw *dev,
 			     struct ieee80211_vif *vif,
 			     struct ieee80211_bss_conf *info,
@@ -2307,128 +2423,5 @@ void wfx_suspend_resume(struct wfx_vif *wvif,
 		if (arg->SuspendResumeFlags.ResumeOrSuspend)
 			wfx_bh_wakeup(wvif->wdev);
 	}
-}
-
-/* ******************************************************************** */
-/* AP privates
- */
-
-static int wfx_upload_beacon(struct wfx_vif *wvif)
-{
-	int ret = 0;
-	struct sk_buff *skb = NULL;
-	struct ieee80211_mgmt *mgmt;
-	WsmHiMibTemplateFrame_t *p;
-
-	if (wvif->mode == NL80211_IFTYPE_STATION ||
-	    wvif->mode == NL80211_IFTYPE_MONITOR ||
-	    wvif->mode == NL80211_IFTYPE_UNSPECIFIED)
-		goto done;
-
-	skb = ieee80211_beacon_get(wvif->wdev->hw, wvif->vif);
-
-	if (!skb)
-		return -ENOMEM;
-
-	p = (WsmHiMibTemplateFrame_t *)skb_push(skb, 4);
-	p->FrameType = WSM_TMPLT_BCN;
-	p->InitRate = WSM_TRANSMIT_RATE_1; /* 1Mbps DSSS */
-	if (wvif->vif->p2p)
-		p->InitRate = WSM_TRANSMIT_RATE_6;
-	p->FrameLength = cpu_to_le16(skb->len - 4);
-
-	ret = wsm_set_template_frame(wvif->wdev, p, wvif->Id);
-
-	skb_pull(skb, 4);
-
-	if (ret)
-		goto done;
-	mgmt = (void *)skb->data;
-	mgmt->frame_control =
-		cpu_to_le16(IEEE80211_FTYPE_MGMT |
-			      IEEE80211_STYPE_PROBE_RESP);
-
-	p->FrameType = WSM_TMPLT_PRBRES;
-
-	if (wvif->vif->p2p) {
-		ret = wsm_set_probe_responder(wvif, true);
-	} else {
-		ret = wsm_set_template_frame(wvif->wdev, p, wvif->Id);
-		wsm_set_probe_responder(wvif, false);
-	}
-
-done:
-	if (!skb)
-		dev_kfree_skb(skb);
-	return ret;
-}
-
-static int wfx_start_ap(struct wfx_vif *wvif)
-{
-	int ret;
-	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
-	WsmHiStartReqBody_t start = {
-		.Band			= WSM_PHY_BAND_2_4G,
-		.ChannelNumber		= wvif->channel->hw_value,
-		.BeaconInterval		= conf->beacon_int,
-		.DTIMPeriod		= conf->dtim_period,
-		.PreambleType		= conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
-		.BasicRateSet		= wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
-	};
-	struct wsm_operational_mode mode = {
-		.power_mode = wvif->wdev->pdata.power_mode,
-		.disable_more_flag_usage = true,
-	};
-
-
-	memset(start.Ssid, 0, sizeof(start.Ssid));
-	if (!conf->hidden_ssid) {
-		start.SsidLength = conf->ssid_len;
-		memcpy(start.Ssid, conf->ssid, start.SsidLength);
-	}
-
-	wvif->beacon_int = conf->beacon_int;
-	wvif->dtim_period = conf->dtim_period;
-
-	memset(&wvif->link_id_db, 0, sizeof(wvif->link_id_db));
-
-	pr_debug("[AP] ch: %d(%d), bcn: %d(%d), brt: 0x%.8X, ssid: %.*s.\n",
-		 start.ChannelNumber, start.Band,
-		 start.BeaconInterval, start.DTIMPeriod,
-		 start.BasicRateSet,
-		 start.SsidLength, start.Ssid);
-	wvif->wdev->tx_burst_idx = -1;
-	ret = wsm_start(wvif->wdev, &start, wvif->Id);
-	if (!ret)
-		ret = wfx_upload_keys(wvif);
-	if (!ret) {
-		wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
-		wvif->state = WFX_STATE_AP;
-		wfx_update_filtering(wvif);
-	}
-	wsm_set_operational_mode(wvif->wdev, &mode);
-	return ret;
-}
-
-static int wfx_update_beaconing(struct wfx_vif *wvif)
-{
-	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
-
-	if (wvif->mode == NL80211_IFTYPE_AP) {
-		if (wvif->state != WFX_STATE_AP ||
-		    wvif->beacon_int != conf->beacon_int) {
-			pr_debug("ap restarting\n");
-			wsm_lock_tx(wvif->wdev);
-			if (wvif->state != WFX_STATE_PASSIVE)
-				wsm_reset(wvif->wdev, false, wvif->Id);
-			wvif->state = WFX_STATE_PASSIVE;
-			wfx_start_ap(wvif);
-			wsm_unlock_tx(wvif->wdev);
-		} else {
-			pr_debug("ap started state: %d\n",
-				 wvif->state);
-	}
-	}
-	return 0;
 }
 
