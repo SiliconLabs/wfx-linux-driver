@@ -2397,7 +2397,6 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	}
 	wvif->setbssparams_done = false;
 	wvif->wep_default_key_id = -1;
-	wvif->cipherType = 0;
 
 	return 0;
 }
