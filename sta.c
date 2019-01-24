@@ -54,8 +54,6 @@ static void wfx_do_unjoin(struct wfx_vif *wvif);
 static int wfx_upload_beacon(struct wfx_vif *wvif);
 static int wfx_start_ap(struct wfx_vif *wvif);
 static int wfx_update_beaconing(struct wfx_vif *wvif);
-static void __wfx_sta_notify(struct wfx_vif *wvif,
-			     enum sta_notify_cmd notify_cmd, int link_id);
 static int __wfx_flush(struct wfx_dev *wdev, bool drop);
 
 static int wfx_alloc_key(struct wfx_vif *wvif)
