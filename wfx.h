@@ -132,8 +132,8 @@ struct wfx_dev {
 	int output_power;
 
 	/* BBP/MAC state */
-	struct ieee80211_rate		*rates;
-	struct ieee80211_rate		*mcs_rates;
+	const struct ieee80211_rate	*rates;
+	const struct ieee80211_rate	*mcs_rates;
 	struct wfx_ht_info		ht_info;
 	u8				long_frame_max_tx_count;
 	u8				short_frame_max_tx_count;

@@ -81,7 +81,7 @@ static struct ieee80211_rate wfx_rates[] = {
 	RATETAB_ENT(540, 13, 0),
 };
 
-static struct ieee80211_rate wfx_mcs_rates[] = {
+static const struct ieee80211_rate wfx_mcs_rates[] = {
 	RATETAB_ENT( 65, 14, IEEE80211_TX_RC_MCS),
 	RATETAB_ENT(130, 15, IEEE80211_TX_RC_MCS),
 	RATETAB_ENT(195, 16, IEEE80211_TX_RC_MCS),
@@ -118,7 +118,7 @@ static struct ieee80211_channel wfx_2ghz_chantable[] = {
 	CHAN2G(14, 2484, 0),
 };
 
-static struct ieee80211_supported_band wfx_band_2ghz = {
+static const struct ieee80211_supported_band wfx_band_2ghz = {
 	.channels = wfx_2ghz_chantable,
 	.n_channels = ARRAY_SIZE(wfx_2ghz_chantable),
 	.bitrates = wfx_rates,
@@ -244,6 +244,7 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 	hw->wiphy->max_scan_ie_len = IEEE80211_MAX_DATA_LEN;
 	hw->wiphy->bands[NL80211_BAND_2GHZ] = devm_kmalloc(dev, sizeof(wfx_band_2ghz), GFP_KERNEL);
 	// FIXME: report OTP restriction here
+	// FIXME: also copy wfx_rates and wfx_2ghz_chantable
 	memcpy(hw->wiphy->bands[NL80211_BAND_2GHZ], &wfx_band_2ghz, sizeof(wfx_band_2ghz));
 
 	wdev = hw->priv;
