@@ -282,8 +282,6 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 
 	seq_printf(seq, "RSSI thold: %d\n",
 		   wvif->cqm_rssi_thold);
-	seq_printf(seq, "RSSI hyst:  %d\n",
-		   wvif->cqm_rssi_hyst);
 	seq_printf(seq, "Long retr:  %d\n",
 		   wdev->long_frame_max_tx_count);
 	seq_printf(seq, "Short retr: %d\n",

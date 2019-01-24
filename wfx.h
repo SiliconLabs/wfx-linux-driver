@@ -192,8 +192,6 @@ struct wfx_vif {
 	int			cqm_rssi_thold;
 	int			join_complete_status;
 
-	unsigned		cqm_rssi_hyst;
-
 	u8			bssid[ETH_ALEN];
 	u8			action_frame_sa[ETH_ALEN];
 	u8			action_linkid;

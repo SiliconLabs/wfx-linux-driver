@@ -2041,7 +2041,6 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 		pr_debug("[CQM] RSSI threshold subscribe: %d +- %d\n",
 			 info->cqm_rssi_thold, info->cqm_rssi_hyst);
 		wvif->cqm_rssi_thold = info->cqm_rssi_thold;
-		wvif->cqm_rssi_hyst = info->cqm_rssi_hyst;
 
 		if (info->cqm_rssi_thold || info->cqm_rssi_hyst) {
 			/* RSSI: signed Q8.0, RCPI: unsigned Q7.1
