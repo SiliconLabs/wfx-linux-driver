@@ -264,7 +264,6 @@ struct wfx_vif {
 	/* spinlock/mutex */
 	struct mutex		bss_loss_lock;
 	spinlock_t		ps_state_lock;
-	spinlock_t		vif_lock;
 	spinlock_t		event_queue_lock;
 
 	/* WSM events and CQM implementation */

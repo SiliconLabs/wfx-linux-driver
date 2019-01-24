@@ -220,7 +220,6 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 {
 	struct wfx_dev *wdev = dev->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
-	LIST_HEAD(list);
 	int i;
 
 	pr_debug("[STA] wfx_remove_interface : state= %d\n",
@@ -288,16 +287,10 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 	cancel_work_sync(&wvif->unjoin_work);
 	cancel_delayed_work_sync(&wvif->link_id_gc_work);
 	del_timer_sync(&wvif->mcast_timeout);
+	wfx_free_event_queue(wvif);
 
 	wvif->mode = NL80211_IFTYPE_UNSPECIFIED;
 	wvif->listening = false;
-
-	spin_lock(&wvif->event_queue_lock);
-	list_splice_init(&wvif->event_queue, &list);
-	spin_unlock(&wvif->event_queue_lock);
-	__wfx_free_event_queue(&list);
-
-	wvif->state = WFX_STATE_PASSIVE;
 
 	mutex_unlock(&wdev->conf_mutex);
 }
@@ -2361,7 +2354,6 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	};
 
 	/* Spin lock */
-	spin_lock_init(&wvif->vif_lock);
 	spin_lock_init(&wvif->ps_state_lock);
 	spin_lock_init(&wvif->event_queue_lock);
 	mutex_init(&wvif->bss_loss_lock);
