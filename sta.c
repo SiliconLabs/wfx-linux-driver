@@ -101,6 +101,17 @@ static inline void __wfx_free_event_queue(struct list_head *list)
 	}
 }
 
+static void wfx_free_event_queue(struct wfx_vif *wvif)
+{
+	LIST_HEAD(list);
+
+	spin_lock(&wvif->event_queue_lock);
+	list_splice_init(&wvif->event_queue, &list);
+	spin_unlock(&wvif->event_queue_lock);
+
+	__wfx_free_event_queue(&list);
+}
+
 /* ******************************************************************** */
 /* STA API								*/
 
@@ -1140,17 +1151,6 @@ void wfx_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 
 /* ******************************************************************** */
 /* WSM callbacks							*/
-
-void wfx_free_event_queue(struct wfx_vif *wvif)
-{
-	LIST_HEAD(list);
-
-	spin_lock(&wvif->event_queue_lock);
-	list_splice_init(&wvif->event_queue, &list);
-	spin_unlock(&wvif->event_queue_lock);
-
-	__wfx_free_event_queue(&list);
-}
 
 void wfx_event_handler(struct work_struct *work)
 {

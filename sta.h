@@ -77,7 +77,6 @@ void wfx_join_complete_cb(struct wfx_vif		*wvif,
 /* ******************************************************************** */
 /* WSM events								*/
 
-void wfx_free_event_queue(struct wfx_vif *wvif);
 void wfx_event_handler(struct work_struct *work);
 void wfx_bss_loss_work(struct work_struct *work);
 void wfx_bss_params_work(struct work_struct *work);
