@@ -104,42 +104,6 @@ static void wfx_free_event_queue(struct wfx_vif *wvif)
 	__wfx_free_event_queue(&list);
 }
 
-/* ******************************************************************** */
-/* STA API								*/
-
-int wfx_start(struct ieee80211_hw *dev)
-{
-	return 0;
-}
-
-/*This should stop WFx driver when receive a critical error.
- * It must turn off frame reception
- */
-void wfx_stop(struct ieee80211_hw *dev)
-{
-	struct wfx_dev *wdev = dev->priv;
-
-	int i;
-
-	pr_debug("[STA] wfx_stop\n");
-
-	wsm_lock_tx(wdev);
-
-	flush_workqueue(wdev->workqueue);
-	mutex_lock(&wdev->conf_mutex);
-
-	for (i = 0; i < 4; i++)
-		wfx_queue_clear(&wdev->tx_queue[i]);
-	mutex_unlock(&wdev->conf_mutex);
-	tx_policy_clean(wdev);
-
-	if (atomic_xchg(&wdev->tx_lock, 1) != 1)
-		pr_debug("[STA] TX is force-unlocked due to stop request.\n");
-
-	wsm_unlock_tx(wdev);
-	atomic_xchg(&wdev->tx_lock, 0); /* for recovery to work */
-}
-
 void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 			     int init, int good, int bad)
 {
@@ -196,6 +160,39 @@ void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 		if (skb)
 			wfx_tx(wvif->wdev->hw, NULL, skb);
 	}
+}
+
+int wfx_start(struct ieee80211_hw *dev)
+{
+	return 0;
+}
+
+/*This should stop WFx driver when receive a critical error.
+ * It must turn off frame reception
+ */
+void wfx_stop(struct ieee80211_hw *dev)
+{
+	struct wfx_dev *wdev = dev->priv;
+
+	int i;
+
+	pr_debug("[STA] wfx_stop\n");
+
+	wsm_lock_tx(wdev);
+
+	flush_workqueue(wdev->workqueue);
+	mutex_lock(&wdev->conf_mutex);
+
+	for (i = 0; i < 4; i++)
+		wfx_queue_clear(&wdev->tx_queue[i]);
+	mutex_unlock(&wdev->conf_mutex);
+	tx_policy_clean(wdev);
+
+	if (atomic_xchg(&wdev->tx_lock, 1) != 1)
+		pr_debug("[STA] TX is force-unlocked due to stop request.\n");
+
+	wsm_unlock_tx(wdev);
+	atomic_xchg(&wdev->tx_lock, 0); /* for recovery to work */
 }
 
 static int wfx_set_uapsd_param(struct wfx_vif		*wvif,
