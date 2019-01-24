@@ -48,9 +48,6 @@
 #define RSN_CAPA_MFPR_BIT BIT(6)
 #define RSN_CAPA_MFPC_BIT BIT(7)
 
-static void wfx_do_join(struct wfx_vif *wvif);
-static void wfx_do_unjoin(struct wfx_vif *wvif);
-
 static int __wfx_flush(struct wfx_dev *wdev, bool drop);
 
 static int wfx_alloc_key(struct wfx_vif *wvif)
@@ -1344,6 +1341,62 @@ void wfx_set_beacon_wakeup_period_work(struct work_struct *work)
 	wsm_set_beacon_wakeup_period(wvif->wdev, period, period, wvif->Id);
 }
 
+static void wfx_do_unjoin(struct wfx_vif *wvif)
+{
+	cancel_delayed_work_sync(&wvif->join_timeout);
+
+	mutex_lock(&wvif->wdev->conf_mutex);
+
+	if (atomic_read(&wvif->scan.in_progress)) {
+		if (wvif->delayed_unjoin)
+			wiphy_dbg(wvif->wdev->hw->wiphy,
+				  "Delayed unjoin is already scheduled.\n");
+		else
+			wvif->delayed_unjoin = true;
+		goto done;
+	}
+
+	wvif->delayed_link_loss = false;
+
+	if (!wvif->state)
+		goto done;
+
+	if (wvif->state == WFX_STATE_AP)
+		goto done;
+
+	cancel_work_sync(&wvif->update_filtering_work);
+	cancel_work_sync(&wvif->set_beacon_wakeup_period_work);
+	wvif->state = WFX_STATE_PASSIVE;
+
+	/* Unjoin is a reset. */
+	wsm_flush_tx(wvif->wdev);
+	wsm_keep_alive_period(wvif->wdev, 0, wvif->Id);
+	wsm_reset(wvif->wdev, false, wvif->Id);
+	wsm_set_output_power(wvif->wdev, wvif->wdev->output_power * 10, wvif->Id);
+	wvif->dtim_period = 0;
+	wsm_set_macaddr(wvif->wdev, wvif->vif->addr, wvif->Id);
+	wfx_free_event_queue(wvif);
+	cancel_work_sync(&wvif->event_handler);
+	wfx_update_listening(wvif, wvif->listening);
+	wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
+
+	/* Disable Block ACKs */
+	wsm_set_block_ack_policy(wvif->wdev, 0, 0, wvif->Id);
+
+	wvif->disable_beacon_filter = false;
+	wfx_update_filtering(wvif);
+	memset(&wvif->association_mode, 0,
+	       sizeof(wvif->association_mode));
+	memset(&wvif->bss_params, 0, sizeof(wvif->bss_params));
+	wvif->setbssparams_done = false;
+	memset(&wvif->wdev->ht_info, 0, sizeof(wvif->wdev->ht_info));
+
+	pr_debug("[STA] Unjoin completed.\n");
+
+done:
+	mutex_unlock(&wvif->wdev->conf_mutex);
+}
+
 static void wfx_join_complete(struct wfx_vif *wvif)
 {
 	pr_debug("[STA] Join complete (%d)\n", wvif->join_complete_status);
@@ -1360,28 +1413,6 @@ static void wfx_join_complete(struct wfx_vif *wvif)
 			wvif->state = WFX_STATE_PRE_STA;
 	}
 	wsm_unlock_tx(wvif->wdev); /* Clearing the lock held before do_join() */
-}
-
-void wfx_join_complete_work(struct work_struct *work)
-{
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, join_complete_work);
-
-	mutex_lock(&wvif->wdev->conf_mutex);
-	wfx_join_complete(wvif);
-	mutex_unlock(&wvif->wdev->conf_mutex);
-}
-
-void wfx_join_complete_cb(struct wfx_vif		*wvif,
-			  WsmHiJoinCompleteIndBody_t	*arg)
-{
-	pr_debug("[STA] wfx_join_complete_cb called, status=%d.\n",
-		 arg->Status);
-
-	if (cancel_delayed_work(&wvif->join_timeout)) {
-		wvif->join_complete_status = arg->Status;
-		queue_work(wvif->wdev->workqueue, &wvif->join_complete_work);
-	}
 }
 
 /* MUST be called with tx_lock held!  It will be unlocked for us. */
@@ -1569,6 +1600,28 @@ done_put:
 		cfg80211_put_bss(wvif->wdev->hw->wiphy, bss);
 }
 
+void wfx_join_complete_work(struct work_struct *work)
+{
+	struct wfx_vif *wvif =
+		container_of(work, struct wfx_vif, join_complete_work);
+
+	mutex_lock(&wvif->wdev->conf_mutex);
+	wfx_join_complete(wvif);
+	mutex_unlock(&wvif->wdev->conf_mutex);
+}
+
+void wfx_join_complete_cb(struct wfx_vif		*wvif,
+			  WsmHiJoinCompleteIndBody_t	*arg)
+{
+	pr_debug("[STA] wfx_join_complete_cb called, status=%d.\n",
+		 arg->Status);
+
+	if (cancel_delayed_work(&wvif->join_timeout)) {
+		wvif->join_complete_status = arg->Status;
+		queue_work(wvif->wdev->workqueue, &wvif->join_complete_work);
+	}
+}
+
 void wfx_join_timeout(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
@@ -1578,62 +1631,6 @@ void wfx_join_timeout(struct work_struct *work)
 	wsm_lock_tx(wvif->wdev);
 	if (queue_work(wvif->wdev->workqueue, &wvif->unjoin_work) <= 0)
 		wsm_unlock_tx(wvif->wdev);
-}
-
-static void wfx_do_unjoin(struct wfx_vif *wvif)
-{
-	cancel_delayed_work_sync(&wvif->join_timeout);
-
-	mutex_lock(&wvif->wdev->conf_mutex);
-
-	if (atomic_read(&wvif->scan.in_progress)) {
-		if (wvif->delayed_unjoin)
-			wiphy_dbg(wvif->wdev->hw->wiphy,
-				  "Delayed unjoin is already scheduled.\n");
-		else
-			wvif->delayed_unjoin = true;
-		goto done;
-	}
-
-	wvif->delayed_link_loss = false;
-
-	if (!wvif->state)
-		goto done;
-
-	if (wvif->state == WFX_STATE_AP)
-		goto done;
-
-	cancel_work_sync(&wvif->update_filtering_work);
-	cancel_work_sync(&wvif->set_beacon_wakeup_period_work);
-	wvif->state = WFX_STATE_PASSIVE;
-
-	/* Unjoin is a reset. */
-	wsm_flush_tx(wvif->wdev);
-	wsm_keep_alive_period(wvif->wdev, 0, wvif->Id);
-	wsm_reset(wvif->wdev, false, wvif->Id);
-	wsm_set_output_power(wvif->wdev, wvif->wdev->output_power * 10, wvif->Id);
-	wvif->dtim_period = 0;
-	wsm_set_macaddr(wvif->wdev, wvif->vif->addr, wvif->Id);
-	wfx_free_event_queue(wvif);
-	cancel_work_sync(&wvif->event_handler);
-	wfx_update_listening(wvif, wvif->listening);
-	wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
-
-	/* Disable Block ACKs */
-	wsm_set_block_ack_policy(wvif->wdev, 0, 0, wvif->Id);
-
-	wvif->disable_beacon_filter = false;
-	wfx_update_filtering(wvif);
-	memset(&wvif->association_mode, 0,
-	       sizeof(wvif->association_mode));
-	memset(&wvif->bss_params, 0, sizeof(wvif->bss_params));
-	wvif->setbssparams_done = false;
-	memset(&wvif->wdev->ht_info, 0, sizeof(wvif->wdev->ht_info));
-
-	pr_debug("[STA] Unjoin completed.\n");
-
-done:
-	mutex_unlock(&wvif->wdev->conf_mutex);
 }
 
 void wfx_unjoin_work(struct work_struct *work)
