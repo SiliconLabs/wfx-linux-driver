@@ -41,7 +41,6 @@
 #include "sta.h"
 #include "debug.h"
 #include "wsm.h"
-#include "testmode.h"
 
 MODULE_DESCRIPTION("Silicon Labs 802.11 Wireless LAN driver for WFx");
 MODULE_AUTHOR("Jérôme Pouiller <jerome.pouiller@silabs.com>");
@@ -172,9 +171,6 @@ static const struct ieee80211_ops wfx_ops = {
 	.change_chanctx		= wfx_change_chanctx,
 	.assign_vif_chanctx	= wfx_assign_vif_chanctx,
 	.unassign_vif_chanctx	= wfx_unassign_vif_chanctx,
-#ifdef CONFIG_NL80211_TESTMODE
-	.testmode_cmd		= wfx_testmode_command,
-#endif
 };
 
 struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *label)
