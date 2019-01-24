@@ -198,7 +198,6 @@ struct wfx_vif {
 	u32			link_id_map;
 	u32			sta_asleep_mask;
 	u32			pspoll_mask;
-	u32			listen_interval;
 	u32			erp_info;
 	u32			bss_loss_confirm_id;
 	u32			cipherType;
