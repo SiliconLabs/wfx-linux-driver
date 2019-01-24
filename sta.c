@@ -59,6 +59,39 @@ static void __wfx_sta_notify(struct wfx_vif *wvif,
 			     enum sta_notify_cmd notify_cmd, int link_id);
 static int __wfx_flush(struct wfx_dev *wdev, bool drop);
 
+static int wfx_alloc_key(struct wfx_vif *wvif)
+{
+	int idx;
+
+	idx = ffs(~wvif->key_map) - 1;
+	if (idx < 0 || idx > WSM_KEY_MAX_INDEX)
+		return -1;
+
+	wvif->key_map |= BIT(idx);
+	wvif->keys[idx].EntryIndex = idx;
+	return idx;
+}
+
+static void wfx_free_key(struct wfx_vif *wvif, int idx)
+{
+	BUG_ON(!(wvif->key_map & BIT(idx)));
+	memset(&wvif->keys[idx], 0, sizeof(wvif->keys[idx]));
+	wvif->key_map &= ~BIT(idx);
+}
+
+static int wfx_upload_keys(struct wfx_vif *wvif)
+{
+	int idx, ret = 0;
+
+	for (idx = 0; idx <= WSM_KEY_MAX_INDEX; ++idx)
+		if (wvif->key_map & BIT(idx)) {
+			ret = wsm_add_key(wvif->wdev, &wvif->keys[idx], wvif->Id);
+			if (ret < 0)
+				break;
+		}
+	return ret;
+}
+
 static inline void __wfx_free_event_queue(struct list_head *list)
 {
 	struct wfx_wsm_event *event, *tmp;
@@ -259,7 +292,8 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 		break;
 	}
 	wvif->mode = NL80211_IFTYPE_MONITOR;
-	wfx_free_keys(wvif);
+	wvif->key_map = 0;
+	memset(&wvif->keys, 0, sizeof(wvif->keys));
 
 	wsm_set_macaddr(wdev, NULL, wvif->Id);
 

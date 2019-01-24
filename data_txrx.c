@@ -1226,48 +1226,6 @@ drop:
 	return;
 }
 
-/* ******************************************************************** */
-/* Security								*/
-
-int wfx_alloc_key(struct wfx_vif *wvif)
-{
-	int idx;
-
-	idx = ffs(~wvif->key_map) - 1;
-	if (idx < 0 || idx > WSM_KEY_MAX_INDEX)
-		return -1;
-
-	wvif->key_map |= BIT(idx);
-	wvif->keys[idx].EntryIndex = idx;
-	return idx;
-}
-
-void wfx_free_key(struct wfx_vif *wvif, int idx)
-{
-	BUG_ON(!(wvif->key_map & BIT(idx)));
-	memset(&wvif->keys[idx], 0, sizeof(wvif->keys[idx]));
-	wvif->key_map &= ~BIT(idx);
-}
-
-void wfx_free_keys(struct wfx_vif *wvif)
-{
-	memset(&wvif->keys, 0, sizeof(wvif->keys));
-	wvif->key_map = 0;
-}
-
-int wfx_upload_keys(struct wfx_vif *wvif)
-{
-	int idx, ret = 0;
-
-	for (idx = 0; idx <= WSM_KEY_MAX_INDEX; ++idx)
-		if (wvif->key_map & BIT(idx)) {
-			ret = wsm_add_key(wvif->wdev, &wvif->keys[idx], wvif->Id);
-			if (ret < 0)
-				break;
-		}
-	return ret;
-}
-
 /* Workaround for WFD test case 6.1.10 */
 void wfx_link_id_reset(struct work_struct *work)
 {
