@@ -26,7 +26,6 @@
 #include "bh.h"
 #include "debug.h"
 #include "sta.h"
-#include "testmode.h"
 
 void init_wsm_cmd(struct wsm_cmd *wsm_cmd)
 {

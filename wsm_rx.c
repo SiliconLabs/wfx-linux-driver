@@ -27,7 +27,6 @@
 #include "bh.h"
 #include "debug.h"
 #include "sta.h"
-#include "testmode.h"
 
 static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
@@ -216,7 +215,6 @@ static int wsm_join_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, v
 
 	return 0;
 }
-
 
 static int wsm_suspend_resume_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
