@@ -220,7 +220,6 @@ struct wfx_vif {
 	u32			rts_threshold;
 	u32			key_map;
 
-	bool			join_pending;
 	bool			enable_beacon;
 	bool			htcap;
 	bool			setbssparams_done;

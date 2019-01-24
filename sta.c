@@ -309,8 +309,6 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 	__wfx_free_event_queue(&list);
 
 	wvif->state = WFX_STATE_PASSIVE;
-	wvif->join_pending = false;
-
 
 	mutex_unlock(&wdev->conf_mutex);
 }
@@ -1199,7 +1197,6 @@ static void wfx_join_complete(struct wfx_vif *wvif)
 {
 	pr_debug("[STA] Join complete (%d)\n", wvif->join_complete_status);
 
-	wvif->join_pending = false;
 	if (wvif->join_complete_status) {
 		wvif->state = WFX_STATE_PASSIVE;
 		wfx_update_listening(wvif, wvif->listening);
@@ -1285,8 +1282,6 @@ static void wfx_do_join(struct wfx_vif *wvif)
 		wsm_unlock_tx(wvif->wdev);
 		goto done_put;
 	}
-
-	wvif->join_pending = true;
 
 	/* Sanity check basic rates */
 	if (!join.BasicRateSet)
@@ -1439,7 +1434,6 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 	cancel_delayed_work_sync(&wvif->join_timeout);
 
 	mutex_lock(&wvif->wdev->conf_mutex);
-	wvif->join_pending = false;
 
 	if (atomic_read(&wvif->wdev->scan.in_progress)) {
 		if (wvif->delayed_unjoin)
