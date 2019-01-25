@@ -488,7 +488,7 @@ static int wfx_tx_h_calc_link_ids(struct wfx_vif *wvif, struct wfx_txinfo *t)
 		if (!t->txpriv.link_id)
 			t->txpriv.link_id = wfx_alloc_link_id(wvif, t->da);
 		if (!t->txpriv.link_id) {
-			wiphy_err(wvif->wdev->hw->wiphy,
+			dev_err(wvif->wdev->pdev,
 				  "No more link IDs available.\n");
 			return -ENOENT;
 		}
@@ -549,7 +549,7 @@ static int wfx_tx_h_align(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiDataF
 		dev_warn(wvif->wdev->pdev, "Attempt to transmit an unaligned frame\n");
 
 	if (skb_headroom(t->skb) < offset) {
-		wiphy_err(wvif->wdev->hw->wiphy,
+		dev_err(wvif->wdev->pdev,
 			  "Bug: no space allocated for DMA alignment. headroom: %d\n",
 			  skb_headroom(t->skb));
 		return -ENOMEM;
@@ -1088,7 +1088,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg,
 	}
 
 	if (skb->len < sizeof(struct ieee80211_pspoll)) {
-		wiphy_warn(wvif->wdev->hw->wiphy, "Malformed SDU rx'ed. Size is lesser than IEEE header.\n");
+		dev_warn(wvif->wdev->pdev, "Malformed SDU rx'ed. Size is lesser than IEEE header.\n");
 		goto drop;
 	}
 
@@ -1165,7 +1165,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg,
 			icv_len = 0;
 
 		if (skb->len < hdrlen + iv_len + icv_len) {
-			wiphy_warn(wvif->wdev->hw->wiphy, "Malformed SDU rx'ed. Size is lesser than crypto headers.\n");
+			dev_warn(wvif->wdev->pdev, "Malformed SDU rx'ed. Size is lesser than crypto headers.\n");
 			goto drop;
 		}
 
@@ -1326,7 +1326,7 @@ int wfx_alloc_link_id(struct wfx_vif *wvif, const u8 *mac)
 		if (!queue_work(wvif->wdev->workqueue, &wvif->link_id_work))
 			wsm_unlock_tx(wvif->wdev);
 	} else {
-		wiphy_info(wvif->wdev->hw->wiphy,
+		dev_info(wvif->wdev->pdev,
 			   "[AP] Early: no more link IDs available.\n");
 	}
 	spin_unlock_bh(&wvif->ps_state_lock);

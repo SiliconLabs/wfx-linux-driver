@@ -310,7 +310,7 @@ bool wsm_flush_tx(struct wfx_dev *wdev)
 						      timeout) <= 0) {
 			/* Hmmm... Not good. Frame had stuck in firmware. */
 			wdev->bh_error = 1;
-			wiphy_err(wdev->hw->wiphy,
+			dev_err(wdev->pdev,
 				  "[WSM] TX Frames (%d) stuck in firmware, killing BH\n",
 				  wdev->hw_bufs_used);
 			wake_up(&wdev->bh_wq);
@@ -429,13 +429,13 @@ static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
 			action = do_drop;
 		} else if (!(BIT(txpriv->raw_link_id) &
 		      (BIT(0) | wvif->link_id_map))) {
-			wiphy_warn(wvif->wdev->hw->wiphy,
+			dev_warn(wvif->wdev->pdev,
 				   "A frame with expired link id is dropped.\n");
 			action = do_drop;
 		}
 		if (wfx_queue_get_generation(wsm->Body.PacketId) >
 				WFX_MAX_REQUEUE_ATTEMPTS) {
-			wiphy_warn(wvif->wdev->hw->wiphy,
+			dev_warn(wvif->wdev->pdev,
 				   "Too many attempts to requeue a frame; dropped.\n");
 			action = do_drop;
 		}

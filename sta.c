@@ -735,7 +735,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	if (!ret)
 		ret = wfx_set_multicast_filter(wvif->wdev, &wvif->multicast_filter, wvif->Id);
 	if (ret)
-		wiphy_err(wvif->wdev->hw->wiphy,
+		dev_err(wvif->wdev->pdev,
 			  "Update filtering failed: %d.\n", ret);
 }
 
@@ -1373,7 +1373,7 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 
 	if (atomic_read(&wvif->scan.in_progress)) {
 		if (wvif->delayed_unjoin)
-			wiphy_dbg(wvif->wdev->hw->wiphy,
+			dev_dbg(wvif->wdev->pdev,
 				  "Delayed unjoin is already scheduled.\n");
 		else
 			wvif->delayed_unjoin = true;
@@ -1728,7 +1728,7 @@ int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		 sta->addr[4], sta->addr[5], sta_priv->link_id);
 
 	if (!sta_priv->link_id) {
-		wiphy_info(wdev->hw->wiphy,
+		dev_info(wdev->pdev,
 			   "[AP] No more link IDs available.\n");
 		return -ENOENT;
 	}
@@ -2371,7 +2371,7 @@ void wfx_mcast_timeout(unsigned long arg)
 {
 	struct wfx_vif *wvif = (struct wfx_vif *)arg;
 #endif
-	wiphy_warn(wvif->wdev->hw->wiphy,
+	dev_warn(wvif->wdev->pdev,
 		   "Multicast delivery timeout.\n");
 	spin_lock_bh(&wvif->ps_state_lock);
 	wvif->tx_multicast = wvif->aid0_bit_set &&

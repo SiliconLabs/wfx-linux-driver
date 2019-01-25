@@ -79,7 +79,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	if (req->n_ssids == 1 && !req->ssids[0].ssid_len)
 		req->n_ssids = 0;
 
-	wiphy_dbg(hw->wiphy, "[SCAN] Scan request for %d SSIDs.\n",
+	dev_dbg(wdev->pdev, "[SCAN] Scan request for %d SSIDs.\n",
 		  req->n_ssids);
 
 	if (req->n_ssids > WSM_API_SSID_DEF_SIZE)
@@ -188,14 +188,14 @@ void wfx_scan_work(struct work_struct *work)
 			wsm_set_output_power(wvif->wdev, wvif->wdev->output_power * 10, wvif->Id);
 
 		if (wvif->scan.status < 0)
-			wiphy_warn(wvif->wdev->hw->wiphy,
+			dev_warn(wvif->wdev->pdev,
 				   "[SCAN] Scan failed (%d).\n",
 				   wvif->scan.status);
 		else if (wvif->scan.req)
-			wiphy_dbg(wvif->wdev->hw->wiphy,
+			dev_dbg(wvif->wdev->pdev,
 				  "[SCAN] Scan completed.\n");
 		else
-			wiphy_dbg(wvif->wdev->hw->wiphy,
+			dev_dbg(wvif->wdev->pdev,
 				  "[SCAN] Scan canceled.\n");
 
 		wvif->scan.req = NULL;
@@ -291,7 +291,7 @@ static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
 		if (!queue_work(wvif->wdev->workqueue, &wvif->unjoin_work))
 			wsm_unlock_tx(wvif->wdev);
 	} else if (wvif->delayed_link_loss) {
-		wiphy_dbg(wvif->wdev->hw->wiphy, "[CQM] Requeue BSS loss.\n");
+		dev_dbg(wvif->wdev->pdev, "[CQM] Requeue BSS loss.\n");
 		wvif->delayed_link_loss = 0;
 		wfx_cqm_bssloss_sm(wvif, 1, 0, 0);
 	}
@@ -302,7 +302,7 @@ static void wfx_scan_complete(struct wfx_vif *wvif)
 	atomic_set(&wvif->wdev->wait_for_scan, 0);
 
 	if (wvif->scan.direct_probe) {
-		wiphy_dbg(wvif->wdev->hw->wiphy, "[SCAN] Direct probe complete.\n");
+		dev_dbg(wvif->wdev->pdev, "[SCAN] Direct probe complete.\n");
 		wfx_scan_restart_delayed(wvif);
 		wvif->scan.direct_probe = 0;
 		up(&wvif->scan.lock);
@@ -337,7 +337,7 @@ void wfx_scan_timeout(struct work_struct *work)
 		if (wvif->scan.status > 0) {
 			wvif->scan.status = 0;
 		} else if (!wvif->scan.status) {
-			wiphy_warn(wvif->wdev->hw->wiphy,
+			dev_warn(wvif->wdev->pdev,
 				   "Timeout waiting for scan complete notification.\n");
 			wvif->scan.status = -ETIMEDOUT;
 			wvif->scan.curr = wvif->scan.end;
@@ -375,7 +375,7 @@ void wfx_probe_work(struct work_struct *work)
 	int ret;
 	WsmHiMibTemplateFrame_t *p;
 
-	wiphy_dbg(wvif->wdev->hw->wiphy, "[SCAN] Direct probe work.\n");
+	dev_dbg(wvif->wdev->pdev, "[SCAN] Direct probe work.\n");
 
 	mutex_lock(&wvif->wdev->conf_mutex);
 	if (down_trylock(&wvif->scan.lock)) {

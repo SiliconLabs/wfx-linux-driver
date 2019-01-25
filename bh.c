@@ -512,7 +512,7 @@ static int wfx_bh(void *arg)
 				/* Check to see if we have any outstanding frames */
 				if (wdev->hw_bufs_used && !pending_rx) {
 					pending_rx = wfx_check_pending_rx(wdev, &ctrl_reg);
-					wiphy_warn(wdev->hw->wiphy, "Missed interrupt? (%d frames outstanding) pending_rx=%d\n",
+					dev_warn(wdev->pdev, "Missed interrupt? (%d frames outstanding) pending_rx=%d\n",
 						   wdev->hw_bufs_used, pending_rx);
 
 					if (pending_rx < 0) {
@@ -526,7 +526,7 @@ static int wfx_bh(void *arg)
 
 					/* And terminate BH thread if the frame is "stuck" */
 					if (pending && timeout < 0) {
-						wiphy_warn(wdev->hw->wiphy, "Timeout waiting for TX confirm (%d/%d pending, %ld vs %lu).\n",
+						dev_warn(wdev->pdev, "Timeout waiting for TX confirm (%d/%d pending, %ld vs %lu).\n",
 							wdev->hw_bufs_used, pending, timestamp, jiffies);
 					}
 				} /* end of timeout event */
