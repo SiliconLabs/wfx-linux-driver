@@ -454,6 +454,9 @@ static inline int wfx_set_multicast_filter(struct wfx_dev *wdev,
 	WsmHiMibMacAddrDataFrameCondition_t MacAddrCond = { };
 	WsmHiMibUcMcBcDataFrameCondition_t UcMcBcCond = { };
 
+	// Temporary workaround for filters
+	return wsm_set_data_filtering(wdev, &DataFiltering, Id);
+
 	if (!fp->enable) {
 		DataFiltering.Enable = 0;
 		return wsm_set_data_filtering(wdev, &DataFiltering, Id);
@@ -465,7 +468,7 @@ static inline int wfx_set_multicast_filter(struct wfx_dev *wdev,
 		MacAddrCond.AddressType = WSM_MAC_ADDR_A1;
 		ether_addr_copy(MacAddrCond.MacAddress, fp->address_list[i]);
 		ret = wsm_set_mac_addr_condition(wdev, &MacAddrCond, Id);
-		if (ret <= 0)
+		if (ret)
 			return ret;
 		FilterConfig.MacCond |= 1 << i;
 		pr_debug("[STA] Multicast Match addr[%d]: %pM\n", i, MacAddrCond.MacAddress);
@@ -476,15 +479,14 @@ static inline int wfx_set_multicast_filter(struct wfx_dev *wdev,
 	UcMcBcCond.Param.bits.TypeUnicast = 1;
 	UcMcBcCond.Param.bits.TypeBroadcast = 1;
 	ret = wsm_set_uc_mc_bc_condition(wdev, &UcMcBcCond, Id);
-	if (ret <= 0)
+	if (ret)
 		return ret;
 
 	FilterConfig.UcMcBcCond = 1;
 	FilterConfig.FilterIdx = 0; // TODO #define MULTICAST_FILTERING 0
 	FilterConfig.Enable = 1;
-
 	ret = wsm_set_config_data_filter(wdev, &FilterConfig, Id);
-	if (ret <= 0)
+	if (ret)
 		return ret;
 
 	// discard all data frames except match filter
