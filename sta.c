@@ -1597,16 +1597,6 @@ done_put:
 		cfg80211_put_bss(wvif->wdev->hw->wiphy, bss);
 }
 
-void wfx_join_complete_work(struct work_struct *work)
-{
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, join_complete_work);
-
-	mutex_lock(&wvif->wdev->conf_mutex);
-	wfx_join_complete(wvif);
-	mutex_unlock(&wvif->wdev->conf_mutex);
-}
-
 void wfx_join_complete_cb(struct wfx_vif		*wvif,
 			  WsmHiJoinCompleteIndBody_t	*arg)
 {
@@ -1617,6 +1607,16 @@ void wfx_join_complete_cb(struct wfx_vif		*wvif,
 		wvif->join_complete_status = arg->Status;
 		queue_work(wvif->wdev->workqueue, &wvif->join_complete_work);
 	}
+}
+
+void wfx_join_complete_work(struct work_struct *work)
+{
+	struct wfx_vif *wvif =
+		container_of(work, struct wfx_vif, join_complete_work);
+
+	mutex_lock(&wvif->wdev->conf_mutex);
+	wfx_join_complete(wvif);
+	mutex_unlock(&wvif->wdev->conf_mutex);
 }
 
 void wfx_join_timeout(struct work_struct *work)
