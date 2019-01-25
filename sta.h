@@ -106,8 +106,6 @@ void wfx_update_filtering_work(struct work_struct *work);
 void wfx_set_beacon_wakeup_period_work(struct work_struct *work);
 int wfx_enable_listening(struct wfx_vif *wvif);
 int wfx_disable_listening(struct wfx_vif *wvif);
-int wfx_set_uapsd_param(struct wfx_vif		*wvif,
-				const struct wsm_edca_params *arg);
 void wfx_ba_work(struct work_struct *work);
 void wfx_ba_timer(unsigned long arg);
 

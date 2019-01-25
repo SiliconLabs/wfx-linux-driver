@@ -201,6 +201,47 @@ void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 	}
 }
 
+static int wfx_set_uapsd_param(struct wfx_vif		*wvif,
+			   const struct wsm_edca_params *arg)
+{
+	int ret;
+
+	/* Here's the mapping AC [queue, bit]
+	 *  VO [0,3], VI [1, 2], BE [2, 1], BK [3, 0]
+	 */
+
+	if (arg->uapsd_enable[IEEE80211_AC_VO])
+		wvif->uapsd_info.TrigVoice = 1;
+	else
+		wvif->uapsd_info.TrigVoice = 0;
+
+	if (arg->uapsd_enable[IEEE80211_AC_VI])
+		wvif->uapsd_info.TrigVideo = 1;
+	else
+		wvif->uapsd_info.TrigVideo = 0;
+
+	if (arg->uapsd_enable[IEEE80211_AC_BE])
+		wvif->uapsd_info.TrigBe = 1;
+	else
+		wvif->uapsd_info.TrigBe = 0;
+
+	if (arg->uapsd_enable[IEEE80211_AC_BK])
+		wvif->uapsd_info.TrigBckgrnd = 1;
+	else
+		wvif->uapsd_info.TrigBckgrnd = 0;
+
+	/* Currently pseudo U-APSD operation is not supported, so setting
+	 * MinAutoTriggerInterval, MaxAutoTriggerInterval and
+	 * AutoTriggerStep to 0
+	 */
+	wvif->uapsd_info.MinAutoTriggerInterval = 0;
+	wvif->uapsd_info.MaxAutoTriggerInterval = 0;
+	wvif->uapsd_info.AutoTriggerStep = 0;
+
+	ret = wsm_set_uapsd_info(wvif->wdev, &wvif->uapsd_info, wvif->Id);
+	return ret;
+}
+
 static int wfx_vif_setup(struct wfx_vif *wvif)
 {
 	int i;
@@ -1647,50 +1688,6 @@ void wfx_update_listening(struct wfx_vif *wvif, bool enabled)
 		}
 	}
 }
-
-int wfx_set_uapsd_param(struct wfx_vif		*wvif,
-			   const struct wsm_edca_params *arg)
-{
-	int ret;
-
-	/* Here's the mapping AC [queue, bit]
-	 *  VO [0,3], VI [1, 2], BE [2, 1], BK [3, 0]
-	 */
-
-	if (arg->uapsd_enable[IEEE80211_AC_VO])
-		wvif->uapsd_info.TrigVoice = 1;
-	else
-		wvif->uapsd_info.TrigVoice = 0;
-
-	if (arg->uapsd_enable[IEEE80211_AC_VI])
-		wvif->uapsd_info.TrigVideo = 1;
-	else
-		wvif->uapsd_info.TrigVideo = 0;
-
-	if (arg->uapsd_enable[IEEE80211_AC_BE])
-		wvif->uapsd_info.TrigBe = 1;
-	else
-		wvif->uapsd_info.TrigBe = 0;
-
-	if (arg->uapsd_enable[IEEE80211_AC_BK])
-		wvif->uapsd_info.TrigBckgrnd = 1;
-	else
-		wvif->uapsd_info.TrigBckgrnd = 0;
-
-	/* Currently pseudo U-APSD operation is not supported, so setting
-	 * MinAutoTriggerInterval, MaxAutoTriggerInterval and
-	 * AutoTriggerStep to 0
-	 */
-	wvif->uapsd_info.MinAutoTriggerInterval = 0;
-	wvif->uapsd_info.MaxAutoTriggerInterval = 0;
-	wvif->uapsd_info.AutoTriggerStep = 0;
-
-	ret = wsm_set_uapsd_info(wvif->wdev, &wvif->uapsd_info, wvif->Id);
-	return ret;
-}
-
-/* ******************************************************************** */
-/* AP API								*/
 
 int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		   struct ieee80211_sta *sta)
