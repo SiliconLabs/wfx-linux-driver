@@ -64,24 +64,11 @@ void wfx_change_chanctx(struct ieee80211_hw *, struct ieee80211_chanctx_conf *, 
 int wfx_assign_vif_chanctx(struct ieee80211_hw *, struct ieee80211_vif *, struct ieee80211_chanctx_conf *);
 void wfx_unassign_vif_chanctx(struct ieee80211_hw *, struct ieee80211_vif *, struct ieee80211_chanctx_conf *);
 
+// WSM Callbacks
+void wfx_join_complete_cb(struct wfx_vif *wvif, WsmHiJoinCompleteIndBody_t *arg);
+void wfx_suspend_resume(struct wfx_vif *wvif, WsmHiSuspendResumeTxIndBody_t *arg);
 
-
-int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg);
-
-/* ******************************************************************** */
-/* WSM callbacks							*/
-
-void wfx_join_complete_cb(struct wfx_vif		*wvif,
-			  WsmHiJoinCompleteIndBody_t	*arg);
-
-/* ******************************************************************** */
-/* WSM events								*/
-
-void wfx_event_handler_work(struct work_struct *work);
-void wfx_bss_loss_work(struct work_struct *work);
-void wfx_bss_params_work(struct work_struct *work);
-void wfx_keep_alive_work(struct work_struct *work);
-
+// Other Helpers
 void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif, int init, int good, int bad);
 static inline void wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 					 int init, int good, int bad)
@@ -91,35 +78,15 @@ static inline void wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 	mutex_unlock(&wvif->bss_loss_lock);
 }
 
-/* ******************************************************************** */
-/* Internal API								*/
+void wfx_join_timeout_work(struct work_struct *work);
 
 int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len);
 int wfx_send_pdata_pds(struct wfx_dev *wdev);
-void wfx_join_timeout_work(struct work_struct *work);
-void wfx_unjoin_work(struct work_struct *work);
-void wfx_join_complete_work(struct work_struct *work);
-void wfx_wep_key_work(struct work_struct *work);
-void wfx_update_listening(struct wfx_vif *wvif, bool enabled);
-void wfx_update_filtering(struct wfx_vif *wvif);
-void wfx_update_filtering_work(struct work_struct *work);
-void wfx_set_beacon_wakeup_period_work(struct work_struct *work);
+
 int wfx_enable_listening(struct wfx_vif *wvif);
 int wfx_disable_listening(struct wfx_vif *wvif);
-void wfx_ba_work(struct work_struct *work);
-void wfx_ba_timer(unsigned long arg);
-
-/* AP stuffs */
-void wfx_suspend_resume(struct wfx_vif *wvif,
-			WsmHiSuspendResumeTxIndBody_t *arg);
-void wfx_set_tim_work(struct work_struct *work);
-void wfx_set_cts_work(struct work_struct *work);
-void wfx_multicast_start_work(struct work_struct *work);
-void wfx_multicast_stop_work(struct work_struct *work);
-#if (KERNEL_VERSION(4, 14, 0) <= LINUX_VERSION_CODE)
-void wfx_mcast_timeout(struct timer_list *t);
-#else
-void wfx_mcast_timeout(unsigned long arg);
-#endif
+void wfx_update_listening(struct wfx_vif *wvif, bool enabled);
+void wfx_update_filtering(struct wfx_vif *wvif);
+int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg);
 
 #endif /* WFX_STA_H */

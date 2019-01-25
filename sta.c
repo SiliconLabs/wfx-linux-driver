@@ -50,6 +50,26 @@
 
 static int __wfx_flush(struct wfx_dev *wdev, bool drop);
 
+static void wfx_unjoin_work(struct work_struct *work);
+static void wfx_join_complete_work(struct work_struct *work);
+// Declared in sta.h
+//static void wfx_join_timeout_work(struct work_struct *work);
+static void wfx_bss_params_work(struct work_struct *work);
+static void wfx_bss_loss_work(struct work_struct *work);
+static void wfx_event_handler_work(struct work_struct *work);
+static void wfx_wep_key_work(struct work_struct *work);
+static void wfx_update_filtering_work(struct work_struct *work);
+static void wfx_set_beacon_wakeup_period_work(struct work_struct *work);
+static void wfx_set_tim_work(struct work_struct *work);
+static void wfx_set_cts_work(struct work_struct *work);
+static void wfx_multicast_start_work(struct work_struct *work);
+static void wfx_multicast_stop_work(struct work_struct *work);
+#if (KERNEL_VERSION(4, 14, 0) <= LINUX_VERSION_CODE)
+static void wfx_mcast_timeout(struct timer_list *t);
+#else
+static void wfx_mcast_timeout(unsigned long arg);
+#endif
+
 static int wfx_alloc_key(struct wfx_vif *wvif)
 {
 	int idx;

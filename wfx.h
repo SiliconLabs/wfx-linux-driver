@@ -223,25 +223,23 @@ struct wfx_vif {
 	struct wfx_link_entry	link_id_db[WFX_MAX_STA_IN_AP_MODE];
 	struct wfx_grp_addr_table	multicast_filter;
 
-	/* work: initiate in wfx_vif_setup */
 	struct work_struct	unjoin_work;
 	struct work_struct	join_complete_work;
 	struct delayed_work	join_timeout_work;
+	struct work_struct	bss_params_work;
+	struct delayed_work	bss_loss_work;
 	struct work_struct	event_handler_work;
 	struct work_struct	wep_key_work;
-	struct work_struct	set_tim_work;
-	struct work_struct	set_cts_work;
-	struct work_struct	multicast_start_work;
-	struct work_struct	multicast_stop_work;
 	struct work_struct	update_filtering_work;
 	struct work_struct	set_beacon_wakeup_period_work;
-	struct work_struct	bss_params_work;
-	/* Workaround for WFD testcase 6.1.10*/
-	/* delayed work */
-	struct delayed_work	bss_loss_work;
+	struct work_struct	set_tim_work;
+	struct work_struct	set_cts_work;
 	struct work_struct	link_id_work;
 	struct work_struct	link_id_reset_work;
 	struct delayed_work	link_id_gc_work;
+	struct work_struct	multicast_start_work;
+	struct work_struct	multicast_stop_work;
+	struct timer_list	mcast_timeout;
 
 	/* API */
 	WsmHiSetPmModeReqBody_t		powersave_mode;
@@ -257,8 +255,6 @@ struct wfx_vif {
 
 	/* WSM events and CQM implementation */
 	struct list_head	event_queue;
-
-	struct timer_list	mcast_timeout;
 };
 
 static inline struct wfx_vif *wdev_to_wvif(struct wfx_dev *wdev, int vif_id)
