@@ -182,6 +182,13 @@ void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 	}
 }
 
+void wfx_cqm_bssloss_sm(struct wfx_vif *wvif, int init, int good, int bad)
+{
+	mutex_lock(&wvif->bss_loss_lock);
+	__wfx_cqm_bssloss_sm(wvif, init, good, bad);
+	mutex_unlock(&wvif->bss_loss_lock);
+}
+
 int wfx_start(struct ieee80211_hw *dev)
 {
 	return 0;

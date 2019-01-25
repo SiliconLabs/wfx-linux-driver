@@ -70,14 +70,7 @@ void wfx_suspend_resume(struct wfx_vif *wvif, WsmHiSuspendResumeTxIndBody_t *arg
 
 // Other Helpers
 void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif, int init, int good, int bad);
-static inline void wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
-					 int init, int good, int bad)
-{
-	mutex_lock(&wvif->bss_loss_lock);
-	__wfx_cqm_bssloss_sm(wvif, init, good, bad);
-	mutex_unlock(&wvif->bss_loss_lock);
-}
-
+void wfx_cqm_bssloss_sm(struct wfx_vif *wvif, int init, int good, int bad);
 void wfx_join_timeout_work(struct work_struct *work);
 
 int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len);
