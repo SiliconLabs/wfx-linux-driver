@@ -87,11 +87,6 @@ void wfx_rx_cb(struct wfx_vif *wvif,
 		  struct sk_buff **skb_p);
 
 /* ******************************************************************** */
-/* Timeout								*/
-
-void wfx_tx_timeout(struct work_struct *work);
-
-/* ******************************************************************** */
 /* Workaround for WFD test case 6.1.10					*/
 void wfx_link_id_reset(struct work_struct *work);
 
