@@ -192,7 +192,7 @@ static int wsm_event_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 	spin_unlock(&wvif->event_queue_lock);
 
 	if (first)
-		queue_work(wdev->workqueue, &wvif->event_handler);
+		queue_work(wdev->workqueue, &wvif->event_handler_work);
 
 	return 0;
 }

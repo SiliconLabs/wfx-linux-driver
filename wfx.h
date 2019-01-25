@@ -224,8 +224,10 @@ struct wfx_vif {
 	struct wfx_grp_addr_table	multicast_filter;
 
 	/* work: initiate in wfx_vif_setup */
-	struct work_struct	join_complete_work;
 	struct work_struct	unjoin_work;
+	struct work_struct	join_complete_work;
+	struct delayed_work	join_timeout_work;
+	struct work_struct	event_handler_work;
 	struct work_struct	wep_key_work;
 	struct work_struct	set_tim_work;
 	struct work_struct	set_cts_work;
@@ -235,10 +237,7 @@ struct wfx_vif {
 	struct work_struct	set_beacon_wakeup_period_work;
 	struct work_struct	bss_params_work;
 	/* Workaround for WFD testcase 6.1.10*/
-	struct work_struct	event_handler;
-
 	/* delayed work */
-	struct delayed_work	join_timeout;
 	struct delayed_work	bss_loss_work;
 	struct work_struct	link_id_work;
 	struct work_struct	link_id_reset_work;

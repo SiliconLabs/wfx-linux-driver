@@ -165,8 +165,8 @@ void wfx_scan_work(struct work_struct *work)
 	int i;
 
 	if (first_run) {
-		if (cancel_delayed_work_sync(&wvif->join_timeout) > 0)
-			wfx_join_timeout(&wvif->join_timeout.work);
+		if (cancel_delayed_work_sync(&wvif->join_timeout_work) > 0)
+			wfx_join_timeout(&wvif->join_timeout_work.work);
 	}
 
 	mutex_lock(&wvif->wdev->conf_mutex);
