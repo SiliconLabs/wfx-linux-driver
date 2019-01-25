@@ -26,18 +26,6 @@
 
 #include "wfx.h"
 
-#define WLAN_DRIVER "wfx_wlan"
-#define WLAN_PREFIX WLAN_DRIVER ": "
-
-#define wfx_info(fmt, arg ...) \
-	pr_info(WLAN_PREFIX fmt, ## arg)
-
-#define wfx_err(fmt, arg ...) \
-	pr_err(WLAN_PREFIX "ERROR " fmt, ## arg)
-
-#define wfx_warn(fmt, arg ...) \
-	pr_warn(WLAN_PREFIX "WARNING " fmt, ## arg)
-
 struct wfx_dbg_param;
 
 struct wfx_debug_priv {
