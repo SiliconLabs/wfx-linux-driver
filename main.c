@@ -401,6 +401,9 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 	wdev->hwbus_ops = hwbus_ops;
 	wdev->hwbus_priv = hwbus;
 
+	// LDPC support was not yet tested
+	wdev->pdata.support_ldpc = false;
+
 	/* Pass struct wfx_dev back up */
 	*core = wdev;
 
@@ -412,8 +415,7 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 	if (err)
 		goto err2;
 
-	// LDPC support was not yet tested
-	wdev->pdata.support_ldpc = false;
+	WARN_ON(!queue_work(wdev->bh_workqueue, &wdev->bh_work));
 
 	if (wait_for_completion_interruptible_timeout(&wdev->firmware_ready, 10 * HZ) <= 0) {
 		dev_err(wdev->pdev, "timeout while waiting for startup indication. IRQ configuration error?\n");

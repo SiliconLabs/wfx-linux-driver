@@ -94,8 +94,6 @@ int wfx_register_bh(struct wfx_dev *wdev)
 	init_waitqueue_head(&wdev->bh_wq);
 	init_waitqueue_head(&wdev->bh_evt_wq);
 
-	err = !queue_work(wdev->bh_workqueue, &wdev->bh_work);
-	WARN_ON(err);
 	return err;
 }
 
