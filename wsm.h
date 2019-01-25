@@ -27,94 +27,24 @@
 
 #include "wfx_api.h"
 
-#define WSM_DUAL_CTS_PROT_ENB           BIT(0)
-#define WSM_NON_GREENFIELD_STA_PRESENT  BIT(1)
-#define WSM_HT_PROT_MODE__NO_PROT       (0 << 2)
-#define WSM_HT_PROT_MODE__NON_MEMBER    (1 << 2)
-#define WSM_HT_PROT_MODE__20_MHZ        (2 << 2)
-#define WSM_HT_PROT_MODE__NON_HT_MIXED  (3 << 2)
-#define WSM_LSIG_TXOP_PROT_FULL         BIT4
-#define WSM_LARGE_L_LENGTH_PROT         BIT5
+#define WSM_DUAL_CTS_PROT_ENB		BIT(0)
+#define WSM_NON_GREENFIELD_STA_PRESENT	BIT(1)
 
-/*FOR WFX COMMANDS SEND/RECEIVE/CONFIRM*/
-#define NB_REQ_MSG   33
-#define NB_INDIC_MSG 16
-
-/* Bands */
-/* Radio band 2.412 -2.484 GHz. */
 #define WSM_PHY_BAND_2_4G		(0)
-/* Radio band 4.9375-5.8250 GHz. */
 #define WSM_PHY_BAND_5G			(1)
 
-// See also:
-//   https://en.wikipedia.org/wiki/IEEE_802.11g-2003#Technical_description
-//   https://en.wikipedia.org/wiki/IEEE_802.11n-2009#Data_rates
-#define WSM_TRANSMIT_RATE_1      0 //  1   Mbps ERP-DSSS            b
-#define WSM_TRANSMIT_RATE_2      1 //  2   Mbps ERP-DSSS            b
-#define WSM_TRANSMIT_RATE_5      2 //  5.5 Mbps ERP-CCK             b
-#define WSM_TRANSMIT_RATE_11     3 // 11   Mbps ERP-CCK             b
-#define WSM_TRANSMIT_RATE_6      6 //  6   Mbps ERP-OFDM,  BPSK 1/2 g
-#define WSM_TRANSMIT_RATE_9      7 //  9   Mbps ERP-OFDM,  BPSK 3/4 g
-#define WSM_TRANSMIT_RATE_12     8 // 12   Mbps ERP-OFDM,  QPSK 1/2 g
-#define WSM_TRANSMIT_RATE_18     9 // 18   Mbps ERP-OFDM,  QPSK 3/4 g
-#define WSM_TRANSMIT_RATE_24    10 // 24   Mbps ERP-OFDM, 16QAM 1/2 g
-#define WSM_TRANSMIT_RATE_36    11 // 36   Mbps ERP-OFDM, 16QAM 3/4 g
-#define WSM_TRANSMIT_RATE_48    12 // 48   Mbps ERP-OFDM, 64QAM 1/2 g
-#define WSM_TRANSMIT_RATE_54    13 // 54   Mbps ERP-OFDM, 64QAM 3/4 g
-#define WSM_TRANSMIT_RATE_HT_6  14 //  6.5 Mbps  HT-OFDM,  BPSK 1/2 n MCS0
-#define WSM_TRANSMIT_RATE_HT_13 15 // 13   Mbps  HT-OFDM,  QPSK 1/2 n MCS1
-#define WSM_TRANSMIT_RATE_HT_19 16 // 19.5 Mbps  HT-OFDM,  QPSK 3/4 n MCS2
-#define WSM_TRANSMIT_RATE_HT_26 17 // 26   Mbps  HT-OFDM, 16QAM 1/2 n MCS3
-#define WSM_TRANSMIT_RATE_HT_39 18 // 39   Mbps  HT-OFDM, 16QAM 3/4 n MCS4
-#define WSM_TRANSMIT_RATE_HT_52 19 // 52   Mbps  HT-OFDM, 64QAM 2/3 n MCS5
-#define WSM_TRANSMIT_RATE_HT_58 20 // 58.5 Mbps  HT-OFDM, 64QAM 3/4 n MCS6
-#define WSM_TRANSMIT_RATE_HT_65 21 // 65   Mbps  HT-OFDM, 64QAM 5/6 n MCS7
-
-/* Scan constraints */
-/* Maximum number of channels to be scanned. */
-#define WSM_SCAN_MAX_NUM_OF_CHANNELS	(48)
-/* The maximum number of SSIDs that the device can scan for. */
-#define WSM_SCAN_MAX_NUM_OF_SSIDS	(2)
-/* EPTA prioirty flags for BT Coex */
-/* default epta priority */
-#define WSM_EPTA_PRIORITY_DEFAULT	4
-/* use for normal data */
-#define WSM_EPTA_PRIORITY_DATA		4
-/* use for connect/disconnect/roaming*/
-#define WSM_EPTA_PRIORITY_MGT		5
-/* use for action frames */
-#define WSM_EPTA_PRIORITY_ACTION	5
-/* use for AC_VI data */
-#define WSM_EPTA_PRIORITY_VIDEO		5
-/* use for AC_VO data */
-#define WSM_EPTA_PRIORITY_VOICE		6
-/* use for EAPOL exchange */
-#define WSM_EPTA_PRIORITY_EAPOL		7
-/* Key indexes */
-#define WSM_KEY_MAX_INDEX             (16)
-/* ACK policy */
-#define WSM_ACK_POLICY_NORMAL		(0)
-#define WSM_ACK_POLICY_NO_ACK		(1)
-/* Start modes */
-#define WSM_START_MODE_AP		(0)	/* Mini AP */
-#define WSM_START_MODE_P2P_GO		(1)	/* P2P GO */
-#define WSM_START_MODE_P2P_DEV		(2)	/* P2P device */
+#define WSM_KEY_MAX_INDEX		(16)
 #define WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES	2
-#define WSM_FILTER_PORT_TYPE_DST	(0)
-#define WSM_FILTER_PORT_TYPE_SRC	(1)
-/* #define WSM_TX_SEQ_MAX               (7) equivalent to HI_MSG_SEQ_RANGE */
-#define WSM_TX_SEQ(seq)			\
-	((seq & HI_MSG_SEQ_RANGE) << 3)         /* seq location in uint8_t MsgInfo */
-/* Replaced with interface_id in new msg header*/
-#define WSM_TX_LINK_ID_MAX        (0x03)        /*max value but used as a MASK*/
-#define WSM_TX_LINK_ID(link_id)		\
-	((link_id & WSM_TX_LINK_ID_MAX) << 1)
-#define WSM_CMD_LAST_CHANCE_TIMEOUT (HZ * 3 / 2)
-/* = sizeof(generic hi hdr) + sizeof(wsm hdr) + sizeof(alignment) */
-#define WSM_TX_EXTRA_HEADROOM (28)
-/* = sizeof(generic hi hdr) + sizeof(wsm hdr) */
-#define WSM_RX_EXTRA_HEADROOM (16)
-#define TXOP_UNIT 32
+/* Start modes */
+#define WSM_START_MODE_AP		(0)
+#define WSM_START_MODE_P2P_GO		(1)
+#define WSM_START_MODE_P2P_DEV		(2)
+
+#define WSM_TX_SEQ(seq)			((seq & HI_MSG_SEQ_RANGE) << 3)
+#define WSM_CMD_LAST_CHANCE_TIMEOUT	(HZ * 3 / 2)
+#define WSM_TX_EXTRA_HEADROOM		(28) // sizeof(hdr) + sizeof(tx req) + sizeof(alignment)
+#define WSM_RX_EXTRA_HEADROOM		(16) // sizeof(hdr) + sizeof(rx req)
+#define TXOP_UNIT			32
 
 struct wfx_dev;
 struct wfx_vif;

@@ -2008,9 +2008,9 @@ static int wfx_upload_beacon(struct wfx_vif *wvif)
 
 	p = (WsmHiMibTemplateFrame_t *)skb_push(skb, 4);
 	p->FrameType = WSM_TMPLT_BCN;
-	p->InitRate = WSM_TRANSMIT_RATE_1; /* 1Mbps DSSS */
+	p->InitRate = RATE_INDEX_B_1M; /* 1Mbps DSSS */
 	if (wvif->vif->p2p)
-		p->InitRate = WSM_TRANSMIT_RATE_6;
+		p->InitRate = RATE_INDEX_A_6M;
 	p->FrameLength = cpu_to_le16(skb->len - 4);
 
 	ret = wsm_set_template_frame(wvif->wdev, p, wvif->Id);

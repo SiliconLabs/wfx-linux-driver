@@ -226,9 +226,9 @@ void wfx_scan_work(struct work_struct *work)
 		scan.scan_req.Band = first->band;
 
 		if (wvif->scan.req->no_cck)
-			scan.scan_req.MaxTransmitRate = WSM_TRANSMIT_RATE_6;
+			scan.scan_req.MaxTransmitRate = RATE_INDEX_A_6M;
 		else
-			scan.scan_req.MaxTransmitRate = WSM_TRANSMIT_RATE_1;
+			scan.scan_req.MaxTransmitRate = RATE_INDEX_B_1M;
 		scan.scan_req.NumOfProbeRequests =
 			(first->flags & IEEE80211_CHAN_NO_IR) ? 0 : 2;
 		scan.scan_req.NumOfSSIDs = wvif->scan.n_ssids;
