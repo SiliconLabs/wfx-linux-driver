@@ -288,7 +288,7 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	/* AP Work */
 	INIT_WORK(&wvif->link_id_work, wfx_link_id_work);
 	INIT_DELAYED_WORK(&wvif->link_id_gc_work, wfx_link_id_gc_work);
-	INIT_WORK(&wvif->linkid_reset_work, wfx_link_id_reset);
+	INIT_WORK(&wvif->link_id_reset_work, wfx_link_id_reset);
 	INIT_WORK(&wvif->update_filtering_work, wfx_update_filtering_work);
 
 	/* Optional */

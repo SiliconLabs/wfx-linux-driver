@@ -1050,10 +1050,10 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg,
 		   ieee80211_is_action(frame->frame_control) &&
 		   (mgmt->u.action.category == WLAN_CATEGORY_PUBLIC)) {
 		pr_debug("[RX] Going to MAP&RESET link ID\n");
-		WARN_ON(work_pending(&wvif->linkid_reset_work));
+		WARN_ON(work_pending(&wvif->link_id_reset_work));
 		ether_addr_copy(&wvif->action_frame_sa[0], ieee80211_get_SA(frame));
-		wvif->action_linkid = 0;
-		schedule_work(&wvif->linkid_reset_work);
+		wvif->action_link_id = 0;
+		schedule_work(&wvif->link_id_reset_work);
 	}
 
 	if (link_id && p2p &&
@@ -1062,10 +1062,10 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg,
 		/* Link ID already exists for the ACTION frame.
 		 * Reset and Remap
 		 */
-		WARN_ON(work_pending(&wvif->linkid_reset_work));
+		WARN_ON(work_pending(&wvif->link_id_reset_work));
 		ether_addr_copy(&wvif->action_frame_sa[0], ieee80211_get_SA(frame));
-		wvif->action_linkid = link_id;
-		schedule_work(&wvif->linkid_reset_work);
+		wvif->action_link_id = link_id;
+		schedule_work(&wvif->link_id_reset_work);
 	}
 	if (arg->Status) {
 		if (arg->Status == WSM_STATUS_MICFAILURE) {
@@ -1230,22 +1230,22 @@ drop:
 void wfx_link_id_reset(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, linkid_reset_work);
-	int temp_linkid;
+		container_of(work, struct wfx_vif, link_id_reset_work);
+	int temp_link_id;
 
-	if (!wvif->action_linkid) {
+	if (!wvif->action_link_id) {
 		/* In GO mode we can receive ACTION frames without a linkID */
-		temp_linkid = wfx_alloc_link_id(wvif,
+		temp_link_id = wfx_alloc_link_id(wvif,
 						&wvif->action_frame_sa[0]);
-		WARN_ON(!temp_linkid);
-		if (temp_linkid) {
+		WARN_ON(!temp_link_id);
+		if (temp_link_id) {
 			/* Make sure we execute the WQ */
 			flush_workqueue(wvif->wdev->workqueue);
 			/* Release the link ID */
 			spin_lock_bh(&wvif->ps_state_lock);
-			wvif->link_id_db[temp_linkid - 1].prev_status =
-				wvif->link_id_db[temp_linkid - 1].status;
-			wvif->link_id_db[temp_linkid - 1].status =
+			wvif->link_id_db[temp_link_id - 1].prev_status =
+				wvif->link_id_db[temp_link_id - 1].status;
+			wvif->link_id_db[temp_link_id - 1].status =
 				WFX_LINK_RESET;
 			spin_unlock_bh(&wvif->ps_state_lock);
 			wsm_lock_tx_async(wvif->wdev);
@@ -1255,9 +1255,9 @@ void wfx_link_id_reset(struct work_struct *work)
 		}
 	} else {
 		spin_lock_bh(&wvif->ps_state_lock);
-		wvif->link_id_db[wvif->action_linkid - 1].prev_status =
-			wvif->link_id_db[wvif->action_linkid - 1].status;
-		wvif->link_id_db[wvif->action_linkid - 1].status =
+		wvif->link_id_db[wvif->action_link_id - 1].prev_status =
+			wvif->link_id_db[wvif->action_link_id - 1].status;
+		wvif->link_id_db[wvif->action_link_id - 1].status =
 			WFX_LINK_RESET_REMAP;
 		spin_unlock_bh(&wvif->ps_state_lock);
 		wsm_lock_tx_async(wvif->wdev);

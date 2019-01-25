@@ -193,7 +193,7 @@ struct wfx_vif {
 	int			join_complete_status;
 
 	u8			action_frame_sa[ETH_ALEN];
-	u8			action_linkid;
+	u8			action_link_id;
 
 	u32			link_id_map;
 	u32			sta_asleep_mask;
@@ -231,17 +231,17 @@ struct wfx_vif {
 	struct work_struct	set_cts_work;
 	struct work_struct	multicast_start_work;
 	struct work_struct	multicast_stop_work;
-	struct work_struct	link_id_work;
 	struct work_struct	update_filtering_work;
 	struct work_struct	set_beacon_wakeup_period_work;
 	struct work_struct	bss_params_work;
 	/* Workaround for WFD testcase 6.1.10*/
-	struct work_struct	linkid_reset_work;
 	struct work_struct	event_handler;
 
 	/* delayed work */
 	struct delayed_work	join_timeout;
 	struct delayed_work	bss_loss_work;
+	struct work_struct	link_id_work;
+	struct work_struct	link_id_reset_work;
 	struct delayed_work	link_id_gc_work;
 
 	/* API */
