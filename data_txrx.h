@@ -61,8 +61,8 @@ struct tx_policy_cache {
  * linux tx retry sequences with a retry policy table in the device.
  */
 void tx_policy_init(struct wfx_dev *wdev);
-void tx_policy_upload_work(struct work_struct *work);
 void tx_policy_clean(struct wfx_dev *wdev);
+void tx_policy_upload_work(struct work_struct *work);
 
 /* ******************************************************************** */
 /* TX implementation							*/
@@ -88,13 +88,11 @@ void wfx_rx_cb(struct wfx_vif *wvif,
 
 /* ******************************************************************** */
 /* Workaround for WFD test case 6.1.10					*/
-void wfx_link_id_reset(struct work_struct *work);
-
 #define WFX_LINK_ID_GC_TIMEOUT ((unsigned long)(10 * HZ))
-
-int wfx_find_link_id(struct wfx_vif *wvif, const u8 *mac);
-int wfx_alloc_link_id(struct wfx_vif *wvif, const u8 *mac);
 void wfx_link_id_work(struct work_struct *work);
 void wfx_link_id_gc_work(struct work_struct *work);
+void wfx_link_id_reset_work(struct work_struct *work);
+int wfx_find_link_id(struct wfx_vif *wvif, const u8 *mac);
+int wfx_alloc_link_id(struct wfx_vif *wvif, const u8 *mac);
 
 #endif /* WFX_DATA_TXRX_H */

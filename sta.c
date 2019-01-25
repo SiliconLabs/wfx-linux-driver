@@ -276,8 +276,8 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	mutex_init(&wvif->bss_loss_lock);
 	/* STA Work*/
 	INIT_LIST_HEAD(&wvif->event_queue);
-	INIT_DELAYED_WORK(&wvif->join_timeout_work, wfx_join_timeout);
-	INIT_WORK(&wvif->event_handler_work, wfx_event_handler);
+	INIT_DELAYED_WORK(&wvif->join_timeout_work, wfx_join_timeout_work);
+	INIT_WORK(&wvif->event_handler_work, wfx_event_handler_work);
 	INIT_WORK(&wvif->unjoin_work, wfx_unjoin_work);
 	INIT_WORK(&wvif->join_complete_work, wfx_join_complete_work);
 	INIT_WORK(&wvif->wep_key_work, wfx_wep_key_work);
@@ -287,8 +287,8 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 
 	/* AP Work */
 	INIT_WORK(&wvif->link_id_work, wfx_link_id_work);
+	INIT_WORK(&wvif->link_id_reset_work, wfx_link_id_reset_work);
 	INIT_DELAYED_WORK(&wvif->link_id_gc_work, wfx_link_id_gc_work);
-	INIT_WORK(&wvif->link_id_reset_work, wfx_link_id_reset);
 	INIT_WORK(&wvif->update_filtering_work, wfx_update_filtering_work);
 
 	/* Optional */
@@ -1172,7 +1172,7 @@ void wfx_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 /* ******************************************************************** */
 /* WSM callbacks							*/
 
-void wfx_event_handler(struct work_struct *work)
+void wfx_event_handler_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
 		container_of(work, struct wfx_vif, event_handler_work);
@@ -1617,7 +1617,7 @@ void wfx_join_complete_work(struct work_struct *work)
 	mutex_unlock(&wvif->wdev->conf_mutex);
 }
 
-void wfx_join_timeout(struct work_struct *work)
+void wfx_join_timeout_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
 		container_of(work, struct wfx_vif, join_timeout_work.work);

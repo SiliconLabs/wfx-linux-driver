@@ -77,7 +77,7 @@ void wfx_join_complete_cb(struct wfx_vif		*wvif,
 /* ******************************************************************** */
 /* WSM events								*/
 
-void wfx_event_handler(struct work_struct *work);
+void wfx_event_handler_work(struct work_struct *work);
 void wfx_bss_loss_work(struct work_struct *work);
 void wfx_bss_params_work(struct work_struct *work);
 void wfx_keep_alive_work(struct work_struct *work);
@@ -96,7 +96,7 @@ static inline void wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 
 int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len);
 int wfx_send_pdata_pds(struct wfx_dev *wdev);
-void wfx_join_timeout(struct work_struct *work);
+void wfx_join_timeout_work(struct work_struct *work);
 void wfx_unjoin_work(struct work_struct *work);
 void wfx_join_complete_work(struct work_struct *work);
 void wfx_wep_key_work(struct work_struct *work);

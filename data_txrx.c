@@ -1227,7 +1227,7 @@ drop:
 }
 
 /* Workaround for WFD test case 6.1.10 */
-void wfx_link_id_reset(struct work_struct *work)
+void wfx_link_id_reset_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
 		container_of(work, struct wfx_vif, link_id_reset_work);
