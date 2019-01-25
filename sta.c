@@ -727,16 +727,6 @@ void wfx_update_filtering_work(struct work_struct *work)
 	wfx_update_filtering(wvif);
 }
 
-void wfx_set_beacon_wakeup_period_work(struct work_struct *work)
-{
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif,
-			     set_beacon_wakeup_period_work);
-	unsigned period = wvif->dtim_period;
-
-	wsm_set_beacon_wakeup_period(wvif->wdev, period, period, wvif->Id);
-}
-
 u64 wfx_prepare_multicast(struct ieee80211_hw *hw,
 			     struct netdev_hw_addr_list *mc_list)
 {
@@ -1342,6 +1332,16 @@ int wfx_send_pdata_pds(struct wfx_dev *wdev)
 	kfree(tmp_buf);
 	release_firmware(pds);
 	return ret;
+}
+
+void wfx_set_beacon_wakeup_period_work(struct work_struct *work)
+{
+	struct wfx_vif *wvif =
+		container_of(work, struct wfx_vif,
+			     set_beacon_wakeup_period_work);
+	unsigned period = wvif->dtim_period;
+
+	wsm_set_beacon_wakeup_period(wvif->wdev, period, period, wvif->Id);
 }
 
 static void wfx_join_complete(struct wfx_vif *wvif)
