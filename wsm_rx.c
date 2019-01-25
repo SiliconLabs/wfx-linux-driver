@@ -474,8 +474,8 @@ static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
 		pr_debug("[WSM] Convert probe request to scan.\n");
 		wsm_lock_tx_async(wvif->wdev);
 		wvif->wdev->pending_frame_id = wsm->Body.PacketId;
-		if (queue_delayed_work(wvif->wdev->workqueue,
-				       &wvif->scan.probe_work, 0) <= 0)
+		if (!queue_delayed_work(wvif->wdev->workqueue,
+				       &wvif->scan.probe_work, 0))
 			wsm_unlock_tx(wvif->wdev);
 		handled = true;
 		break;
@@ -489,7 +489,7 @@ static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
 		wsm_lock_tx_async(wvif->wdev);
 		wvif->wep_default_key_id = tx_info->control.hw_key->keyidx;
 		wvif->wdev->pending_frame_id = wsm->Body.PacketId;
-		if (queue_work(wvif->wdev->workqueue, &wvif->wep_key_work) <= 0)
+		if (!queue_work(wvif->wdev->workqueue, &wvif->wep_key_work))
 			wsm_unlock_tx(wvif->wdev);
 		handled = true;
 		break;

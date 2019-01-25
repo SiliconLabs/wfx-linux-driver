@@ -288,7 +288,7 @@ static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
 
 	if (wvif->delayed_unjoin) {
 		wvif->delayed_unjoin = false;
-		if (queue_work(wvif->wdev->workqueue, &wvif->unjoin_work) <= 0)
+		if (!queue_work(wvif->wdev->workqueue, &wvif->unjoin_work))
 			wsm_unlock_tx(wvif->wdev);
 	} else if (wvif->delayed_link_loss) {
 		wiphy_dbg(wvif->wdev->hw->wiphy, "[CQM] Requeue BSS loss.\n");
@@ -316,7 +316,7 @@ void wfx_scan_failed_cb(struct wfx_vif *wvif)
 {
 	if (cancel_delayed_work_sync(&wvif->scan.timeout) > 0) {
 		wvif->scan.status = -EIO;
-		queue_delayed_work(wvif->wdev->workqueue, &wvif->scan.timeout, 0);
+		queue_work(wvif->wdev->workqueue, &wvif->scan.timeout.work);
 	}
 }
 
@@ -325,7 +325,7 @@ void wfx_scan_complete_cb(struct wfx_vif		*wvif,
 {
 	if (cancel_delayed_work_sync(&wvif->scan.timeout) > 0) {
 		wvif->scan.status = 1;
-		queue_delayed_work(wvif->wdev->workqueue, &wvif->scan.timeout, 0);
+		queue_work(wvif->wdev->workqueue, &wvif->scan.timeout.work);
 	}
 }
 

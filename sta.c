@@ -416,7 +416,7 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 	case WFX_STATE_STA:
 	case WFX_STATE_IBSS:
 		wsm_lock_tx(wdev);
-		if (queue_work(wdev->workqueue, &wvif->unjoin_work) <= 0)
+		if (!queue_work(wdev->workqueue, &wvif->unjoin_work))
 			wsm_unlock_tx(wdev);
 		break;
 	case WFX_STATE_AP:
@@ -1596,7 +1596,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 		cancel_delayed_work_sync(&wvif->join_timeout_work);
 		wfx_update_listening(wvif, wvif->listening);
 		/* Tx lock still held, unjoin will clear it. */
-		if (queue_work(wvif->wdev->workqueue, &wvif->unjoin_work) <= 0)
+		if (!queue_work(wvif->wdev->workqueue, &wvif->unjoin_work))
 			wsm_unlock_tx(wvif->wdev);
 	} else {
 		wvif->join_complete_status = 0;
@@ -1651,7 +1651,7 @@ void wfx_join_timeout_work(struct work_struct *work)
 
 	pr_debug("[WSM] Join timed out.\n");
 	wsm_lock_tx(wvif->wdev);
-	if (queue_work(wvif->wdev->workqueue, &wvif->unjoin_work) <= 0)
+	if (!queue_work(wvif->wdev->workqueue, &wvif->unjoin_work))
 		wsm_unlock_tx(wvif->wdev);
 }
 
@@ -1764,7 +1764,7 @@ int wfx_sta_remove(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	entry->status = WFX_LINK_RESERVE;
 	entry->timestamp = jiffies;
 	wsm_lock_tx_async(wdev);
-	if (queue_work(wdev->workqueue, &wvif->link_id_work) <= 0)
+	if (!queue_work(wdev->workqueue, &wvif->link_id_work))
 		wsm_unlock_tx(wdev);
 	spin_unlock_bh(&wvif->ps_state_lock);
 	flush_workqueue(wdev->workqueue);
@@ -2115,7 +2115,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 		/* Shedule unjoin work */
 		pr_debug("[WSM] Issue unjoin command\n");
 		wsm_lock_tx_async(wdev);
-		if (queue_work(wdev->workqueue, &wvif->unjoin_work) <= 0)
+		if (!queue_work(wdev->workqueue, &wvif->unjoin_work))
 			wsm_unlock_tx(wdev);
 	} else {
 		if (changed & BSS_CHANGED_BEACON_INT) {

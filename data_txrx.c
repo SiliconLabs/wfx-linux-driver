@@ -690,8 +690,8 @@ static int wfx_tx_h_rate_policy(struct wfx_dev *wdev, struct wfx_txinfo *t, WsmH
 		 */
 		wsm_lock_tx_async(wdev);
 		wfx_tx_queues_lock(wdev);
-		if (queue_work(wdev->workqueue,
-			       &wdev->tx_policy_upload_work) <= 0) {
+		if (!queue_work(wdev->workqueue,
+			       &wdev->tx_policy_upload_work)) {
 			wfx_tx_queues_unlock(wdev);
 			wsm_unlock_tx(wdev);
 		}
@@ -1249,8 +1249,8 @@ void wfx_link_id_reset_work(struct work_struct *work)
 				WFX_LINK_RESET;
 			spin_unlock_bh(&wvif->ps_state_lock);
 			wsm_lock_tx_async(wvif->wdev);
-			if (queue_work(wvif->wdev->workqueue,
-				       &wvif->link_id_work) <= 0)
+			if (!queue_work(wvif->wdev->workqueue,
+				       &wvif->link_id_work))
 				wsm_unlock_tx(wvif->wdev);
 		}
 	} else {
@@ -1261,7 +1261,7 @@ void wfx_link_id_reset_work(struct work_struct *work)
 			WFX_LINK_RESET_REMAP;
 		spin_unlock_bh(&wvif->ps_state_lock);
 		wsm_lock_tx_async(wvif->wdev);
-		if (queue_work(wvif->wdev->workqueue, &wvif->link_id_work) <= 0)
+		if (!queue_work(wvif->wdev->workqueue, &wvif->link_id_work))
 			wsm_unlock_tx(wvif->wdev);
 		flush_workqueue(wvif->wdev->workqueue);
 	}
@@ -1317,7 +1317,7 @@ int wfx_alloc_link_id(struct wfx_vif *wvif, const u8 *mac)
 		skb_queue_head_init(&entry->rx_queue);
 		wsm_lock_tx_async(wvif->wdev);
 
-		if (queue_work(wvif->wdev->workqueue, &wvif->link_id_work) <= 0)
+		if (!queue_work(wvif->wdev->workqueue, &wvif->link_id_work))
 			wsm_unlock_tx(wvif->wdev);
 	} else {
 		wiphy_info(wvif->wdev->hw->wiphy,
