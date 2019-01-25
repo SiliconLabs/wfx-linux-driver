@@ -691,8 +691,7 @@ static int wfx_tx_h_rate_policy(struct wfx_dev *wdev, struct wfx_txinfo *t, WsmH
 		 */
 		wsm_lock_tx_async(wdev);
 		wfx_tx_queues_lock(wdev);
-		if (!queue_work(wdev->workqueue,
-			       &wdev->tx_policy_upload_work)) {
+		if (!schedule_work(&wdev->tx_policy_upload_work)) {
 			wfx_tx_queues_unlock(wdev);
 			wsm_unlock_tx(wdev);
 		}
@@ -708,8 +707,7 @@ static bool wfx_tx_h_pm_state(struct wfx_vif *wvif, struct wfx_txinfo *t)
 	    !wvif->buffered_multicasts) {
 		wvif->buffered_multicasts = true;
 		if (wvif->sta_asleep_mask)
-			queue_work(wvif->wdev->workqueue,
-				   &wvif->multicast_start_work);
+			schedule_work(&wvif->multicast_start_work);
 	}
 
 	if (t->txpriv.raw_link_id && t->txpriv.tid < WFX_MAX_TID)
@@ -909,7 +907,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 			spin_lock_bh(&wvif->ps_state_lock);
 			wvif->buffered_multicasts = true;
 			if (wvif->sta_asleep_mask)
-				queue_work(wdev->workqueue, &wvif->multicast_start_work);
+				schedule_work(&wvif->multicast_start_work);
 			spin_unlock_bh(&wvif->ps_state_lock);
 		}
 	} else {
@@ -1197,8 +1195,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg,
 
 			if (wvif->dtim_period != tim->dtim_period) {
 				wvif->dtim_period = tim->dtim_period;
-				queue_work(wvif->wdev->workqueue,
-					   &wvif->set_beacon_wakeup_period_work);
+				schedule_work(&wvif->set_beacon_wakeup_period_work);
 			}
 		}
 
@@ -1207,8 +1204,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg,
 		    (wvif->vif->bss_conf.assoc ||
 		     wvif->vif->bss_conf.ibss_joined)) {
 			wvif->disable_beacon_filter = false;
-			queue_work(wvif->wdev->workqueue,
-				   &wvif->update_filtering_work);
+			schedule_work(&wvif->update_filtering_work);
 		}
 	}
 
@@ -1246,7 +1242,7 @@ void wfx_link_id_reset_work(struct work_struct *work)
 		WARN_ON(!temp_link_id);
 		if (temp_link_id) {
 			/* Make sure we execute the WQ */
-			flush_workqueue(wvif->wdev->workqueue);
+			flush_work(&wvif->link_id_work);
 			/* Release the link ID */
 			spin_lock_bh(&wvif->ps_state_lock);
 			wvif->link_id_db[temp_link_id - 1].prev_status =
@@ -1255,8 +1251,7 @@ void wfx_link_id_reset_work(struct work_struct *work)
 				WFX_LINK_RESET;
 			spin_unlock_bh(&wvif->ps_state_lock);
 			wsm_lock_tx_async(wvif->wdev);
-			if (!queue_work(wvif->wdev->workqueue,
-				       &wvif->link_id_work))
+			if (!schedule_work(&wvif->link_id_work))
 				wsm_unlock_tx(wvif->wdev);
 		}
 	} else {
@@ -1267,9 +1262,9 @@ void wfx_link_id_reset_work(struct work_struct *work)
 			WFX_LINK_RESET_REMAP;
 		spin_unlock_bh(&wvif->ps_state_lock);
 		wsm_lock_tx_async(wvif->wdev);
-		if (!queue_work(wvif->wdev->workqueue, &wvif->link_id_work))
+		if (!schedule_work(&wvif->link_id_work))
 			wsm_unlock_tx(wvif->wdev);
-		flush_workqueue(wvif->wdev->workqueue);
+		flush_work(&wvif->link_id_work);
 	}
 }
 
@@ -1323,7 +1318,7 @@ int wfx_alloc_link_id(struct wfx_vif *wvif, const u8 *mac)
 		skb_queue_head_init(&entry->rx_queue);
 		wsm_lock_tx_async(wvif->wdev);
 
-		if (!queue_work(wvif->wdev->workqueue, &wvif->link_id_work))
+		if (!schedule_work(&wvif->link_id_work))
 			wsm_unlock_tx(wvif->wdev);
 	} else {
 		dev_info(wvif->wdev->pdev,
@@ -1421,7 +1416,6 @@ void wfx_link_id_gc_work(struct work_struct *work)
 	}
 	spin_unlock_bh(&wvif->ps_state_lock);
 	if (next_gc != -1)
-		queue_delayed_work(wvif->wdev->workqueue,
-				   &wvif->link_id_gc_work, next_gc);
+		schedule_delayed_work(&wvif->link_id_gc_work, next_gc);
 	wsm_unlock_tx(wvif->wdev);
 }

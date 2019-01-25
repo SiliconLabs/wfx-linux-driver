@@ -144,9 +144,7 @@ void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 		return;
 
 	if (init) {
-		queue_delayed_work(wvif->wdev->workqueue,
-				   &wvif->bss_loss_work,
-				   HZ);
+		schedule_delayed_work(&wvif->bss_loss_work, HZ);
 		wvif->bss_loss_state = 0;
 
 		/* Skip the confimration procedure in P2P case */
@@ -155,7 +153,7 @@ void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 	} else if (good) {
 		cancel_delayed_work_sync(&wvif->bss_loss_work);
 		wvif->bss_loss_state = 0;
-		queue_work(wvif->wdev->workqueue, &wvif->bss_params_work);
+		schedule_work(&wvif->bss_params_work);
 	} else if (bad) {
 		if (wvif->bss_loss_state < 3)
 			tx = 1;
@@ -205,7 +203,6 @@ void wfx_stop(struct ieee80211_hw *hw)
 
 	wsm_lock_tx(wdev);
 
-	flush_workqueue(wdev->workqueue);
 	mutex_lock(&wdev->conf_mutex);
 
 	for (i = 0; i < 4; i++)
@@ -409,7 +406,7 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	case WFX_STATE_STA:
 	case WFX_STATE_IBSS:
 		wsm_lock_tx(wdev);
-		if (!queue_work(wdev->workqueue, &wvif->unjoin_work))
+		if (!schedule_work(&wvif->unjoin_work))
 			wsm_unlock_tx(wdev);
 		break;
 	case WFX_STATE_AP:
@@ -729,8 +726,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 void wfx_update_filtering_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif,
-			     update_filtering_work);
+		container_of(work, struct wfx_vif, update_filtering_work);
 
 	wfx_update_filtering(wvif);
 }
@@ -1193,9 +1189,7 @@ void wfx_event_handler_work(struct work_struct *work)
 				 */
 				wvif->delayed_link_loss = 1;
 				/* Also start a watchdog. */
-				queue_delayed_work(wvif->wdev->workqueue,
-						   &wvif->bss_loss_work,
-						   5 * HZ);
+				schedule_delayed_work(&wvif->bss_loss_work, 5 * HZ);
 			}
 			break;
 		case WSM_EVENT_IND_BSSREGAINED:
@@ -1326,8 +1320,7 @@ int wfx_send_pdata_pds(struct wfx_dev *wdev)
 void wfx_set_beacon_wakeup_period_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif,
-			     set_beacon_wakeup_period_work);
+		container_of(work, struct wfx_vif, set_beacon_wakeup_period_work);
 	unsigned period = wvif->dtim_period;
 
 	wsm_set_beacon_wakeup_period(wvif->wdev, period, period, wvif->Id);
@@ -1496,7 +1489,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	/* Set up timeout */
 	if (join.JoinFlags.ForceWithInd) {
 		wvif->state = WFX_STATE_JOINING;
-		queue_delayed_work(wvif->wdev->workqueue, &wvif->join_timeout_work, WFX_JOIN_TIMEOUT);
+		schedule_delayed_work(&wvif->join_timeout_work, WFX_JOIN_TIMEOUT);
 	}
 
 	/* 802.11w protected mgmt frames */
@@ -1564,7 +1557,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 		cancel_delayed_work_sync(&wvif->join_timeout_work);
 		wfx_update_listening(wvif, wvif->listening);
 		/* Tx lock still held, unjoin will clear it. */
-		if (!queue_work(wvif->wdev->workqueue, &wvif->unjoin_work))
+		if (!schedule_work(&wvif->unjoin_work))
 			wsm_unlock_tx(wvif->wdev);
 	} else {
 		wvif->join_complete_status = 0;
@@ -1598,7 +1591,7 @@ void wfx_join_complete_cb(struct wfx_vif		*wvif,
 
 	if (cancel_delayed_work(&wvif->join_timeout_work)) {
 		wvif->join_complete_status = arg->Status;
-		queue_work(wvif->wdev->workqueue, &wvif->join_complete_work);
+		schedule_work(&wvif->join_complete_work);
 	}
 }
 
@@ -1619,7 +1612,7 @@ void wfx_join_timeout_work(struct work_struct *work)
 
 	pr_debug("[WSM] Join timed out.\n");
 	wsm_lock_tx(wvif->wdev);
-	if (!queue_work(wvif->wdev->workqueue, &wvif->unjoin_work))
+	if (!schedule_work(&wvif->unjoin_work))
 		wsm_unlock_tx(wvif->wdev);
 }
 
@@ -1726,10 +1719,10 @@ int wfx_sta_remove(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	entry->status = WFX_LINK_RESERVE;
 	entry->timestamp = jiffies;
 	wsm_lock_tx_async(wdev);
-	if (!queue_work(wdev->workqueue, &wvif->link_id_work))
+	if (!schedule_work(&wvif->link_id_work))
 		wsm_unlock_tx(wdev);
 	spin_unlock_bh(&wvif->ps_state_lock);
-	flush_workqueue(wdev->workqueue);
+	flush_work(&wvif->link_id_work);
 	return 0;
 }
 
@@ -1753,10 +1746,8 @@ static void __wfx_sta_notify(struct wfx_vif *wvif,
 	switch (notify_cmd) {
 	case STA_NOTIFY_SLEEP:
 		if (!prev) {
-			if (wvif->buffered_multicasts &&
-			    !wvif->sta_asleep_mask)
-				queue_work(wvif->wdev->workqueue,
-					   &wvif->multicast_start_work);
+			if (wvif->buffered_multicasts && !wvif->sta_asleep_mask)
+				schedule_work(&wvif->multicast_start_work);
 			wvif->sta_asleep_mask |= bit;
 		}
 		break;
@@ -1765,8 +1756,7 @@ static void __wfx_sta_notify(struct wfx_vif *wvif,
 			wvif->sta_asleep_mask &= ~bit;
 			wvif->pspoll_mask &= ~bit;
 			if (link_id && !wvif->sta_asleep_mask)
-				queue_work(wvif->wdev->workqueue,
-					   &wvif->multicast_stop_work);
+				schedule_work(&wvif->multicast_stop_work);
 			wfx_bh_wakeup(wvif->wdev);
 		}
 		break;
@@ -1852,7 +1842,7 @@ int wfx_set_tim(struct ieee80211_hw *hw, struct ieee80211_sta *sta,
 	struct wfx_sta_priv *sta_dev = (struct wfx_sta_priv *) &sta->drv_priv;
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, sta_dev->vif_id);
 
-	queue_work(wdev->workqueue, &wvif->set_tim_work);
+	schedule_work(&wvif->set_tim_work);
 	return 0;
 }
 
@@ -2051,7 +2041,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 		/* Shedule unjoin work */
 		pr_debug("[WSM] Issue unjoin command\n");
 		wsm_lock_tx_async(wdev);
-		if (!queue_work(wdev->workqueue, &wvif->unjoin_work))
+		if (!schedule_work(&wvif->unjoin_work))
 			wsm_unlock_tx(wdev);
 	} else {
 		if (changed & BSS_CHANGED_BEACON_INT) {
@@ -2194,7 +2184,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 		pr_debug("[STA] ERP Protection: %x\n", wvif->erp_info);
 
 		if (prev_erp_info != wvif->erp_info)
-			queue_work(wdev->workqueue, &wvif->set_cts_work);
+			schedule_work(&wvif->set_cts_work);
 	}
 
 	/* ERP Slottime */

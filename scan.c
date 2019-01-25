@@ -45,8 +45,7 @@ static int wfx_scan_start(struct wfx_vif *wvif, struct wsm_scan *scan)
 	atomic_set(&wvif->scan.in_progress, 1);
 	atomic_set(&wvif->wdev->wait_for_scan, 1);
 
-	queue_delayed_work(wvif->wdev->workqueue, &wvif->scan.timeout,
-			   msecs_to_jiffies(tmo));
+	schedule_delayed_work(&wvif->scan.timeout, msecs_to_jiffies(tmo));
 	ret = wsm_scan(wvif->wdev, scan, wvif->Id);
 	if (ret) {
 		wfx_scan_failed_cb(wvif);
@@ -133,7 +132,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 
 	if (skb)
 		dev_kfree_skb(skb);
-	queue_work(wdev->workqueue, &wvif->scan.work);
+	schedule_work(&wvif->scan.work);
 	return 0;
 }
 
@@ -273,7 +272,7 @@ void wfx_scan_work(struct work_struct *work)
 fail:
 	wvif->scan.curr = wvif->scan.end;
 	mutex_unlock(&wvif->wdev->conf_mutex);
-	queue_work(wvif->wdev->workqueue, &wvif->scan.work);
+	schedule_work(&wvif->scan.work);
 }
 
 static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
@@ -285,7 +284,7 @@ static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
 
 	if (wvif->delayed_unjoin) {
 		wvif->delayed_unjoin = false;
-		if (!queue_work(wvif->wdev->workqueue, &wvif->unjoin_work))
+		if (!schedule_work(&wvif->unjoin_work))
 			wsm_unlock_tx(wvif->wdev);
 	} else if (wvif->delayed_link_loss) {
 		dev_dbg(wvif->wdev->pdev, "[CQM] Requeue BSS loss.\n");
@@ -313,7 +312,7 @@ void wfx_scan_failed_cb(struct wfx_vif *wvif)
 {
 	if (cancel_delayed_work_sync(&wvif->scan.timeout) > 0) {
 		wvif->scan.status = -EIO;
-		queue_work(wvif->wdev->workqueue, &wvif->scan.timeout.work);
+		schedule_work(&wvif->scan.timeout.work);
 	}
 }
 
@@ -322,7 +321,7 @@ void wfx_scan_complete_cb(struct wfx_vif		*wvif,
 {
 	if (cancel_delayed_work_sync(&wvif->scan.timeout) > 0) {
 		wvif->scan.status = 1;
-		queue_work(wvif->wdev->workqueue, &wvif->scan.timeout.work);
+		schedule_work(&wvif->scan.timeout.work);
 	}
 }
 
@@ -378,8 +377,7 @@ void wfx_probe_work(struct work_struct *work)
 	if (down_trylock(&wvif->scan.lock)) {
 		/* Scan is already in progress. Requeue self. */
 		schedule();
-		queue_delayed_work(wvif->wdev->workqueue, &wvif->scan.probe_work,
-				   msecs_to_jiffies(100));
+		schedule_delayed_work(&wvif->scan.probe_work, msecs_to_jiffies(100));
 		mutex_unlock(&wvif->wdev->conf_mutex);
 		return;
 	}

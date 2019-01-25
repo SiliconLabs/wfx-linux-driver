@@ -120,7 +120,6 @@ struct wfx_dev {
 
 	struct wfx_debug_priv	*debug;
 
-	struct workqueue_struct		*workqueue;
 	/* Mutex for device configuration */
 	struct mutex			conf_mutex;
 

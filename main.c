@@ -261,7 +261,6 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 	init_completion(&wdev->firmware_ready);
 	init_wsm_cmd(&wdev->wsm_cmd);
 	mutex_init(&wdev->conf_mutex);
-	wdev->workqueue = create_singlethread_workqueue("wfx_wq");
 
 	INIT_WORK(&wdev->tx_policy_upload_work, tx_policy_upload_work);
 	if (wfx_queue_stats_init(&wdev->tx_queue_stats, WFX_LINK_ID_MAX,
@@ -328,9 +327,6 @@ static void wfx_unregister_common(struct ieee80211_hw *dev)
 	wfx_unregister_bh(wdev);
 
 	mutex_destroy(&wdev->conf_mutex);
-
-	destroy_workqueue(wdev->workqueue);
-	wdev->workqueue = NULL;
 
 	for (i = 0; i < 4; ++i)
 		wfx_queue_deinit(&wdev->tx_queue[i]);
