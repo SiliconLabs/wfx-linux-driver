@@ -604,14 +604,16 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	WsmHiTxReq_t *wsm = NULL;
 	struct ieee80211_tx_info *tx_info;
 	struct wfx_queue *queue = NULL;
+	struct wfx_queue *vif_queue = NULL;
 	u32 tx_allowed_mask = 0;
+	u32 vif_tx_allowed_mask = 0;
 	const struct wfx_txpriv *txpriv = NULL;
 	int count = 0;
-	// FIXME: Get interface id from wsm_buf
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
-
+	struct wfx_vif *wvif;
 	/* More is used only for broadcasts. */
 	bool more = false;
+	bool vif_more = false;
+	int not_found;
 
 	if (try_wait_for_completion(&wdev->wsm_cmd.ready)) {
 		WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
@@ -620,46 +622,61 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 		*burst = 1;
 		return 1;
 	}
-	if (!wvif) {
-		// May happen during unregister
-		dev_dbg(wdev->dev, "%s: non-existent vif", __func__);
-		return 0;
-	}
 	for (;;) {
-		int ret;
+		int ret = -ENOENT;
 		int queue_num;
 		struct ieee80211_hdr *hdr;
 
 		if (atomic_add_return(0, &wdev->tx_lock))
 			break;
 
-		spin_lock_bh(&wvif->ps_state_lock);
+		wvif = NULL;
+		while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
+			spin_lock_bh(&wvif->ps_state_lock);
 
-		ret = wsm_get_tx_queue_and_mask(wvif, &queue, &tx_allowed_mask, &more);
-		queue_num = queue - wdev->tx_queue;
+			not_found = wsm_get_tx_queue_and_mask(wvif, &vif_queue, &vif_tx_allowed_mask, &vif_more);
 
-		if (wvif->buffered_multicasts && (ret || !more) &&
-		    (wvif->tx_multicast || !wvif->sta_asleep_mask)) {
-			wvif->buffered_multicasts = false;
-			if (wvif->tx_multicast) {
-				wvif->tx_multicast = false;
-				schedule_work(&wvif->multicast_stop_work);
+			if (wvif->buffered_multicasts && (not_found || !vif_more) &&
+					(wvif->tx_multicast || !wvif->sta_asleep_mask)) {
+				wvif->buffered_multicasts = false;
+				if (wvif->tx_multicast) {
+					wvif->tx_multicast = false;
+					schedule_work(&wvif->multicast_stop_work);
+				}
+			}
+
+			spin_unlock_bh(&wvif->ps_state_lock);
+
+			if (vif_more) {
+				more = 1;
+				tx_allowed_mask = vif_tx_allowed_mask;
+				queue = vif_queue;
+				ret = 0;
+				break;
+			} else if (!not_found) {
+				if (queue && queue != vif_queue)
+					dev_info(wdev->dev, "Vifs disagree about queue priority");
+				tx_allowed_mask |= vif_tx_allowed_mask;
+				queue = vif_queue;
+				ret = 0;
 			}
 		}
-
-		spin_unlock_bh(&wvif->ps_state_lock);
 
 		if (ret)
 			break;
 
+		queue_num = queue - wdev->tx_queue;
+
 		if (wfx_queue_get(queue, tx_allowed_mask, &wsm, &tx_info, &txpriv))
 			continue;
 
+		// Note: txpriv->vif_id is reundant with wsm->Header.s.b.IntId
+		wvif = wdev_to_wvif(wdev, wsm->Header.s.b.IntId);
 		WARN_ON(!wvif);
+		
 		if (wsm_handle_tx_data(wvif, wsm, tx_info, txpriv, queue))
 			continue;  /* Handled by WSM */
 
-		wsm->Header.s.b.IntId = 0;
 		wvif->pspoll_mask &= ~BIT(txpriv->raw_link_id);
 
 		*data = (u8 *)wsm;
