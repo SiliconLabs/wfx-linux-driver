@@ -504,7 +504,7 @@ static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
 }
 
 static int wfx_get_prio_queue(struct wfx_vif *wvif,
-				 u32 link_id_map, int *total)
+				 u32 tx_allowed_mask, int *total)
 {
 	static const int urgent = BIT(WFX_LINK_ID_AFTER_DTIM) |
 		BIT(WFX_LINK_ID_UAPSD);
@@ -517,7 +517,7 @@ static int wfx_get_prio_queue(struct wfx_vif *wvif,
 		int queued;
 		edca = &wvif->edca.params[i];
 		queued = wfx_queue_get_num_queued(&wvif->wdev->tx_queue[i],
-				link_id_map);
+				tx_allowed_mask);
 		if (!queued)
 			continue;
 		*total += queued;
@@ -533,8 +533,8 @@ static int wfx_get_prio_queue(struct wfx_vif *wvif,
 	/* override winner if bursting */
 	if (winner >= 0 && wvif->wdev->tx_burst_idx >= 0 &&
 	    winner != wvif->wdev->tx_burst_idx &&
-	    !wfx_queue_get_num_queued(&wvif->wdev->tx_queue[winner], link_id_map & urgent) &&
-	    wfx_queue_get_num_queued(&wvif->wdev->tx_queue[wvif->wdev->tx_burst_idx], link_id_map))
+	    !wfx_queue_get_num_queued(&wvif->wdev->tx_queue[winner], tx_allowed_mask & urgent) &&
+	    wfx_queue_get_num_queued(&wvif->wdev->tx_queue[wvif->wdev->tx_burst_idx], tx_allowed_mask))
 		winner = wvif->wdev->tx_burst_idx;
 
 	return winner;
