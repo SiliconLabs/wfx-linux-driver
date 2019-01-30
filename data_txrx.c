@@ -488,7 +488,7 @@ static int wfx_tx_h_calc_link_ids(struct wfx_vif *wvif, struct wfx_txinfo *t)
 		if (!t->txpriv.link_id)
 			t->txpriv.link_id = wfx_alloc_link_id(wvif, t->da);
 		if (!t->txpriv.link_id) {
-			dev_err(wvif->wdev->pdev,
+			dev_err(wvif->wdev->dev,
 				  "No more link IDs available.\n");
 			return -ENOENT;
 		}
@@ -546,10 +546,10 @@ static int wfx_tx_h_align(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiDataF
 		return 0;
 
 	if (offset & 1)
-		dev_warn(wvif->wdev->pdev, "Attempt to transmit an unaligned frame\n");
+		dev_warn(wvif->wdev->dev, "Attempt to transmit an unaligned frame\n");
 
 	if (skb_headroom(t->skb) < offset) {
-		dev_err(wvif->wdev->pdev,
+		dev_err(wvif->wdev->dev,
 			  "Bug: no space allocated for DMA alignment. headroom: %d\n",
 			  skb_headroom(t->skb));
 		return -ENOMEM;
@@ -582,7 +582,7 @@ static WsmHiTxReq_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 	if (WARN(skb_headroom(t->skb) < wsm_length, "Not enough space for WSM headers"))
 		return NULL;
 	if (t->skb->len > wvif->wdev->wsm_caps.SizeInpChBuf) {
-		dev_info(wvif->wdev->pdev, "Requested frame size (%d) is larger than maximum supported (%d)\n",
+		dev_info(wvif->wdev->dev, "Requested frame size (%d) is larger than maximum supported (%d)\n",
 			 t->skb->len, wvif->wdev->wsm_caps.SizeInpChBuf);
 		return NULL;
 	}
@@ -880,7 +880,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 
 	ret = wfx_queue_get_skb(queue, arg->PacketId, &skb, &txpriv);
 	if (ret) {
-		dev_warn(wdev->pdev, "Received unknown packet_id (%#.8x) from chip\n", arg->PacketId);
+		dev_warn(wdev->dev, "Received unknown packet_id (%#.8x) from chip\n", arg->PacketId);
 		return;
 	}
 
@@ -899,7 +899,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 		WARN(!arg->TxResultFlags.Requeue, "Incoherent Status and ResultFlags");
 
 		wfx_suspend_resume(wvif, &suspend);
-		dev_dbg(wdev->pdev, "Requeuing for station %d (try %d). STAs asleep: 0x%.8X.\n",
+		dev_dbg(wdev->dev, "Requeuing for station %d (try %d). STAs asleep: 0x%.8X.\n",
 			   txpriv->link_id, wfx_queue_get_generation(arg->PacketId) + 1,
 			   wvif->sta_asleep_mask);
 		wfx_queue_requeue(queue, arg->PacketId);
@@ -995,7 +995,7 @@ static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
 
 		spin_lock_bh(&wvif->ps_state_lock);
 		if (!buffered[tid])
-			dev_err(wvif->wdev->pdev, "wfx_notify_buffered_tx: inconsistent tid (%d)\n", tid);
+			dev_err(wvif->wdev->dev, "wfx_notify_buffered_tx: inconsistent tid (%d)\n", tid);
 		else
 			still_buffered = --buffered[tid];
 		spin_unlock_bh(&wvif->ps_state_lock);
@@ -1086,7 +1086,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg,
 	}
 
 	if (skb->len < sizeof(struct ieee80211_pspoll)) {
-		dev_warn(wvif->wdev->pdev, "Malformed SDU rx'ed. Size is lesser than IEEE header.\n");
+		dev_warn(wvif->wdev->dev, "Malformed SDU rx'ed. Size is lesser than IEEE header.\n");
 		goto drop;
 	}
 
@@ -1153,7 +1153,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg,
 			icv_len = 16 /* WAPI_MIC_LEN */;
 			break;
 		default:
-			dev_err(wvif->wdev->pdev, "Unknown encryption type %d\n",
+			dev_err(wvif->wdev->dev, "Unknown encryption type %d\n",
 				 arg->RxFlags.Encryp);
 			goto drop;
 		}
@@ -1163,7 +1163,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg,
 			icv_len = 0;
 
 		if (skb->len < hdrlen + iv_len + icv_len) {
-			dev_warn(wvif->wdev->pdev, "Malformed SDU rx'ed. Size is lesser than crypto headers.\n");
+			dev_warn(wvif->wdev->dev, "Malformed SDU rx'ed. Size is lesser than crypto headers.\n");
 			goto drop;
 		}
 
@@ -1321,7 +1321,7 @@ int wfx_alloc_link_id(struct wfx_vif *wvif, const u8 *mac)
 		if (!schedule_work(&wvif->link_id_work))
 			wsm_unlock_tx(wvif->wdev);
 	} else {
-		dev_info(wvif->wdev->pdev,
+		dev_info(wvif->wdev->dev,
 			   "[AP] Early: no more link IDs available.\n");
 	}
 	spin_unlock_bh(&wvif->ps_state_lock);

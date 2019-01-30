@@ -87,12 +87,12 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 
 	ret = wait_for_completion_timeout(&wdev->wsm_cmd.done, 3 * HZ);
 	if (!ret) {
-		dev_err(wdev->pdev, "chip is abnormally long to answer");
+		dev_err(wdev->dev, "chip is abnormally long to answer");
 		reinit_completion(&wdev->wsm_cmd.ready);
 		ret = wait_for_completion_timeout(&wdev->wsm_cmd.done, 7 * HZ);
 	}
 	if (!ret) {
-		dev_err(wdev->pdev, "chip did not answer");
+		dev_err(wdev->dev, "chip did not answer");
 		reinit_completion(&wdev->wsm_cmd.done);
 		ret = -ETIMEDOUT;
 	} else {
@@ -107,11 +107,11 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 		mib_sep = "/";
 	}
 	if (ret < 0)
-		dev_err(wdev->pdev,
+		dev_err(wdev->dev,
 			"WSM request %s%s%s (%#.2x) on vif %d returned error %d\n",
 			get_wsm_name(cmd), mib_sep, mib_name, cmd, vif, ret);
 	if (ret > 0)
-		dev_warn(wdev->pdev,
+		dev_warn(wdev->dev,
 			 "WSM request %s%s%s (%#.2x) on vif %d returned status %d\n",
 			 get_wsm_name(cmd), mib_sep, mib_name, cmd, vif, ret);
 
@@ -160,12 +160,12 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len)
 
 	reply->Length -= 4; // Drop header
 	if (val_len < reply->Length) {
-		dev_err(wdev->pdev, "Buffer is too small to receive %s (%zu < %d)\n",
+		dev_err(wdev->dev, "Buffer is too small to receive %s (%zu < %d)\n",
 			get_mib_name(id), val_len, reply->Length);
 		ret = -ENOMEM;
 	}
 	if (id != reply->MibId) {
-		dev_warn(wdev->pdev, "%s: confirmation mismatch request\n", __func__);
+		dev_warn(wdev->dev, "%s: confirmation mismatch request\n", __func__);
 		ret = -EIO;
 	}
 	if (!ret)

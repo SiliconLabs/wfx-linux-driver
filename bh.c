@@ -132,7 +132,7 @@ void wfx_bh_wakeup(struct wfx_dev *wdev)
 {
 	pr_debug("[BH] %s wakeup.\n", __func__);
 	if (wdev->bh_error) {
-		dev_err(wdev->pdev, "bh: wakeup failed\n");
+		dev_err(wdev->dev, "bh: wakeup failed\n");
 		return;
 	}
 
@@ -150,7 +150,7 @@ int wsm_release_tx_buffer(struct wfx_dev *wdev, int count)
 
 	wdev->hw_bufs_used -= count;
 	if (wdev->hw_bufs_used < 0) {
-		dev_warn(wdev->pdev, "wrong buffers use %d\n", wdev->hw_bufs_used);
+		dev_warn(wdev->dev, "wrong buffers use %d\n", wdev->hw_bufs_used);
 		ret = -EINVAL;
 	}
 	if (!wdev->hw_bufs_used)
@@ -170,7 +170,7 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 
 	if (wdev->pdata.gpio_wakeup) {
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
-		dev_dbg(wdev->pdev, "bh: wake up device\n");
+		dev_dbg(wdev->dev, "bh: wake up device\n");
 	}
 
 	/* wait the IRQ indicating the device is ready*/
@@ -196,15 +196,15 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 		if (error || !Control_reg || Control_reg == ~0) {
 			ret = 0;
 		} else if (!(Control_reg & CTRL_WLAN_READY)) {
-			dev_err(wdev->pdev, "bh: cannot wakeup device\n");
+			dev_err(wdev->dev, "bh: cannot wakeup device\n");
 			ret = 0;
 		} else {
-			dev_dbg(wdev->pdev, "bh: device correctly wake up\n");
+			dev_dbg(wdev->dev, "bh: device correctly wake up\n");
 			atomic_set(&wdev->device_can_sleep, 0);
 			ret = 1;
 		}
 	} else {
-		dev_dbg(wdev->pdev, "bh: already awake\n");
+		dev_dbg(wdev->dev, "bh: already awake\n");
 		ret = 1;
 	}
 
@@ -239,7 +239,7 @@ static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev)
 
 	if (wdev->pdata.gpio_wakeup) {
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
-		dev_dbg(wdev->pdev, "%s: wake up chip", __func__);
+		dev_dbg(wdev->dev, "%s: wake up chip", __func__);
 		atomic_set(&wdev->device_can_sleep, 0);
 	}
 		return ret;
@@ -307,7 +307,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 		((u16 *) data)[alloc_len / 2 - 1] = HIF_ERROR_DETECTION_16;
 #endif
 	if (wfx_data_read(wdev, data, alloc_len)) {
-		dev_err(wdev->pdev, "bh: rx blew up, len %zu\n", alloc_len);
+		dev_err(wdev->dev, "bh: rx blew up, len %zu\n", alloc_len);
 		goto err;
 	}
 
@@ -321,14 +321,14 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 		 * the control register is set to 0 to cause
 		 * a new read of this register in the bh loop*/
 		*ctrl_reg = 0;
-		dev_warn(wdev->pdev, "bh: ctrl_reg piggyback error");
+		dev_warn(wdev->dev, "bh: ctrl_reg piggyback error");
 	}
 #endif
 
 	wsm = (HiMsgHdr_t *)data;
 	wsm_len = le16_to_cpu(wsm->MsgLen);
 	if (wsm_len > read_len) {
-		dev_err(wdev->pdev, "bh: inconsistent HIF message length %zu != %zu\n",
+		dev_err(wdev->dev, "bh: inconsistent HIF message length %zu != %zu\n",
 			wsm_len, read_len);
 		goto err;
 	}
@@ -342,7 +342,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 
 	if (wsm_id != HI_EXCEPTION_IND_ID) {
 		if (wsm_seq != wdev->wsm_rx_seq &&  !rx_resync) {
-			dev_warn(wdev->pdev, "wrong message sequence %d != %d\n",
+			dev_warn(wdev->dev, "wrong message sequence %d != %d\n",
 					wsm_seq, wdev->wsm_rx_seq);
 			goto err;
 		}
@@ -360,7 +360,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 
 	/* wfx_wsm_rx takes care on SKB livetime */
 	if (wsm_handle_rx(wdev, wsm, &skb_rx)) {
-		dev_err(wdev->pdev, "bh: wsm_handle_rx return error for cmd %.2x\n", wsm_id);
+		dev_err(wdev->dev, "bh: wsm_handle_rx return error for cmd %.2x\n", wsm_id);
 		goto err;
 	}
 
@@ -423,7 +423,7 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 	wsm->s.t.MsgInfo &= 0xff ^ WSM_TX_SEQ(HI_MSG_SEQ_RANGE);
 	wsm->s.t.MsgInfo |= WSM_TX_SEQ(wdev->wsm_tx_seq);
 	if (wfx_data_write(wdev, data, tx_len)) {
-		dev_err(wdev->pdev, "bh: tx blew up, len %zu\n", tx_len);
+		dev_err(wdev->dev, "bh: tx blew up, len %zu\n", tx_len);
 		wsm_release_tx_buffer(wdev, 1);
 		return -1; /* Error */
 	}
@@ -511,7 +511,7 @@ static int wfx_bh(void *arg)
 				/* Check to see if we have any outstanding frames */
 				if (wdev->hw_bufs_used && !pending_rx) {
 					pending_rx = wfx_check_pending_rx(wdev, &ctrl_reg);
-					dev_warn(wdev->pdev, "Missed interrupt? (%d frames outstanding) pending_rx=%d\n",
+					dev_warn(wdev->dev, "Missed interrupt? (%d frames outstanding) pending_rx=%d\n",
 						   wdev->hw_bufs_used, pending_rx);
 
 					if (pending_rx < 0) {
@@ -525,13 +525,13 @@ static int wfx_bh(void *arg)
 
 					/* And terminate BH thread if the frame is "stuck" */
 					if (pending && timeout < 0) {
-						dev_warn(wdev->pdev, "Timeout waiting for TX confirm (%d/%d pending, %ld vs %lu).\n",
+						dev_warn(wdev->dev, "Timeout waiting for TX confirm (%d/%d pending, %ld vs %lu).\n",
 							wdev->hw_bufs_used, pending, timestamp, jiffies);
 					}
 				} /* end of timeout event */
 			}
 		} /* end of the wait_event global processing */
-		dev_dbg(wdev->pdev, "bh: wait event\n");
+		dev_dbg(wdev->dev, "bh: wait event\n");
 
 		/*
 		 * process Rx then Tx because Rx processing can release some buffers for the Tx
@@ -605,7 +605,7 @@ tx:
 	}
 
 	if (!term) {
-		dev_dbg(wdev->pdev, "bh: main exited on error\n");
+		dev_dbg(wdev->dev, "bh: main exited on error\n");
 		wdev->bh_error = 1;
 	}
 	return 0;

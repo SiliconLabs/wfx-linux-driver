@@ -38,7 +38,7 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 	WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
 
 	if (cmd != wdev->wsm_cmd.buf_send->s.b.Id) {
-		dev_warn(wdev->pdev, "Chip response mismatch request: %#.4X vs %#.4X\n",
+		dev_warn(wdev->dev, "Chip response mismatch request: %#.4X vs %#.4X\n",
 			 cmd, wdev->wsm_cmd.buf_send->s.b.Id);
 		return -EINVAL;
 	}
@@ -117,7 +117,7 @@ static int wsm_startup_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 	HiStartupIndBody_t *body = buf;
 
 	if (body->Status || body->FirmwareType > 4) {
-		dev_err(wdev->pdev, "Received invalid startup indication");
+		dev_err(wdev->dev, "Received invalid startup indication");
 		return -EINVAL;
 	}
 	memcpy(&wdev->wsm_caps, body, sizeof(HiStartupIndBody_t));
@@ -235,7 +235,7 @@ static int wsm_error_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 {
 	HiErrorIndBody_t *body = buf;
 
-	dev_err(wdev->pdev, "asynchronous error: %d\n", body->Type);
+	dev_err(wdev->dev, "asynchronous error: %d\n", body->Type);
 	return 0;
 }
 
@@ -247,13 +247,13 @@ static int wsm_generic_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 	case  HI_GENERIC_INDICATION_TYPE_RAW:
 		return 0;
 	case HI_GENERIC_INDICATION_TYPE_STRING:
-		dev_info(wdev->pdev, "%s", (char *) body->IndicationData.RawData);
+		dev_info(wdev->dev, "%s", (char *) body->IndicationData.RawData);
 		return 0;
 	case HI_GENERIC_INDICATION_TYPE_RX_STATS:
 		memcpy(&wdev->rx_stats, &body->IndicationData.RxStats, sizeof(wdev->rx_stats));
 		return 0;
 	default:
-		dev_err(wdev->pdev, "generic_indication: unknown indication type: %#.8x\n", body->IndicationType);
+		dev_err(wdev->dev, "generic_indication: unknown indication type: %#.8x\n", body->IndicationType);
 		return -EIO;
 	}
 }
@@ -289,7 +289,7 @@ bool wsm_flush_tx(struct wfx_dev *wdev)
 
 	if (wdev->bh_error) {
 		/* In case of failure do not wait for magic. */
-		dev_err(wdev->pdev, "fatal error occurred. TX is not flushed.\n");
+		dev_err(wdev->dev, "fatal error occurred. TX is not flushed.\n");
 		return false;
 	} else {
 		bool pending = false;
@@ -310,7 +310,7 @@ bool wsm_flush_tx(struct wfx_dev *wdev)
 						      timeout) <= 0) {
 			/* Hmmm... Not good. Frame had stuck in firmware. */
 			wdev->bh_error = 1;
-			dev_err(wdev->pdev,
+			dev_err(wdev->dev,
 				  "[WSM] TX Frames (%d) stuck in firmware, killing BH\n",
 				  wdev->hw_bufs_used);
 			wake_up(&wdev->bh_wq);
@@ -338,7 +338,7 @@ void wsm_unlock_tx(struct wfx_dev *wdev)
 static int wsm_exception_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
 	size_t len = hdr->MsgLen - 4; // drop header
-	dev_err(wdev->pdev, "Firmware exception.\n");
+	dev_err(wdev->dev, "Firmware exception.\n");
 	print_hex_dump_bytes("Dump: ", DUMP_PREFIX_NONE, buf, len);
 
 	return -1;
@@ -395,7 +395,7 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm, struct sk_buff **skb_p)
 			else
 				return 0;
 		}
-	dev_err(wdev->pdev, "Unsupported WSM ID %02x\n", wsm_id);
+	dev_err(wdev->dev, "Unsupported WSM ID %02x\n", wsm_id);
 	return -EIO;
 }
 
@@ -429,13 +429,13 @@ static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
 			action = do_drop;
 		} else if (!(BIT(txpriv->raw_link_id) &
 		      (BIT(0) | wvif->link_id_map))) {
-			dev_warn(wvif->wdev->pdev,
+			dev_warn(wvif->wdev->dev,
 				   "A frame with expired link id is dropped.\n");
 			action = do_drop;
 		}
 		if (wfx_queue_get_generation(wsm->Body.PacketId) >
 				WFX_MAX_REQUEUE_ATTEMPTS) {
-			dev_warn(wvif->wdev->pdev,
+			dev_warn(wvif->wdev->dev,
 				   "Too many attempts to requeue a frame; dropped.\n");
 			action = do_drop;
 		}
@@ -611,7 +611,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	}
 	if (!wvif) {
 		// May happen during unregister
-		dev_dbg(wdev->pdev, "%s: non-existent vif", __func__);
+		dev_dbg(wdev->dev, "%s: non-existent vif", __func__);
 		return 0;
 	}
 	for (;;) {

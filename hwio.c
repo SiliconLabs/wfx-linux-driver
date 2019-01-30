@@ -82,7 +82,7 @@ static int read32_locked(struct wfx_dev *wdev, int reg, u32 *val)
 	if (i == 3)
 		ret = -ETIMEDOUT;
 	else if (i > 0)
-		dev_info(wdev->pdev, "success read after %d failures\n", i);
+		dev_info(wdev->dev, "success read after %d failures\n", i);
 #endif
 	_trace_io_read32(reg, *val);
 	wdev->hwbus_ops->unlock(wdev->hwbus_priv);
@@ -106,7 +106,7 @@ static int write32_locked(struct wfx_dev *wdev, int reg, u32 val)
 	if (i == 3)
 		ret = -ETIMEDOUT;
 	else if (i > 0)
-		dev_info(wdev->pdev, "success write after %d failures\n", i);
+		dev_info(wdev->dev, "success write after %d failures\n", i);
 #endif
 	_trace_io_write32(reg, val);
 	wdev->hwbus_ops->unlock(wdev->hwbus_priv);
@@ -272,7 +272,7 @@ int wfx_data_read(struct wfx_dev *wdev, void *buf, size_t len)
 		ret = -ETIMEDOUT;
 		memset(buf, 0xFF, len); // Never return undefined value
 	} else if (i > 0) {
-		dev_info(wdev->pdev, "success read after %d failures\n", i);
+		dev_info(wdev->dev, "success read after %d failures\n", i);
 	}
 #endif
 	_trace_io_read(WFX_REG_IN_OUT_QUEUE, buf, len);
@@ -299,7 +299,7 @@ int wfx_data_write(struct wfx_dev *wdev, const void *buf, size_t len)
 	if (i == 3)
 		ret = -ETIMEDOUT;
 	else if (i > 0)
-		dev_info(wdev->pdev, "success write after %d failures\n", i);
+		dev_info(wdev->dev, "success write after %d failures\n", i);
 #endif
 	_trace_io_write(WFX_REG_IN_OUT_QUEUE, buf, len);
 	wdev->hwbus_ops->unlock(wdev->hwbus_priv);

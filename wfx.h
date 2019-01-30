@@ -97,7 +97,7 @@ struct wfx_link_entry {
 
 struct wfx_dev {
 	struct wfx_platform_data	pdata;
-	struct device			*pdev;
+	struct device			*dev;
 	struct ieee80211_hw		*hw;
 	struct ieee80211_vif		*vif[1];
 	struct mac_address		addresses[1];
@@ -250,11 +250,11 @@ static inline struct wfx_vif *wdev_to_wvif(struct wfx_dev *wdev, int vif_id)
 {
 	WARN(vif_id != 0 && vif_id != 2, "Not yet supported");
 	if (vif_id >= ARRAY_SIZE(wdev->vif)) {
-		dev_dbg(wdev->pdev, "Requesting non-existent vif: %d\n", vif_id);
+		dev_dbg(wdev->dev, "Requesting non-existent vif: %d\n", vif_id);
 		return NULL;
 	}
 	if (!wdev->vif[vif_id]) {
-		dev_dbg(wdev->pdev, "Requesting non-allocated vif: %d\n", vif_id);
+		dev_dbg(wdev->dev, "Requesting non-allocated vif: %d\n", vif_id);
 		return NULL;
 	}
 	return (struct wfx_vif *) wdev->vif[vif_id]->drv_priv;

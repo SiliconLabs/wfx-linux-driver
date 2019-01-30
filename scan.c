@@ -184,14 +184,14 @@ void wfx_scan_work(struct work_struct *work)
 			wsm_set_output_power(wvif->wdev, wvif->wdev->output_power * 10, wvif->Id);
 
 		if (wvif->scan.status < 0)
-			dev_warn(wvif->wdev->pdev,
+			dev_warn(wvif->wdev->dev,
 				   "[SCAN] Scan failed (%d).\n",
 				   wvif->scan.status);
 		else if (wvif->scan.req)
-			dev_dbg(wvif->wdev->pdev,
+			dev_dbg(wvif->wdev->dev,
 				  "[SCAN] Scan completed.\n");
 		else
-			dev_dbg(wvif->wdev->pdev,
+			dev_dbg(wvif->wdev->dev,
 				  "[SCAN] Scan canceled.\n");
 
 		wvif->scan.req = NULL;
@@ -287,7 +287,7 @@ static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
 		if (!schedule_work(&wvif->unjoin_work))
 			wsm_unlock_tx(wvif->wdev);
 	} else if (wvif->delayed_link_loss) {
-		dev_dbg(wvif->wdev->pdev, "[CQM] Requeue BSS loss.\n");
+		dev_dbg(wvif->wdev->dev, "[CQM] Requeue BSS loss.\n");
 		wvif->delayed_link_loss = 0;
 		wfx_cqm_bssloss_sm(wvif, 1, 0, 0);
 	}
@@ -298,7 +298,7 @@ static void wfx_scan_complete(struct wfx_vif *wvif)
 	atomic_set(&wvif->wdev->wait_for_scan, 0);
 
 	if (wvif->scan.direct_probe) {
-		dev_dbg(wvif->wdev->pdev, "[SCAN] Direct probe complete.\n");
+		dev_dbg(wvif->wdev->dev, "[SCAN] Direct probe complete.\n");
 		wfx_scan_restart_delayed(wvif);
 		wvif->scan.direct_probe = 0;
 		up(&wvif->scan.lock);
@@ -333,7 +333,7 @@ void wfx_scan_timeout(struct work_struct *work)
 		if (wvif->scan.status > 0) {
 			wvif->scan.status = 0;
 		} else if (!wvif->scan.status) {
-			dev_warn(wvif->wdev->pdev,
+			dev_warn(wvif->wdev->dev,
 				   "Timeout waiting for scan complete notification.\n");
 			wvif->scan.status = -ETIMEDOUT;
 			wvif->scan.curr = wvif->scan.end;
@@ -371,7 +371,7 @@ void wfx_probe_work(struct work_struct *work)
 	int ret;
 	WsmHiMibTemplateFrame_t *p;
 
-	dev_dbg(wvif->wdev->pdev, "[SCAN] Direct probe work.\n");
+	dev_dbg(wvif->wdev->dev, "[SCAN] Direct probe work.\n");
 
 	mutex_lock(&wvif->wdev->conf_mutex);
 	if (down_trylock(&wvif->scan.lock)) {

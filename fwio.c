@@ -125,16 +125,16 @@ int get_firmware(struct wfx_dev *wdev, u32 keyset_chip,
 
 	snprintf(filename, sizeof(filename), "%s_%02X.sec", wdev->pdata.file_fw, keyset_chip);
 #if (KERNEL_VERSION(4, 18, 0) <= LINUX_VERSION_CODE)
-	ret = firmware_request_nowarn(fw, filename, wdev->pdev);
+	ret = firmware_request_nowarn(fw, filename, wdev->dev);
 #else
-	ret = request_firmware(fw, filename, wdev->pdev);
+	ret = request_firmware(fw, filename, wdev->dev);
 #endif
 	if (ret) {
-		dev_info(wdev->pdev, "can't load %s, falling back to %s.sec\n", filename, wdev->pdata.file_fw);
+		dev_info(wdev->dev, "can't load %s, falling back to %s.sec\n", filename, wdev->pdata.file_fw);
 		snprintf(filename, sizeof(filename), "%s.sec", wdev->pdata.file_fw);
-		ret = request_firmware(fw, filename, wdev->pdev);
+		ret = request_firmware(fw, filename, wdev->dev);
 		if (ret) {
-			dev_err(wdev->pdev, "can't load %s\n", filename);
+			dev_err(wdev->dev, "can't load %s\n", filename);
 			return ret;
 		}
 	}
@@ -148,13 +148,13 @@ int get_firmware(struct wfx_dev *wdev, u32 keyset_chip,
 		*file_offset = 8;
 		keyset_file = (hex_to_bin(data[6]) * 16) | hex_to_bin(data[7]);
 		if (keyset_file < 0) {
-			dev_err(wdev->pdev, "%s corrupted\n", filename);
+			dev_err(wdev->dev, "%s corrupted\n", filename);
 			release_firmware(*fw);
 			return -EINVAL;
 		}
 	}
 	if (keyset_file != keyset_chip) {
-		dev_err(wdev->pdev, "firmware keyset is incompatible with chip (file: 0x%02X, chip: 0x%02X)\n",
+		dev_err(wdev->dev, "firmware keyset is incompatible with chip (file: 0x%02X, chip: 0x%02X)\n",
 			keyset_file, keyset_chip);
 		release_firmware(*fw);
 		return -ENODEV;
@@ -181,9 +181,9 @@ static int wait_ncp_status(struct wfx_dev *wdev, u32 status)
 			return -ETIMEDOUT;
 	}
 	if (ktime_compare(now, start))
-		dev_dbg(wdev->pdev, "chip answer after %lldus\n", ktime_us_delta(now, start));
+		dev_dbg(wdev->dev, "chip answer after %lldus\n", ktime_us_delta(now, start));
 	else
-		dev_dbg(wdev->pdev, "chip answer immediately\n");
+		dev_dbg(wdev->dev, "chip answer immediately\n");
 	return 0;
 }
 
@@ -194,7 +194,7 @@ static int upload_firmware(struct wfx_dev *wdev, const u8 *data, size_t len)
 	ktime_t now, start;
 
 	if (len % DNLD_BLOCK_SIZE) {
-		dev_err(wdev->pdev, "firmware size is not aligned. Buffer overrun will occur\n");
+		dev_err(wdev->dev, "firmware size is not aligned. Buffer overrun will occur\n");
 		return -EIO;
 	}
 	offs = 0;
@@ -212,7 +212,7 @@ static int upload_firmware(struct wfx_dev *wdev, const u8 *data, size_t len)
 				return -ETIMEDOUT;
 		}
 		if (ktime_compare(now, start))
-			dev_dbg(wdev->pdev, "answer after %lldus\n", ktime_us_delta(now, start));
+			dev_dbg(wdev->dev, "answer after %lldus\n", ktime_us_delta(now, start));
 
 		ret = sram_write_dma_safe(wdev, WFX_DNLD_FIFO + (offs % DNLD_FIFO_SIZE),
 					  data + offs, DNLD_BLOCK_SIZE);
@@ -235,13 +235,13 @@ static void print_boot_status(struct wfx_dev *wdev)
 
 	sram_reg_read(wdev, WFX_STATUS_INFO, &val32);
 	if (val32 == 0x12345678) {
-		dev_info(wdev->pdev, "no error reported by secure boot\n");
+		dev_info(wdev->dev, "no error reported by secure boot\n");
 	} else {
 		sram_reg_read(wdev, WFX_ERR_INFO, &val32);
 		if (val32 < ARRAY_SIZE(fwio_error_strings) && fwio_error_strings[val32])
-			dev_info(wdev->pdev, "secure boot error: %s\n", fwio_error_strings[val32]);
+			dev_info(wdev->dev, "secure boot error: %s\n", fwio_error_strings[val32]);
 		else
-			dev_info(wdev->pdev, "secure boot error: Unknown (0x%02x)\n", val32);
+			dev_info(wdev->dev, "secure boot error: Unknown (0x%02x)\n", val32);
 	}
 }
 
@@ -271,7 +271,7 @@ int load_firmware_secure(struct wfx_dev *wdev)
 
 	CHECK(sram_buf_read(wdev, WFX_BOOTLOADER_LABEL, buf, BOOTLOADER_LABEL_SIZE));
 	buf[BOOTLOADER_LABEL_SIZE] = 0;
-	dev_dbg(wdev->pdev, "bootloader: \"%s\"\n", buf);
+	dev_dbg(wdev->dev, "bootloader: \"%s\"\n", buf);
 
 	CHECK(sram_buf_read(wdev, WFX_PTE_INFO, buf, PTE_INFO_SIZE));
 	CHECK(get_firmware(wdev, buf[PTE_INFO_KEYSET_IDX], &fw, &fw_offset));
@@ -290,7 +290,7 @@ int load_firmware_secure(struct wfx_dev *wdev)
 
 	start = ktime_get();
 	CHECK(upload_firmware(wdev, fw->data + header_size, fw->size - header_size));
-	dev_dbg(wdev->pdev, "firmware load after %lldus\n", ktime_us_delta(ktime_get(), start));
+	dev_dbg(wdev->dev, "firmware load after %lldus\n", ktime_us_delta(ktime_get(), start));
 
 	CHECK(sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_UPLOAD_COMPLETE));
 	ret = wait_ncp_status(wdev, NCP_AUTH_OK);
@@ -329,7 +329,7 @@ static int init_gpr(struct wfx_dev *wdev)
 		ret = igpr_reg_write(wdev, gpr_init[i].index, gpr_init[i].value);
 		if (ret < 0)
 			return ret;
-		dev_dbg(wdev->pdev, "  index %02x: %08x\n", gpr_init[i].index, gpr_init[i].value);
+		dev_dbg(wdev->dev, "  index %02x: %08x\n", gpr_init[i].index, gpr_init[i].value);
 	}
 	return 0;
 }
@@ -347,31 +347,31 @@ int wfx_init_device(struct wfx_dev *wdev)
 		reg |= CFG_CLK_RISE_EDGE;
 	ret = config_reg_write(wdev, reg);
 	if (ret < 0) {
-		dev_err(wdev->pdev, "%s bus returned error during first write access. Host configuration error?\n",
+		dev_err(wdev->dev, "%s bus returned error during first write access. Host configuration error?\n",
 			wdev->pdata.sdio ? "SDIO" : "SPI");
 		return -EIO;
 	}
 
 	ret = config_reg_read(wdev, &reg);
 	if (ret < 0) {
-		dev_err(wdev->pdev, "%s bus returned error during first read access. Bus configuration error?\n",
+		dev_err(wdev->dev, "%s bus returned error during first read access. Bus configuration error?\n",
 				wdev->pdata.sdio ? "SDIO" : "SPI");
 		return -EIO;
 	}
 	if (reg == 0 || reg == ~0) {
-		dev_err(wdev->pdev, "chip mute. Bus configuration error or chip wasn't reset?\n");
+		dev_err(wdev->dev, "chip mute. Bus configuration error or chip wasn't reset?\n");
 		return -EIO;
 	}
-	dev_dbg(wdev->pdev, "initial config register value: %08x\n", reg);
+	dev_dbg(wdev->dev, "initial config register value: %08x\n", reg);
 
 	hw_revision = FIELD_GET(CFG_DEVICE_ID_MAJOR, reg);
 	if (hw_revision == 0 || hw_revision > 2) {
-		dev_err(wdev->pdev, "bad hardware revision number: %d\n", hw_revision);
+		dev_err(wdev->dev, "bad hardware revision number: %d\n", hw_revision);
 		return -ENODEV;
 	}
 	hw_type = FIELD_GET(CFG_DEVICE_ID_TYPE, reg);
 	if (hw_type == 1) {
-		dev_notice(wdev->pdev, "development hardware detected\n");
+		dev_notice(wdev->dev, "development hardware detected\n");
 		wakeup_timeout = 2000;
 	}
 
@@ -389,11 +389,11 @@ int wfx_init_device(struct wfx_dev *wdev)
 		if (reg & CTRL_WLAN_READY)
 			break;
 		if (ktime_after(now, ktime_add_ms(start, wakeup_timeout))) {
-			dev_err(wdev->pdev, "chip didn't wake up. Chip wasn't reset?\n");
+			dev_err(wdev->dev, "chip didn't wake up. Chip wasn't reset?\n");
 			return -ETIMEDOUT;
 		}
 	}
-	dev_dbg(wdev->pdev, "chip wake up after %lldus\n", ktime_us_delta(now, start));
+	dev_dbg(wdev->dev, "chip wake up after %lldus\n", ktime_us_delta(now, start));
 
 	ret = config_reg_write_bits(wdev, CFG_CPU_RESET | CFG_DISABLE_CPU_CLK, 0);
 	if (ret < 0)

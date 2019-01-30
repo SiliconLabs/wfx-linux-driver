@@ -174,7 +174,7 @@ void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 		skb = ieee80211_nullfunc_get(wvif->wdev->hw, wvif->vif);
 #endif
 		if (!skb)
-			dev_err(wvif->wdev->pdev, "failed to retrieve a nullfunc\n");
+			dev_err(wvif->wdev->dev, "failed to retrieve a nullfunc\n");
 		if (skb)
 			wfx_tx(wvif->wdev->hw, NULL, skb);
 	}
@@ -702,7 +702,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	if (!ret)
 		ret = wfx_set_multicast_filter(wvif->wdev, &wvif->multicast_filter, wvif->Id);
 	if (ret)
-		dev_err(wvif->wdev->pdev,
+		dev_err(wvif->wdev->dev,
 			  "Update filtering failed: %d.\n", ret);
 }
 
@@ -1031,7 +1031,7 @@ int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 			wsm_key->Key.IgtkGroupKey.KeyId = key->keyidx;
 			break;
 		default:
-			dev_warn(wdev->pdev, "unsupported key type %d\n", key->cipher);
+			dev_warn(wdev->dev, "unsupported key type %d\n", key->cipher);
 			wfx_free_key(wvif, idx);
 			ret = -EOPNOTSUPP;
 			goto finally;
@@ -1050,7 +1050,7 @@ int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 		wfx_free_key(wvif, key->hw_key_idx);
 		ret = wsm_remove_key(wdev, key->hw_key_idx, wvif->Id);
 	} else {
-		dev_warn(wdev->pdev, "unsupported key command %d\n", cmd);
+		dev_warn(wdev->dev, "unsupported key command %d\n", cmd);
 	}
 
 finally:
@@ -1201,7 +1201,7 @@ void wfx_event_handler_work(struct work_struct *work)
 			break;
 		}
 		default:
-			dev_warn(wvif->wdev->pdev, "Unhandled indication %.2x\n", event->evt.EventId);
+			dev_warn(wvif->wdev->dev, "Unhandled indication %.2x\n", event->evt.EventId);
 			break;
 		}
 	}
@@ -1240,7 +1240,7 @@ int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len)
 	start = 0;
 	brace_level = 0;
 	if (buf[0] != '{') {
-		dev_err(wdev->pdev, "Valid PDS start with '{'. Did you forget to compress it?");
+		dev_err(wdev->dev, "Valid PDS start with '{'. Did you forget to compress it?");
 		return -EINVAL;
 	}
 	for (i = 1; i < len - 1; i++) {
@@ -1254,19 +1254,19 @@ int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len)
 				return -EFBIG;
 			buf[start] = '{';
 			buf[i] = 0;
-			dev_dbg(wdev->pdev, "Send PDS '%s}'", buf + start);
+			dev_dbg(wdev->dev, "Send PDS '%s}'", buf + start);
 			buf[i] = '}';
 			ret = wsm_configuration(wdev, buf + start, i - start + 1);
 			if (ret == INVALID_PDS_CONFIG_FILE) {
-				dev_err(wdev->pdev, "PDS bytes %d to %d: invalid data (unsupported options?)\n", start, i);
+				dev_err(wdev->dev, "PDS bytes %d to %d: invalid data (unsupported options?)\n", start, i);
 				return -EINVAL;
 			}
 			if (ret == -ETIMEDOUT) {
-				dev_err(wdev->pdev, "PDS bytes %d to %d: chip didn't reply (corrupted file?)\n", start, i);
+				dev_err(wdev->dev, "PDS bytes %d to %d: chip didn't reply (corrupted file?)\n", start, i);
 				return ret;
 			}
 			if (ret) {
-				dev_err(wdev->pdev, "PDS bytes %d to %d: chip returned an unknown error\n", start, i);
+				dev_err(wdev->dev, "PDS bytes %d to %d: chip returned an unknown error\n", start, i);
 				return -EIO;
 			}
 			buf[i] = ',';
@@ -1282,9 +1282,9 @@ int wfx_send_pdata_pds(struct wfx_dev *wdev)
 	const struct firmware *pds;
 	unsigned char *tmp_buf;
 
-	ret = request_firmware(&pds, wdev->pdata.file_pds, wdev->pdev);
+	ret = request_firmware(&pds, wdev->pdata.file_pds, wdev->dev);
 	if (ret) {
-		dev_err(wdev->pdev, "Can't load PDS file %s", wdev->pdata.file_pds);
+		dev_err(wdev->dev, "Can't load PDS file %s", wdev->pdata.file_pds);
 		return ret;
 	}
 	tmp_buf = kmemdup(pds->data, pds->size, GFP_KERNEL);
@@ -1311,7 +1311,7 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 
 	if (atomic_read(&wvif->scan.in_progress)) {
 		if (wvif->delayed_unjoin)
-			dev_dbg(wvif->wdev->pdev,
+			dev_dbg(wvif->wdev->dev,
 				  "Delayed unjoin is already scheduled.\n");
 		else
 			wvif->delayed_unjoin = true;
@@ -1399,7 +1399,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	};
 
 	if (delayed_work_pending(&wvif->join_timeout_work)) {
-		dev_warn(wvif->wdev->pdev, "do_join: join request already pending, skipping..\n");
+		dev_warn(wvif->wdev->dev, "do_join: join request already pending, skipping..\n");
 		wsm_unlock_tx(wvif->wdev);
 		return;
 	}
@@ -1662,7 +1662,7 @@ int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	sta_priv->vif_id = wvif->Id;
 	sta_priv->link_id = wfx_find_link_id(wvif, sta->addr);
 	if (!sta_priv->link_id) {
-		dev_info(wdev->pdev,
+		dev_info(wdev->dev,
 			   "[AP] No more link IDs available.\n");
 		return -ENOENT;
 	}
@@ -1713,7 +1713,7 @@ static void __wfx_sta_notify(struct wfx_vif *wvif,
 	if (link_id) {
 		bit = BIT(link_id);
 	} else if (notify_cmd != STA_NOTIFY_AWAKE) {
-		dev_warn(wvif->wdev->pdev, "wfx_sta_notify: unsupported notify command");
+		dev_warn(wvif->wdev->dev, "wfx_sta_notify: unsupported notify command");
 		bit = 0;
 	} else {
 		bit = wvif->link_id_map;
@@ -1757,7 +1757,7 @@ void wfx_sta_notify(struct ieee80211_hw *hw,
 // FIXME: wfx_ps_notify should change each station status independently
 static void wfx_ps_notify(struct wfx_vif *wvif, bool ps)
 {
-	dev_info(wvif->wdev->pdev, "%s: %s STAs asleep: %.8X\n", __func__,
+	dev_info(wvif->wdev->dev, "%s: %s STAs asleep: %.8X\n", __func__,
 		 ps ? "Start" : "Stop",
 		 wvif->sta_asleep_mask);
 
@@ -2257,7 +2257,7 @@ void wfx_mcast_timeout(unsigned long arg)
 {
 	struct wfx_vif *wvif = (struct wfx_vif *)arg;
 #endif
-	dev_warn(wvif->wdev->pdev,
+	dev_warn(wvif->wdev->dev,
 		   "Multicast delivery timeout.\n");
 	spin_lock_bh(&wvif->ps_state_lock);
 	wvif->tx_multicast = wvif->aid0_bit_set &&

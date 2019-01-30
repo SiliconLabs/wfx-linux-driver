@@ -244,7 +244,7 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 
 	wdev = hw->priv;
 	wdev->hw = hw;
-	wdev->pdev = dev;
+	wdev->dev = dev;
 	wdev->hwbus_ops = hwbus_ops;
 	wdev->hwbus_priv = hwbus;
 	wdev->rates = wfx_rates;
@@ -314,25 +314,25 @@ int wfx_probe(struct wfx_dev *wdev)
 	WARN_ON(!queue_work(wdev->bh_workqueue, &wdev->bh_work));
 
 	if (wait_for_completion_interruptible_timeout(&wdev->firmware_ready, 10 * HZ) <= 0) {
-		dev_err(wdev->pdev, "timeout while waiting for startup indication. IRQ configuration error?\n");
+		dev_err(wdev->dev, "timeout while waiting for startup indication. IRQ configuration error?\n");
 		err = -ETIMEDOUT;
 		goto err2;
 	}
 
-	dev_info(wdev->pdev, "Firmware \"%s\" started. Version: %d.%d.%d API: %d.%d caps: 0x%.8X\n",
+	dev_info(wdev->dev, "Firmware \"%s\" started. Version: %d.%d.%d API: %d.%d caps: 0x%.8X\n",
 		 wdev->wsm_caps.FirmwareLabel, wdev->wsm_caps.FirmwareMajor,
 		 wdev->wsm_caps.FirmwareMinor, wdev->wsm_caps.FirmwareBuild,
 		 wdev->wsm_caps.ApiVersionMajor, wdev->wsm_caps.ApiVersionMinor,
 		 *((u32 *) &wdev->wsm_caps.Capabilities));
 
 	if (wdev->wsm_caps.ApiVersionMajor != 1) {
-		dev_err(wdev->pdev, "Unsupported firmware API version (expect 1 while firmware returns %d)\n", wdev->wsm_caps.ApiVersionMajor);
+		dev_err(wdev->dev, "Unsupported firmware API version (expect 1 while firmware returns %d)\n", wdev->wsm_caps.ApiVersionMajor);
 		goto err2;
 	}
 
 	msleep(100);
 
-	dev_dbg(wdev->pdev, "sending configuration file %s", wdev->pdata.file_pds);
+	dev_dbg(wdev->dev, "sending configuration file %s", wdev->pdata.file_pds);
 	err = wfx_send_pdata_pds(wdev);
 	if (err < 0)
 		goto err2;
@@ -346,7 +346,7 @@ int wfx_probe(struct wfx_dev *wdev)
 		 */
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
 		control_reg_write(wdev, 0);
-		dev_dbg(wdev->pdev, "enable 'quiescent' power mode with gpio %d and PDS file %s\n",
+		dev_dbg(wdev->dev, "enable 'quiescent' power mode with gpio %d and PDS file %s\n",
 			desc_to_gpio(wdev->pdata.gpio_wakeup), wdev->pdata.file_pds);
 		wsm_set_operational_mode(wdev, WSM_OP_POWER_MODE_QUIESCENT);
 	} else {
@@ -357,17 +357,17 @@ int wfx_probe(struct wfx_dev *wdev)
 
 	for (i = 0; i < ARRAY_SIZE(wdev->addresses); i++) {
 		eth_zero_addr(wdev->addresses[i].addr);
-		macaddr = of_get_mac_address(wdev->pdev->of_node);
+		macaddr = of_get_mac_address(wdev->dev->of_node);
 		if (macaddr) {
 			ether_addr_copy(wdev->addresses[i].addr, macaddr);
 			wdev->addresses[i].addr[ETH_ALEN - 1] += i;
 		}
 		ether_addr_copy(wdev->addresses[i].addr, wdev->wsm_caps.MacAddr[i]);
 		if (!is_valid_ether_addr(wdev->addresses[i].addr)) {
-			dev_warn(wdev->pdev, "using random MAC address\n");
+			dev_warn(wdev->dev, "using random MAC address\n");
 			eth_random_addr(wdev->addresses[i].addr);
 		}
-		dev_info(wdev->pdev, "MAC address %d: %pM\n", i, wdev->addresses[i].addr);
+		dev_info(wdev->dev, "MAC address %d: %pM\n", i, wdev->addresses[i].addr);
 	}
 	wdev->hw->wiphy->n_addresses = ARRAY_SIZE(wdev->addresses);
 	wdev->hw->wiphy->addresses = wdev->addresses;

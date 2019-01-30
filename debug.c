@@ -547,7 +547,7 @@ void wfx_dbg_filter_wsm(struct wfx_dev *wdev, void *buf)
 				buf8[p->data_offset] &= ~data_mask;
 				buf8[p->data_offset] |= p->data_val << p->data_shift;
 			}
-			dev_dbg(wdev->pdev, "force parameter %s: %d -> %d\n", p->fs_name, old_val, p->data_val);
+			dev_dbg(wdev->dev, "force parameter %s: %d -> %d\n", p->fs_name, old_val, p->data_val);
 		}
 	}
 }
@@ -560,7 +560,7 @@ static ssize_t wfx_send_pds_write(struct file *file, const char __user *user_buf
 	int ret;
 
 	if (*ppos != 0) {
-		dev_dbg(wdev->pdev, "PDS data must be written in one transaction");
+		dev_dbg(wdev->dev, "PDS data must be written in one transaction");
 		return -EBUSY;
 	}
 	buf = memdup_user(user_buf, count);
@@ -585,7 +585,7 @@ int wfx_debug_init(struct wfx_dev *wdev)
 	struct dentry *d;
 	int i;
 
-	wdev->debug = devm_kzalloc(wdev->pdev, sizeof(*wdev->debug), GFP_KERNEL);
+	wdev->debug = devm_kzalloc(wdev->dev, sizeof(*wdev->debug), GFP_KERNEL);
 	if (!wdev->debug)
 		return -ENOMEM;
 
@@ -597,7 +597,7 @@ int wfx_debug_init(struct wfx_dev *wdev)
 
 	d = debugfs_create_dir("wsm_params", d);
 	INIT_LIST_HEAD(&wdev->debug->dbg_params_active);
-	wdev->debug->dbg_params = devm_kmemdup(wdev->pdev, wfx_dbg_params, sizeof(wfx_dbg_params), GFP_KERNEL);
+	wdev->debug->dbg_params = devm_kmemdup(wdev->dev, wfx_dbg_params, sizeof(wfx_dbg_params), GFP_KERNEL);
 	for (i = 0; i < ARRAY_SIZE(wfx_dbg_params); i++) {
 		p = &wdev->debug->dbg_params[i];
 		if (p->is_mib)
