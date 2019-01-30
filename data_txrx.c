@@ -719,10 +719,10 @@ static bool wfx_tx_h_pm_state(struct wfx_vif *wvif, struct wfx_txinfo *t)
 
 /* ******************************************************************** */
 
-void wfx_tx(struct ieee80211_hw *dev, struct ieee80211_tx_control *control,
+void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	    struct sk_buff *skb)
 {
-	struct wfx_dev *wdev = dev->priv;
+	struct wfx_dev *wdev = hw->priv;
 	struct wfx_vif *wvif;
 	struct wfx_txinfo t = {
 		.skb = skb,

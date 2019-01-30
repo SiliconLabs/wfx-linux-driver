@@ -189,7 +189,7 @@ void wfx_cqm_bssloss_sm(struct wfx_vif *wvif, int init, int good, int bad)
 	mutex_unlock(&wvif->bss_loss_lock);
 }
 
-int wfx_start(struct ieee80211_hw *dev)
+int wfx_start(struct ieee80211_hw *hw)
 {
 	return 0;
 }
@@ -197,9 +197,9 @@ int wfx_start(struct ieee80211_hw *dev)
 /*This should stop WFx driver when receive a critical error.
  * It must turn off frame reception
  */
-void wfx_stop(struct ieee80211_hw *dev)
+void wfx_stop(struct ieee80211_hw *hw)
 {
-	struct wfx_dev *wdev = dev->priv;
+	struct wfx_dev *wdev = hw->priv;
 
 	int i;
 
@@ -347,13 +347,13 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	return 0;
 }
 
-int wfx_add_interface(struct ieee80211_hw *dev,
+int wfx_add_interface(struct ieee80211_hw *hw,
 	// FIXME: parameters are set by kernel juste after interface_add.
 	// Keep WsmHiEdcaQueueParamsReqBody_t blank?
 			 struct ieee80211_vif *vif)
 {
 	int ret, i;
-	struct wfx_dev *wdev = dev->priv;
+	struct wfx_dev *wdev = hw->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 
 	vif->driver_flags |= IEEE80211_VIF_BEACON_FILTER |
@@ -399,10 +399,10 @@ int wfx_add_interface(struct ieee80211_hw *dev,
 	return 0;
 }
 
-void wfx_remove_interface(struct ieee80211_hw *dev,
+void wfx_remove_interface(struct ieee80211_hw *hw,
 			     struct ieee80211_vif *vif)
 {
-	struct wfx_dev *wdev = dev->priv;
+	struct wfx_dev *wdev = hw->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 	int i;
 
@@ -480,7 +480,7 @@ void wfx_remove_interface(struct ieee80211_hw *dev,
 	mutex_unlock(&wdev->conf_mutex);
 }
 
-int wfx_change_interface(struct ieee80211_hw *dev,
+int wfx_change_interface(struct ieee80211_hw *hw,
 			    struct ieee80211_vif *vif,
 			    enum nl80211_iftype new_type,
 			    bool p2p)
@@ -492,10 +492,10 @@ int wfx_change_interface(struct ieee80211_hw *dev,
 		 p2p, vif->type, vif->p2p);
 
 	if (new_type != vif->type || vif->p2p != p2p) {
-		wfx_remove_interface(dev, vif);
+		wfx_remove_interface(hw, vif);
 		vif->type = new_type;
 		vif->p2p = p2p;
-		ret = wfx_add_interface(dev, vif);
+		ret = wfx_add_interface(hw, vif);
 	}
 
 	return ret;
@@ -542,11 +542,11 @@ void wfx_unassign_vif_chanctx(struct ieee80211_hw *hw,
 	wvif->channel = NULL;
 }
 
-int wfx_config(struct ieee80211_hw *dev, u32 changed)
+int wfx_config(struct ieee80211_hw *hw, u32 changed)
 {
 	int ret = 0;
-	struct wfx_dev *wdev = dev->priv;
-	struct ieee80211_conf *conf = &dev->conf;
+	struct wfx_dev *wdev = hw->priv;
+	struct ieee80211_conf *conf = &hw->conf;
 	// FIXME: Interface id should not been hardcoded
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
@@ -822,10 +822,10 @@ void wfx_configure_filter(struct ieee80211_hw *dev,
 	up(&wvif->scan.lock);
 }
 
-int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
+int wfx_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		   u16 queue, const struct ieee80211_tx_queue_params *params)
 {
-	struct wfx_dev *wdev = dev->priv;
+	struct wfx_dev *wdev = hw->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 	int ret = 0;
 	/* To prevent re-applying PM request OID again and again*/
@@ -836,7 +836,7 @@ int wfx_conf_tx(struct ieee80211_hw *dev, struct ieee80211_vif *vif,
 
 	mutex_lock(&wdev->conf_mutex);
 
-	if (queue < dev->queues) {
+	if (queue < hw->queues) {
 		old_uapsd_flags = *((u16 *) &wvif->uapsd_info);
 		edca = &wvif->edca.params[queue];
 
@@ -870,10 +870,10 @@ out:
 	return ret;
 }
 
-int wfx_get_stats(struct ieee80211_hw *dev,
+int wfx_get_stats(struct ieee80211_hw *hw,
 		     struct ieee80211_low_level_stats *stats)
 {
-	struct wfx_dev *wdev = dev->priv;
+	struct wfx_dev *wdev = hw->priv;
 
 	memcpy(stats, &wdev->stats, sizeof(*stats));
 	return 0;
@@ -905,12 +905,12 @@ int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 	return ret;
 }
 
-int wfx_set_key(struct ieee80211_hw *dev, enum set_key_cmd cmd,
+int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 		   struct ieee80211_vif *vif, struct ieee80211_sta *sta,
 		   struct ieee80211_key_conf *key)
 {
 	int ret = -EOPNOTSUPP;
-	struct wfx_dev *wdev = dev->priv;
+	struct wfx_dev *wdev = hw->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 	struct ieee80211_key_seq seq;
 
@@ -1811,7 +1811,7 @@ static void __wfx_sta_notify(struct wfx_vif *wvif,
 	}
 }
 
-void wfx_sta_notify(struct ieee80211_hw *dev,
+void wfx_sta_notify(struct ieee80211_hw *hw,
 		       struct ieee80211_vif *vif,
 		       enum sta_notify_cmd notify_cmd,
 		       struct ieee80211_sta *sta)
@@ -1887,10 +1887,10 @@ void wfx_set_tim_work(struct work_struct *work)
 	(void)wfx_set_tim_impl(wvif, wvif->aid0_bit_set);
 }
 
-int wfx_set_tim(struct ieee80211_hw *dev, struct ieee80211_sta *sta,
+int wfx_set_tim(struct ieee80211_hw *hw, struct ieee80211_sta *sta,
 			   bool set)
 {
-	struct wfx_dev *wdev = dev->priv;
+	struct wfx_dev *wdev = hw->priv;
 	struct wfx_sta_priv *sta_dev = (struct wfx_sta_priv *) &sta->drv_priv;
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, sta_dev->vif_id);
 
@@ -2039,12 +2039,12 @@ done:
 	return ret;
 }
 
-void wfx_bss_info_changed(struct ieee80211_hw *dev,
+void wfx_bss_info_changed(struct ieee80211_hw *hw,
 			     struct ieee80211_vif *vif,
 			     struct ieee80211_bss_conf *info,
 			     u32 changed)
 {
-	struct wfx_dev *wdev = dev->priv;
+	struct wfx_dev *wdev = hw->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 	bool do_join = false;
 	int i;
@@ -2169,7 +2169,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *dev,
 						wfx_rate_mask_to_wsm(wdev, sta->supp_rates[wvif->channel->band]);
 					wdev->ht_info.channel_type =
 						cfg80211_get_chandef_type(
-							&dev->conf.chandef);
+							&hw->conf.chandef);
 					wdev->ht_info.operation_mode =
 						info->ht_operation_mode;
 				} else {
