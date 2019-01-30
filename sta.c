@@ -722,78 +722,60 @@ void wfx_update_filtering_work(struct work_struct *work)
 	wfx_update_filtering(wvif);
 }
 
-u64 wfx_prepare_multicast(struct ieee80211_hw *hw,
-			     struct netdev_hw_addr_list *mc_list)
+u64 wfx_prepare_multicast(struct ieee80211_hw *hw, struct netdev_hw_addr_list *mc_list)
 {
-	struct wfx_dev *wdev = hw->priv;
+	int i;
 	struct netdev_hw_addr *ha;
-	int count = 0;
-	// FIXME: Interface id should not been hardcoded
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
+	struct wfx_vif *wvif = NULL;
+	struct wfx_dev *wdev = hw->priv;
+	int count = netdev_hw_addr_list_count(mc_list);
 
-	pr_debug("[STA] wfx_prepare_multicast\n");
+	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
+		memset(&wvif->multicast_filter, 0x00, sizeof(wvif->multicast_filter));
+		if (!count || count > ARRAY_SIZE(wvif->multicast_filter.address_list))
+			continue;
 
-	/* Disable multicast filtering */
-	memset(&wvif->multicast_filter, 0x00, sizeof(wvif->multicast_filter));
-
-	if (netdev_hw_addr_list_count(mc_list) > ARRAY_SIZE(wvif->multicast_filter.address_list))
-		return 0;
-
-	/* Enable if requested */
-	netdev_hw_addr_list_for_each(ha, mc_list) {
-		pr_debug("[STA] multicast: %pM\n", ha->addr);
-		ether_addr_copy(wvif->multicast_filter.address_list[count],
-				ha->addr);
-		count++;
+		i = 0;
+		netdev_hw_addr_list_for_each(ha, mc_list) {
+			ether_addr_copy(wvif->multicast_filter.address_list[i], ha->addr);
+			i++;
+		}
+		wvif->multicast_filter.enable = 1;
+		wvif->multicast_filter.num_addresses = count;
 	}
 
-	if (count) {
-		wvif->multicast_filter.enable = cpu_to_le32(1);
-		wvif->multicast_filter.num_addresses = cpu_to_le32(count);
-	}
-
-	return netdev_hw_addr_list_count(mc_list);
+	return 0;
 }
 
-void wfx_configure_filter(struct ieee80211_hw *dev,
+// FIXME: FIF_PROBE_REQ could be handled on each vif independently
+void wfx_configure_filter(struct ieee80211_hw *hw,
 			     unsigned int changed_flags,
 			     unsigned int *total_flags,
-			     u64 multicast)
+			     u64 unused)
 {
-	struct wfx_dev *wdev = dev->priv;
+	struct wfx_vif *wvif = NULL;
+	struct wfx_dev *wdev = hw->priv;
 	bool listening = !!(*total_flags &
-			    (FIF_OTHER_BSS |
-			     FIF_BCN_PRBRESP_PROMISC |
-			     FIF_PROBE_REQ));
-	// FIXME: Interface id should not been hardcoded
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
+			    (FIF_OTHER_BSS | FIF_BCN_PRBRESP_PROMISC | FIF_PROBE_REQ));
 
-	*total_flags &= FIF_OTHER_BSS |
-			FIF_FCSFAIL |
-			FIF_BCN_PRBRESP_PROMISC |
-			FIF_PROBE_REQ;
+	*total_flags &= FIF_OTHER_BSS | FIF_FCSFAIL |
+			FIF_BCN_PRBRESP_PROMISC | FIF_PROBE_REQ;
 
-	pr_debug("[STA] wfx_configure_filter : 0x%.8X\n", *total_flags);
-
-	down(&wvif->scan.lock);
 	mutex_lock(&wdev->conf_mutex);
-
-	wvif->rx_filter.bssid = (*total_flags & (FIF_OTHER_BSS |
-			FIF_PROBE_REQ)) ? 1 : 0; /* set wvif->rx_filter.bssid */
-
-	wvif->disable_beacon_filter = !(*total_flags &
-					(FIF_BCN_PRBRESP_PROMISC |
-					 FIF_PROBE_REQ));
-
-	if (wvif->listening != listening) {
-		wvif->listening = listening;
-		wsm_lock_tx(wdev);
-		wfx_update_listening(wvif, listening); /* set wvif->rx_filter.probeResponder */
-		wsm_unlock_tx(wdev);
+	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
+		down(&wvif->scan.lock);
+		wvif->rx_filter.bssid = (*total_flags & (FIF_OTHER_BSS | FIF_PROBE_REQ)) ? 1 : 0;
+		wvif->disable_beacon_filter = !(*total_flags & (FIF_BCN_PRBRESP_PROMISC | FIF_PROBE_REQ));
+		if (wvif->listening != listening) {
+			wvif->listening = listening;
+			wsm_lock_tx(wvif->wdev);
+			wfx_update_listening(wvif, listening);
+			wsm_unlock_tx(wvif->wdev);
+		}
+		wfx_update_filtering(wvif);
+		up(&wvif->scan.lock);
 	}
-	wfx_update_filtering(wvif);
 	mutex_unlock(&wdev->conf_mutex);
-	up(&wvif->scan.lock);
 }
 
 int wfx_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
