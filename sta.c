@@ -203,8 +203,6 @@ void wfx_stop(struct ieee80211_hw *hw)
 
 	int i;
 
-	pr_debug("[STA] wfx_stop\n");
-
 	wsm_lock_tx(wdev);
 
 	flush_workqueue(wdev->workqueue);
@@ -360,8 +358,6 @@ int wfx_add_interface(struct ieee80211_hw *hw,
 			     IEEE80211_VIF_SUPPORTS_UAPSD |
 			     IEEE80211_VIF_SUPPORTS_CQM_RSSI;
 
-	pr_debug("[STA] wfx_add_interface : type= %d\n", vif->type);
-
 	mutex_lock(&wdev->conf_mutex);
 
 	switch (vif->type) {
@@ -405,9 +401,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	struct wfx_dev *wdev = hw->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 	int i;
-
-	pr_debug("[STA] wfx_remove_interface : state= %d\n",
-		 wvif->state);
 
 	mutex_lock(&wdev->conf_mutex);
 	switch (wvif->state) {
@@ -487,10 +480,6 @@ int wfx_change_interface(struct ieee80211_hw *hw,
 {
 	int ret = 0;
 
-	pr_debug("[STA] wfx_change_interface: new: %d (%d), old: %d (%d)\n",
-		 new_type,
-		 p2p, vif->type, vif->p2p);
-
 	if (new_type != vif->type || vif->p2p != p2p) {
 		wfx_remove_interface(hw, vif);
 		vif->type = new_type;
@@ -549,8 +538,6 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 	struct ieee80211_conf *conf = &hw->conf;
 	// FIXME: Interface id should not been hardcoded
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
-
-	pr_debug("[STA] wfx_config:  %08x\n", changed);
 
 	down(&wvif->scan.lock);
 	mutex_lock(&wdev->conf_mutex);
@@ -832,8 +819,6 @@ int wfx_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	u16 old_uapsd_flags, new_uapsd_flags;
 	WsmHiEdcaQueueParamsReqBody_t *edca;
 
-	pr_debug("[STA] wfx_conf_tx\n");
-
 	mutex_lock(&wdev->conf_mutex);
 
 	if (queue < hw->queues) {
@@ -913,8 +898,6 @@ int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 	struct wfx_dev *wdev = hw->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 	struct ieee80211_key_seq seq;
-
-	pr_debug("[STA] wfx_set _key\n");
 
 	mutex_lock(&wdev->conf_mutex);
 
@@ -1180,8 +1163,6 @@ void wfx_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 {
 	struct wfx_dev *wdev = hw->priv;
 	struct wfx_vif *wvif;
-
-	pr_debug("[STA] wfx_flush\n");
 
 	if (vif) {
 		wvif = (struct wfx_vif *) vif->drv_priv;
@@ -1723,10 +1704,6 @@ int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 
 	sta_priv->vif_id = wvif->Id;
 	sta_priv->link_id = wfx_find_link_id(wvif, sta->addr);
-	pr_debug("[STA] wfx_sta_add : MAC=%d:%d:%d:%d:%d:%d, link_id=%d\n",
-		 sta->addr[0], sta->addr[1], sta->addr[2], sta->addr[3],
-		 sta->addr[4], sta->addr[5], sta_priv->link_id);
-
 	if (!sta_priv->link_id) {
 		dev_info(wdev->pdev,
 			   "[AP] No more link IDs available.\n");
@@ -1753,8 +1730,6 @@ int wfx_sta_remove(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	struct wfx_sta_priv *sta_priv =
 			(struct wfx_sta_priv *)&sta->drv_priv;
 	struct wfx_link_entry *entry;
-
-	pr_debug("[STA] wfx_sta_remove\n");
 
 	if (wvif->mode != NL80211_IFTYPE_AP || !sta_priv->link_id)
 		return 0;
@@ -1820,17 +1795,13 @@ void wfx_sta_notify(struct ieee80211_hw *hw,
 	struct wfx_sta_priv *sta_priv =
 		(struct wfx_sta_priv *)&sta->drv_priv;
 
-	pr_debug("[STA] wfx_sta_notify: link_id=%d, status=%d\n",
-		 sta_priv->link_id, sta_priv->link_id);
-
 	spin_lock_bh(&wvif->ps_state_lock);
 	__wfx_sta_notify(wvif, notify_cmd, sta_priv->link_id);
 	spin_unlock_bh(&wvif->ps_state_lock);
 }
 
 // FIXME: wfx_ps_notify should change each station status independently
-static void wfx_ps_notify(struct wfx_vif *wvif,
-		      bool ps)
+static void wfx_ps_notify(struct wfx_vif *wvif, bool ps)
 {
 	dev_info(wvif->wdev->pdev, "%s: %s STAs asleep: %.8X\n", __func__,
 		 ps ? "Start" : "Stop",
@@ -2051,9 +2022,6 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 	int nb_arp_addr;
 
 	mutex_lock(&wdev->conf_mutex);
-
-	pr_debug("[STA] wfx_bss_info_changed : %08x\n", changed);
-	pr_debug("BSS CHANGED:  %08x\n", changed);
 
 
 	if (changed & BSS_CHANGED_ARP_FILTER) {
@@ -2398,15 +2366,12 @@ int wfx_ampdu_action(struct ieee80211_hw *hw,
 	 * mac80211 stack to do anything: it interferes with
 	 * the firmware.
 	 */
-	pr_debug("[STA] wfx_ampdu_action : empty (done by FW)\n");
 
 	/* Note that we still need this function stubbed. */
 
 	return -ENOTSUPP;
 }
 
-/* ******************************************************************** */
-/* WSM callback								*/
 void wfx_suspend_resume(struct wfx_vif *wvif,
 			WsmHiSuspendResumeTxIndBody_t *arg)
 {

@@ -79,9 +79,6 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	if (req->n_ssids == 1 && !req->ssids[0].ssid_len)
 		req->n_ssids = 0;
 
-	dev_dbg(wdev->pdev, "[SCAN] Scan request for %d SSIDs.\n",
-		  req->n_ssids);
-
 	if (req->n_ssids > WSM_API_SSID_DEF_SIZE)
 		return -EINVAL;
 
