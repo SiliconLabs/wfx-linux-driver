@@ -256,13 +256,13 @@ static inline int tx_policy_release(struct tx_policy_cache *cache,
 	return ret;
 }
 
-void tx_policy_clean(struct wfx_dev *wdev)
+void tx_policy_clean(struct wfx_vif *wvif)
 {
 	int idx, locked;
-	struct tx_policy_cache *cache = &wdev->tx_policy_cache;
+	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
 	struct tx_policy_cache_entry *entry;
 
-	wfx_tx_queues_lock(wdev);
+	wfx_tx_queues_lock(wvif->wdev);
 	spin_lock_bh(&cache->lock);
 	locked = list_empty(&cache->free);
 
@@ -278,18 +278,18 @@ void tx_policy_clean(struct wfx_dev *wdev)
 		memset(&entry->policy, 0, sizeof(entry->policy));
 	}
 	if (locked)
-		wfx_tx_queues_unlock(wdev);
+		wfx_tx_queues_unlock(wvif->wdev);
 
-	wfx_tx_queues_unlock(wdev);
+	wfx_tx_queues_unlock(wvif->wdev);
 	spin_unlock_bh(&cache->lock);
 }
 
 /* ******************************************************************** */
 /* External TX policy cache API						*/
 
-void tx_policy_init(struct wfx_dev *wdev)
+void tx_policy_init(struct wfx_vif *wvif)
 {
-	struct tx_policy_cache *cache = &wdev->tx_policy_cache;
+	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
 	int i;
 
 	memset(cache, 0, sizeof(*cache));
@@ -306,8 +306,7 @@ static int tx_policy_get(struct wfx_vif *wvif, struct ieee80211_tx_rate *rates,
 			 size_t count, bool *renew)
 {
 	int idx;
-	struct wfx_dev *wdev = wvif->wdev;
-	struct tx_policy_cache *cache = &wdev->tx_policy_cache;
+	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
 	struct tx_policy wanted;
 
 	tx_policy_build(wvif, &wanted, rates, count);
@@ -337,35 +336,34 @@ static int tx_policy_get(struct wfx_vif *wvif, struct ieee80211_tx_rate *rates,
 	tx_policy_use(cache, &cache->cache[idx]);
 	if (list_empty(&cache->free)) {
 		/* Lock TX queues. */
-		wfx_tx_queues_lock(wdev);
+		wfx_tx_queues_lock(wvif->wdev);
 	}
 	spin_unlock_bh(&cache->lock);
 	return idx;
 }
 
-static void tx_policy_put(struct wfx_dev *wdev, int idx)
+static void tx_policy_put(struct wfx_vif *wvif, int idx)
 {
 	int usage, locked;
-	struct tx_policy_cache *cache = &wdev->tx_policy_cache;
+	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
 
 	spin_lock_bh(&cache->lock);
 	locked = list_empty(&cache->free);
 	usage = tx_policy_release(cache, &cache->cache[idx]);
 	if (locked && !usage) {
 		/* Unlock TX queues. */
-		wfx_tx_queues_unlock(wdev);
+		wfx_tx_queues_unlock(wvif->wdev);
 	}
 	spin_unlock_bh(&cache->lock);
 }
 
-static int tx_policy_upload(struct wfx_dev *wdev)
+static int tx_policy_upload(struct wfx_vif *wvif)
 {
-	struct tx_policy_cache *cache = &wdev->tx_policy_cache;
+	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
 	int i;
 	WsmHiMibSetTxRateRetryPolicy_t arg = {
 		.NumTxRatePolicy	= 0,
 	};
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
 	spin_lock_bh(&cache->lock);
 
@@ -379,8 +377,8 @@ static int tx_policy_upload(struct wfx_dev *wdev)
 				sizeof(WsmHiMibTxRateRetryPolicy_t);
 
 			dst->PolicyIndex = i;
-			dst->ShortRetryCount = wdev->short_frame_max_tx_count;
-			dst->LongRetryCount = wdev->long_frame_max_tx_count;
+			dst->ShortRetryCount = wvif->wdev->short_frame_max_tx_count;
+			dst->LongRetryCount = wvif->wdev->long_frame_max_tx_count;
 
 			/* dst->flags = WSM_TX_RATE_POLICY_FLAG_TERMINATE_WHEN_FINISHED |
 			 *  WSM_TX_RATE_POLICY_FLAG_COUNT_INITIAL_TRANSMIT;
@@ -394,21 +392,21 @@ static int tx_policy_upload(struct wfx_dev *wdev)
 		}
 	}
 	spin_unlock_bh(&cache->lock);
-	wfx_debug_tx_cache_miss(wdev);
+	wfx_debug_tx_cache_miss(wvif->wdev);
 	pr_debug("[TX policy] Upload %d policies\n", arg.NumTxRatePolicy);
-	return wsm_set_tx_rate_retry_policy(wdev, &arg, wvif->Id);
+	return wsm_set_tx_rate_retry_policy(wvif->wdev, &arg, wvif->Id);
 }
 
 void tx_policy_upload_work(struct work_struct *work)
 {
-	struct wfx_dev *wdev =
-		container_of(work, struct wfx_dev, tx_policy_upload_work);
+	struct wfx_vif *wvif =
+		container_of(work, struct wfx_vif, tx_policy_upload_work);
 
 	pr_debug("[TX] TX policy upload.\n");
-	tx_policy_upload(wdev);
+	tx_policy_upload(wvif);
 
-	wsm_unlock_tx(wdev);
-	wfx_tx_queues_unlock(wdev);
+	wsm_unlock_tx(wvif->wdev);
+	wfx_tx_queues_unlock(wvif->wdev);
 }
 
 /* ******************************************************************** */
@@ -696,7 +694,7 @@ static int wfx_tx_h_rate_policy(struct wfx_dev *wdev, struct wfx_txinfo *t, WsmH
 		 */
 		wsm_lock_tx_async(wdev);
 		wfx_tx_queues_lock(wdev);
-		if (!schedule_work(&wdev->tx_policy_upload_work)) {
+		if (!schedule_work(&wvif->tx_policy_upload_work)) {
 			wfx_tx_queues_unlock(wdev);
 			wsm_unlock_tx(wdev);
 		}
@@ -1026,7 +1024,7 @@ void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb,
 	if (txpriv->rate_id != WFX_INVALID_RATE_ID) {
 		wfx_notify_buffered_tx(wvif, skb,
 					  txpriv->raw_link_id, txpriv->tid);
-		tx_policy_put(wdev, txpriv->rate_id);
+		tx_policy_put(wvif, txpriv->rate_id);
 	}
 	ieee80211_tx_status(wdev->hw, skb);
 }

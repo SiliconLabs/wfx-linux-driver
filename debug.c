@@ -281,11 +281,11 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 		   wdev->long_frame_max_tx_count);
 	seq_printf(seq, "Short retr: %d\n",
 		   wdev->short_frame_max_tx_count);
-	spin_lock_bh(&wdev->tx_policy_cache.lock);
+	spin_lock_bh(&wvif->tx_policy_cache.lock);
 	i = 0;
-	list_for_each(item, &wdev->tx_policy_cache.used)
+	list_for_each(item, &wvif->tx_policy_cache.used)
 		++i;
-	spin_unlock_bh(&wdev->tx_policy_cache.lock);
+	spin_unlock_bh(&wvif->tx_policy_cache.lock);
 	seq_printf(seq, "RC in use:  %d\n", i);
 
 	seq_puts(seq, "\n");

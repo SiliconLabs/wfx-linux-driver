@@ -60,8 +60,8 @@ struct tx_policy_cache {
  * It uses "tx retry policy id" instead, so driver code has to sync
  * linux tx retry sequences with a retry policy table in the device.
  */
-void tx_policy_init(struct wfx_dev *wdev);
-void tx_policy_clean(struct wfx_dev *wdev);
+void tx_policy_init(struct wfx_vif *wvif);
+void tx_policy_clean(struct wfx_vif *wvif);
 void tx_policy_upload_work(struct work_struct *work);
 
 /* ******************************************************************** */

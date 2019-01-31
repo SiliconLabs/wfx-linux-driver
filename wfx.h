@@ -169,10 +169,6 @@ struct wfx_dev {
 	u32			pending_frame_id;
 
 
-	/* TX rate policy cache */
-	struct tx_policy_cache tx_policy_cache;
-	struct work_struct tx_policy_upload_work;
-
 	/* For debugfs 'rx_stats' file */
 	HiRxStats_t rx_stats;
 };
@@ -219,7 +215,9 @@ struct wfx_vif {
 	struct wsm_edca_params	edca;
 	struct wfx_link_entry	link_id_db[WFX_MAX_STA_IN_AP_MODE];
 	struct wfx_grp_addr_table	multicast_filter;
+	struct tx_policy_cache		tx_policy_cache;
 
+	struct work_struct	tx_policy_upload_work;
 	struct work_struct	unjoin_work;
 	struct work_struct	bss_params_work;
 	struct delayed_work	bss_loss_work;

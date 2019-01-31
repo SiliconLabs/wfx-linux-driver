@@ -205,7 +205,6 @@ void wfx_stop(struct ieee80211_hw *hw)
 	for (i = 0; i < 4; i++)
 		wfx_queue_clear(&wdev->tx_queue[i]);
 	mutex_unlock(&wdev->conf_mutex);
-	tx_policy_clean(wdev);
 
 	if (atomic_xchg(&wdev->tx_lock, 1) != 1)
 		pr_debug("[STA] TX is force-unlocked due to stop request.\n");
@@ -303,6 +302,7 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	INIT_WORK(&wvif->bss_params_work, wfx_bss_params_work);
 	INIT_WORK(&wvif->set_beacon_wakeup_period_work, wfx_set_beacon_wakeup_period_work);
 	INIT_DELAYED_WORK(&wvif->bss_loss_work, wfx_bss_loss_work);
+	INIT_WORK(&wvif->tx_policy_upload_work, tx_policy_upload_work);
 
 	/* AP Work */
 	INIT_WORK(&wvif->link_id_work, wfx_link_id_work);
@@ -387,6 +387,7 @@ int wfx_add_interface(struct ieee80211_hw *hw,
 	for (i = 0; i < 4; i++)
 		wsm_set_edca_queue_params(wdev, &wvif->edca.params[i], wvif->Id);
 	wfx_set_uapsd_param(wvif, &wvif->edca);
+	tx_policy_init(wvif);
 	// Combo mode does not support Block Acks
 	wvif = NULL;
 	while ((wvif = wvif_iterate(wdev, wvif)) != NULL)
@@ -445,6 +446,7 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	wsm_unlock_tx(wdev);
 
 	wsm_set_macaddr(wdev, NULL, wvif->Id);
+	tx_policy_clean(wvif);
 
 	cancel_delayed_work_sync(&wvif->scan.probe_work);
 	cancel_delayed_work_sync(&wvif->scan.timeout);
@@ -573,13 +575,14 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 		pr_debug("[STA] Retry limits: %d (long), %d (short).\n",
 			 conf->long_frame_max_tx_count,
 			 conf->short_frame_max_tx_count);
-		spin_lock_bh(&wdev->tx_policy_cache.lock);
+		// FIXME: move wvif->tx_policy_cache.lock to wdev
+		spin_lock_bh(&wvif->tx_policy_cache.lock);
 		wdev->long_frame_max_tx_count = conf->long_frame_max_tx_count;
 		wdev->short_frame_max_tx_count =
 			(conf->short_frame_max_tx_count < 0x0F) ?
 			conf->short_frame_max_tx_count : 0x0F;
 		wdev->hw->max_rate_tries = wdev->short_frame_max_tx_count;
-		spin_unlock_bh(&wdev->tx_policy_cache.lock);
+		spin_unlock_bh(&wvif->tx_policy_cache.lock);
 	}
 	mutex_unlock(&wdev->conf_mutex);
 	up(&wvif->scan.lock);

@@ -279,7 +279,6 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	init_wsm_cmd(&wdev->wsm_cmd);
 	mutex_init(&wdev->conf_mutex);
 
-	INIT_WORK(&wdev->tx_policy_upload_work, tx_policy_upload_work);
 	if (wfx_queue_stats_init(&wdev->tx_queue_stats, WFX_LINK_ID_MAX,
 				 wfx_skb_dtor, wdev)) {
 		goto err1;
@@ -289,8 +288,6 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 		if (wfx_queue_init(&wdev->tx_queue[i], &wdev->tx_queue_stats,
 				   i, 16, wfx_ttl[i]))
 			goto err2;
-
-	tx_policy_init(wdev);
 
 	return wdev;
 err2:
