@@ -605,6 +605,7 @@ static int wfx_tx_h_rate_policy(struct wfx_dev *wdev, struct wfx_txinfo *t, WsmH
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, wsm->Header.s.b.IntId);
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 
+	WARN_ON(!wvif);
 	t->txpriv.rate_id = tx_policy_get(wvif,
 		t->tx_info->control.rates, IEEE80211_TX_MAX_RATES,
 		&tx_policy_renew);
@@ -749,6 +750,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		wvif = wdev_to_wvif(wdev, 0);
 	}
 
+	WARN_ON(!wvif);
 	t.txpriv.vif_id = wvif->Id;
 	t.hdrlen = ieee80211_hdrlen(t.hdr->frame_control);
 	t.da = ieee80211_get_DA(t.hdr);
@@ -885,6 +887,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 	}
 
 	wvif = wdev_to_wvif(wdev, txpriv->vif_id);
+	WARN_ON(!wvif);
 	if (!wvif)
 		return;
 
@@ -1015,6 +1018,7 @@ void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb,
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, txpriv->vif_id);
 
+	WARN_ON(!wvif);
 	skb_pull(skb, txpriv->offset);
 	if (txpriv->rate_id != WFX_INVALID_RATE_ID) {
 		wfx_notify_buffered_tx(wvif, skb,

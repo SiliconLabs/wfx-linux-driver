@@ -138,6 +138,7 @@ static int wsm_receive_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 	__le16 fctl;
 	int sta_id;
 
+	WARN_ON(!wvif);
 	skb_pull(*skb_p, sizeof(WsmHiRxIndBody_t));
 
 	frame = (struct ieee80211_hdr *)(*skb_p)->data;
@@ -173,6 +174,7 @@ static int wsm_event_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 	struct wfx_wsm_event *event;
 	int first;
 
+	WARN_ON(!wvif);
 	if (!wvif)
 		return 0;
 
@@ -201,6 +203,7 @@ static int wsm_scan_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, v
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	WsmHiScanCmplIndBody_t *body = buf;
 
+	WARN_ON(!wvif);
 	wfx_scan_complete_cb(wvif, body);
 
 	return 0;
@@ -211,6 +214,7 @@ static int wsm_join_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, v
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	WsmHiJoinCompleteIndBody_t *body = buf;
 
+	WARN_ON(!wvif);
 	wfx_join_complete_cb(wvif, body);
 
 	return 0;
@@ -221,6 +225,7 @@ static int wsm_suspend_resume_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, 
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	WsmHiSuspendResumeTxIndBody_t *body = buf;
 
+	WARN_ON(!wvif);
 	wfx_suspend_resume(wvif, body);
 
 	return 0;
@@ -640,6 +645,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 		if (wfx_queue_get(queue, tx_allowed_mask, &wsm, &tx_info, &txpriv))
 			continue;
 
+		WARN_ON(!wvif);
 		if (wsm_handle_tx_data(wvif, wsm, tx_info, txpriv, queue))
 			continue;  /* Handled by WSM */
 

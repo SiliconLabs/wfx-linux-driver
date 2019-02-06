@@ -191,6 +191,7 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 	struct wfx_debug_priv *d = wdev->debug;
 	u32 *p_Capa = (u32 *)&wdev->wsm_caps.Capabilities;
 
+	WARN_ON(!wvif);
 	seq_puts(seq,
 		 "Status of Linux Wireless network device drivers for Siliconlabs WFx unit\n");
 	seq_printf(seq, "Firmware:   %s %d %d.%d\n",
