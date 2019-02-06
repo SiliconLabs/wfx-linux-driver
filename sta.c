@@ -1510,6 +1510,7 @@ int wfx_enable_listening(struct wfx_vif *wvif)
 		.BasicRateSet		= 0x0F,
 	};
 
+	start.Mode = 2;
 
 	if (wvif->channel) {
 		start.ChannelNumber = wvif->channel->hw_value;
