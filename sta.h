@@ -81,8 +81,6 @@ void wfx_cqm_bssloss_sm(struct wfx_vif *wvif, int init, int good, int bad);
 int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len);
 int wfx_send_pdata_pds(struct wfx_dev *wdev);
 
-int wfx_enable_listening(struct wfx_vif *wvif);
-int wfx_disable_listening(struct wfx_vif *wvif);
 void wfx_update_listening(struct wfx_vif *wvif, bool enabled);
 void wfx_update_filtering(struct wfx_vif *wvif);
 int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg);

@@ -433,9 +433,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 		/* reset.link_id = 0; */
 		wsm_reset(wdev, false, wvif->Id);
 		break;
-	case WFX_STATE_MONITOR:
-		wfx_update_listening(wvif, false);
-		break;
 	default:
 		break;
 	}
@@ -581,17 +578,6 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 		}
 		wvif = wdev_to_wvif(wdev, 0);
 	}
-	if (changed & IEEE80211_CONF_CHANGE_IDLE) {
-		wsm_lock_tx(wdev);
-		/* Disable p2p-dev mode forced by TX request */
-		if (wvif->state == WFX_STATE_MONITOR &&
-		    conf->flags & IEEE80211_CONF_IDLE &&
-		    !wvif->listening) {
-			wfx_disable_listening(wvif);
-			wvif->state = WFX_STATE_PASSIVE;
-		}
-		wsm_unlock_tx(wdev);
-	}
 
 	if (changed & IEEE80211_CONF_CHANGE_RETRY_LIMITS) {
 		pr_debug("[STA] Retry limits: %d (long), %d (short).\n",
@@ -696,8 +682,6 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 
 	if (wvif->state == WFX_STATE_PASSIVE)
 		return;
-	else if (wvif->state == WFX_STATE_MONITOR)
-		l_rx_filter.bssid = true;
 
 	if (wvif->disable_beacon_filter) {
 		bf_ctrl.Enable = 0;
@@ -771,13 +755,12 @@ void wfx_configure_filter(struct ieee80211_hw *hw,
 	bool listening = !!(*total_flags &
 			    (FIF_OTHER_BSS | FIF_BCN_PRBRESP_PROMISC | FIF_PROBE_REQ));
 
-	*total_flags &= FIF_OTHER_BSS | FIF_FCSFAIL |
-			FIF_BCN_PRBRESP_PROMISC | FIF_PROBE_REQ;
+	*total_flags &= FIF_OTHER_BSS | FIF_FCSFAIL | FIF_PROBE_REQ;
 
 	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
 		down(&wvif->scan.lock);
 		wvif->rx_filter.bssid = (*total_flags & (FIF_OTHER_BSS | FIF_PROBE_REQ)) ? 1 : 0;
-		wvif->disable_beacon_filter = !(*total_flags & (FIF_BCN_PRBRESP_PROMISC | FIF_PROBE_REQ));
+		wvif->disable_beacon_filter = !(*total_flags & FIF_PROBE_REQ);
 		if (wvif->listening != listening) {
 			wvif->listening = listening;
 			wsm_lock_tx(wvif->wdev);
@@ -1561,45 +1544,11 @@ void wfx_unjoin_work(struct work_struct *work)
 	wsm_unlock_tx(wvif->wdev);
 }
 
-int wfx_enable_listening(struct wfx_vif *wvif)
-{
-	WsmHiStartReqBody_t start = {
-		.Band			= WSM_PHY_BAND_2_4G,
-		.BeaconInterval		= 100,
-		.DTIMPeriod		= 1,
-		.BasicRateSet		= 0x0F,
-	};
-
-	start.Mode = 2;
-
-	if (wvif->channel) {
-		start.ChannelNumber = wvif->channel->hw_value;
-	} else {
-		start.ChannelNumber = 1;
-	}
-
-	wvif->wdev->tx_burst_idx = -1;
-	return wsm_start(wvif->wdev, &start, wvif->Id);
-}
-
-int wfx_disable_listening(struct wfx_vif *wvif)
-{
-	return wsm_reset(wvif->wdev, false, wvif->Id);
-}
-
 void wfx_update_listening(struct wfx_vif *wvif, bool enabled)
 {
 	if (enabled) {
 		if (wvif->state == WFX_STATE_PASSIVE) {
-			if (!wfx_enable_listening(wvif))
-				wvif->state = WFX_STATE_MONITOR;
 			wsm_set_probe_responder(wvif, true);
-		}
-	} else {
-		if (wvif->state == WFX_STATE_MONITOR) {
-			if (!wfx_disable_listening(wvif))
-				wvif->state = WFX_STATE_PASSIVE;
-			wsm_set_probe_responder(wvif, false);
 		}
 	}
 }

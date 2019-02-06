@@ -60,7 +60,6 @@ static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
 /* Please keep order */
 enum wfx_state {
 	WFX_STATE_PASSIVE = 0,
-	WFX_STATE_MONITOR,
 	WFX_STATE_PRE_STA,
 	WFX_STATE_STA,
 	WFX_STATE_IBSS,

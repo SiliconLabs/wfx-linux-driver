@@ -429,9 +429,7 @@ static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
 
 	switch (wvif->mode) {
 	case NL80211_IFTYPE_STATION:
-		if (wvif->state == WFX_STATE_MONITOR)
-			action = do_tx;
-		else if (wvif->state < WFX_STATE_PRE_STA)
+		if (wvif->state < WFX_STATE_PRE_STA)
 			action = do_drop;
 		break;
 	case NL80211_IFTYPE_AP:

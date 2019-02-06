@@ -171,8 +171,6 @@ void wfx_scan_work(struct work_struct *work)
 
 			pm.PmMode.PmMode = 1;
 			wfx_set_pm(wvif, &pm);
-		} else if (wvif->state == WFX_STATE_MONITOR) {
-			wfx_disable_listening(wvif);
 		}
 	}
 
@@ -274,11 +272,6 @@ fail:
 
 static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
 {
-	if (wvif->state == WFX_STATE_MONITOR) {
-		wfx_enable_listening(wvif);
-		wfx_update_filtering(wvif);
-	}
-
 	if (wvif->delayed_unjoin) {
 		wvif->delayed_unjoin = false;
 		if (!schedule_work(&wvif->unjoin_work))
@@ -420,8 +413,6 @@ void wfx_probe_work(struct work_struct *work)
 			skb_trim(skb, skb->len - ssids[0].SSIDLength);
 		}
 	}
-	if (wvif->state == WFX_STATE_MONITOR)
-		wfx_disable_listening(wvif);
 
 	p = (WsmHiMibTemplateFrame_t *)skb_push(skb, 4);
 	p->FrameType = WSM_TMPLT_PRBREQ;
