@@ -742,10 +742,12 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		goto drop;
 
 	// control.vif can be NULL for injected frames
-	if (IEEE80211_SKB_CB(skb)->control.vif)
+	if (IEEE80211_SKB_CB(skb)->control.vif) {
 		wvif = (struct wfx_vif *) IEEE80211_SKB_CB(skb)->control.vif->drv_priv;
-	else
+	} else {
+		pr_info("Injected frame\n");
 		wvif = wdev_to_wvif(wdev, 0);
+	}
 
 	t.txpriv.vif_id = wvif->Id;
 	t.hdrlen = ieee80211_hdrlen(t.hdr->frame_control);
