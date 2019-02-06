@@ -77,8 +77,7 @@ static inline void wfx_debug_txed_agg(struct wfx_dev *wdev)
 	++wdev->debug->tx_agg;
 }
 
-static inline void wfx_debug_txed_multi(struct wfx_dev	*wdev,
-					   int count)
+static inline void wfx_debug_txed_multi(struct wfx_dev *wdev, int count)
 {
 	++wdev->debug->tx_multi;
 	wdev->debug->tx_multi_frames += count;
@@ -115,8 +114,8 @@ static inline void wfx_debug_tx_burst(struct wfx_dev *wdev)
 }
 
 static inline void wfx_debug_ba(struct wfx_dev *wdev,
-				   int ba_cnt, int ba_acc,
-				   int ba_cnt_rx, int ba_acc_rx)
+				int ba_cnt, int ba_acc,
+				int ba_cnt_rx, int ba_acc_rx)
 {
 	wdev->debug->ba_cnt = ba_cnt;
 	wdev->debug->ba_acc = ba_acc;
