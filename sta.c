@@ -1098,13 +1098,11 @@ void wfx_wep_key_work(struct work_struct *work)
 int wfx_set_rts_threshold(struct ieee80211_hw *hw, u32 value)
 {
 	struct wfx_dev *wdev = hw->priv;
-	// FIXME: Interface id should not been hardcoded. Apply to all vif.
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
+	struct wfx_vif *wvif = NULL;
 
-	if (!wvif)
-		return 0;
-
-	return wsm_rts_threshold(wdev, value, wvif->Id);
+	while ((wvif = wvif_iterate(wdev, wvif)) != NULL)
+		wsm_rts_threshold(wdev, value, wvif->Id);
+	return 0;
 }
 
 /* If successful, LOCKS the TX queue! */
