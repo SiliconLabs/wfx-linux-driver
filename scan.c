@@ -92,8 +92,8 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 		memcpy(skb_put(skb, req->ie_len), req->ie, req->ie_len);
 
 	/* will be unlocked in wfx_scan_work() */
-	down(&wvif->scan.lock);
 	mutex_lock(&wdev->conf_mutex);
+	down(&wvif->scan.lock);
 
 	p = (WsmHiMibTemplateFrame_t *)skb_push(skb, 4);
 	p->FrameType = WSM_TMPLT_PRBREQ;

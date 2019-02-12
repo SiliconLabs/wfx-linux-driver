@@ -544,8 +544,8 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 		return 0;
 	}
 
-	down(&wvif->scan.lock);
 	mutex_lock(&wdev->conf_mutex);
+	down(&wvif->scan.lock);
 	if (changed & IEEE80211_CONF_CHANGE_POWER) {
 		wdev->output_power = conf->power_level;
 		pr_debug("[STA] TX power: %d\n", wdev->output_power);
@@ -772,7 +772,6 @@ void wfx_configure_filter(struct ieee80211_hw *hw,
 	*total_flags &= FIF_OTHER_BSS | FIF_FCSFAIL |
 			FIF_BCN_PRBRESP_PROMISC | FIF_PROBE_REQ;
 
-	mutex_lock(&wdev->conf_mutex);
 	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
 		down(&wvif->scan.lock);
 		wvif->rx_filter.bssid = (*total_flags & (FIF_OTHER_BSS | FIF_PROBE_REQ)) ? 1 : 0;
@@ -786,7 +785,6 @@ void wfx_configure_filter(struct ieee80211_hw *hw,
 		wfx_update_filtering(wvif);
 		up(&wvif->scan.lock);
 	}
-	mutex_unlock(&wdev->conf_mutex);
 }
 
 int wfx_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
