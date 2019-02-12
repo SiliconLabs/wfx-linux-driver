@@ -882,7 +882,6 @@ int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 		pm.PmMode.PmMode = 0;
 	}
 
-	pr_debug("Set PM %d, %d\n", pm.PmMode.FastPsm, pm.PmMode.PmMode);
 	ret = wsm_set_pm(wvif->wdev, &pm, wvif->Id);
 	// FIXME: why ?
 	if (-ETIMEDOUT == wvif->scan.status)
@@ -1042,17 +1041,6 @@ int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 			break;
 		case WLAN_CIPHER_SUITE_AES_CMAC:
 			ieee80211_get_key_rx_seq(key, 0, &seq);
-
-			pr_debug(
-				"set AES_CMAC, key_id %d, IPN = 0x%02x%02x%02x%02x%02x%02x\n",
-				key->keyidx,
-				seq.aes_cmac.pn[0],
-				seq.aes_cmac.pn[1],
-				seq.aes_cmac.pn[2],
-				seq.aes_cmac.pn[3],
-				seq.aes_cmac.pn[4],
-				seq.aes_cmac.pn[5]);
-
 			wsm_key->Type = WSM_KEY_TYPE_IGTK_GROUP;
 			/* Copy key in wsm message */
 			memcpy(wsm_key->Key.IgtkGroupKey.IGTKKeyData,
@@ -1104,7 +1092,6 @@ void wfx_wep_key_work(struct work_struct *work)
 	struct wfx_queue *queue = &wvif->wdev->tx_queue[queue_id];
 	int wep_default_key_id = wvif->wep_default_key_id;
 
-	pr_debug("[STA] Setting default WEP key: %d\n", wep_default_key_id);
 	wsm_flush_tx(wvif->wdev);
 	wsm_wep_default_key_id(wvif->wdev, wep_default_key_id, wvif->Id);
 	wfx_queue_requeue(queue, wvif->wdev->pending_frame_id);
@@ -1883,8 +1870,6 @@ void wfx_set_cts_work(struct work_struct *work)
 	erp_ie[2] = wvif->erp_info;
 	mutex_unlock(&wvif->wdev->conf_mutex);
 
-	pr_debug("[STA] ERP information 0x%x\n", erp_ie[2]);
-
 	wsm_erp_use_protection(wvif->wdev, erp_ie[2] & WLAN_ERP_USE_PROTECTION, wvif->Id);
 
 	if (wvif->mode != NL80211_IFTYPE_STATION)
@@ -1920,11 +1905,6 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 
 	memset(&wvif->link_id_db, 0, sizeof(wvif->link_id_db));
 
-	pr_debug("[AP] ch: %d(%d), bcn: %d(%d), brt: 0x%.8X, ssid: %.*s.\n",
-		 start.ChannelNumber, start.Band,
-		 start.BeaconInterval, start.DTIMPeriod,
-		 start.BasicRateSet,
-		 start.SsidLength, start.Ssid);
 	wvif->wdev->tx_burst_idx = -1;
 	ret = wsm_start(wvif->wdev, &start, wvif->Id);
 	if (!ret)
@@ -1955,7 +1935,7 @@ static int wfx_update_beaconing(struct wfx_vif *wvif)
 		} else {
 			pr_debug("ap started state: %d\n",
 				 wvif->state);
-	}
+		}
 	}
 	return 0;
 }
@@ -2025,15 +2005,11 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 
 
 	if (changed & BSS_CHANGED_ARP_FILTER) {
-		WsmHiMibArpIpAddrTable_t filter = { 0 };
+		WsmHiMibArpIpAddrTable_t filter = { };
 		nb_arp_addr = info->arp_addr_cnt;
-		pr_debug("[STA] BSS_CHANGED_ARP_FILTER cnt: %d\n", nb_arp_addr);
 
-		/* This configuration is not supported by firmware - remove filters */
-		if (nb_arp_addr <= 0 || nb_arp_addr > WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES) {
-			pr_debug("[STA] This arp filter configuration is not possible!\n");
+		if (nb_arp_addr <= 0 || nb_arp_addr > WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES)
 			nb_arp_addr = 0;
-		}
 
 		for (i = 0; i < WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES; i++) {
 			filter.ConditionIdx = i;
@@ -2041,12 +2017,8 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 				/* Caution: type of arp_addr_list[i] is __be32 */
 				memcpy(filter.Ipv4Address, &info->arp_addr_list[i], sizeof(filter.Ipv4Address));
 				filter.ArpEnable = WSM_ARP_NS_FILTERING_ENABLE;
-				pr_debug("[STA] arp ip filter %d enable\n", filter.ConditionIdx);
-				pr_debug("[STA] addr[%d]: %d.%d.%d.%d\n", i, filter.Ipv4Address[0],
-						filter.Ipv4Address[1], filter.Ipv4Address[2], filter.Ipv4Address[3]);
 			} else {
 				filter.ArpEnable = WSM_ARP_NS_FILTERING_DISABLE;
-				pr_debug("[STA] arp ip filter %d disable\n", filter.ConditionIdx);
 			}
 			wsm_set_arp_ipv4_filter(wdev, &filter, wvif->Id);
 		}
@@ -2055,16 +2027,12 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 	if (changed &
 	    (BSS_CHANGED_BEACON | BSS_CHANGED_AP_PROBE_RESP |
 	     BSS_CHANGED_BSSID | BSS_CHANGED_SSID | BSS_CHANGED_IBSS)) {
-		pr_debug("BSS_CHANGED_BEACON\n");
 		wvif->beacon_int = info->beacon_int;
 		wfx_update_beaconing(wvif);
 		wfx_upload_beacon(wvif);
 	}
 
 	if (changed & BSS_CHANGED_BEACON_ENABLED) {
-		pr_debug("BSS_CHANGED_BEACON_ENABLED (%d)\n",
-			 info->enable_beacon);
-
 		if (wvif->enable_beacon != info->enable_beacon) {
 			wsm_beacon_transmit(wvif->wdev, info->enable_beacon, wvif->Id);
 			wvif->enable_beacon = info->enable_beacon;
@@ -2087,22 +2055,18 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 			wsm_unlock_tx(wdev);
 	} else {
 		if (changed & BSS_CHANGED_BEACON_INT) {
-			pr_debug("CHANGED_BEACON_INT\n");
 			if (info->ibss_joined)
 				do_join = true;
 			else if (wvif->state == WFX_STATE_AP)
 				wfx_update_beaconing(wvif);
 		}
 
-		if (changed & BSS_CHANGED_BSSID) {
-			pr_debug("BSS_CHANGED_BSSID\n");
+		if (changed & BSS_CHANGED_BSSID)
 			do_join = true;
-		}
 
 		if (changed &
 		    (BSS_CHANGED_ASSOC | BSS_CHANGED_BSSID |
 		     BSS_CHANGED_IBSS | BSS_CHANGED_BASIC_RATES | BSS_CHANGED_HT)) {
-			pr_debug("BSS_CHANGED_ASSOC %d\n", info->assoc);
 			if (info->assoc) {
 				if (wvif->state <
 				    WFX_STATE_PRE_STA) {
@@ -2187,13 +2151,6 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 				pr_debug("[STA] DTIM %d, interval: %d\n",
 					 wvif->dtim_period,
 					 wvif->beacon_int);
-				pr_debug(
-					"[STA] Preamble: %d, Greenfield: %d, Aid: %d, Rates: 0x%.8X, Basic: 0x%.8X\n",
-					wvif->association_mode.PreambleType,
-					wvif->association_mode.MixedOrGreenfieldType,
-					wvif->bss_params.AID,
-					wvif->bss_params.OperationalRateSet,
-					wvif->association_mode.BasicRateSet);
 				wsm_set_association_mode(wdev,
 							 &wvif->association_mode, wvif->Id);
 
@@ -2244,7 +2201,6 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 	if (changed & (BSS_CHANGED_ASSOC | BSS_CHANGED_ERP_SLOT)) {
 		u32 slot_time = info->use_short_slot ? 9 : 20;
 
-		pr_debug("[STA] Slot time: %d us.\n", slot_time);
 		wsm_slot_time(wdev, slot_time, wvif->Id);
 	}
 
