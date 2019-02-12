@@ -545,29 +545,18 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 	}
 
 	if (changed & IEEE80211_CONF_CHANGE_PS) {
-		if (!(conf->flags & IEEE80211_CONF_PS)) {
-			wvif->powersave_mode.PmMode.PmMode = 0;
-			wvif->powersave_mode.PmMode.FastPsm = 0;
-		} else if (conf->dynamic_ps_timeout <= 0) {
+		memset(&wvif->powersave_mode, 0, sizeof(wvif->powersave_mode));
+		if (conf->flags & IEEE80211_CONF_PS) {
 			wvif->powersave_mode.PmMode.PmMode = 1;
-			wvif->powersave_mode.PmMode.FastPsm = 0;
-		} else {
-			wvif->powersave_mode.PmMode.PmMode = 1;
-			wvif->powersave_mode.PmMode.FastPsm = 1;
+			if (conf->dynamic_ps_timeout > 0) {
+				wvif->powersave_mode.PmMode.FastPsm = 1;
+				// Firmware does not support more than 128ms
+				wvif->powersave_mode.FastPsmIdlePeriod =
+					min(conf->dynamic_ps_timeout * 2, 255);
+			}
 		}
 
-		/* Firmware requires that value for this 1-byte field must
-		 * be specified in units of 500us. Values above the 128ms
-		 * threshold are not supported.
-		 */
-		if (conf->dynamic_ps_timeout >= 0x80)
-			wvif->powersave_mode.FastPsmIdlePeriod = 0xFF;
-		else
-			wvif->powersave_mode.FastPsmIdlePeriod =
-					conf->dynamic_ps_timeout << 1;
-
-		if (wvif->state == WFX_STATE_STA &&
-		    wvif->bss_params.AID)
+		if (wvif->state == WFX_STATE_STA && wvif->bss_params.AID)
 			wfx_set_pm(wvif, &wvif->powersave_mode);
 	}
 	if (changed & IEEE80211_CONF_CHANGE_IDLE) {
