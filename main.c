@@ -196,10 +196,10 @@ struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *lab
 	return ret;
 }
 
-static struct wfx_dev *wfx_init_common(struct device *dev,
-				     const struct wfx_platform_data *pdata,
-				     const struct hwbus_ops *hwbus_ops,
-				     struct hwbus_priv *hwbus)
+struct wfx_dev *wfx_init_common(struct device *dev,
+				const struct wfx_platform_data *pdata,
+				const struct hwbus_ops *hwbus_ops,
+				struct hwbus_priv *hwbus)
 {
 	int i;
 	struct ieee80211_hw *hw;
@@ -282,7 +282,7 @@ err1:
 	return NULL;
 }
 
-static void wfx_free_common(struct wfx_dev *wdev)
+void wfx_free_common(struct wfx_dev *wdev)
 {
 	int i;
 
@@ -297,21 +297,11 @@ static void wfx_free_common(struct wfx_dev *wdev)
 	ieee80211_free_hw(wdev->hw);
 }
 
-int wfx_core_probe(const struct wfx_platform_data *pdata,
-		   const struct hwbus_ops *hwbus_ops,
-		      struct hwbus_priv *hwbus,
-		      struct device *pdev,
-		   struct wfx_dev **core)
+int wfx_probe(struct wfx_dev *wdev)
 {
 	int i;
 	int err = -EINVAL;
-	struct wfx_dev *wdev;
 	const void *macaddr;
-
-	*core = wfx_init_common(pdev, pdata, hwbus_ops, hwbus);
-	if (!*core)
-		goto err;
-	wdev = *core;
 
 	err = wfx_register_bh(wdev);
 	if (err)
@@ -397,17 +387,13 @@ err3:
 err2:
 	wfx_unregister_bh(wdev);
 err1:
-	wfx_free_common(wdev);
-err:
-	*core = NULL;
 	return err;
 }
 
-void wfx_core_release(struct wfx_dev *wdev)
+void wfx_release(struct wfx_dev *wdev)
 {
 	ieee80211_unregister_hw(wdev->hw);
 	wfx_unregister_bh(wdev);
-	wfx_free_common(wdev);
 }
 
 extern struct sdio_driver wfx_sdio_driver;

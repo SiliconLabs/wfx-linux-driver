@@ -206,13 +206,21 @@ static int wfx_sdio_probe(struct sdio_func *func,
 	if (ret)
 		goto err1;
 
-	ret = wfx_core_probe(&wfx_sdio_pdata, &wfx_sdio_hwbus_ops,
-				self, &func->dev, &self->core);
-	if (ret)
+	self->core = wfx_init_common(&func->dev, &wfx_sdio_pdata,
+				    &wfx_sdio_hwbus_ops, self);
+	if (!self->core) {
+		ret = -EIO;
 		goto err2;
+	}
+
+	ret = wfx_probe(self->core);
+	if (ret)
+		goto err3;
 
 	return 0;
 
+err3:
+	wfx_free_common(self->core);
 err2:
 	wfx_sdio_irq_unsubscribe(self);
 err1:
@@ -227,7 +235,8 @@ static void wfx_sdio_remove(struct sdio_func *func)
 {
 	struct hwbus_priv *self = sdio_get_drvdata(func);
 
-	wfx_core_release(self->core);
+	wfx_release(self->core);
+	wfx_free_common(self->core);
 	wfx_sdio_irq_unsubscribe(self);
 	sdio_claim_host(func);
 	sdio_disable_func(func);

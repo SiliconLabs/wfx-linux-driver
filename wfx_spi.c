@@ -210,8 +210,14 @@ static int wfx_spi_probe(struct spi_device *func)
 		udelay(1000);
 	}
 
-	ret = wfx_core_probe(&wfx_spi_pdata, &wfx_spi_hwbus_ops,
-			     bus, &func->dev, &bus->core);
+	bus->core = wfx_init_common(&func->dev, &wfx_spi_pdata,
+				    &wfx_spi_hwbus_ops, bus);
+	if (!bus->core)
+		return -EIO;
+
+	ret = wfx_probe(bus->core);
+	if (ret)
+		wfx_free_common(bus->core);
 
 	return ret;
 }
@@ -221,7 +227,8 @@ static int wfx_spi_disconnect(struct spi_device *func)
 {
 	struct hwbus_priv *bus = spi_get_drvdata(func);
 
-	wfx_core_release(bus->core);
+	wfx_release(bus->core);
+	wfx_free_common(bus->core);
 	// A few IRQ will be sent during device release. Hopefully, no IRQ
 	// should happen after wdev/wvif are released.
 	devm_free_irq(&func->dev, func->irq, bus);

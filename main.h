@@ -44,12 +44,14 @@ struct wfx_platform_data {
 	bool sdio;
 };
 
-int wfx_core_probe(const struct wfx_platform_data *pdata,
-			       const struct hwbus_ops *hwbus_ops,
-			       struct hwbus_priv *hwbus,
-			       struct device *pdev,
-			       struct wfx_dev **wdev);
-void wfx_core_release(struct wfx_dev *wdev);
+struct wfx_dev *wfx_init_common(struct device *dev,
+			        const struct wfx_platform_data *pdata,
+			        const struct hwbus_ops *hwbus_ops,
+			        struct hwbus_priv *hwbus);
+void wfx_free_common(struct wfx_dev *wdev);
+
+int wfx_probe(struct wfx_dev *wdev);
+void wfx_release(struct wfx_dev *wdev);
 
 struct gpio_desc *wfx_get_gpio(struct device *dev, int override,
 			       const char *label);
