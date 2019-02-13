@@ -454,11 +454,11 @@ err:
 	return err;
 }
 
-void wfx_core_release(struct wfx_dev *self)
+void wfx_core_release(struct wfx_dev *wdev)
 {
-	wfx_unregister_common(self->hw);
-	config_reg_write_bits(self, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, 0);
-	wfx_free_common(self->hw);
+	wfx_unregister_common(wdev->hw);
+	config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, 0);
+	wfx_free_common(wdev->hw);
 }
 
 extern struct sdio_driver wfx_sdio_driver;

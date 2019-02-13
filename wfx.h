@@ -285,7 +285,7 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 		      struct device *pdev,
 		   struct wfx_dev **pself);
 
-void wfx_core_release(struct wfx_dev *self);
+void wfx_core_release(struct wfx_dev *wdev);
 
 struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *label);
 
