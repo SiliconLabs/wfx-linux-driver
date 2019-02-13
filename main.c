@@ -199,7 +199,7 @@ struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *lab
 struct wfx_dev *wfx_init_common(struct device *dev,
 				const struct wfx_platform_data *pdata,
 				const struct hwbus_ops *hwbus_ops,
-				struct hwbus_priv *hwbus)
+				void *hwbus_priv)
 {
 	int i;
 	struct ieee80211_hw *hw;
@@ -246,7 +246,7 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	wdev->hw = hw;
 	wdev->dev = dev;
 	wdev->hwbus_ops = hwbus_ops;
-	wdev->hwbus_priv = hwbus;
+	wdev->hwbus_priv = hwbus_priv;
 	wdev->rates = wfx_rates;
 	wdev->mcs_rates = wfx_mcs_rates;
 	memcpy(&wdev->pdata, pdata, sizeof(*pdata));

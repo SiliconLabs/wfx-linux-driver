@@ -36,7 +36,7 @@ static const struct wfx_platform_data wfx_sdio_pdata = {
 	.sdio = true,
 };
 
-struct hwbus_priv {
+struct wfx_sdio_priv {
 	struct sdio_func *func;
 	struct wfx_dev *core;
 	u8 buf_id_tx;
@@ -44,9 +44,10 @@ struct hwbus_priv {
 	int of_irq;
 };
 
-static int wfx_sdio_copy_from_io(struct hwbus_priv *bus, unsigned int reg_id,
+static int wfx_sdio_copy_from_io(void *priv, unsigned int reg_id,
 				 void *dst, size_t count)
 {
+	struct wfx_sdio_priv *bus = priv;
 	unsigned int sdio_addr = reg_id << 2;
 	int ret;
 
@@ -64,9 +65,10 @@ static int wfx_sdio_copy_from_io(struct hwbus_priv *bus, unsigned int reg_id,
 	return ret;
 }
 
-static int wfx_sdio_copy_to_io(struct hwbus_priv *bus, unsigned int reg_id,
+static int wfx_sdio_copy_to_io(void *priv, unsigned int reg_id,
 			       const void *src, size_t count)
 {
+	struct wfx_sdio_priv *bus = priv;
 	unsigned int sdio_addr = reg_id << 2;
 	int ret;
 
@@ -85,19 +87,23 @@ static int wfx_sdio_copy_to_io(struct hwbus_priv *bus, unsigned int reg_id,
 	return ret;
 }
 
-static void wfx_sdio_lock(struct hwbus_priv *bus)
+static void wfx_sdio_lock(void *priv)
 {
+	struct wfx_sdio_priv *bus = priv;
+
 	sdio_claim_host(bus->func);
 }
 
-static void wfx_sdio_unlock(struct hwbus_priv *bus)
+static void wfx_sdio_unlock(void *priv)
 {
+	struct wfx_sdio_priv *bus = priv;
+
 	sdio_release_host(bus->func);
 }
 
 static void wfx_sdio_irq_handler(struct sdio_func *func)
 {
-	struct hwbus_priv *bus = sdio_get_drvdata(func);
+	struct wfx_sdio_priv *bus = sdio_get_drvdata(func);
 
 	if (bus->core)
 		wfx_irq_handler(bus->core);
@@ -105,9 +111,9 @@ static void wfx_sdio_irq_handler(struct sdio_func *func)
 		WARN(!bus->core, "race condition in driver init/deinit");
 }
 
-static irqreturn_t wfx_sdio_irq_handler_ext(int irq, void *dev)
+static irqreturn_t wfx_sdio_irq_handler_ext(int irq, void *priv)
 {
-	struct hwbus_priv *bus = dev;
+	struct wfx_sdio_priv *bus = priv;
 
 	if (!bus->core) {
 		WARN(!bus->core, "race condition in driver init/deinit");
@@ -119,7 +125,7 @@ static irqreturn_t wfx_sdio_irq_handler_ext(int irq, void *dev)
 	return IRQ_HANDLED;
 }
 
-static int wfx_sdio_irq_subscribe(struct hwbus_priv *bus)
+static int wfx_sdio_irq_subscribe(struct wfx_sdio_priv *bus)
 {
 	int ret;
 
@@ -134,7 +140,7 @@ static int wfx_sdio_irq_subscribe(struct hwbus_priv *bus)
 	return ret;
 }
 
-static int wfx_sdio_irq_unsubscribe(struct hwbus_priv *bus)
+static int wfx_sdio_irq_unsubscribe(struct wfx_sdio_priv *bus)
 {
 	int ret;
 
@@ -149,12 +155,14 @@ static int wfx_sdio_irq_unsubscribe(struct hwbus_priv *bus)
 	return ret;
 }
 
-static size_t wfx_sdio_align_size(struct hwbus_priv *bus, size_t size)
+static size_t wfx_sdio_align_size(void *priv, size_t size)
 {
+	struct wfx_sdio_priv *bus = priv;
+
 	return sdio_align_size(bus->func, size);
 }
 
-static struct hwbus_ops wfx_sdio_hwbus_ops = {
+static const struct hwbus_ops wfx_sdio_hwbus_ops = {
 	.copy_from_io = wfx_sdio_copy_from_io,
 	.copy_to_io = wfx_sdio_copy_to_io,
 	.lock			= wfx_sdio_lock,
@@ -167,7 +175,7 @@ static int wfx_sdio_probe(struct sdio_func *func,
 			     const struct sdio_device_id *id)
 {
 	struct device_node *np = func->dev.of_node;
-	struct hwbus_priv *bus;
+	struct wfx_sdio_priv *bus;
 	int ret;
 
 	if (func->num != 1) {
@@ -233,7 +241,7 @@ err0:
 
 static void wfx_sdio_remove(struct sdio_func *func)
 {
-	struct hwbus_priv *bus = sdio_get_drvdata(func);
+	struct wfx_sdio_priv *bus = sdio_get_drvdata(func);
 
 	wfx_release(bus->core);
 	wfx_free_common(bus->core);

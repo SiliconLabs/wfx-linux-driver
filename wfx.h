@@ -107,7 +107,7 @@ struct wfx_dev {
 
 	/* Hardware interface */
 	const struct hwbus_ops		*hwbus_ops;
-	struct hwbus_priv		*hwbus_priv;
+	void				*hwbus_priv;
 
 	struct wfx_debug_priv	*debug;
 

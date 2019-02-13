@@ -38,7 +38,7 @@ MODULE_PARM_DESC(gpio_reset, "gpio number for reset. -1 for none.");
 #define SET_WRITE 0x7FFF        /* usage: and operation */
 #define SET_READ 0x8000         /* usage: or operation */
 
-struct hwbus_priv {
+struct wfx_spi_priv {
 	struct spi_device	*func;
 	struct wfx_dev		*core;
 	struct gpio_desc *gpio_reset;
@@ -61,9 +61,10 @@ static const struct wfx_platform_data wfx_spi_pdata = {
  * natively. The code below to support big endian host and commonly used SPI
  * 8bits.
  */
-static int wfx_spi_copy_from_io(struct hwbus_priv *bus, unsigned int addr,
+static int wfx_spi_copy_from_io(void *priv, unsigned int addr,
 				void *dst, size_t count)
 {
+	struct wfx_spi_priv *bus = priv;
 	u16 regaddr = (addr << 12) | (count / 2) | SET_READ;
 	u16 *dst16 = dst;
 	int ret, i;
@@ -95,9 +96,10 @@ static int wfx_spi_copy_from_io(struct hwbus_priv *bus, unsigned int addr,
 	return ret;
 }
 
-static int wfx_spi_copy_to_io(struct hwbus_priv *bus, unsigned int addr,
+static int wfx_spi_copy_to_io(void *priv, unsigned int addr,
 			      const void *src, size_t count)
 {
+	struct wfx_spi_priv *bus = priv;
 	u16 regaddr = (addr << 12) | (count / 2);
 	// FIXME: use a bounce buffer
 	u16 *src16 = (void *) src;
@@ -134,17 +136,17 @@ static int wfx_spi_copy_to_io(struct hwbus_priv *bus, unsigned int addr,
 	return ret;
 }
 
-static void wfx_spi_lock(struct hwbus_priv *bus)
+static void wfx_spi_lock(void *priv)
 {
 }
 
-static void wfx_spi_unlock(struct hwbus_priv *bus)
+static void wfx_spi_unlock(void *priv)
 {
 }
 
-static irqreturn_t wfx_spi_irq_handler(int irq, void *dev_id)
+static irqreturn_t wfx_spi_irq_handler(int irq, void *priv)
 {
-	struct hwbus_priv *bus = dev_id;
+	struct wfx_spi_priv *bus = priv;
 
 	if (!bus->core) {
 		WARN(!bus->core, "race condition in driver init/deinit");
@@ -154,13 +156,13 @@ static irqreturn_t wfx_spi_irq_handler(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
-static size_t wfx_spi_align_size(struct hwbus_priv *bus, size_t size)
+static size_t wfx_spi_align_size(void *priv, size_t size)
 {
 	// Most of SPI controllers avoid DMA if buffer size is not 32bits aligned
 	return ALIGN(size, 4);
 }
 
-static struct hwbus_ops wfx_spi_hwbus_ops = {
+static const struct hwbus_ops wfx_spi_hwbus_ops = {
 	.copy_from_io = wfx_spi_copy_from_io,
 	.copy_to_io = wfx_spi_copy_to_io,
 	.lock			= wfx_spi_lock,
@@ -170,7 +172,7 @@ static struct hwbus_ops wfx_spi_hwbus_ops = {
 
 static int wfx_spi_probe(struct spi_device *func)
 {
-	struct hwbus_priv *bus;
+	struct wfx_spi_priv *bus;
 	int ret;
 
 	if (!func->bits_per_word)
@@ -225,7 +227,7 @@ static int wfx_spi_probe(struct spi_device *func)
 /* Disconnect Function to be called by SPI stack when device is disconnected */
 static int wfx_spi_disconnect(struct spi_device *func)
 {
-	struct hwbus_priv *bus = spi_get_drvdata(func);
+	struct wfx_spi_priv *bus = spi_get_drvdata(func);
 
 	wfx_release(bus->core);
 	wfx_free_common(bus->core);

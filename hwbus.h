@@ -30,14 +30,12 @@
 #define WFX_REG_SET_GEN_R_W   0x6
 #define WFX_REG_FRAME_OUT     0x7
 
-struct hwbus_priv;
-
 struct hwbus_ops {
-	int (*copy_from_io)(struct hwbus_priv *bus, unsigned int addr, void *dst, size_t count);
-	int (*copy_to_io)(struct hwbus_priv *bus, unsigned int addr, const void *src, size_t count);
-	void (*lock)(struct hwbus_priv *bus);
-	void (*unlock)(struct hwbus_priv *bus);
-	size_t (*align_size)(struct hwbus_priv *bus, size_t size);
+	int (*copy_from_io)(void *bus_priv, unsigned int addr, void *dst, size_t count);
+	int (*copy_to_io)(void *bus_priv, unsigned int addr, const void *src, size_t count);
+	void (*lock)(void *bus_priv);
+	void (*unlock)(void *bus_priv);
+	size_t (*align_size)(void *bus_priv, size_t size);
 };
 
 #endif /* WFX_HWBUS_H */
