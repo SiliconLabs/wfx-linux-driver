@@ -196,7 +196,7 @@ struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *lab
 	return ret;
 }
 
-static struct ieee80211_hw *wfx_init_common(struct device *dev,
+static struct wfx_dev *wfx_init_common(struct device *dev,
 				     const struct wfx_platform_data *pdata,
 				     const struct hwbus_ops *hwbus_ops,
 				     struct hwbus_priv *hwbus)
@@ -272,7 +272,7 @@ static struct ieee80211_hw *wfx_init_common(struct device *dev,
 
 	tx_policy_init(wdev);
 
-	return hw;
+	return wdev;
 err2:
 	for (i = 0; i < 4; ++i)
 		wfx_queue_deinit(&wdev->tx_queue[i]);
@@ -305,14 +305,13 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 {
 	int i;
 	int err = -EINVAL;
-	struct ieee80211_hw *dev;
 	struct wfx_dev *wdev;
 	const void *macaddr;
 
-	dev = wfx_init_common(pdev, pdata, hwbus_ops, hwbus);
-	if (!dev)
+	*core = wfx_init_common(pdev, pdata, hwbus_ops, hwbus);
+	if (!*core)
 		goto err;
-	*core = wdev = dev->priv;
+	wdev = *core;
 
 	err = wfx_register_bh(wdev);
 	if (err)
@@ -368,7 +367,7 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 
 	for (i = 0; i < ARRAY_SIZE(wdev->addresses); i++) {
 		eth_zero_addr(wdev->addresses[i].addr);
-		macaddr = of_get_mac_address(pdev->of_node);
+		macaddr = of_get_mac_address(wdev->pdev->of_node);
 		if (macaddr) {
 			ether_addr_copy(wdev->addresses[i].addr, macaddr);
 			wdev->addresses[i].addr[ETH_ALEN - 1] += i;
@@ -380,10 +379,10 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 		}
 		dev_info(wdev->pdev, "MAC address %d: %pM\n", i, wdev->addresses[i].addr);
 	}
-	dev->wiphy->n_addresses = ARRAY_SIZE(wdev->addresses);
-	dev->wiphy->addresses = wdev->addresses;
+	wdev->hw->wiphy->n_addresses = ARRAY_SIZE(wdev->addresses);
+	wdev->hw->wiphy->addresses = wdev->addresses;
 
-	err = ieee80211_register_hw(dev);
+	err = ieee80211_register_hw(wdev->hw);
 	if (err)
 		goto err2;
 
@@ -394,7 +393,7 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 	return err;
 
 err3:
-	ieee80211_unregister_hw(dev);
+	ieee80211_unregister_hw(wdev->hw);
 err2:
 	wfx_unregister_bh(wdev);
 err1:
