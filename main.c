@@ -196,7 +196,10 @@ struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *lab
 	return ret;
 }
 
-static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdata, struct device *dev)
+static struct ieee80211_hw *wfx_init_common(struct device *dev,
+				     const struct wfx_platform_data *pdata,
+				     const struct hwbus_ops *hwbus_ops,
+				     struct hwbus_priv *hwbus)
 {
 	int i;
 	struct ieee80211_hw *hw;
@@ -242,11 +245,15 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 	wdev = hw->priv;
 	wdev->hw = hw;
 	wdev->pdev = dev;
+	wdev->hwbus_ops = hwbus_ops;
+	wdev->hwbus_priv = hwbus;
 	wdev->rates = wfx_rates;
 	wdev->mcs_rates = wfx_mcs_rates;
 	memcpy(&wdev->pdata, pdata, sizeof(*pdata));
 	of_property_read_string(dev->of_node, "config-file", &wdev->pdata.file_pds);
 	wdev->pdata.gpio_wakeup = wfx_get_gpio(dev, gpio_wakeup, "wakeup");
+	// LDPC support was not yet tested
+	wdev->pdata.support_ldpc = false;
 
 	init_completion(&wdev->firmware_ready);
 	init_wsm_cmd(&wdev->wsm_cmd);
@@ -302,19 +309,10 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 	struct wfx_dev *wdev;
 	const void *macaddr;
 
-	dev = wfx_init_common(pdata, pdev);
+	dev = wfx_init_common(pdev, pdata, hwbus_ops, hwbus);
 	if (!dev)
 		goto err;
-
-	wdev = dev->priv;
-	wdev->hwbus_ops = hwbus_ops;
-	wdev->hwbus_priv = hwbus;
-
-	// LDPC support was not yet tested
-	wdev->pdata.support_ldpc = false;
-
-	/* Pass struct wfx_dev back up */
-	*core = wdev;
+	*core = wdev = dev->priv;
 
 	err = wfx_register_bh(wdev);
 	if (err)
