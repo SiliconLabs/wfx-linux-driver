@@ -258,19 +258,17 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 		goto err1;
 	}
 
-	for (i = 0; i < 4; ++i) {
+	for (i = 0; i < 4; ++i)
 		if (wfx_queue_init(&wdev->tx_queue[i], &wdev->tx_queue_stats,
-				   i, 16, wfx_ttl[i])) {
-			for (; i > 0; i--)
-				wfx_queue_deinit(&wdev->tx_queue[i - 1]);
+				   i, 16, wfx_ttl[i]))
 			goto err2;
-		}
-	}
 
 	tx_policy_init(wdev);
 
 	return hw;
 err2:
+	for (i = 0; i < 4; ++i)
+		wfx_queue_deinit(&wdev->tx_queue[i]);
 	wfx_queue_stats_deinit(&wdev->tx_queue_stats);
 err1:
 	ieee80211_free_hw(hw);
