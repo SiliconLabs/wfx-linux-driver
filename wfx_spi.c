@@ -61,7 +61,7 @@ static const struct wfx_platform_data wfx_spi_pdata = {
  * natively. The code below to support big endian host and commonly used SPI
  * 8bits.
  */
-static int wfx_spi_copy_from_io(struct hwbus_priv *self, unsigned int addr,
+static int wfx_spi_copy_from_io(struct hwbus_priv *bus, unsigned int addr,
 				void *dst, size_t count)
 {
 	u16 regaddr = (addr << 12) | (count / 2) | SET_READ;
@@ -80,22 +80,22 @@ static int wfx_spi_copy_from_io(struct hwbus_priv *self, unsigned int addr,
 	WARN(count % 2, "buffer size must be a multiple of 2");
 	cpu_to_le16s(&regaddr);
 
-	if (self->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+	if (bus->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
 		swab16s(&regaddr);
 
 	spi_message_init(&m);
 	spi_message_add_tail(&t_addr, &m);
 	spi_message_add_tail(&t_msg, &m);
-	ret = spi_sync(self->func, &m);
+	ret = spi_sync(bus->func, &m);
 
-	if (self->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+	if (bus->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
 		for (i = 0; i < count / 2; i++)
 			swab16s(&dst16[i]);
 
 	return ret;
 }
 
-static int wfx_spi_copy_to_io(struct hwbus_priv *self, unsigned int addr,
+static int wfx_spi_copy_to_io(struct hwbus_priv *bus, unsigned int addr,
 			      const void *src, size_t count)
 {
 	u16 regaddr = (addr << 12) | (count / 2);
@@ -117,7 +117,7 @@ static int wfx_spi_copy_to_io(struct hwbus_priv *self, unsigned int addr,
 
 	cpu_to_le16s(&regaddr);
 
-	if (self->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN)) {
+	if (bus->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN)) {
 		swab16s(&regaddr);
 		for (i = 0; i < count / 2; i++)
 			swab16s(&src16[i]);
@@ -126,35 +126,35 @@ static int wfx_spi_copy_to_io(struct hwbus_priv *self, unsigned int addr,
 	spi_message_init(&m);
 	spi_message_add_tail(&t_addr, &m);
 	spi_message_add_tail(&t_msg, &m);
-	ret = spi_sync(self->func, &m);
+	ret = spi_sync(bus->func, &m);
 
-	if (self->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+	if (bus->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
 		for (i = 0; i < count / 2; i++)
 			swab16s(&src16[i]);
 	return ret;
 }
 
-static void wfx_spi_lock(struct hwbus_priv *self)
+static void wfx_spi_lock(struct hwbus_priv *bus)
 {
 }
 
-static void wfx_spi_unlock(struct hwbus_priv *self)
+static void wfx_spi_unlock(struct hwbus_priv *bus)
 {
 }
 
 static irqreturn_t wfx_spi_irq_handler(int irq, void *dev_id)
 {
-	struct hwbus_priv *self = dev_id;
+	struct hwbus_priv *bus = dev_id;
 
-	if (!self->core) {
-		WARN(!self->core, "race condition in driver init/deinit");
+	if (!bus->core) {
+		WARN(!bus->core, "race condition in driver init/deinit");
 		return IRQ_NONE;
 	}
-	wfx_irq_handler(self->core);
+	wfx_irq_handler(bus->core);
 	return IRQ_HANDLED;
 }
 
-static size_t wfx_spi_align_size(struct hwbus_priv *self, size_t size)
+static size_t wfx_spi_align_size(struct hwbus_priv *bus, size_t size)
 {
 	// Most of SPI controllers avoid DMA if buffer size is not 32bits aligned
 	return ALIGN(size, 4);

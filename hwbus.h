@@ -33,11 +33,11 @@
 struct hwbus_priv;
 
 struct hwbus_ops {
-	int (*copy_from_io)(struct hwbus_priv *self, unsigned int addr, void *dst, size_t count);
-	int (*copy_to_io)(struct hwbus_priv *self, unsigned int addr, const void *src, size_t count);
-	void (*lock)(struct hwbus_priv *self);
-	void (*unlock)(struct hwbus_priv *self);
-	size_t (*align_size)(struct hwbus_priv *self, size_t size);
+	int (*copy_from_io)(struct hwbus_priv *bus, unsigned int addr, void *dst, size_t count);
+	int (*copy_to_io)(struct hwbus_priv *bus, unsigned int addr, const void *src, size_t count);
+	void (*lock)(struct hwbus_priv *bus);
+	void (*unlock)(struct hwbus_priv *bus);
+	size_t (*align_size)(struct hwbus_priv *bus, size_t size);
 };
 
 #endif /* WFX_HWBUS_H */
