@@ -296,13 +296,11 @@ err1:
 	return ret;
 }
 
-static void wfx_free_common(struct ieee80211_hw *dev)
+static void wfx_free_common(struct wfx_dev *wdev)
 {
-	struct wfx_dev *wdev = dev->priv;
-
 	if (wdev->pdata.gpio_wakeup)
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
-	ieee80211_free_hw(dev);
+	ieee80211_free_hw(wdev->hw);
 }
 
 static void wfx_unregister_common(struct ieee80211_hw *dev)
@@ -426,7 +424,7 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 err2:
 	wfx_unregister_bh(wdev);
 err1:
-	wfx_free_common(dev);
+	wfx_free_common(wdev);
 err:
 	*core = NULL;
 	return err;
@@ -436,7 +434,7 @@ void wfx_core_release(struct wfx_dev *wdev)
 {
 	wfx_unregister_common(wdev->hw);
 	config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, 0);
-	wfx_free_common(wdev->hw);
+	wfx_free_common(wdev);
 }
 
 extern struct sdio_driver wfx_sdio_driver;
