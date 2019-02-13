@@ -72,12 +72,6 @@ struct wsm_rx_filter {
 	bool    keepAlive;
 };
 
-struct wsm_operational_mode {
-	WsmOpPowerMode		power_mode;
-	int			disable_more_flag_usage;
-	int			perform_ant_diversity;
-};
-
 struct wsm_protected_mgmt_policy {
 	bool	protectedMgmtEnable;
 	bool	unprotectedMgmtFramesAllowed;
@@ -214,15 +208,10 @@ static inline int wsm_beacon_filter_control(struct wfx_dev *wdev, int enable,
 			     sizeof(arg), Id);
 }
 
-static inline int wsm_set_operational_mode(struct wfx_dev *wdev,
-					   const struct wsm_operational_mode *arg)
+static inline int wsm_set_operational_mode(struct wfx_dev *wdev, enum WsmOpPowerMode_e mode)
 {
-	u8 val = arg->power_mode;
+	uint32_t val = mode;
 
-	if (arg->disable_more_flag_usage)
-		val |= BIT(4);
-	if (arg->perform_ant_diversity)
-		val |= BIT(5);
 	return wsm_write_mib(wdev, WSM_MIB_ID_GL_OPERATIONAL_POWER_MODE,
 			     &val, sizeof(val), -1);
 }

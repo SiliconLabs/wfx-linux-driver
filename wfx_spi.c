@@ -46,7 +46,6 @@ struct hwbus_priv {
 static const struct wfx_platform_data wfx_spi_pdata = {
 	.file_fw = "wfm_wf200",
 	.file_pds = "wf200.pds",
-	.power_mode = WSM_OP_POWER_MODE_ACTIVE,
 	.use_rising_clk = true,
 	.support_ldpc = true,
 	.sdio = false,

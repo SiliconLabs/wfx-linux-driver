@@ -855,12 +855,6 @@ int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 		pm.PmMode.FastPsm = 0;
 	}
 
-	if (wvif->wdev->pdata.power_mode == WSM_OP_POWER_MODE_ACTIVE) {
-		/* If the device is set active, disable power mode */
-		pm.PmMode.FastPsm = 0;
-		pm.PmMode.PmMode = 0;
-	}
-
 	ret = wsm_set_pm(wvif->wdev, &pm, wvif->Id);
 	// FIXME: why ?
 	if (-ETIMEDOUT == wvif->scan.status)

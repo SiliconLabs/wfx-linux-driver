@@ -55,10 +55,6 @@ static int gpio_wakeup = -2;
 module_param(gpio_wakeup, int, 0644);
 MODULE_PARM_DESC(gpio_wakeup, "gpio number for wakeup. -1 for none.");
 
-int power_mode = -1;
-module_param(power_mode, int, 0644);
-MODULE_PARM_DESC(power_mode, "Force power save mode. 0: Disabled, 1: Allow doze, 2: Allow quiescent");
-
 #define RATETAB_ENT(_rate, _rateid, _flags) { \
 	.bitrate	= (_rate),   \
 	.hw_value	= (_rateid), \
@@ -250,13 +246,7 @@ static struct ieee80211_hw *wfx_init_common(const struct wfx_platform_data *pdat
 	wdev->mcs_rates = wfx_mcs_rates;
 	memcpy(&wdev->pdata, pdata, sizeof(*pdata));
 	of_property_read_string(dev->of_node, "config-file", &wdev->pdata.file_pds);
-	if (power_mode >= 0 && power_mode <= 2)
-		wdev->pdata.power_mode = power_mode;
 	wdev->pdata.gpio_wakeup = wfx_get_gpio(dev, gpio_wakeup, "wakeup");
-	if (!wdev->pdata.gpio_wakeup && wdev->pdata.power_mode == WSM_OP_POWER_MODE_QUIESCENT) {
-		wdev->pdata.power_mode = WSM_OP_POWER_MODE_DOZE;
-		dev_warn(wdev->pdev, "disable WSM_OP_POWER_MODE_QUIESCENT");
-	}
 
 	init_completion(&wdev->firmware_ready);
 	init_wsm_cmd(&wdev->wsm_cmd);
@@ -344,7 +334,6 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 	int err = -EINVAL;
 	struct ieee80211_hw *dev;
 	struct wfx_dev *wdev;
-	struct wsm_operational_mode mode = { };
 	const void *macaddr;
 
 	dev = wfx_init_common(pdata, pdev);
@@ -395,7 +384,7 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 	if (err < 0)
 		goto err2;
 
-	if (wdev->pdata.power_mode == WSM_OP_POWER_MODE_QUIESCENT) {
+	if (wdev->pdata.gpio_wakeup) {
 		/* Driver must switch WUP gpio to 0 to allow sleep
 		 * and set it to 1 to wakeup the device
 		 * control_register WUP bit used to wakeup the device at reset
@@ -407,10 +396,10 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 		wdev->sleep_activated = true;
 		dev_dbg(wdev->pdev, "enable 'quiescent' power mode with gpio %d and PDS file %s\n",
 			desc_to_gpio(wdev->pdata.gpio_wakeup), wdev->pdata.file_pds);
+		wsm_set_operational_mode(wdev, WSM_OP_POWER_MODE_QUIESCENT);
+	} else {
+		wsm_set_operational_mode(wdev, WSM_OP_POWER_MODE_DOZE);
 	}
-	mode.disable_more_flag_usage = true;
-	mode.power_mode = wdev->pdata.power_mode;
-	wsm_set_operational_mode(wdev, &mode);
 
 	wsm_use_multi_tx_conf(wdev, true);
 

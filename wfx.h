@@ -97,7 +97,6 @@ struct wfx_link_entry {
 struct wfx_platform_data {
 	const char *file_fw; /* Keyset and ".sec" extention will appended to this string */
 	const char *file_pds;
-	int power_mode;
 	struct gpio_desc *gpio_wakeup;
 	bool support_ldpc;
 	bool use_rising_clk; /* if true HIF D_out is sampled on the rising edge of the clock (intended to be used in 50Mhz SDIO) */

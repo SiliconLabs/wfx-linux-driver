@@ -204,7 +204,7 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 	seq_printf(seq, "FW label:  '%s'\n",
 		   wdev->wsm_caps.FirmwareLabel);
 	seq_printf(seq, "Power mode: %d\n",
-		   wdev->pdata.power_mode);
+		   wdev->pdata.gpio_wakeup ? 2 : 1);
 	if (!wvif)
 		return 0;
 
