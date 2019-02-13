@@ -560,11 +560,6 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 			wfx_set_pm(wvif, &wvif->powersave_mode);
 	}
 	if (changed & IEEE80211_CONF_CHANGE_IDLE) {
-		struct wsm_operational_mode mode = {
-			.power_mode = wdev->pdata.power_mode,
-			.disable_more_flag_usage = true,
-		};
-
 		wsm_lock_tx(wdev);
 		/* Disable p2p-dev mode forced by TX request */
 		if (wvif->state == WFX_STATE_MONITOR &&
@@ -573,7 +568,6 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 			wfx_disable_listening(wvif);
 			wvif->state = WFX_STATE_PASSIVE;
 		}
-		wsm_set_operational_mode(wdev, &mode);
 		wsm_unlock_tx(wdev);
 	}
 
@@ -1867,10 +1861,6 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 		.PreambleType		= conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
 		.BasicRateSet		= wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
 	};
-	struct wsm_operational_mode mode = {
-		.power_mode = wvif->wdev->pdata.power_mode,
-		.disable_more_flag_usage = true,
-	};
 
 
 	memset(start.Ssid, 0, sizeof(start.Ssid));
@@ -1893,7 +1883,6 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 		wvif->state = WFX_STATE_AP;
 		wfx_update_filtering(wvif);
 	}
-	wsm_set_operational_mode(wvif->wdev, &mode);
 	return ret;
 }
 
