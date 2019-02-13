@@ -486,4 +486,8 @@ Architecture
 
  * `sta.c`, `scan.c` and `data_txrx.c` provide interfaces with kernel API.
 
+Upstream status
+---------------
 
+This driver was not yet proposed to kernel mainline. It will submitted in near
+future.
