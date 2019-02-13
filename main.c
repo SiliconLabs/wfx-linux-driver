@@ -319,6 +319,7 @@ int wfx_probe(struct wfx_dev *wdev)
 		goto err2;
 	}
 
+	// FIXME: fill wiphy::fw_version and wiphy::hw_version
 	dev_info(wdev->dev, "Firmware \"%s\" started. Version: %d.%d.%d API: %d.%d caps: 0x%.8X\n",
 		 wdev->wsm_caps.FirmwareLabel, wdev->wsm_caps.FirmwareMajor,
 		 wdev->wsm_caps.FirmwareMinor, wdev->wsm_caps.FirmwareBuild,
@@ -326,7 +327,8 @@ int wfx_probe(struct wfx_dev *wdev)
 		 *((u32 *) &wdev->wsm_caps.Capabilities));
 
 	if (wdev->wsm_caps.ApiVersionMajor != 1) {
-		dev_err(wdev->dev, "Unsupported firmware API version (expect 1 while firmware returns %d)\n", wdev->wsm_caps.ApiVersionMajor);
+		dev_err(wdev->dev, "Unsupported firmware API version (expect 1 while firmware returns %d)\n",
+			wdev->wsm_caps.ApiVersionMajor);
 		goto err2;
 	}
 
@@ -338,16 +340,10 @@ int wfx_probe(struct wfx_dev *wdev)
 		goto err2;
 
 	if (wdev->pdata.gpio_wakeup) {
-		/* Driver must switch WUP gpio to 0 to allow sleep
-		 * and set it to 1 to wakeup the device
-		 * control_register WUP bit used to wakeup the device at reset
-		 * must be set back to 0
-		 * else sleep is not possible
-		 */
-		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
-		control_reg_write(wdev, 0);
 		dev_dbg(wdev->dev, "enable 'quiescent' power mode with gpio %d and PDS file %s\n",
 			desc_to_gpio(wdev->pdata.gpio_wakeup), wdev->pdata.file_pds);
+		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
+		control_reg_write(wdev, 0);
 		wsm_set_operational_mode(wdev, WSM_OP_POWER_MODE_QUIESCENT);
 	} else {
 		wsm_set_operational_mode(wdev, WSM_OP_POWER_MODE_DOZE);

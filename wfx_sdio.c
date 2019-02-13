@@ -172,7 +172,7 @@ static const struct hwbus_ops wfx_sdio_hwbus_ops = {
 
 static const struct of_device_id wfx_sdio_of_match[];
 static int wfx_sdio_probe(struct sdio_func *func,
-			     const struct sdio_device_id *id)
+			  const struct sdio_device_id *id)
 {
 	struct device_node *np = func->dev.of_node;
 	struct wfx_sdio_priv *bus;
