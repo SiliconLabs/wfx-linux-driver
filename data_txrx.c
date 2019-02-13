@@ -599,7 +599,8 @@ static WsmHiTxReq_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 static int wfx_tx_h_rate_policy(struct wfx_dev *wdev, struct wfx_txinfo *t, WsmHiTxReq_t *wsm)
 {
 	bool tx_policy_renew = false;
-	struct ieee80211_bss_conf *conf = &wdev->vif->bss_conf;
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, wsm->Header.s.b.IntId);
+	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 
 	t->txpriv.rate_id = tx_policy_get(wdev,
 		t->tx_info->control.rates, IEEE80211_TX_MAX_RATES,
