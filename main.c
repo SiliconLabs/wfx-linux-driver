@@ -275,49 +275,15 @@ err1:
 	return NULL;
 }
 
-static int wfx_register_common(struct ieee80211_hw *dev)
-{
-	struct wfx_dev *wdev = dev->priv;
-	int ret;
-
-	ret = ieee80211_register_hw(dev);
-	if (ret)
-		goto err1;
-
-	ret = wfx_debug_init(wdev);
-	if (ret)
-		goto err2;
-
-	return ret;
-
-err2:
-	ieee80211_unregister_hw(dev);
-err1:
-	return ret;
-}
-
 static void wfx_free_common(struct wfx_dev *wdev)
 {
-	if (wdev->pdata.gpio_wakeup)
-		gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
-	ieee80211_free_hw(wdev->hw);
-}
-
-static void wfx_unregister_common(struct ieee80211_hw *dev)
-{
-	struct wfx_dev *wdev = dev->priv;
 	int i;
 
-	ieee80211_unregister_hw(dev);
-
-	wfx_unregister_bh(wdev);
-
 	mutex_destroy(&wdev->conf_mutex);
-
 	for (i = 0; i < 4; ++i)
 		wfx_queue_deinit(&wdev->tx_queue[i]);
-
 	wfx_queue_stats_deinit(&wdev->tx_queue_stats);
+	ieee80211_free_hw(wdev->hw);
 }
 
 int wfx_core_probe(const struct wfx_platform_data *pdata,
@@ -415,12 +381,18 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 	dev->wiphy->n_addresses = ARRAY_SIZE(wdev->addresses);
 	dev->wiphy->addresses = wdev->addresses;
 
-	err = wfx_register_common(dev);
+	err = ieee80211_register_hw(dev);
 	if (err)
 		goto err2;
 
+	err = wfx_debug_init(wdev);
+	if (err)
+		goto err3;
+
 	return err;
 
+err3:
+	ieee80211_unregister_hw(dev);
 err2:
 	wfx_unregister_bh(wdev);
 err1:
@@ -432,8 +404,11 @@ err:
 
 void wfx_core_release(struct wfx_dev *wdev)
 {
-	wfx_unregister_common(wdev->hw);
+	ieee80211_unregister_hw(wdev->hw);
+	wfx_unregister_bh(wdev);
 	config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, 0);
+	if (wdev->pdata.gpio_wakeup)
+		gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
 	wfx_free_common(wdev);
 }
 
