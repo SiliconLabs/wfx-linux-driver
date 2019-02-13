@@ -28,6 +28,7 @@
 
 #include "wfx.h"
 #include "hwbus.h"
+#include "main.h"
 #include "bh.h"
 
 static int gpio_reset = -2;

@@ -26,6 +26,7 @@
 
 #include "wfx.h"
 #include "hwbus.h"
+#include "main.h"
 #include "bh.h"
 
 static const struct wfx_platform_data wfx_sdio_pdata = {

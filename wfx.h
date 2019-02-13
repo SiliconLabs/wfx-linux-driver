@@ -29,6 +29,7 @@
 #include <net/mac80211.h>
 
 #include "wfx_api.h"
+#include "main.h"
 #include "queue.h"
 #include "wsm.h"
 #include "scan.h"
@@ -92,15 +93,6 @@ struct wfx_link_entry {
 	u8			old_mac[ETH_ALEN];      /* Previous peerMAC address. To use in unmap message */
 	u8				buffered[WFX_MAX_TID];
 	struct sk_buff_head		rx_queue;
-};
-
-struct wfx_platform_data {
-	const char *file_fw; /* Keyset and ".sec" extention will appended to this string */
-	const char *file_pds;
-	struct gpio_desc *gpio_wakeup;
-	bool support_ldpc;
-	bool use_rising_clk; /* if true HIF D_out is sampled on the rising edge of the clock (intended to be used in 50Mhz SDIO) */
-	bool sdio;
 };
 
 struct wfx_dev {
@@ -290,19 +282,6 @@ struct wfx_sta_priv {
 	int link_id;
 	int vif_id;
 };
-
-extern const char *const wfx_fw_types[];
-
-/* interfaces for the drivers */
-int wfx_core_probe(const struct wfx_platform_data *pdata,
-		   const struct hwbus_ops *hwbus_ops,
-		      struct hwbus_priv *hwbus,
-		      struct device *pdev,
-		   struct wfx_dev **pself);
-
-void wfx_core_release(struct wfx_dev *wdev);
-
-struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *label);
 
 static inline int wfx_is_ht(const struct wfx_ht_info *ht_info)
 {
