@@ -151,7 +151,6 @@ struct wfx_dev {
 	u8				wsm_rx_seq;
 	u8				wsm_tx_seq;
 	int				hw_bufs_used;
-	bool					sleep_activated;
 
 	/* Keep wfx200 awake (WUP = 1) 1 second after each scan to avoid
 	 * FW issue with sleeping/waking up.

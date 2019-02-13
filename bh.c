@@ -73,7 +73,6 @@ int wfx_register_bh(struct wfx_dev *wdev)
 	wdev->bh_error = 0;
 	wdev->hw_bufs_used = 0;
 	atomic_set(&wdev->device_can_sleep, 0);
-	wdev->sleep_activated = false;
 	init_waitqueue_head(&wdev->bh_wq);
 	init_waitqueue_head(&wdev->bh_evt_wq);
 
@@ -169,7 +168,7 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 	u32 Control_reg;
 	int rdy_timeout = 0;
 
-	if (wdev->sleep_activated) {
+	if (wdev->pdata.gpio_wakeup) {
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
 		dev_dbg(wdev->pdev, "bh: wake up device\n");
 	}
@@ -238,7 +237,7 @@ static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev)
 {
 	int ret = 0;
 
-	if (wdev->sleep_activated) {
+	if (wdev->pdata.gpio_wakeup) {
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
 		dev_dbg(wdev->pdev, "%s: wake up chip", __func__);
 		atomic_set(&wdev->device_can_sleep, 0);
@@ -458,7 +457,7 @@ static int wfx_bh(void *arg)
 			/* enable IRQ on Rx data available to wake us up */
 			config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY);
 
-			if (!wdev->hw_bufs_used && /* !pending_rx && !pending_tx && */ wdev->sleep_activated &&
+			if (!wdev->hw_bufs_used && /* !pending_rx && !pending_tx && */ wdev->pdata.gpio_wakeup &&
 			    !atomic_read(&wdev->device_can_sleep) && !atomic_read(&wdev->wait_for_scan)) {
 				/* no data to process and allowed to go to sleep */
 				status = 10 * HZ; /* wakeup at least every 10s */

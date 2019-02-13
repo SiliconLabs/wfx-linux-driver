@@ -393,7 +393,6 @@ int wfx_core_probe(const struct wfx_platform_data *pdata,
 		 */
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
 		control_reg_write(wdev, 0);
-		wdev->sleep_activated = true;
 		dev_dbg(wdev->pdev, "enable 'quiescent' power mode with gpio %d and PDS file %s\n",
 			desc_to_gpio(wdev->pdata.gpio_wakeup), wdev->pdata.file_pds);
 		wsm_set_operational_mode(wdev, WSM_OP_POWER_MODE_QUIESCENT);
