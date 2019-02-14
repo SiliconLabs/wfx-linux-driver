@@ -436,13 +436,12 @@ static int wfx_rx_stats_show(struct seq_file *seq, void *v)
 	HiRxStats_t *st = &wdev->rx_stats;
 	int i;
 
-	seq_printf(seq, "Timestamp: %dus\n", wdev->rx_stats.Date);
+	seq_printf(seq, "Timestamp: %dus\n", st->Date);
 	seq_printf(seq, "Low power clock: frequency %uHz, external %s\n",
-		wdev->rx_stats.PwrClkFreq,
-		wdev->rx_stats.IsExtPwrClk ? "yes" : "no");
+		st->PwrClkFreq,
+		st->IsExtPwrClk ? "yes" : "no");
 	seq_printf(seq, "Num. of frames: %d, PER (x10e4): %d, Throughput: %dKbps/s\n",
-		wdev->rx_stats.NbRxFrame, wdev->rx_stats.PerTotal,
-		wdev->rx_stats.Throughput);
+		st->NbRxFrame, st->PerTotal, st->Throughput);
 	seq_printf(seq, "       Num. of      PER     RSSI      SNR      CFO\n");
 	seq_printf(seq, "        frames  (x10e4)    (dBm)     (dB)    (kHz)\n");
 	for (i = 0; i < ARRAY_SIZE(channel_names); i++) {
