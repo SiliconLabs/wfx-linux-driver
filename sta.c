@@ -553,19 +553,30 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 	}
 
 	if (changed & IEEE80211_CONF_CHANGE_PS) {
-		memset(&wvif->powersave_mode, 0, sizeof(wvif->powersave_mode));
-		if (conf->flags & IEEE80211_CONF_PS) {
-			wvif->powersave_mode.PmMode.PmMode = 1;
-			if (conf->dynamic_ps_timeout > 0) {
-				wvif->powersave_mode.PmMode.FastPsm = 1;
-				// Firmware does not support more than 128ms
-				wvif->powersave_mode.FastPsmIdlePeriod =
-					min(conf->dynamic_ps_timeout * 2, 255);
+		wvif = NULL;
+		while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
+			memset(&wvif->powersave_mode, 0, sizeof(wvif->powersave_mode));
+			// Kernel disable PowerSave when multiple vifs are in
+			// use. In contrary, it is absolutly necessary to
+			// enable PowerSave for WF200
+			if (wvif_count(wdev) > 1) {
+				wvif->powersave_mode.PmMode.PmMode = 1;
+				wvif->powersave_mode.PmMode.FastPsm = 0;
+			} else {
+				if (conf->flags & IEEE80211_CONF_PS) {
+					wvif->powersave_mode.PmMode.PmMode = 1;
+					if (conf->dynamic_ps_timeout > 0) {
+						wvif->powersave_mode.PmMode.FastPsm = 1;
+						// Firmware does not support more than 128ms
+						wvif->powersave_mode.FastPsmIdlePeriod =
+							min(conf->dynamic_ps_timeout * 2, 255);
+					}
+				}
 			}
+			if (wvif->state == WFX_STATE_STA && wvif->bss_params.AID)
+				wfx_set_pm(wvif, &wvif->powersave_mode);
 		}
-
-		if (wvif->state == WFX_STATE_STA && wvif->bss_params.AID)
-			wfx_set_pm(wvif, &wvif->powersave_mode);
+		wvif = wdev_to_wvif(wdev, 0);
 	}
 	if (changed & IEEE80211_CONF_CHANGE_IDLE) {
 		wsm_lock_tx(wdev);
