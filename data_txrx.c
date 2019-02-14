@@ -722,7 +722,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	    struct sk_buff *skb)
 {
 	struct wfx_dev *wdev = hw->priv;
-	struct wfx_vif *wvif;
+	struct wfx_vif *wvif = NULL;
 	struct wfx_txinfo t = {
 		.skb = skb,
 		.queue = skb_get_queue_mapping(skb),
@@ -741,12 +741,12 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		goto drop;
 
 	// control.vif can be NULL for injected frames
-	if (IEEE80211_SKB_CB(skb)->control.vif) {
+	if (IEEE80211_SKB_CB(skb)->control.vif)
 		wvif = (struct wfx_vif *) IEEE80211_SKB_CB(skb)->control.vif->drv_priv;
-	} else {
-		pr_info("Injected frame\n");
-		wvif = wdev_to_wvif(wdev, 0);
-	}
+	else
+		wvif = wvif_iterate(wdev, NULL);
+	if (!wvif)
+		goto drop;
 
 	WARN_ON(!wvif);
 	t.txpriv.vif_id = wvif->Id;
