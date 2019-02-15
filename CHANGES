@@ -1,8 +1,32 @@
+Changes in 2.1
+--------------
+
+  * Driver does not accept power_mode parameter anymore. Chip power save mode
+    is now set dynamically set using native Linux API. So, command below is
+    equivalent to power_mode=0:
+        iw dev wlan set power_save off
+    Enabling power_save is equivalent power_mode=2 if wakeup_gpio is defined
+    (in DT).  Else, if wakeup_gpio is not defined, it is equivalent to
+    power_mode=1.
+  * Driver try now to load a firmware with keyset in its name (i.e.
+    wfm_wf200_C0.sec). If it is not found, it fallbacks to legacy firmware name
+    (wfm_wf200.sec). This feature allows install firmware for multiple chips
+    alongside.
+  * Testmode was removed from public releases. Indeed, driver relied on
+    NL80211_TESTMODE but did not provide any usefull testmode commands.
+  * Uniformize debug traces
+  * Fix race condition during chip identification on SPI
+  * Scan now wait longer for AP response
+  * Fix UAPSD that was broken since 2.0
+  * Fix listening mode (that created an unsolicited AP):
+  * Fix some errors pointed by checkpatch.pl
+
 Changes in 2.0.3
 ----------------
 
-  * Show power_mode value in debugfs
-  * Show rx_stats in debugfs
+  * Show power_mode value in debugfs (in
+    /sys/kernel/debug/ieee80211/phy0/wfx/status)
+  * Show rx_stats in debugfs (in /sys/kernel/debug/ieee80211/phy0/wfx/rx_stats)
   * Improve concurrency robustness while removing interface
   * Fix support for DTIM > 1s
   * Fix support for development hardware
