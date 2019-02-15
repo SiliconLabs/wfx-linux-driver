@@ -270,6 +270,24 @@ static inline struct wfx_vif *wdev_to_wvif(struct wfx_dev *wdev, int vif_id)
 	return (struct wfx_vif *) wdev->vif[vif_id]->drv_priv;
 }
 
+static inline struct wfx_vif *wvif_iterate(struct wfx_dev *wdev, struct wfx_vif *cur)
+{
+	int i;
+	int mark = 0;
+	struct wfx_vif *tmp;
+
+	if (!cur)
+		mark = 1;
+	for (i = 0; i < ARRAY_SIZE(wdev->vif); i++) {
+		tmp = wdev_to_wvif(wdev, i);
+		if (mark && tmp)
+			return tmp;
+		if (tmp == cur)
+			mark = 1;
+	}
+	return NULL;
+}
+
 struct wfx_sta_priv {
 	int link_id;
 	int vif_id;
