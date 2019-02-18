@@ -283,6 +283,10 @@ static void wfx_free_common(struct wfx_dev *wdev)
 	for (i = 0; i < 4; ++i)
 		wfx_queue_deinit(&wdev->tx_queue[i]);
 	wfx_queue_stats_deinit(&wdev->tx_queue_stats);
+	// FIXME hw deinit would be more likely better placed in wfx_core_release()
+	config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, 0);
+	if (wdev->pdata.gpio_wakeup)
+		gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
 	ieee80211_free_hw(wdev->hw);
 }
 
@@ -406,9 +410,6 @@ void wfx_core_release(struct wfx_dev *wdev)
 {
 	ieee80211_unregister_hw(wdev->hw);
 	wfx_unregister_bh(wdev);
-	config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, 0);
-	if (wdev->pdata.gpio_wakeup)
-		gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
 	wfx_free_common(wdev);
 }
 
