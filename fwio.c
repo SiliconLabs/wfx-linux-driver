@@ -124,7 +124,11 @@ int get_firmware(struct wfx_dev *wdev, u32 keyset_chip,
 	int ret;
 
 	snprintf(filename, sizeof(filename), "%s_%02X.sec", wdev->pdata.file_fw, keyset_chip);
+#if (KERNEL_VERSION(4, 18, 0) <= LINUX_VERSION_CODE)
+	ret = firmware_request_nowarn(fw, filename, wdev->pdev);
+#else
 	ret = request_firmware(fw, filename, wdev->pdev);
+#endif
 	if (ret) {
 		dev_info(wdev->pdev, "can't load %s, falling back to %s.sec\n", filename, wdev->pdata.file_fw);
 		snprintf(filename, sizeof(filename), "%s.sec", wdev->pdata.file_fw);
