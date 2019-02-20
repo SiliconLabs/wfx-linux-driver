@@ -367,7 +367,7 @@ It is also possible to trace requests from mac80211 stack to WFx driver:
 Note that there is no real way to trace events during module loading. The best
 solution is to defer probing, setup traces and finally request probe manually:
 
-    $ echo 1 > /sys/bus/spi/drivers_autoprobe
+    $ echo 0 > /sys/bus/spi/drivers_autoprobe
     $ modprobe wfx
     $ echo 1 | tee /sys/kernel/debug/tracing/events/wfx/wsm_*/enable
     $ cat /sys/kernel/debug/tracing/trace_pipe &
