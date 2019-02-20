@@ -344,7 +344,7 @@ int wfx_add_interface(struct ieee80211_hw *hw,
 	// Keep WsmHiEdcaQueueParamsReqBody_t blank?
 			 struct ieee80211_vif *vif)
 {
-	int ret, i;
+	int i;
 	struct wfx_dev *wdev = hw->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 
@@ -381,9 +381,9 @@ int wfx_add_interface(struct ieee80211_hw *hw,
 	wvif->vif = vif;
 	wvif->wdev = wdev;
 	wvif->mode = vif->type;
-	ret = wsm_set_macaddr(wdev, vif->addr, wvif->Id);
 	wfx_vif_setup(wvif);
 	mutex_unlock(&wdev->conf_mutex);
+	wsm_set_macaddr(wdev, vif->addr, wvif->Id);
 	for (i = 0; i < 4; i++)
 		wsm_set_edca_queue_params(wdev, &wvif->edca.params[i], wvif->Id);
 	wfx_set_uapsd_param(wvif, &wvif->edca);
