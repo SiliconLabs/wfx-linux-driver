@@ -1043,10 +1043,20 @@ int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 			goto finally;
 		}
 		ret = wsm_add_key(wdev, wsm_key, wvif->Id);
-		if (!ret)
+		if (!ret) {
 			key->hw_key_idx = idx;
-		else
+		} else {
+#if KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE && \
+    KERNEL_VERSION(4, 9, 63) > LINUX_VERSION_CODE && \
+    KERNEL_VERSION(4, 4, 99) > LINUX_VERSION_CODE
+			if (ret == HI_INVALID_PARAMETER) {
+				// Use a patched kernel in order to solve this error
+				dev_warn(wdev->dev, "chip prevents re-installation of same key\n");
+				dev_warn(wdev->dev, "your kernel is not patched to protect against KRACK attack\n");
+			}
+#endif
 			wfx_free_key(wvif, idx);
+		}
 	} else if (cmd == DISABLE_KEY) {
 		if (key->hw_key_idx > WSM_KEY_MAX_INDEX) {
 			ret = -EINVAL;
