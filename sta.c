@@ -532,6 +532,11 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 	// FIXME: Interface id should not been hardcoded
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 
+	if (!wvif) {
+		WARN(1, "Interface 0 does not exist anymore");
+		return 0;
+	}
+
 	down(&wvif->scan.lock);
 	mutex_lock(&wdev->conf_mutex);
 	if (changed & IEEE80211_CONF_CHANGE_POWER) {
