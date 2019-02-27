@@ -445,13 +445,8 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 
 	wvif->listening = false;
 	wvif->state = WFX_STATE_PASSIVE;
-	if (!__wfx_flush(wdev, true)) {
-		wdev->vif[wvif->Id] = NULL;
+	if (!__wfx_flush(wdev, true))
 		wsm_unlock_tx(wdev);
-	} else {
-		wdev->vif[wvif->Id] = NULL;
-	}
-	wvif->vif = NULL;
 
 	cancel_delayed_work_sync(&wvif->scan.probe_work);
 	cancel_delayed_work_sync(&wvif->scan.timeout);
@@ -463,8 +458,10 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	del_timer_sync(&wvif->mcast_timeout);
 	wfx_free_event_queue(wvif);
 
+	wdev->vif[wvif->Id] = NULL;
 	wvif->mode = NL80211_IFTYPE_UNSPECIFIED;
 	wvif->listening = false;
+	wvif->vif = NULL;
 
 	mutex_unlock(&wdev->conf_mutex);
 }
