@@ -399,6 +399,11 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 	int i;
 
+	// If scan is in progress, stop it
+	while (down_trylock(&wvif->scan.lock))
+		schedule();
+	up(&wvif->scan.lock);
+
 	mutex_lock(&wdev->conf_mutex);
 	switch (wvif->state) {
 	case WFX_STATE_JOINING:
@@ -447,12 +452,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 		wdev->vif[wvif->Id] = NULL;
 	}
 	wvif->vif = NULL;
-	while (down_trylock(&wvif->scan.lock)) {
-		/* Scan is in progress. Force it to stop. */
-		wvif->scan.req = NULL;
-		schedule();
-	}
-	up(&wvif->scan.lock);
 
 	cancel_delayed_work_sync(&wvif->scan.probe_work);
 	cancel_delayed_work_sync(&wvif->scan.timeout);
