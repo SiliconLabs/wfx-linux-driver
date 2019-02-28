@@ -31,11 +31,6 @@
 #define WFX_WAKEUP_WAIT_STEP_MAX 300  /*in us */
 #define WFX_WAKEUP_WAIT_MAX 2000      /*in us */
 
-#ifdef RASPBERRY_PI
-#define HIF_ERROR_DETECTION_8   0x55
-#define HIF_ERROR_DETECTION_16  0x5555
-#endif
-
 static int wfx_bh(void *arg);
 static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev);
 
@@ -296,15 +291,21 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	skb_trim(skb_rx, 0);
 	skb_put(skb_rx, read_len);
 	data = skb_rx->data;
-#ifdef RASPBERRY_PI
-	/* Error detection mechanism to detect the issue
-	 * https://github.com/raspberrypi/linux/issues/2200
-	 * The last bytes are set to a defined impair value
-	 * Most of the HIF messages have a pair length
+
+#if (KERNEL_VERSION(4, 19, 0) > LINUX_VERSION_CODE)
+	/* Some SPI driver (and especially Raspberry one) have race conditions
+	 * during SPI transfers. It impact last byte of transfer.  Work around
+	 * bellow try to detect and solve them.
+	 * See https://github.com/raspberrypi/linux/issues/2200
+	 * FIXME: bug seems now fixed. Place this code under #ifdef LINUX_VERSION
 	 */
-	if (!wdev->pdata.sdio)
-		((u16 *) data)[alloc_len / 2 - 1] = HIF_ERROR_DETECTION_16;
+	if (!wdev->pdata.sdio) {
+		// FIXME: Depending of SPI configuration, we may also set value
+		// of data[alloc_len - 2].
+		data[alloc_len - 1] = 0xFF;
+	}
 #endif
+
 	if (wfx_data_read(wdev, data, alloc_len)) {
 		dev_err(wdev->dev, "bh: rx blew up, len %zu\n", alloc_len);
 		goto err;
@@ -313,13 +314,17 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	/* update ctrl_reg with the u16 piggybacked value */
 	*ctrl_reg = (u32) le16_to_cpu(((__le16 *)data)[alloc_len / 2 - 1]);
 
-#ifdef RASPBERRY_PI
-	if (!wdev->pdata.sdio && data[alloc_len - 2] == HIF_ERROR_DETECTION_8) {
-		/* If the last byte has not been overwritten,
-		 * the control register is set to 0 to cause
-		 * a new read of this register in the bh loop*/
-		*ctrl_reg = 0;
-		dev_warn(wdev->dev, "bh: ctrl_reg piggyback error");
+#if (KERNEL_VERSION(4, 19, 0) > LINUX_VERSION_CODE)
+	if (!wdev->pdata.sdio) {
+		/* If last byes has not been overwritten, set ctrl_reg to 0 in
+		 * order to force a new read.
+		 * FIXME: Depending of SPI configuration, we may also
+		 * test value of data[alloc_len - 1].
+		 */
+		if (data[alloc_len - 2] == 0xFF) {
+			dev_warn(wdev->dev, "SPI DMA error detected (and resolved)\n");
+			*ctrl_reg = 0;
+		}
 	}
 #endif
 
