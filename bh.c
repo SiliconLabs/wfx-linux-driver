@@ -328,7 +328,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	wsm = (HiMsgHdr_t *)data;
 	wsm_len = le16_to_cpu(wsm->MsgLen);
 	if (wsm_len > read_len) {
-		dev_err(wdev->dev, "bh: inconsistent HIF message length %zu != %zu\n",
+		dev_err(wdev->dev, "inconsistent message length: %zu != %zu\n",
 			wsm_len, read_len);
 		goto err;
 	}
@@ -342,7 +342,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 
 	if (wsm_id != HI_EXCEPTION_IND_ID) {
 		if (wsm_seq != wdev->wsm_rx_seq &&  !rx_resync) {
-			dev_warn(wdev->dev, "wrong message sequence %d != %d\n",
+			dev_warn(wdev->dev, "wrong message sequence: %d != %d\n",
 					wsm_seq, wdev->wsm_rx_seq);
 			goto err;
 		}
@@ -359,10 +359,8 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	}
 
 	/* wfx_wsm_rx takes care on SKB livetime */
-	if (wsm_handle_rx(wdev, wsm, &skb_rx)) {
-		dev_err(wdev->dev, "bh: wsm_handle_rx return error for cmd %.2x\n", wsm_id);
+	if (wsm_handle_rx(wdev, wsm, &skb_rx))
 		goto err;
-	}
 
 	if (skb_rx) {
 		dev_kfree_skb(skb_rx);
