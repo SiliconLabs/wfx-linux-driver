@@ -330,6 +330,8 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	INIT_WORK(&wvif->scan.work, wfx_scan_work);
 	INIT_DELAYED_WORK(&wvif->scan.probe_work, wfx_probe_work);
 	INIT_DELAYED_WORK(&wvif->scan.timeout, wfx_scan_timeout);
+	init_completion(&wvif->set_pm_mode_complete);
+	complete(&wvif->set_pm_mode_complete);
 
 	BUG_ON(ARRAY_SIZE(default_edca_params) != ARRAY_SIZE(wvif->edca.params));
 	for (i = 0; i < ARRAY_SIZE(default_edca_params); i++) {
@@ -403,6 +405,7 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	while (down_trylock(&wvif->scan.lock))
 		schedule();
 	up(&wvif->scan.lock);
+	wait_for_completion_timeout(&wvif->set_pm_mode_complete, msecs_to_jiffies(300));
 
 	mutex_lock(&wdev->conf_mutex);
 	switch (wvif->state) {
@@ -856,6 +859,8 @@ int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 		pm.PmMode.FastPsm = 0;
 	}
 
+	if (!wait_for_completion_timeout(&wvif->set_pm_mode_complete, msecs_to_jiffies(300)))
+		dev_warn(wvif->wdev->dev, "timeout while waiting of set_pm_mode_complete\n");
 	ret = wsm_set_pm(wvif->wdev, &pm, wvif->Id);
 	// FIXME: why ?
 	if (-ETIMEDOUT == wvif->scan.status)

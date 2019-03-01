@@ -198,6 +198,16 @@ static int wsm_event_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 	return 0;
 }
 
+static int wsm_pm_mode_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
+{
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
+
+	WARN_ON(!wvif);
+	complete(&wvif->set_pm_mode_complete);
+
+	return 0;
+}
+
 static int wsm_scan_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
@@ -369,7 +379,7 @@ static const struct {
 	{ HI_CONFIGURATION_CNF_ID,       wsm_generic_confirm },
 	/* Indications */
 	{ WSM_HI_EVENT_IND_ID,           wsm_event_indication },
-	{ WSM_HI_SET_PM_MODE_CMPL_IND_ID, NULL },
+	{ WSM_HI_SET_PM_MODE_CMPL_IND_ID, wsm_pm_mode_complete_indication },
 	{ WSM_HI_JOIN_COMPLETE_IND_ID,   wsm_join_complete_indication },
 	{ WSM_HI_SCAN_CMPL_IND_ID,       wsm_scan_complete_indication },
 	{ WSM_HI_SUSPEND_RESUME_TX_IND_ID, wsm_suspend_resume_indication },

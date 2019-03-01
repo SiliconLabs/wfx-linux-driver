@@ -241,6 +241,7 @@ struct wfx_vif {
 	struct mutex		bss_loss_lock;
 	spinlock_t		ps_state_lock;
 	spinlock_t		event_queue_lock;
+	struct completion	set_pm_mode_complete;
 
 	/* WSM events and CQM implementation */
 	struct list_head	event_queue;
