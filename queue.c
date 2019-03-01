@@ -216,6 +216,33 @@ int wfx_queue_init(struct wfx_queue *queue,
 	return 0;
 }
 
+/* If successful, LOCKS the TX queue! */
+void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
+{
+	int i;
+	bool done;
+	struct wfx_queue *queue;
+	struct wfx_queue_item *item;
+	struct wfx_dev *wdev = wvif->wdev;
+
+	do {
+		done = true;
+		wsm_lock_tx(wdev);
+		for (i = 0; i < 4 && done; ++i) {
+			queue = &wdev->tx_queue[i];
+			spin_lock_bh(&queue->lock);
+			list_for_each_entry(item, &queue->queue, head)
+				if (item->txpriv.vif_id == wvif->Id)
+					done = false;
+			spin_unlock_bh(&queue->lock);
+		}
+		if (!done) {
+			wsm_unlock_tx(wdev);
+			msleep(1);
+		}
+	} while (!done);
+}
+
 int wfx_queue_clear(struct wfx_queue *queue)
 {
 	int i;

@@ -443,12 +443,12 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	wvif->key_map = 0;
 	memset(&wvif->keys, 0, sizeof(wvif->keys));
 
-	wsm_set_macaddr(wdev, NULL, wvif->Id);
-
 	wvif->listening = false;
 	wvif->state = WFX_STATE_PASSIVE;
-	if (!__wfx_flush(wdev, true))
-		wsm_unlock_tx(wdev);
+	wfx_queue_wait_empty_vif(wvif);
+	wsm_unlock_tx(wdev);
+
+	wsm_set_macaddr(wdev, NULL, wvif->Id);
 
 	cancel_delayed_work_sync(&wvif->scan.probe_work);
 	cancel_delayed_work_sync(&wvif->scan.timeout);

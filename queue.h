@@ -27,6 +27,7 @@
 
 /* extern */ struct sk_buff;
 /* extern */ struct wfx_dev;
+/* extern */ struct wfx_vif;
 /* extern */ struct ieee80211_tx_queue_stats;
 /* extern */ struct wfx_txpriv;
 
@@ -84,6 +85,9 @@ int wfx_queue_init(struct wfx_queue *queue,
 		      u8 queue_id,
 		      size_t capacity,
 		      unsigned long ttl);
+
+void wfx_queue_wait_empty_vif(struct wfx_vif *wvif);
+
 int wfx_queue_clear(struct wfx_queue *queue);
 void wfx_queue_stats_deinit(struct wfx_queue_stats *stats);
 void wfx_queue_deinit(struct wfx_queue *queue);
