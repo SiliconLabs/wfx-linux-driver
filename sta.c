@@ -387,7 +387,10 @@ int wfx_add_interface(struct ieee80211_hw *hw,
 	for (i = 0; i < 4; i++)
 		wsm_set_edca_queue_params(wdev, &wvif->edca.params[i], wvif->Id);
 	wfx_set_uapsd_param(wvif, &wvif->edca);
-
+	// Combo mode does not support Block Acks
+	wvif = NULL;
+	while ((wvif = wvif_iterate(wdev, wvif)) != NULL)
+		wsm_set_block_ack_policy(wvif->wdev, 0, 0, wvif->Id);
 	return 0;
 }
 
@@ -462,6 +465,12 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	wvif->vif = NULL;
 
 	mutex_unlock(&wdev->conf_mutex);
+	// Combo mode does not support Block Acks but, we can re-enable them
+	// now
+	WARN_ON(wvif_count(wdev) > 1);
+	wvif = NULL;
+	while ((wvif = wvif_iterate(wdev, wvif)) != NULL)
+		wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
 }
 
 int wfx_change_interface(struct ieee80211_hw *hw,
@@ -1455,8 +1464,8 @@ static void wfx_do_join(struct wfx_vif *wvif)
 
 	wfx_update_listening(wvif, false);
 
-	/* Turn on Block ACKs */
-	wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
+	if (wvif_count(wvif->wdev) <= 1)
+		wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
 
 	/* 802.11w protected mgmt frames */
 
@@ -1831,7 +1840,8 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 	if (!ret)
 		ret = wfx_upload_keys(wvif);
 	if (!ret) {
-		wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
+		if (wvif_count(wvif->wdev) <= 1)
+			wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
 		wvif->state = WFX_STATE_AP;
 		wfx_update_filtering(wvif);
 	}
