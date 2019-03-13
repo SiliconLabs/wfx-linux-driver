@@ -135,6 +135,7 @@ int get_firmware(struct wfx_dev *wdev, u32 keyset_chip,
 		ret = request_firmware(fw, filename, wdev->dev);
 		if (ret) {
 			dev_err(wdev->dev, "can't load %s\n", filename);
+			*fw = NULL;
 			return ret;
 		}
 	}
@@ -150,6 +151,7 @@ int get_firmware(struct wfx_dev *wdev, u32 keyset_chip,
 		if (keyset_file < 0) {
 			dev_err(wdev->dev, "%s corrupted\n", filename);
 			release_firmware(*fw);
+			*fw = NULL;
 			return -EINVAL;
 		}
 	}
@@ -157,6 +159,7 @@ int get_firmware(struct wfx_dev *wdev, u32 keyset_chip,
 		dev_err(wdev->dev, "firmware keyset is incompatible with chip (file: 0x%02X, chip: 0x%02X)\n",
 			keyset_file, keyset_chip);
 		release_firmware(*fw);
+		*fw = NULL;
 		return -ENODEV;
 	}
 	return 0;
