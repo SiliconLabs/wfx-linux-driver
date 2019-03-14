@@ -162,6 +162,7 @@ int get_firmware(struct wfx_dev *wdev, u32 keyset_chip,
 		*fw = NULL;
 		return -ENODEV;
 	}
+	wdev->keyset = keyset_file;
 	return 0;
 }
 

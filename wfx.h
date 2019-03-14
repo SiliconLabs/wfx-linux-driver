@@ -153,6 +153,7 @@ struct wfx_dev {
 	struct wsm_cmd			wsm_cmd;
 	struct completion		firmware_ready;
 	HiStartupIndBody_t		wsm_caps;
+	u8				keyset;
 	atomic_t			tx_lock;
 
 	/* WSM Join */

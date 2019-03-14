@@ -320,11 +320,11 @@ int wfx_probe(struct wfx_dev *wdev)
 	}
 
 	// FIXME: fill wiphy::fw_version and wiphy::hw_version
-	dev_info(wdev->dev, "Firmware \"%s\" started. Version: %d.%d.%d API: %d.%d caps: 0x%.8X\n",
+	dev_info(wdev->dev, "Firmware \"%s\" started. Version: %d.%d.%d API: %d.%d Keyset: %02X caps: 0x%.8X\n",
 		 wdev->wsm_caps.FirmwareLabel, wdev->wsm_caps.FirmwareMajor,
 		 wdev->wsm_caps.FirmwareMinor, wdev->wsm_caps.FirmwareBuild,
 		 wdev->wsm_caps.ApiVersionMajor, wdev->wsm_caps.ApiVersionMinor,
-		 *((u32 *) &wdev->wsm_caps.Capabilities));
+		 wdev->keyset, *((u32 *) &wdev->wsm_caps.Capabilities));
 
 	if (wdev->wsm_caps.ApiVersionMajor != 1) {
 		dev_err(wdev->dev, "Unsupported firmware API version (expect 1 while firmware returns %d)\n",
