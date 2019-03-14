@@ -220,6 +220,9 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	ieee80211_hw_set(hw, SIGNAL_DBM);
 	ieee80211_hw_set(hw, SUPPORTS_PS);
 	ieee80211_hw_set(hw, MFP_CAPABLE);
+#if (KERNEL_VERSION(3, 19, 0) > LINUX_VERSION_CODE)
+	ieee80211_hw_set(hw, SUPPORTS_UAPSD);
+#endif
 
 	hw->vif_data_size = sizeof(struct wfx_vif);
 	hw->sta_data_size = sizeof(struct wfx_sta_priv);

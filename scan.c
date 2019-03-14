@@ -81,8 +81,11 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	if (req->n_ssids > WSM_API_SSID_DEF_SIZE)
 		return -EINVAL;
 
-	skb = ieee80211_probereq_get(hw, wvif->vif->addr, NULL, 0,
-		req->ie_len);
+#if (KERNEL_VERSION(3, 19, 0) > LINUX_VERSION_CODE)
+	skb = ieee80211_probereq_get(hw, wvif->vif, NULL, 0, req->ie_len);
+#else
+	skb = ieee80211_probereq_get(hw, wvif->vif->addr, NULL, 0, req->ie_len);
+#endif
 	if (!skb)
 		return -ENOMEM;
 

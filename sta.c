@@ -354,7 +354,9 @@ int wfx_add_interface(struct ieee80211_hw *hw,
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 
 	vif->driver_flags |= IEEE80211_VIF_BEACON_FILTER |
+#if (KERNEL_VERSION(3, 19, 0) <= LINUX_VERSION_CODE)
 			     IEEE80211_VIF_SUPPORTS_UAPSD |
+#endif
 			     IEEE80211_VIF_SUPPORTS_CQM_RSSI;
 
 	mutex_lock(&wdev->conf_mutex);
@@ -894,8 +896,12 @@ int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 		if (sta)
 			peer_addr = sta->addr;
 
+#if (KERNEL_VERSION(3, 19, 0) > LINUX_VERSION_CODE)
+		key->flags |= IEEE80211_KEY_FLAG_PUT_IV_SPACE;
+#else
 		key->flags |= IEEE80211_KEY_FLAG_PUT_IV_SPACE |
 			      IEEE80211_KEY_FLAG_RESERVE_TAILROOM;
+#endif
 
 		switch (key->cipher) {
 		case WLAN_CIPHER_SUITE_WEP40:
