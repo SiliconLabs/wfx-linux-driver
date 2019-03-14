@@ -41,6 +41,15 @@
 #define NUM_NL80211_BANDS IEEE80211_NUM_BANDS
 #endif
 
+#if (KERNEL_VERSION(4, 2, 0) > LINUX_VERSION_CODE)
+static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
+				     enum ieee80211_hw_flags flg)
+{
+	hw->flags |= flg;
+}
+#define ieee80211_hw_set(hw, flg)	_ieee80211_hw_set(hw, IEEE80211_HW_##flg)
+#endif
+
 #define TU_TO_USEC(x) ((x) * 1024)
 #define TU_TO_MSEC(x) ((x) * 1024 / 1000)
 

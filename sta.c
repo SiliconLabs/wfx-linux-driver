@@ -2283,16 +2283,22 @@ void wfx_mcast_timeout(struct timer_list *t)
 	spin_unlock_bh(&wvif->ps_state_lock);
 }
 
-#if (KERNEL_VERSION(4, 4, 69) <= LINUX_VERSION_CODE)
-int wfx_ampdu_action(struct ieee80211_hw		*hw,
-		     struct ieee80211_vif		*vif,
-		     struct ieee80211_ampdu_params	*params)
+#if (KERNEL_VERSION(4, 4, 0) > LINUX_VERSION_CODE)
+int wfx_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+		     enum ieee80211_ampdu_mlme_action action,
+		     struct ieee80211_sta *sta, u16 tid,
+		     u16 *ssn, u8 buf_size)
+#else
+#if (KERNEL_VERSION(4, 4, 69) > LINUX_VERSION_CODE)
+int wfx_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+		     enum ieee80211_ampdu_mlme_action action,
+		     struct ieee80211_sta *sta, u16 tid, u16 *ssn,
+		     u8 buf_size, bool amsdu)
 #else
 int wfx_ampdu_action(struct ieee80211_hw *hw,
-			struct ieee80211_vif *vif,
-			enum ieee80211_ampdu_mlme_action action,
-			struct ieee80211_sta *sta, u16 tid, u16 *ssn,
-			u8 buf_size, bool amsdu)
+		     struct ieee80211_vif *vif,
+		     struct ieee80211_ampdu_params *params)
+#endif
 #endif
 {
 	/* Aggregation is implemented fully in firmware,
