@@ -30,7 +30,7 @@ static int wfx_scan_start(struct wfx_vif *wvif, struct wsm_scan *scan)
 {
 	int ret;
 
-	int tmo = 200;
+	int tmo = 500;
 
 	switch (wvif->state) {
 	case WFX_STATE_PRE_STA:
