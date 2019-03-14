@@ -8,6 +8,10 @@
 #include "wfx_api.h"
 #include "hwbus.h"
 
+#if (KERNEL_VERSION(4, 1, 0) > LINUX_VERSION_CODE)
+#define TRACE_DEFINE_ENUM(a)
+#endif
+
 /* The hell below need some explanations. For each symbolic number, we need to
  * define it with TRACE_DEFINE_ENUM() and in a list for __print_symbolic.
  *
