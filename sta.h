@@ -31,7 +31,6 @@
 int wfx_start(struct ieee80211_hw *);
 void wfx_stop(struct ieee80211_hw *);
 int wfx_config(struct ieee80211_hw *, u32);
-void wfx_reconfig_complete(struct ieee80211_hw *, enum ieee80211_reconfig_type);
 int wfx_set_rts_threshold(struct ieee80211_hw *, u32);
 u64 wfx_prepare_multicast(struct ieee80211_hw *, struct netdev_hw_addr_list *);
 void wfx_configure_filter(struct ieee80211_hw *, unsigned, unsigned *, u64);
