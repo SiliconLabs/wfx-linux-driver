@@ -1100,10 +1100,10 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg,
 			hdr->band);
 
 	if (arg->RxedRate >= 14) {
-#if (KERNEL_VERSION(4, 12, 0) <= LINUX_VERSION_CODE)
-		hdr->encoding = RX_ENC_HT;
-#else
+#if (KERNEL_VERSION(4, 12, 0) > LINUX_VERSION_CODE)
 		hdr->flag |= RX_FLAG_HT;
+#else
+		hdr->encoding = RX_ENC_HT;
 #endif
 		hdr->rate_idx = arg->RxedRate - 14;
 	} else if (arg->RxedRate >= 4) {

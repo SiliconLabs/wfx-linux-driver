@@ -21,10 +21,10 @@
 #include <linux/version.h>
 #include <linux/firmware.h>
 
-#if (KERNEL_VERSION(4, 9, 0) <= LINUX_VERSION_CODE)
-#include <linux/bitfield.h>
-#else
+#if (KERNEL_VERSION(4, 9, 0) > LINUX_VERSION_CODE)
 #define FIELD_GET(_mask, _reg) (typeof(_mask))(((_reg) & (_mask)) >> (__builtin_ffsll(_mask) - 1))
+#else
+#include <linux/bitfield.h>
 #endif
 
 #include "fwio.h"
@@ -124,10 +124,10 @@ int get_firmware(struct wfx_dev *wdev, u32 keyset_chip,
 	int ret;
 
 	snprintf(filename, sizeof(filename), "%s_%02X.sec", wdev->pdata.file_fw, keyset_chip);
-#if (KERNEL_VERSION(4, 18, 0) <= LINUX_VERSION_CODE)
-	ret = firmware_request_nowarn(fw, filename, wdev->dev);
-#else
+#if (KERNEL_VERSION(4, 18, 0) > LINUX_VERSION_CODE)
 	ret = request_firmware(fw, filename, wdev->dev);
+#else
+	ret = firmware_request_nowarn(fw, filename, wdev->dev);
 #endif
 	if (ret) {
 		dev_info(wdev->dev, "can't load %s, falling back to %s.sec\n", filename, wdev->pdata.file_fw);

@@ -136,14 +136,14 @@ static void __wfx_queue_gc(struct wfx_queue *queue,
 	}
 }
 
-#if (KERNEL_VERSION(4, 14, 0) <= LINUX_VERSION_CODE)
-static void wfx_queue_gc(struct timer_list *t)
-{
-	struct wfx_queue *queue = from_timer(queue, t, gc);
-#else
+#if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
 static void wfx_queue_gc(unsigned long arg)
 {
 	struct wfx_queue *queue = (struct wfx_queue *) arg;
+#else
+static void wfx_queue_gc(struct timer_list *t)
+{
+	struct wfx_queue *queue = from_timer(queue, t, gc);
 #endif
 	LIST_HEAD(list);
 
@@ -191,10 +191,10 @@ int wfx_queue_init(struct wfx_queue *queue,
 	INIT_LIST_HEAD(&queue->free_pool);
 	spin_lock_init(&queue->lock);
 
-#if (KERNEL_VERSION(4, 14, 0) <= LINUX_VERSION_CODE)
-	timer_setup(&queue->gc, wfx_queue_gc, 0);
-#else
+#if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
 	setup_timer(&queue->gc, wfx_queue_gc, (unsigned long) queue);
+#else
+	timer_setup(&queue->gc, wfx_queue_gc, 0);
 #endif
 
 	queue->pool = kcalloc(capacity, sizeof(struct wfx_queue_item),

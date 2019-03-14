@@ -138,14 +138,14 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 
 static void __ieee80211_scan_completed_compat(struct ieee80211_hw *hw, bool aborted)
 {
-#if (KERNEL_VERSION(4, 8, 0) <= LINUX_VERSION_CODE)
+#if (KERNEL_VERSION(4, 8, 0) > LINUX_VERSION_CODE)
+	ieee80211_scan_completed(hw, aborted);
+#else
 	struct cfg80211_scan_info info = {
 		.aborted = aborted ? 1 : 0,
 	};
 
 	ieee80211_scan_completed(hw, &info);
-#else
-	ieee80211_scan_completed(hw, aborted);
 #endif
 }
 

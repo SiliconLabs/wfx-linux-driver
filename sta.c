@@ -64,10 +64,10 @@ static void wfx_set_tim_work(struct work_struct *work);
 static void wfx_set_cts_work(struct work_struct *work);
 static void wfx_multicast_start_work(struct work_struct *work);
 static void wfx_multicast_stop_work(struct work_struct *work);
-#if (KERNEL_VERSION(4, 14, 0) <= LINUX_VERSION_CODE)
-static void wfx_mcast_timeout(struct timer_list *t);
-#else
+#if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
 static void wfx_mcast_timeout(unsigned long arg);
+#else
+static void wfx_mcast_timeout(struct timer_list *t);
 #endif
 
 static int wfx_alloc_key(struct wfx_vif *wvif)
@@ -168,10 +168,10 @@ void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 
 		wvif->bss_loss_state++;
 
-#if (KERNEL_VERSION(4, 14, 16) <= LINUX_VERSION_CODE)
-		skb = ieee80211_nullfunc_get(wvif->wdev->hw, wvif->vif, false);
-#else
+#if (KERNEL_VERSION(4, 14, 16) > LINUX_VERSION_CODE)
 		skb = ieee80211_nullfunc_get(wvif->wdev->hw, wvif->vif);
+#else
+		skb = ieee80211_nullfunc_get(wvif->wdev->hw, wvif->vif, false);
 #endif
 		if (!skb)
 			dev_err(wvif->wdev->dev, "failed to retrieve a nullfunc\n");
@@ -319,10 +319,10 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 
 	INIT_WORK(&wvif->multicast_start_work, wfx_multicast_start_work);
 	INIT_WORK(&wvif->multicast_stop_work, wfx_multicast_stop_work);
-#if (KERNEL_VERSION(4, 14, 0) <= LINUX_VERSION_CODE)
-	timer_setup(&wvif->mcast_timeout, wfx_mcast_timeout, 0);
-#else
+#if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
 	setup_timer(&wvif->mcast_timeout, wfx_mcast_timeout, (unsigned long) wvif);
+#else
+	timer_setup(&wvif->mcast_timeout, wfx_mcast_timeout, 0);
 #endif
 
 	/* About scan */
@@ -1207,11 +1207,11 @@ void wfx_event_handler_work(struct work_struct *work)
 				NL80211_CQM_RSSI_THRESHOLD_EVENT_LOW :
 				NL80211_CQM_RSSI_THRESHOLD_EVENT_HIGH;
 			pr_debug("[CQM] RSSI event: %d.\n", rcpi_rssi);
-#if (KERNEL_VERSION(4, 11, 0) <= LINUX_VERSION_CODE)
-			ieee80211_cqm_rssi_notify(wvif->vif, cqm_evt, rcpi_rssi,
+#if (KERNEL_VERSION(4, 11, 0) > LINUX_VERSION_CODE)
+			ieee80211_cqm_rssi_notify(wvif->vif, cqm_evt,
 						  GFP_KERNEL);
 #else
-			ieee80211_cqm_rssi_notify(wvif->vif, cqm_evt,
+			ieee80211_cqm_rssi_notify(wvif->vif, cqm_evt, rcpi_rssi,
 						  GFP_KERNEL);
 #endif
 			break;
@@ -2264,14 +2264,14 @@ void wfx_multicast_stop_work(struct work_struct *work)
 	}
 }
 
-#if (KERNEL_VERSION(4, 14, 0) <= LINUX_VERSION_CODE)
-void wfx_mcast_timeout(struct timer_list *t)
-{
-	struct wfx_vif *wvif = from_timer(wvif, t, mcast_timeout);
-#else
+#if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
 void wfx_mcast_timeout(unsigned long arg)
 {
 	struct wfx_vif *wvif = (struct wfx_vif *)arg;
+#else
+void wfx_mcast_timeout(struct timer_list *t)
+{
+	struct wfx_vif *wvif = from_timer(wvif, t, mcast_timeout);
 #endif
 	dev_warn(wvif->wdev->dev,
 		   "Multicast delivery timeout.\n");

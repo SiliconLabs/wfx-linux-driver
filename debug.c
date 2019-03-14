@@ -507,10 +507,10 @@ static int wfx_dbg_param_get(void *data, u64 *val)
 		*val = param->data_val;
 	return 0;
 }
-#if (KERNEL_VERSION(4, 6, 0) <= LINUX_VERSION_CODE)
-DEFINE_DEBUGFS_ATTRIBUTE(wfx_dbg_param_fops, wfx_dbg_param_get, wfx_dbg_param_set, "%lld\n");
-#else
+#if (KERNEL_VERSION(4, 6, 0) > LINUX_VERSION_CODE)
 DEFINE_SIMPLE_ATTRIBUTE(wfx_dbg_param_fops, wfx_dbg_param_get, wfx_dbg_param_set, "%lld\n");
+#else
+DEFINE_DEBUGFS_ATTRIBUTE(wfx_dbg_param_fops, wfx_dbg_param_get, wfx_dbg_param_set, "%lld\n");
 #endif
 
 void wfx_dbg_filter_wsm(struct wfx_dev *wdev, void *buf)
@@ -617,10 +617,10 @@ int wfx_debug_init(struct wfx_dev *wdev)
 
 		INIT_LIST_HEAD(&p->active_list);
 		p->wdev = wdev;
-#if (KERNEL_VERSION(4, 6, 0) <= LINUX_VERSION_CODE)
-		debugfs_create_file_unsafe(p->fs_name, 0600, d, p, &wfx_dbg_param_fops);
-#else
+#if (KERNEL_VERSION(4, 6, 0) > LINUX_VERSION_CODE)
 		debugfs_create_file(p->fs_name, 0600, d, p, &wfx_dbg_param_fops);
+#else
+		debugfs_create_file_unsafe(p->fs_name, 0600, d, p, &wfx_dbg_param_fops);
 #endif
 	}
 
