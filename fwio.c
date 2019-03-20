@@ -173,14 +173,13 @@ static int wait_ncp_status(struct wfx_dev *wdev, u32 status)
 	int ret;
 
 	start = ktime_get();
-	now = start;
 	for (;;) {
 		ret = sram_reg_read(wdev, WFX_DCA_NCP_STATUS, &reg);
 		if (ret < 0)
 			return -EIO;
+		now = ktime_get();
 		if (reg == status)
 			break;
-		now = ktime_get();
 		if (ktime_after(now, ktime_add_ms(start, DCA_TIMEOUT)))
 			return -ETIMEDOUT;
 	}
@@ -204,14 +203,13 @@ static int upload_firmware(struct wfx_dev *wdev, const u8 *data, size_t len)
 	offs = 0;
 	while (offs < len) {
 		start = ktime_get();
-		now = start;
 		for (;;) {
 			ret = sram_reg_read(wdev, WFX_DCA_GET, &bytes_done);
 			if (ret < 0)
 				return ret;
+			now = ktime_get();
 			if (offs + DNLD_BLOCK_SIZE - bytes_done < DNLD_FIFO_SIZE)
 				break;
-			now = ktime_get();
 			if (ktime_after(now, ktime_add_ms(start, DCA_TIMEOUT)))
 				return -ETIMEDOUT;
 		}
