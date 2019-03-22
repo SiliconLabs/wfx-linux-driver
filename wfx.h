@@ -286,6 +286,20 @@ static inline struct wfx_vif *wvif_iterate(struct wfx_dev *wdev, struct wfx_vif 
 	return NULL;
 }
 
+static inline int wvif_count(struct wfx_dev *wdev)
+{
+	int i;
+	int ret = 0;
+	struct wfx_vif *wvif;
+
+	for (i = 0; i < ARRAY_SIZE(wdev->vif); i++) {
+		wvif = wdev_to_wvif(wdev, i);
+		if (wvif)
+			ret++;
+	}
+	return ret;
+}
+
 struct wfx_sta_priv {
 	int link_id;
 	int vif_id;
