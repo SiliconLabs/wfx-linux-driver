@@ -69,7 +69,6 @@ struct wsm_edca_params {
 struct wsm_rx_filter {
 	bool	bssid;
 	bool	probeResponder;
-	bool    keepAlive;
 };
 
 struct wsm_protected_mgmt_policy {
@@ -184,8 +183,6 @@ static inline int wsm_set_rx_filter(struct wfx_dev *wdev,
 		val |= cpu_to_le32(BIT(1));
 	if (arg->probeResponder)
 		val |= cpu_to_le32(BIT(3));
-	if (arg->keepAlive)
-		val |= cpu_to_le32(BIT(4));
 	return wsm_write_mib(wdev, WSM_MIB_ID_RX_FILTER, &val, sizeof(val), Id);
 }
 
