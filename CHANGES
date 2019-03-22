@@ -1,3 +1,9 @@
+Changes in 2.1.1
+----------------
+
+  * Show firmware keyset in startup banner
+  * Update testmode API in internal versions
+
 Changes in 2.1
 --------------
 
