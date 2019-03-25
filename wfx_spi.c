@@ -31,6 +31,7 @@ struct wfx_spi_priv {
 	struct spi_device	*func;
 	struct wfx_dev		*core;
 	struct gpio_desc *gpio_reset;
+	bool need_swab;
 };
 
 static const struct wfx_platform_data wfx_spi_pdata = {
@@ -62,7 +63,7 @@ static int wfx_spi_read_ctrl_reg(struct wfx_spi_priv *bus, u16 *dst)
 	u16 regaddr = (WFX_REG_CONTROL << 12) | (sizeof(u16) / 2) | SET_READ;
 
 	cpu_to_le16s(regaddr);
-	if (bus->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+	if (bus->need_swab)
 		swab16s(&regaddr);
 
 	tx_buf[0] = tx_buf[2] = regaddr;
@@ -122,7 +123,7 @@ static int wfx_spi_copy_from_io(void *priv, unsigned int addr,
 #endif
 
 	cpu_to_le16s(&regaddr);
-	if (bus->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+	if (bus->need_swab)
 		swab16s(&regaddr);
 
 #ifndef DETECT_INVALID_CTRL_ACCESS
@@ -151,7 +152,7 @@ static int wfx_spi_copy_from_io(void *priv, unsigned int addr,
 	}
 #endif
 
-	if (bus->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+	if (bus->need_swab)
 		for (i = 0; i < count / 2; i++)
 			swab16s(&dst16[i]);
 	return ret;
@@ -180,7 +181,7 @@ static int wfx_spi_copy_to_io(void *priv, unsigned int addr,
 
 	cpu_to_le16s(&regaddr);
 
-	if (bus->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN)) {
+	if (bus->need_swab) {
 		swab16s(&regaddr);
 		for (i = 0; i < count / 2; i++)
 			swab16s(&src16[i]);
@@ -191,7 +192,7 @@ static int wfx_spi_copy_to_io(void *priv, unsigned int addr,
 	spi_message_add_tail(&t_msg, &m);
 	ret = spi_sync(bus->func, &m);
 
-	if (bus->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+	if (bus->need_swab)
 		for (i = 0; i < count / 2; i++)
 			swab16s(&src16[i]);
 	return ret;
@@ -244,9 +245,6 @@ static int wfx_spi_probe(struct spi_device *func)
 	// Trace below is also displayed by spi_setup() if compiled with DEBUG
 	dev_dbg(&func->dev, "SPI params: CS=%d, mode=%d bits/word=%d speed=%d",
 		func->chip_select, func->mode, func->bits_per_word, func->max_speed_hz);
-	if (func->bits_per_word != 16)
-		dev_dbg(&func->dev, "current setup is %d bits/word. You may improve performance using 16 bits/word\n",
-			 func->bits_per_word);
 	if (func->bits_per_word != 16 && func->bits_per_word != 8)
 		dev_warn(&func->dev, "unusual bits/word value: %d\n", func->bits_per_word);
 	if (func->max_speed_hz > 49000000)
@@ -256,6 +254,11 @@ static int wfx_spi_probe(struct spi_device *func)
 	if (!bus)
 		return -ENOMEM;
 	bus->func = func;
+	if (func->bits_per_word != 16)
+		dev_dbg(&func->dev, "current setup is %d bits/word. You may improve performance using 16 bits/word\n",
+			 func->bits_per_word);
+	if (func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+		bus->need_swab = true;
 	spi_set_drvdata(func, bus);
 
 	ret = devm_request_irq(&func->dev, func->irq, wfx_spi_irq_handler,
