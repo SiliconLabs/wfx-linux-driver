@@ -67,7 +67,7 @@ int wfx_register_bh(struct wfx_dev *wdev)
 	atomic_set(&wdev->bh_term, 0);
 	wdev->bh_error = 0;
 	wdev->hw_bufs_used = 0;
-	atomic_set(&wdev->device_can_sleep, 0);
+	atomic_set(&wdev->device_awake, 1);
 	init_waitqueue_head(&wdev->bh_wq);
 	init_waitqueue_head(&wdev->bh_evt_wq);
 
@@ -112,7 +112,7 @@ void wfx_irq_handler(struct wfx_dev *wdev)
 		pr_debug("[BH] error.\n");
 		return;
 	}
-	if (atomic_read(&wdev->device_can_sleep))
+	if (!atomic_read(&wdev->device_awake))
 		wfx_prevent_device_to_sleep(wdev);
 
 	if (wdev->pdata.sdio)
@@ -171,7 +171,7 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 	/* wait the IRQ indicating the device is ready*/
 #if 0
 	wait_event_interruptible_timeout(wdev->bh_wq,
-					!atomic_read(&wdev->device_can_sleep),
+					atomic_read(&wdev->device_awake),
 					HZ / 50);
 	/* typically HZ=100, then here wait 2 jiffies
 	 * indeed waiting 1 jiffie is dangerous because if n jiffies is
@@ -180,10 +180,10 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 	do {
 		usleep_range(WFX_WAKEUP_WAIT_STEP_MIN, WFX_WAKEUP_WAIT_STEP_MAX);
 		rdy_timeout += WFX_WAKEUP_WAIT_STEP_MIN;
-	} while (atomic_read(&wdev->device_can_sleep) &&
+	} while (!atomic_read(&wdev->device_awake) &&
 		 (rdy_timeout < WFX_WAKEUP_WAIT_MAX));
 #endif
-	if (atomic_read(&wdev->device_can_sleep) == 1) { /* timeout */
+	if (!atomic_read(&wdev->device_awake)) { /* timeout */
 		/* no IRQ then maybe the device was not sleeping
 		 * try to read the control register */
 		int error = control_reg_read(wdev, &Control_reg);
@@ -195,7 +195,7 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 			ret = 0;
 		} else {
 			dev_dbg(wdev->dev, "bh: device correctly wake up\n");
-			atomic_set(&wdev->device_can_sleep, 0);
+			atomic_set(&wdev->device_awake, 1);
 			ret = 1;
 		}
 	} else {
@@ -218,7 +218,7 @@ static int wfx_device_wakedown(struct wfx_dev *wdev)
 	int ret = 0;
 
 	gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
-	atomic_set(&wdev->device_can_sleep, 1);
+	atomic_set(&wdev->device_awake, 0);
 
 	return ret;
 }
@@ -235,7 +235,7 @@ static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev)
 	if (wdev->pdata.gpio_wakeup) {
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
 		dev_dbg(wdev->dev, "%s: wake up chip", __func__);
-		atomic_set(&wdev->device_can_sleep, 0);
+		atomic_set(&wdev->device_awake, 1);
 	}
 	return ret;
 }
@@ -249,7 +249,7 @@ static int wfx_check_pending_rx(struct wfx_dev *wdev, u32 *ctrl_reg_ptr)
 {
 	int i;
 	/* before reading the ctrl_reg we must be sure the device is awake */
-	if (atomic_read(&wdev->device_can_sleep))
+	if (!atomic_read(&wdev->device_awake))
 		if (wfx_device_wakeup(wdev) <= 0)
 			return -1; /* wake-up error */
 
@@ -408,7 +408,7 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 
 	pr_debug("[BH] %s\n", __func__);
 
-	if (atomic_read(&wdev->device_can_sleep)) {
+	if (!atomic_read(&wdev->device_awake)) {
 		ret = wfx_device_wakeup(wdev);
 		if (ret <= 0)           /* Did not awake */
 			return -1;      /* error */
@@ -469,7 +469,7 @@ static int wfx_bh(void *arg)
 			config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY);
 
 			if (!wdev->hw_bufs_used && /* !pending_rx && !pending_tx && */ wdev->pdata.gpio_wakeup &&
-			    !atomic_read(&wdev->device_can_sleep) && !atomic_read(&wdev->wait_for_scan)) {
+			    atomic_read(&wdev->device_awake) && !atomic_read(&wdev->wait_for_scan)) {
 				/* no data to process and allowed to go to sleep */
 				status = 10 * HZ; /* wakeup at least every 10s */
 				pr_debug("[BH] Device wakedown. No data.\n");
@@ -501,7 +501,7 @@ static int wfx_bh(void *arg)
 			/* because of the ctrl_reg read in SDIO IRQ we want to disable the IRQ when possible
 			 * if device is already awake then we can update the IRQ enable now
 			 * else we do it when we wake-up the device*/
-			if (wdev->pdata.sdio && !atomic_read(&wdev->device_can_sleep))
+			if (wdev->pdata.sdio && atomic_read(&wdev->device_awake))
 				config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_WRDY);
 
 			pr_debug("[BH] - rx: %d, tx: %d, term: %d, bh_err: %d, status: %ld , conf_mutex: %d\n",
@@ -585,14 +585,14 @@ tx:
 		/* then Re-read ctrl reg to be sure that no Rx msg is pending */
 		/* this read is also used as Dummy Read for SDIO retry mechanism to ack last Rx or Tx access */
 		if (!pending_rx) {
-			int memo_device_can_sleep = atomic_read(&wdev->device_can_sleep);
+			int memo_device_awake = atomic_read(&wdev->device_awake);
 
 			pending_rx = wfx_check_pending_rx(wdev, &ctrl_reg);
 			if (pending_rx < 0) {
 				break; /* error */
 			}
 
-			if (pending_rx == 0 && memo_device_can_sleep == 1) {
+			if (pending_rx == 0 && memo_device_awake == 0) {
 				/* device has been waked-up by wfx_check_pending_rx() just above
 				 * that has generated an IRQ and thus set wdev->bh_rx to 1.
 				 * to avoid going to sleep and wake-up immediately
