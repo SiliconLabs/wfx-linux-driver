@@ -51,9 +51,6 @@
 static int __wfx_flush(struct wfx_dev *wdev, bool drop);
 
 static void wfx_unjoin_work(struct work_struct *work);
-static void wfx_join_complete_work(struct work_struct *work);
-// Declared in sta.h
-//static void wfx_join_timeout_work(struct work_struct *work);
 static void wfx_bss_params_work(struct work_struct *work);
 static void wfx_bss_loss_work(struct work_struct *work);
 static void wfx_event_handler_work(struct work_struct *work);
@@ -298,10 +295,8 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	mutex_init(&wvif->bss_loss_lock);
 	/* STA Work*/
 	INIT_LIST_HEAD(&wvif->event_queue);
-	INIT_DELAYED_WORK(&wvif->join_timeout_work, wfx_join_timeout_work);
 	INIT_WORK(&wvif->event_handler_work, wfx_event_handler_work);
 	INIT_WORK(&wvif->unjoin_work, wfx_unjoin_work);
-	INIT_WORK(&wvif->join_complete_work, wfx_join_complete_work);
 	INIT_WORK(&wvif->wep_key_work, wfx_wep_key_work);
 	INIT_WORK(&wvif->bss_params_work, wfx_bss_params_work);
 	INIT_WORK(&wvif->set_beacon_wakeup_period_work, wfx_set_beacon_wakeup_period_work);
@@ -411,7 +406,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 
 	mutex_lock(&wdev->conf_mutex);
 	switch (wvif->state) {
-	case WFX_STATE_JOINING:
 	case WFX_STATE_PRE_STA:
 	case WFX_STATE_STA:
 	case WFX_STATE_IBSS:
@@ -456,7 +450,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	cancel_delayed_work_sync(&wvif->scan.probe_work);
 	cancel_delayed_work_sync(&wvif->scan.timeout);
 
-	cancel_delayed_work_sync(&wvif->join_timeout_work);
 	wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
 	cancel_work_sync(&wvif->unjoin_work);
 	cancel_delayed_work_sync(&wvif->link_id_gc_work);
@@ -1327,8 +1320,6 @@ void wfx_set_beacon_wakeup_period_work(struct work_struct *work)
 
 static void wfx_do_unjoin(struct wfx_vif *wvif)
 {
-	cancel_delayed_work_sync(&wvif->join_timeout_work);
-
 	mutex_lock(&wvif->wdev->conf_mutex);
 
 	if (atomic_read(&wvif->scan.in_progress)) {
@@ -1420,12 +1411,6 @@ static void wfx_do_join(struct wfx_vif *wvif)
 		.BasicRateSet	= wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
 	};
 
-	if (delayed_work_pending(&wvif->join_timeout_work)) {
-		dev_warn(wvif->wdev->dev, "do_join: join request already pending, skipping..\n");
-		wsm_unlock_tx(wvif->wdev);
-		return;
-	}
-
 	if (wvif->state)
 		wfx_do_unjoin(wvif);
 
@@ -1490,12 +1475,6 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	/* Turn on Block ACKs */
 	wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
 
-	/* Set up timeout */
-	if (join.JoinFlags.ForceWithInd) {
-		wvif->state = WFX_STATE_JOINING;
-		schedule_delayed_work(&wvif->join_timeout_work, WFX_JOIN_TIMEOUT);
-	}
-
 	/* 802.11w protected mgmt frames */
 
 	/* retrieve MFPC and MFPR flags from beacon or PBRSP */
@@ -1558,15 +1537,13 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	if (wsm_join(wvif->wdev, &join, wvif->Id)) {
 		ieee80211_connection_loss(wvif->vif);
 		wvif->join_complete_status = -1;
-		cancel_delayed_work_sync(&wvif->join_timeout_work);
 		wfx_update_listening(wvif, wvif->listening);
 		/* Tx lock still held, unjoin will clear it. */
 		if (!schedule_work(&wvif->unjoin_work))
 			wsm_unlock_tx(wvif->wdev);
 	} else {
 		wvif->join_complete_status = 0;
-		if (!(join.JoinFlags.ForceWithInd))
-			wfx_join_complete(wvif); /* Will clear tx_lock */
+		wfx_join_complete(wvif); /* Will clear tx_lock */
 
 		/* Upload keys */
 		wfx_upload_keys(wvif);
@@ -1585,39 +1562,6 @@ done_put:
 	mutex_unlock(&wvif->wdev->conf_mutex);
 	if (bss)
 		cfg80211_put_bss(wvif->wdev->hw->wiphy, bss);
-}
-
-void wfx_join_complete_cb(struct wfx_vif		*wvif,
-			  WsmHiJoinCompleteIndBody_t	*arg)
-{
-	pr_debug("[STA] wfx_join_complete_cb called, status=%d.\n",
-		 arg->Status);
-
-	if (cancel_delayed_work(&wvif->join_timeout_work)) {
-		wvif->join_complete_status = arg->Status;
-		schedule_work(&wvif->join_complete_work);
-	}
-}
-
-void wfx_join_complete_work(struct work_struct *work)
-{
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, join_complete_work);
-
-	mutex_lock(&wvif->wdev->conf_mutex);
-	wfx_join_complete(wvif);
-	mutex_unlock(&wvif->wdev->conf_mutex);
-}
-
-void wfx_join_timeout_work(struct work_struct *work)
-{
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, join_timeout_work.work);
-
-	pr_debug("[WSM] Join timed out.\n");
-	wsm_lock_tx(wvif->wdev);
-	if (!schedule_work(&wvif->unjoin_work))
-		wsm_unlock_tx(wvif->wdev);
 }
 
 void wfx_unjoin_work(struct work_struct *work)

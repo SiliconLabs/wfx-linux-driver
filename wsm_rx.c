@@ -224,10 +224,9 @@ static int wsm_scan_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, v
 static int wsm_join_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
-	WsmHiJoinCompleteIndBody_t *body = buf;
 
 	WARN_ON(!wvif);
-	wfx_join_complete_cb(wvif, body);
+	dev_warn(wdev->dev, "unattended JoinCompleteInd\n");
 
 	return 0;
 }

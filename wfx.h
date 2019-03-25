@@ -61,7 +61,6 @@ static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
 enum wfx_state {
 	WFX_STATE_PASSIVE = 0,
 	WFX_STATE_MONITOR,
-	WFX_STATE_JOINING,
 	WFX_STATE_PRE_STA,
 	WFX_STATE_STA,
 	WFX_STATE_IBSS,
@@ -223,8 +222,6 @@ struct wfx_vif {
 	struct wfx_grp_addr_table	multicast_filter;
 
 	struct work_struct	unjoin_work;
-	struct work_struct	join_complete_work;
-	struct delayed_work	join_timeout_work;
 	struct work_struct	bss_params_work;
 	struct delayed_work	bss_loss_work;
 	struct work_struct	event_handler_work;

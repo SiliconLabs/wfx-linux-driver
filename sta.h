@@ -72,13 +72,11 @@ int wfx_assign_vif_chanctx(struct ieee80211_hw *, struct ieee80211_vif *, struct
 void wfx_unassign_vif_chanctx(struct ieee80211_hw *, struct ieee80211_vif *, struct ieee80211_chanctx_conf *);
 
 // WSM Callbacks
-void wfx_join_complete_cb(struct wfx_vif *wvif, WsmHiJoinCompleteIndBody_t *arg);
 void wfx_suspend_resume(struct wfx_vif *wvif, WsmHiSuspendResumeTxIndBody_t *arg);
 
 // Other Helpers
 void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif, int init, int good, int bad);
 void wfx_cqm_bssloss_sm(struct wfx_vif *wvif, int init, int good, int bad);
-void wfx_join_timeout_work(struct work_struct *work);
 
 int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len);
 int wfx_send_pdata_pds(struct wfx_dev *wdev);

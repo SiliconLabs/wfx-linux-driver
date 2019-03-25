@@ -34,7 +34,6 @@ static int wfx_scan_start(struct wfx_vif *wvif, struct wsm_scan *scan)
 
 	switch (wvif->state) {
 	case WFX_STATE_PRE_STA:
-	case WFX_STATE_JOINING:
 		return -EBUSY;
 	default:
 		break;
@@ -162,11 +161,6 @@ void wfx_scan_work(struct work_struct *work)
 	bool first_run = (wvif->scan.begin == wvif->scan.curr &&
 			  wvif->scan.begin != wvif->scan.end);
 	int i;
-
-	if (first_run) {
-		if (cancel_delayed_work_sync(&wvif->join_timeout_work) > 0)
-			wfx_join_timeout_work(&wvif->join_timeout_work.work);
-	}
 
 	mutex_lock(&wvif->wdev->conf_mutex);
 
