@@ -152,7 +152,7 @@ static int wfx_spi_copy_from_io(void *priv, unsigned int addr,
 	}
 #endif
 
-	if (bus->need_swab)
+	if (bus->need_swab && addr == WFX_REG_CONFIG)
 		for (i = 0; i < count / 2; i++)
 			swab16s(&dst16[i]);
 	return ret;
@@ -181,18 +181,18 @@ static int wfx_spi_copy_to_io(void *priv, unsigned int addr,
 
 	cpu_to_le16s(&regaddr);
 
-	if (bus->need_swab) {
+	if (bus->need_swab)
 		swab16s(&regaddr);
+	if (bus->need_swab && addr == WFX_REG_CONFIG)
 		for (i = 0; i < count / 2; i++)
 			swab16s(&src16[i]);
-	}
 
 	spi_message_init(&m);
 	spi_message_add_tail(&t_addr, &m);
 	spi_message_add_tail(&t_msg, &m);
 	ret = spi_sync(bus->func, &m);
 
-	if (bus->need_swab)
+	if (bus->need_swab && addr == WFX_REG_CONFIG)
 		for (i = 0; i < count / 2; i++)
 			swab16s(&src16[i]);
 	return ret;
@@ -254,9 +254,6 @@ static int wfx_spi_probe(struct spi_device *func)
 	if (!bus)
 		return -ENOMEM;
 	bus->func = func;
-	if (func->bits_per_word != 16)
-		dev_dbg(&func->dev, "current setup is %d bits/word. You may improve performance using 16 bits/word\n",
-			 func->bits_per_word);
 	if (func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
 		bus->need_swab = true;
 	spi_set_drvdata(func, bus);

@@ -331,7 +331,7 @@ int wfx_init_device(struct wfx_dev *wdev)
 	ktime_t now, start;
 	u32 reg;
 
-	reg = CFG_DIRECT_ACCESS_MODE | CFG_DISABLE_CPU_CLK | CFG_CPU_RESET;
+	reg = CFG_DIRECT_ACCESS_MODE | CFG_DISABLE_CPU_CLK | CFG_CPU_RESET | CFG_WORD_MODE2;
 	if (wdev->pdata.use_rising_clk)
 		reg |= CFG_CLK_RISE_EDGE;
 	ret = config_reg_write(wdev, reg);
