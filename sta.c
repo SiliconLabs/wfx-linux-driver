@@ -1372,23 +1372,6 @@ done:
 	mutex_unlock(&wvif->wdev->conf_mutex);
 }
 
-static void wfx_join_complete(struct wfx_vif *wvif)
-{
-	pr_debug("[STA] Join complete (%d)\n", wvif->join_complete_status);
-
-	if (wvif->join_complete_status) {
-		wvif->state = WFX_STATE_PASSIVE;
-		wfx_update_listening(wvif, wvif->listening);
-		wfx_do_unjoin(wvif);
-		ieee80211_connection_loss(wvif->vif);
-	} else {
-		if (wvif->mode == NL80211_IFTYPE_ADHOC)
-			wvif->state = WFX_STATE_IBSS;
-		else
-			wvif->state = WFX_STATE_PRE_STA;
-	}
-	wsm_unlock_tx(wvif->wdev); /* Clearing the lock held before do_join() */
-}
 
 /* MUST be called with tx_lock held!  It will be unlocked for us. */
 static void wfx_do_join(struct wfx_vif *wvif)
@@ -1543,7 +1526,11 @@ static void wfx_do_join(struct wfx_vif *wvif)
 			wsm_unlock_tx(wvif->wdev);
 	} else {
 		wvif->join_complete_status = 0;
-		wfx_join_complete(wvif); /* Will clear tx_lock */
+		if (wvif->mode == NL80211_IFTYPE_ADHOC)
+			wvif->state = WFX_STATE_IBSS;
+		else
+			wvif->state = WFX_STATE_PRE_STA;
+		wsm_unlock_tx(wvif->wdev);
 
 		/* Upload keys */
 		wfx_upload_keys(wvif);
