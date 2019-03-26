@@ -552,8 +552,8 @@ rx:
 		while (pending_rx && (done < 32)) {
 			/* ctrl_reg is updated in wfx_bh_rx_helper() using the piggy backing */
 			ret = wfx_bh_rx_helper(wdev, (u32 *) &ctrl_reg);
-			if (ret < 0)
-				break;
+			if (ret < 0) // Ignore piggyback on error
+				ctrl_reg = 0;
 			pending_rx = ctrl_reg & CTRL_NEXT_LEN_MASK;
 			done++;
 		}
