@@ -371,8 +371,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	}
 
 	/* wfx_wsm_rx takes care on SKB livetime */
-	if (wsm_handle_rx(wdev, wsm, &skb_rx))
-		goto err;
+	wsm_handle_rx(wdev, wsm, &skb_rx);
 
 	if (skb_rx) {
 		dev_kfree_skb(skb_rx);
