@@ -247,13 +247,22 @@ static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev)
  */
 static int wfx_check_pending_rx(struct wfx_dev *wdev, u32 *ctrl_reg_ptr)
 {
+	int i;
 	/* before reading the ctrl_reg we must be sure the device is awake */
 	if (atomic_read(&wdev->device_can_sleep))
 		if (wfx_device_wakeup(wdev) <= 0)
 			return -1; /* wake-up error */
 
-	if (control_reg_read(wdev, ctrl_reg_ptr))
-		return -2; /* read error */
+	for (i = 0; i < 4; i++) {
+		if (control_reg_read(wdev, ctrl_reg_ptr))
+			return -EIO;
+		if (*ctrl_reg_ptr & CTRL_WLAN_READY)
+			break;
+		dev_err(wdev->dev, "Chip is not ready! (ctrl: %08x) %d/4\n", *ctrl_reg_ptr, i + 1);
+		udelay(500);
+	}
+	if (!(*ctrl_reg_ptr & CTRL_WLAN_READY))
+		*ctrl_reg_ptr = 0;
 
 	return *ctrl_reg_ptr & CTRL_NEXT_LEN_MASK;
 }
