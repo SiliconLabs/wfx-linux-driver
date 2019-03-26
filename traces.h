@@ -258,6 +258,27 @@ DEFINE_EVENT(io_data32, io_read32,
 #define _trace_io_ind_read32(reg, addr, val) trace_io_read32(reg, addr, val)
 #define _trace_io_read32(reg, val) trace_io_read32(reg, -1, val)
 
+DECLARE_EVENT_CLASS(piggyback,
+	TP_PROTO(u32 val, bool ignored),
+	TP_ARGS(val, ignored),
+	TP_STRUCT__entry(
+		__field(int, val)
+		__field(bool, ignored)
+	),
+	TP_fast_assign(
+		__entry->val = val;
+		__entry->ignored = ignored;
+	),
+	TP_printk("CONTROL: %08x%s",
+		__entry->val,
+		__entry->ignored ? " (ignored)" : ""
+	)
+);
+DEFINE_EVENT(piggyback, piggyback,
+	TP_PROTO(u32 val, bool ignored),
+	TP_ARGS(val, ignored));
+#define _trace_piggyback(val, ignored) trace_piggyback(val, ignored)
+
 DECLARE_EVENT_CLASS(io_data,
 	TP_PROTO(int reg, int addr, const void *io_buf, size_t len),
 	TP_ARGS(reg, addr, io_buf, len),

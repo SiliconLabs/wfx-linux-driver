@@ -368,6 +368,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 		skb_rx = NULL;
 	}
 
+	_trace_piggyback(*ctrl_reg, false);
 	return 0;
 
 err:
@@ -375,6 +376,7 @@ err:
 		dev_kfree_skb(skb_rx);
 		skb_rx = NULL;
 	}
+	_trace_piggyback(*ctrl_reg, true);
 	return -1;
 }
 
