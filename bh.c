@@ -333,6 +333,8 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	if (wsm_len > read_len) {
 		dev_err(wdev->dev, "inconsistent message length: %zu != %zu\n",
 			wsm_len, read_len);
+		print_hex_dump(KERN_INFO, "wsm: ", DUMP_PREFIX_OFFSET, 16, 1,
+			       data, read_len, true);
 		goto err;
 	}
 	_trace_wsm_recv((u16 *) data);
