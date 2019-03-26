@@ -155,11 +155,11 @@ int wsm_release_tx_buffer(struct wfx_dev *wdev, int count)
 
 /*
  * wakeup the device : it must wait the device is ready before continuing
- * it returns 1 if the device is awake, else 0
+ * it returns 0 if the device is awake, else < 0
  */
 static int wfx_device_wakeup(struct wfx_dev *wdev)
 {
-	int ret = 1;
+	int ret = 0;
 	u32 Control_reg;
 	int rdy_timeout = 0;
 
@@ -189,22 +189,22 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 		int error = control_reg_read(wdev, &Control_reg);
 
 		if (error || !Control_reg || Control_reg == ~0) {
-			ret = 0;
+			ret = -EIO;
 		} else if (!(Control_reg & CTRL_WLAN_READY)) {
 			dev_err(wdev->dev, "bh: cannot wakeup device\n");
-			ret = 0;
+			ret = -EIO;
 		} else {
 			dev_dbg(wdev->dev, "bh: device correctly wake up\n");
 			atomic_set(&wdev->device_awake, 1);
-			ret = 1;
+			ret = 0;
 		}
 	} else {
 		dev_dbg(wdev->dev, "bh: already awake\n");
-		ret = 1;
+		ret = 0;
 	}
 
 	/* device is awake, remove the IRQ on data available */
-	if (wdev->pdata.sdio && ret == 1)
+	if (wdev->pdata.sdio && !ret)
 		config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_WRDY);
 
 	return ret;
@@ -250,7 +250,7 @@ static int wfx_check_pending_rx(struct wfx_dev *wdev, u32 *ctrl_reg_ptr)
 	int i;
 	/* before reading the ctrl_reg we must be sure the device is awake */
 	if (!atomic_read(&wdev->device_awake))
-		if (wfx_device_wakeup(wdev) <= 0)
+		if (wfx_device_wakeup(wdev))
 			return -1; /* wake-up error */
 
 	for (i = 0; i < 4; i++) {
@@ -409,9 +409,8 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 	pr_debug("[BH] %s\n", __func__);
 
 	if (!atomic_read(&wdev->device_awake)) {
-		ret = wfx_device_wakeup(wdev);
-		if (ret <= 0)           /* Did not awake */
-			return -1;      /* error */
+		if (wfx_device_wakeup(wdev))
+			return -1;
 	}
 
 	wsm_alloc_tx_buffer(wdev);
