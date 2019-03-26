@@ -225,7 +225,7 @@ static int wfx_device_wakedown(struct wfx_dev *wdev)
 	gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
 	atomic_set(&wdev->device_can_sleep, 1);
 
-		return ret;
+	return ret;
 }
 
 /*
@@ -242,16 +242,15 @@ static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev)
 		dev_dbg(wdev->dev, "%s: wake up chip", __func__);
 		atomic_set(&wdev->device_can_sleep, 0);
 	}
-		return ret;
+	return ret;
 }
 
 /*
  * read the control register to check if there are Rx messages to read
  * It updates the ctrl_reg value and returns 1 when there's a message to read
  * it returns negative values in case of errors
-	 */
-static int wfx_check_pending_rx(struct wfx_dev	*wdev,
-				u32		*ctrl_reg_ptr)
+ */
+static int wfx_check_pending_rx(struct wfx_dev *wdev, u32 *ctrl_reg_ptr)
 {
 	/* before reading the ctrl_reg we must be sure the device is awake */
 	if (atomic_read(&wdev->device_can_sleep))
@@ -312,8 +311,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	}
 
 	/* update ctrl_reg with the u16 piggybacked value */
-	*ctrl_reg =
-		(u32) le16_to_cpu(((__le16 *)data)[alloc_len / 2 - 1]);
+	*ctrl_reg = (u32) le16_to_cpu(((__le16 *)data)[alloc_len / 2 - 1]);
 
 #ifdef RASPBERRY_PI
 	if (!wdev->pdata.sdio && data[alloc_len - 2] == HIF_ERROR_DETECTION_8) {
@@ -325,7 +323,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	}
 #endif
 
-	wsm = (HiMsgHdr_t *)data;
+	wsm = (HiMsgHdr_t *) data;
 	wsm_len = le16_to_cpu(wsm->MsgLen);
 	if (wsm_len > read_len) {
 		dev_err(wdev->dev, "inconsistent message length: %zu != %zu\n",
@@ -352,10 +350,8 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 
 	/* is it a confirmation message? */
 	if ((wsm_id & HI_MSG_TYPE_MASK) == 0) {
-		int rc = wsm_release_tx_buffer(wdev, 1);
-
-		if (rc < 0)
-			return rc;
+		if (wsm_release_tx_buffer(wdev, 1) < 0)
+			goto err;
 	}
 
 	/* wfx_wsm_rx takes care on SKB livetime */
