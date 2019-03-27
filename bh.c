@@ -286,9 +286,6 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	if (!read_len)
 		return 0;
 
-	if (read_len < sizeof(HiMsgHdr_t))
-		return -1;
-
 	read_len = read_len + 2;
 
 	alloc_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, read_len);
