@@ -403,8 +403,6 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 	int ret, tx_burst;
 	HiMsgHdr_t *wsm;
 
-	pr_debug("[BH] %s\n", __func__);
-
 	if (!atomic_read(&wdev->device_awake)) {
 		if (wfx_device_wakeup(wdev))
 			return -1;
@@ -415,9 +413,8 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 	ret = wsm_get_tx(wdev, &data, &tx_len, &tx_burst); /* returns 1 if it founds some data to Tx */
 	if (ret <= 0) {
 		wsm_release_tx_buffer(wdev, 1);
-		if (WARN_ON(ret < 0))
-			return ret; /* Error */
-		return 0; /* No work */
+		WARN_ON(ret < 0);
+		return ret;
 	}
 	wfx_dbg_filter_wsm(wdev, data);
 
@@ -432,7 +429,7 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 	if (wfx_data_write(wdev, data, tx_len)) {
 		dev_err(wdev->dev, "bh: tx blew up, len %zu\n", tx_len);
 		wsm_release_tx_buffer(wdev, 1);
-		return -1; /* Error */
+		return -1;
 	}
 
 	_trace_wsm_send((u16 *) data);
