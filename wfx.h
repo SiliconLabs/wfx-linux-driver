@@ -207,7 +207,6 @@ struct wfx_vif {
 	bool			aid0_bit_set;
 	bool			delayed_unjoin;
 	bool			disable_beacon_filter;
-	bool			listening;
 	bool			cqm_use_rssi;
 
 	/* TX/RX and security */

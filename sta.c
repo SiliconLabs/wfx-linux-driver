@@ -440,7 +440,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	wvif->key_map = 0;
 	memset(&wvif->keys, 0, sizeof(wvif->keys));
 
-	wvif->listening = false;
 	wvif->state = WFX_STATE_PASSIVE;
 	wfx_queue_wait_empty_vif(wvif);
 	wsm_unlock_tx(wdev);
@@ -458,7 +457,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 
 	wdev->vif[wvif->Id] = NULL;
 	wvif->mode = NL80211_IFTYPE_UNSPECIFIED;
-	wvif->listening = false;
 	wvif->vif = NULL;
 
 	mutex_unlock(&wdev->conf_mutex);
@@ -752,8 +750,6 @@ void wfx_configure_filter(struct ieee80211_hw *hw,
 {
 	struct wfx_vif *wvif = NULL;
 	struct wfx_dev *wdev = hw->priv;
-	bool listening = !!(*total_flags &
-			    (FIF_OTHER_BSS | FIF_BCN_PRBRESP_PROMISC | FIF_PROBE_REQ));
 
 	*total_flags &= FIF_OTHER_BSS | FIF_FCSFAIL | FIF_PROBE_REQ;
 
@@ -761,12 +757,7 @@ void wfx_configure_filter(struct ieee80211_hw *hw,
 		down(&wvif->scan.lock);
 		wvif->rx_filter.bssid = (*total_flags & (FIF_OTHER_BSS | FIF_PROBE_REQ)) ? 1 : 0;
 		wvif->disable_beacon_filter = !(*total_flags & FIF_PROBE_REQ);
-		if (wvif->listening != listening) {
-			wvif->listening = listening;
-			wsm_lock_tx(wvif->wdev);
-			wfx_update_listening(wvif, listening);
-			wsm_unlock_tx(wvif->wdev);
-		}
+		wsm_set_probe_responder(wvif, true);
 		wfx_update_filtering(wvif);
 		up(&wvif->scan.lock);
 	}
@@ -1335,7 +1326,6 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 	wsm_set_macaddr(wvif->wdev, wvif->vif->addr, wvif->Id);
 	wfx_free_event_queue(wvif);
 	cancel_work_sync(&wvif->event_handler_work);
-	wfx_update_listening(wvif, wvif->listening);
 	wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
 
 	/* Disable Block ACKs */
@@ -1436,8 +1426,6 @@ static void wfx_do_join(struct wfx_vif *wvif)
 
 	wsm_flush_tx(wvif->wdev);
 
-	wfx_update_listening(wvif, false);
-
 	if (wvif_count(wvif->wdev) <= 1)
 		wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
 
@@ -1503,7 +1491,6 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	if (wsm_join(wvif->wdev, &join, wvif->Id)) {
 		ieee80211_connection_loss(wvif->vif);
 		wvif->join_complete_status = -1;
-		wfx_update_listening(wvif, wvif->listening);
 		/* Tx lock still held, unjoin will clear it. */
 		if (!schedule_work(&wvif->unjoin_work))
 			wsm_unlock_tx(wvif->wdev);
@@ -1542,15 +1529,6 @@ void wfx_unjoin_work(struct work_struct *work)
 	wfx_do_unjoin(wvif);
 
 	wsm_unlock_tx(wvif->wdev);
-}
-
-void wfx_update_listening(struct wfx_vif *wvif, bool enabled)
-{
-	if (enabled) {
-		if (wvif->state == WFX_STATE_PASSIVE) {
-			wsm_set_probe_responder(wvif, true);
-		}
-	}
 }
 
 int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
