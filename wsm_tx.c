@@ -159,20 +159,17 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len)
 	ret = wfx_cmd_send(wdev, hdr, reply, sizeof(*reply), false);
 
 	reply->Length -= 4; // Drop header
-	// Future API versions may reply messages bigger than expected. In this
-	// case, extra bytes may be safely ignored.
-	if (val_len < reply->Length)
-		dev_dbg(wdev->dev, "reply is bigger than expected for %s (%zu < %d)\n",
+	if (val_len < reply->Length) {
+		dev_err(wdev->dev, "Buffer is too small to receive %s (%zu < %d)\n",
 			get_mib_name(id), val_len, reply->Length);
-	if (val_len > reply->Length)
-		dev_dbg(wdev->dev, "reply is smaller than expected for %s (%zu > %d)\n",
-			get_mib_name(id), val_len, reply->Length);
+		ret = -ENOMEM;
+	}
 	if (id != reply->MibId) {
 		dev_warn(wdev->dev, "%s: confirmation mismatch request\n", __func__);
 		ret = -EIO;
 	}
 	if (!ret)
-		memcpy(val, &reply->MibData, min((size_t) reply->Length, val_len));
+		memcpy(val, &reply->MibData, reply->Length);
 	else
 		memset(val, 0xFF, val_len);
 	kfree(hdr);

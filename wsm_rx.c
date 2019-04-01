@@ -33,7 +33,7 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 	// All confirm messages start with Status
 	int status = le32_to_cpu(*((__le32 *) buf));
 	int cmd = hdr->s.t.MsgId;
-	size_t len = hdr->MsgLen - 4; // drop header
+	int len = hdr->MsgLen - 4; // drop header
 
 	WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
 
@@ -44,12 +44,10 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 	}
 
 	if (wdev->wsm_cmd.buf_recv) {
-		// Future API versions may reply messages bigger than expected.
-		// In this case, extra bytes may be safely ignored.
-		if (len < wdev->wsm_cmd.len_recv)
-			dev_dbg(wdev->dev, "reply is bigger than expected for %s (%zu < %zu)\n",
-				get_wsm_name(cmd), len, wdev->wsm_cmd.len_recv);
-		memcpy(wdev->wsm_cmd.buf_recv, buf, min(len, wdev->wsm_cmd.len_recv));
+		if (wdev->wsm_cmd.len_recv >= len)
+			memcpy(wdev->wsm_cmd.buf_recv, buf, len);
+		else
+			status = -EINVAL;
 	}
 	wdev->wsm_cmd.ret = status;
 
