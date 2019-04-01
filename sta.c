@@ -758,7 +758,6 @@ u64 wfx_prepare_multicast(struct ieee80211_hw *hw, struct netdev_hw_addr_list *m
 	return 0;
 }
 
-// FIXME: FIF_PROBE_REQ could be handled on each vif independently
 void wfx_configure_filter(struct ieee80211_hw *hw,
 			     unsigned int changed_flags,
 			     unsigned int *total_flags,
