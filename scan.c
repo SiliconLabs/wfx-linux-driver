@@ -103,7 +103,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 
 	if (!ret)
 		/* Host want to be the probe responder. */
-		ret = wsm_set_probe_responder(wvif, true);
+		ret = wsm_fwd_probe_req(wvif, true);
 	if (ret) {
 		mutex_unlock(&wdev->conf_mutex);
 		up(&wvif->scan.lock);

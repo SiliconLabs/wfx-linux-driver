@@ -113,7 +113,7 @@ int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame, cons
 
 int wsm_map_link(struct wfx_dev *wdev, u8 *mac_addr, int flags, int sta_id, int Id);
 int wfx_unmap_link(struct wfx_vif *wvif, int link_id);
-int wsm_set_probe_responder(struct wfx_vif *wvif, bool enable);
+int wsm_fwd_probe_req(struct wfx_vif *wvif, bool enable);
 
 int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm, struct sk_buff **skb_p);
 int wsm_get_tx(struct wfx_dev *wdev, u8 **data, size_t *tx_len, int *burst);

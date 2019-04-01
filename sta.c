@@ -757,7 +757,7 @@ void wfx_configure_filter(struct ieee80211_hw *hw,
 		down(&wvif->scan.lock);
 		wvif->rx_filter.bssid = (*total_flags & (FIF_OTHER_BSS | FIF_PROBE_REQ)) ? 1 : 0;
 		wvif->disable_beacon_filter = !(*total_flags & FIF_PROBE_REQ);
-		wsm_set_probe_responder(wvif, true);
+		wsm_fwd_probe_req(wvif, true);
 		wfx_update_filtering(wvif);
 		up(&wvif->scan.lock);
 	}
@@ -1826,10 +1826,10 @@ static int wfx_upload_beacon(struct wfx_vif *wvif)
 	p->FrameType = WSM_TMPLT_PRBRES;
 
 	if (wvif->vif->p2p) {
-		ret = wsm_set_probe_responder(wvif, true);
+		ret = wsm_fwd_probe_req(wvif, true);
 	} else {
 		ret = wsm_set_template_frame(wvif->wdev, p, wvif->Id);
-		wsm_set_probe_responder(wvif, false);
+		wsm_fwd_probe_req(wvif, false);
 	}
 
 done:

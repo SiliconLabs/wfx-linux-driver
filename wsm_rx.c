@@ -105,7 +105,7 @@ int wfx_unmap_link(struct wfx_vif *wvif, int sta_id)
 	return wsm_map_link(wvif->wdev, mac_addr, 1, sta_id, wvif->Id);
 }
 
-int wsm_set_probe_responder(struct wfx_vif *wvif, bool enable)
+int wsm_fwd_probe_req(struct wfx_vif *wvif, bool enable)
 {
 	wvif->rx_filter.probeResponder = enable;
 	return wsm_set_rx_filter(wvif->wdev, &wvif->rx_filter, wvif->Id);
