@@ -409,15 +409,16 @@ int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm, struct sk_buff **skb_p)
 	return -EIO;
 }
 
-static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
-			       WsmHiTxReq_t			*wsm,
+static bool wsm_handle_tx_data(struct wfx_vif *wvif,
+			       WsmHiTxReqBody_t *wsm,
 			       const struct ieee80211_tx_info *tx_info,
 			       const struct wfx_txpriv *txpriv,
 			       struct wfx_queue *queue)
 {
 	bool handled = false;
+	u8 *buf8 = (u8 *) wsm;
 	const struct ieee80211_hdr *frame =
-		(struct ieee80211_hdr *)&((u8 *)wsm)[txpriv->offset];
+		(struct ieee80211_hdr *) (buf8 + txpriv->offset - sizeof(HiMsgHdr_t));
 	__le16 fctl = frame->frame_control;
 
 	enum {
@@ -441,7 +442,7 @@ static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
 				   "A frame with expired link id is dropped.\n");
 			action = do_drop;
 		}
-		if (wfx_queue_get_generation(wsm->Body.PacketId) >
+		if (wfx_queue_get_generation(wsm->PacketId) >
 				WFX_MAX_REQUEUE_ATTEMPTS) {
 			dev_warn(wvif->wdev->dev,
 				   "Too many attempts to requeue a frame; dropped.\n");
@@ -465,8 +466,8 @@ static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
 		if (ieee80211_is_nullfunc(fctl)) {
 			mutex_lock(&wvif->bss_loss_lock);
 			if (wvif->bss_loss_state) {
-				wvif->bss_loss_confirm_id = wsm->Body.PacketId;
-				wsm->Body.QueueId.QueueId = WSM_QUEUE_ID_VOICE;
+				wvif->bss_loss_confirm_id = wsm->PacketId;
+				wsm->QueueId.QueueId = WSM_QUEUE_ID_VOICE;
 			}
 			mutex_unlock(&wvif->bss_loss_lock);
 		} else if (ieee80211_is_probe_req(fctl)) {
@@ -484,21 +485,21 @@ static bool wsm_handle_tx_data(struct wfx_vif		*wvif,
 	case do_probe:
 		pr_debug("[WSM] Convert probe request to scan.\n");
 		wsm_lock_tx_async(wvif->wdev);
-		wvif->wdev->pending_frame_id = wsm->Body.PacketId;
+		wvif->wdev->pending_frame_id = wsm->PacketId;
 		if (!schedule_work(&wvif->scan.probe_work.work))
 			wsm_unlock_tx(wvif->wdev);
 		handled = true;
 		break;
 	case do_drop:
 		pr_debug("[WSM] Drop frame (0x%.4X).\n", fctl);
-		BUG_ON(wfx_queue_remove(queue, wsm->Body.PacketId));
+		BUG_ON(wfx_queue_remove(queue, wsm->PacketId));
 		handled = true;
 		break;
 	case do_wep:
 		pr_debug("[WSM] Issue set_default_wep_key.\n");
 		wsm_lock_tx_async(wvif->wdev);
 		wvif->wep_default_key_id = tx_info->control.hw_key->keyidx;
-		wvif->wdev->pending_frame_id = wsm->Body.PacketId;
+		wvif->wdev->pending_frame_id = wsm->PacketId;
 		if (!schedule_work(&wvif->wep_key_work))
 			wsm_unlock_tx(wvif->wdev);
 		handled = true;
@@ -671,7 +672,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 		wvif = wdev_to_wvif(wdev, wsm->Header.s.b.IntId);
 		WARN_ON(!wvif);
 		
-		if (wsm_handle_tx_data(wvif, wsm, tx_info, txpriv, queue))
+		if (wsm_handle_tx_data(wvif, &wsm->Body, tx_info, txpriv, queue))
 			continue;  /* Handled by WSM */
 
 		wvif->pspoll_mask &= ~BIT(txpriv->raw_link_id);
