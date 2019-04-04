@@ -339,7 +339,7 @@ void wfx_probe_work(struct work_struct *work)
 	u8 queue_id = wfx_queue_get_queue_id(wvif->wdev->pending_frame_id);
 	struct wfx_queue *queue = &wvif->wdev->tx_queue[queue_id];
 	const struct wfx_txpriv *txpriv;
-	WsmHiTxReq_t *wsm;
+	WsmHiTxReqBody_t *wsm;
 	struct sk_buff *skb;
 	WsmHiSsidDef_t ssids = { };
 	u8 ch[WSM_API_CHANNEL_LIST_SIZE] = {
@@ -378,8 +378,8 @@ void wfx_probe_work(struct work_struct *work)
 		wsm_unlock_tx(wvif->wdev);
 		return;
 	}
-	wsm = (WsmHiTxReq_t *)skb->data;
-	scan.scan_req.MaxTransmitRate = wsm->Body.MaxTxRate;
+	wsm = (WsmHiTxReqBody_t *) (skb->data + sizeof(HiMsgHdr_t));
+	scan.scan_req.MaxTransmitRate = wsm->MaxTxRate;
 	scan.scan_req.Band = WSM_PHY_BAND_2_4G;
 	if (wvif->state == WFX_STATE_STA ||
 	    wvif->state == WFX_STATE_IBSS) {
