@@ -459,11 +459,16 @@ static const struct ieee80211_rate *wfx_get_tx_rate(struct wfx_vif *wvif,
 						    const struct ieee80211_tx_rate *rate)
 {
 	struct wfx_dev *wdev = wvif->wdev;
+	int band = NL80211_BAND_2GHZ;
+
+	// In some circumstances, channel is unassigned before all data was sent.
+	if (wvif->channel)
+		band = wvif->channel->band;
 	if (rate->idx < 0)
 		return NULL;
 	if (rate->flags & IEEE80211_TX_RC_MCS)
 		return &wdev->mcs_rates[rate->idx];
-	return &wdev->hw->wiphy->bands[wvif->channel->band]->bitrates[rate->idx];
+	return &wdev->hw->wiphy->bands[band]->bitrates[rate->idx];
 }
 
 static int wfx_tx_h_calc_link_ids(struct wfx_vif *wvif, struct wfx_txinfo *t)
