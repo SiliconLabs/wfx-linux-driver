@@ -48,6 +48,8 @@
 #define RSN_CAPA_MFPR_BIT BIT(6)
 #define RSN_CAPA_MFPC_BIT BIT(7)
 
+#define TXOP_UNIT			32
+
 static int __wfx_flush(struct wfx_dev *wdev, bool drop);
 
 static void wfx_unjoin_work(struct work_struct *work);

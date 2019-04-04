@@ -31,6 +31,8 @@
 #define WFX_WAKEUP_WAIT_STEP_MAX 300  /*in us */
 #define WFX_WAKEUP_WAIT_MAX 2000      /*in us */
 
+#define WSM_TX_SEQ(seq)               ((seq & HI_MSG_SEQ_RANGE) << 3)
+
 static int wfx_bh(void *arg);
 static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev);
 

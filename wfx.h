@@ -57,6 +57,23 @@ static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
 #define INVALID_PDS_CONFIG_FILE    1
 #define JOIN_CNF_AUTH_FAILED       2
 
+#define WSM_DUAL_CTS_PROT_ENB		BIT(0)
+#define WSM_NON_GREENFIELD_STA_PRESENT	BIT(1)
+
+#define WSM_PHY_BAND_2_4G		(0)
+#define WSM_PHY_BAND_5G			(1)
+
+#define WSM_KEY_MAX_INDEX		(16)
+#define WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES	2
+/* Start modes */
+#define WSM_START_MODE_AP		(0)
+#define WSM_START_MODE_P2P_GO		(1)
+#define WSM_START_MODE_P2P_DEV		(2)
+
+#define WSM_CMD_LAST_CHANCE_TIMEOUT	(HZ * 3 / 2)
+#define WSM_TX_EXTRA_HEADROOM		(28) // sizeof(hdr) + sizeof(tx req) + sizeof(alignment)
+#define WSM_RX_EXTRA_HEADROOM		(16) // sizeof(hdr) + sizeof(rx req)
+
 /* Please keep order */
 enum wfx_state {
 	WFX_STATE_PASSIVE = 0,
