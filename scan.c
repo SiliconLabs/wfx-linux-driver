@@ -23,6 +23,7 @@
 #include "scan.h"
 #include "wfx.h"
 #include "sta.h"
+#include "wsm_rx.h"
 
 static void wfx_scan_restart_delayed(struct wfx_vif *wvif);
 

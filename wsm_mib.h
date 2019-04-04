@@ -19,22 +19,13 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-#ifndef WFX_WSM_H
-#define WFX_WSM_H
+#ifndef WFX_WSM_MIB_H
+#define WFX_WSM_MIB_H
 
-#include <linux/spinlock.h>
 #include <linux/etherdevice.h>
 
-#include "wfx_api.h"
-
-struct wfx_dev;
-struct wfx_vif;
-
-struct wsm_scan {
-	WsmHiStartScanReqBody_t scan_req;
-	WsmHiSsidDef_t		*ssids;
-	u8			*ch;
-};
+#include "wsm_tx.h"
+#include "wsm_cmd_api.h"
 
 struct wsm_rx_filter {
 	bool	bssid;
@@ -46,47 +37,6 @@ struct wsm_protected_mgmt_policy {
 	bool	unprotectedMgmtFramesAllowed;
 	bool	encryptionForAuthFrame;
 };
-
-struct wsm_cmd {
-	struct mutex      lock;
-	struct completion ready;
-	struct completion done;
-	bool              async;
-	HiMsgHdr_t        *buf_send;
-	void              *buf_recv;
-	size_t            len_recv;
-	int               ret;
-};
-
-void init_wsm_cmd(struct wsm_cmd *wsm_cmd);
-int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len);
-int wsm_reset(struct wfx_dev *wdev, bool reset_stat, int Id);
-int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *buf, size_t buf_size);
-int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *buf, size_t buf_size, int Id);
-int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id);
-int wsm_stop_scan(struct wfx_dev *wdev, int Id);
-int wsm_join(struct wfx_dev *wdev, const WsmHiJoinReqBody_t *arg, int Id);
-int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg, int Id);
-int wsm_set_bss_params(struct wfx_dev *wdev, const WsmHiSetBssParamsReqBody_t *arg, int Id);
-int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg, int Id);
-int wsm_remove_key(struct wfx_dev *wdev, int idx, int Id);
-int wsm_set_edca_queue_params(struct wfx_dev *wdev, const WsmHiEdcaQueueParamsReqBody_t *arg, int Id);
-int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg, int Id);
-int wsm_beacon_transmit(struct wfx_dev *wdev, bool enable, int Id);
-int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame, const u8 *ies, size_t ies_len, int Id);
-
-int wsm_map_link(struct wfx_dev *wdev, u8 *mac_addr, int flags, int sta_id, int Id);
-int wfx_unmap_link(struct wfx_vif *wvif, int link_id);
-int wsm_fwd_probe_req(struct wfx_vif *wvif, bool enable);
-
-int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm, struct sk_buff **skb_p);
-int wsm_get_tx(struct wfx_dev *wdev, u8 **data, size_t *tx_len, int *burst);
-
-void wsm_lock_tx(struct wfx_dev *wdev);
-void wsm_lock_tx_async(struct wfx_dev *wdev);
-void wsm_unlock_tx(struct wfx_dev *wdev);
-
-bool wsm_flush_tx(struct wfx_dev *wdev);
 
 static inline int wsm_set_output_power(struct wfx_dev *wdev,
 				       int power_level,
@@ -342,4 +292,4 @@ static inline int wsm_rts_threshold(struct wfx_dev *wdev, int val, int Id)
 			     &arg, sizeof(arg), Id);
 }
 
-#endif /* WFX_HWIO_H */
+#endif /* WFX_WSM_MIB_H */

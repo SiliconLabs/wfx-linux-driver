@@ -21,7 +21,7 @@
 #include <linux/skbuff.h>
 #include <linux/etherdevice.h>
 
-#include "wsm.h"
+#include "wsm_tx.h"
 #include "wfx.h"
 #include "bh.h"
 #include "debug.h"

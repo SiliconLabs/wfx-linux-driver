@@ -25,6 +25,7 @@
 #include "wfx.h"
 #include "hwio.h"
 #include "debug.h"
+#include "wsm_rx.h"
 #include "traces.h"
 
 #define WFX_WAKEUP_WAIT_STEP_MIN 250  /*in us */

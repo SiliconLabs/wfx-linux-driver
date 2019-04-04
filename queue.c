@@ -23,6 +23,7 @@
 
 #include "queue.h"
 #include "wfx.h"
+#include "wsm_rx.h"
 #include "debug.h"
 
 /* private */ struct wfx_queue_item

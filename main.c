@@ -40,7 +40,7 @@
 #include "bh.h"
 #include "sta.h"
 #include "debug.h"
-#include "wsm.h"
+#include "wsm_mib.h"
 
 MODULE_DESCRIPTION("Silicon Labs 802.11 Wireless LAN driver for WFx");
 MODULE_AUTHOR("Jérôme Pouiller <jerome.pouiller@silabs.com>");

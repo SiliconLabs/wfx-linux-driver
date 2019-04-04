@@ -22,7 +22,7 @@
 
 #include "data_txrx.h"
 #include "wfx.h"
-#include "wsm.h"
+#include "wsm_rx.h"
 #include "bh.h"
 #include "sta.h"
 #include "debug.h"

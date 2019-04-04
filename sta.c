@@ -26,7 +26,9 @@
 #include "fwio.h"
 #include "bh.h"
 #include "debug.h"
-#include "wsm.h"
+#include "wsm_rx.h"
+#include "wsm_tx.h"
+#include "wsm_mib.h"
 
 #define WFX_PDS_MAX_SIZE 1500
 
