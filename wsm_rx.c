@@ -599,7 +599,8 @@ found:
 int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	       size_t *tx_len, int *burst)
 {
-	WsmHiTxReq_t *wsm = NULL;
+	HiMsgHdr_t *hdr = NULL;
+	WsmHiTxReqBody_t *wsm = NULL;
 	struct ieee80211_tx_info *tx_info;
 	struct wfx_queue *queue = NULL;
 	struct wfx_queue *vif_queue = NULL;
@@ -623,7 +624,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	for (;;) {
 		int ret = -ENOENT;
 		int queue_num;
-		struct ieee80211_hdr *hdr;
+		struct ieee80211_hdr *hdr80211;
 
 		if (atomic_add_return(0, &wdev->tx_lock))
 			break;
@@ -665,20 +666,20 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 
 		queue_num = queue - wdev->tx_queue;
 
-		if (wfx_queue_get(queue, tx_allowed_mask, &wsm, &tx_info, &txpriv))
+		if (wfx_queue_get(queue, tx_allowed_mask, &hdr, &tx_info, &txpriv))
 			continue;
-
-		// Note: txpriv->vif_id is reundant with wsm->Header.s.b.IntId
-		wvif = wdev_to_wvif(wdev, wsm->Header.s.b.IntId);
+		wsm = (WsmHiTxReqBody_t *) (hdr + 1); // Point to end of hdr
+		// Note: txpriv->vif_id is reundant with hdr->s.b.IntId
+		wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 		WARN_ON(!wvif);
-		
-		if (wsm_handle_tx_data(wvif, &wsm->Body, tx_info, txpriv, queue))
+
+		if (wsm_handle_tx_data(wvif, wsm, tx_info, txpriv, queue))
 			continue;  /* Handled by WSM */
 
 		wvif->pspoll_mask &= ~BIT(txpriv->raw_link_id);
 
-		*data = (u8 *)wsm;
-		*tx_len = le16_to_cpu(wsm->Header.MsgLen);
+		*data = (u8 *) hdr;
+		*tx_len = le16_to_cpu(hdr->MsgLen);
 
 		/* allow bursting if txop is set */
 		if (wvif->edca.params[queue_num].TxOpLimit)
@@ -692,12 +693,13 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 		else
 			wdev->tx_burst_idx = -1;
 
-		hdr = (struct ieee80211_hdr *) &((u8 *) wsm)[txpriv->offset];
+		hdr80211 = (struct ieee80211_hdr *) (data + txpriv->offset);
+
 		if (more)
-			hdr->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
+			hdr80211->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
 		pr_debug("[WSM] Tx sta_id=%d >>> frame_ctrl=0x%.4x  tx_len=%zu, %p %c\n",
-			txpriv->link_id, hdr->frame_control, *tx_len, *data,
-			wsm->Body.DataFlags.More ? 'M' : ' ');
+			txpriv->link_id, hdr80211->frame_control, *tx_len, *data,
+			wsm->DataFlags.More ? 'M' : ' ');
 		++count;
 		break;
 	}

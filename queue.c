@@ -375,7 +375,7 @@ int wfx_queue_put(struct wfx_queue *queue,
 
 int wfx_queue_get(struct wfx_queue *queue,
 		     u32 link_id_map,
-		  WsmHiTxReq_t			**tx,
+		     HiMsgHdr_t **tx,
 		     struct ieee80211_tx_info **tx_info,
 		     const struct wfx_txpriv **txpriv)
 {
@@ -383,6 +383,7 @@ int wfx_queue_get(struct wfx_queue *queue,
 	struct wfx_queue_item *item;
 	struct wfx_queue_stats *stats = queue->stats;
 	bool wakeup_stats = false;
+	WsmHiTxReqBody_t *wsm;
 
 	spin_lock_bh(&queue->lock);
 	list_for_each_entry(item, &queue->queue, head) {
@@ -393,10 +394,11 @@ int wfx_queue_get(struct wfx_queue *queue,
 	}
 
 	if (!WARN_ON(ret)) {
-		*tx = (WsmHiTxReq_t *)item->skb->data;
+		*tx = (HiMsgHdr_t *) item->skb->data;
 		*tx_info = IEEE80211_SKB_CB(item->skb);
 		*txpriv = &item->txpriv;
-		(*tx)->Body.PacketId = item->packet_id;
+		wsm = (WsmHiTxReqBody_t *) (*tx + 1);
+		wsm->PacketId = item->packet_id;
 		list_move_tail(&item->head, &queue->pending);
 		++queue->num_pending;
 		--queue->link_map_cache[item->txpriv.link_id];
