@@ -602,10 +602,9 @@ static WsmHiTxReq_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 	return wsm;
 }
 
-static int wfx_tx_h_rate_policy(struct wfx_dev *wdev, struct wfx_txinfo *t, WsmHiTxReq_t *wsm)
+static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiTxReq_t *wsm)
 {
 	bool tx_policy_renew = false;
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, wsm->Header.s.b.IntId);
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 
 	WARN_ON(!wvif);
@@ -665,7 +664,7 @@ static int wfx_tx_h_rate_policy(struct wfx_dev *wdev, struct wfx_txinfo *t, WsmH
 	 *
 	 * Bit 5: 0 (lgi), 1 (sgi)
 	 */
-	if (t->rate->flags & IEEE80211_TX_RC_SHORT_GI || wfx_ht_shortGi(&wdev->ht_info))
+	if (t->rate->flags & IEEE80211_TX_RC_SHORT_GI || wfx_ht_shortGi(&wvif->wdev->ht_info))
 		wsm->Body.HtTxParameters.ShortGi = 1;
 
 	/* LDPC (Low-Density Parity-Check code)
@@ -676,8 +675,8 @@ static int wfx_tx_h_rate_policy(struct wfx_dev *wdev, struct wfx_txinfo *t, WsmH
 	 *
 	 * Bit 4: 0 (BCC), 1(LDPC)
 	 */
-	if (t->tx_info->flags & IEEE80211_TX_CTL_LDPC || wfx_ht_fecCoding(&wdev->ht_info))
-		if (wdev->pdata.support_ldpc)
+	if (t->tx_info->flags & IEEE80211_TX_CTL_LDPC || wfx_ht_fecCoding(&wvif->wdev->ht_info))
+		if (wvif->wdev->pdata.support_ldpc)
 			wsm->Body.HtTxParameters.FecCoding = 1;
 
 	/* Transmit STBC (Space-Time Block Coding)
@@ -692,11 +691,11 @@ static int wfx_tx_h_rate_policy(struct wfx_dev *wdev, struct wfx_txinfo *t, WsmH
 		 * Better to reimplement task scheduling with
 		 * a counter. TODO.
 		 */
-		wsm_lock_tx_async(wdev);
-		wfx_tx_queues_lock(wdev);
+		wsm_lock_tx_async(wvif->wdev);
+		wfx_tx_queues_lock(wvif->wdev);
 		if (!schedule_work(&wvif->tx_policy_upload_work)) {
-			wfx_tx_queues_unlock(wdev);
-			wsm_unlock_tx(wdev);
+			wfx_tx_queues_unlock(wvif->wdev);
+			wsm_unlock_tx(wvif->wdev);
 		}
 	}
 	return 0;
@@ -788,7 +787,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		goto drop;
 	}
 	wsm->Body.DataFlags.FcOffset = flags.FcOffset;
-	ret = wfx_tx_h_rate_policy(wdev, &t, wsm);
+	ret = wfx_tx_h_rate_policy(wvif, &t, wsm);
 	if (ret)
 		goto drop;
 
