@@ -577,7 +577,7 @@ static int wfx_tx_h_action(struct wfx_vif *wvif, struct wfx_txinfo *t)
 }
 
 /* Add WSM header */
-static WsmHiTxReq_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t)
+static WsmHiTxReqBody_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
 	WsmHiTxReq_t *wsm;
 	u32 wsm_length = sizeof(WsmHiTxReq_t) - sizeof(u32);
@@ -599,7 +599,7 @@ static WsmHiTxReq_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 	wsm->Body.QueueId.PeerStaId = t->txpriv.raw_link_id;
 	// Queue index are inverted between WSM and Linux
 	wsm->Body.QueueId.QueueId = 3 - t->queue;
-	return wsm;
+	return &wsm->Body;
 }
 
 static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiTxReqBody_t *wsm)
@@ -734,7 +734,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		.txpriv.rate_id = WFX_INVALID_RATE_ID,
 	};
 	struct ieee80211_sta *sta;
-	WsmHiTxReq_t *wsm;
+	WsmHiTxReqBody_t *wsm;
 	bool tid_update = 0;
 	WsmHiDataFlags_t flags = { };
 	int ret;
@@ -786,8 +786,8 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		ret = -ENOMEM;
 		goto drop;
 	}
-	wsm->Body.DataFlags.FcOffset = flags.FcOffset;
-	ret = wfx_tx_h_rate_policy(wvif, &t, &wsm->Body);
+	wsm->DataFlags.FcOffset = flags.FcOffset;
+	ret = wfx_tx_h_rate_policy(wvif, &t, wsm);
 	if (ret)
 		goto drop;
 
