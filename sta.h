@@ -29,6 +29,23 @@
 struct wfx_dev;
 struct wfx_vif;
 
+struct wfx_wsm_event {
+	struct list_head link;
+	WsmHiEventIndBody_t evt;
+};
+
+struct wsm_edca_params {
+	/* NOTE: index is a linux queue id. */
+	WsmHiEdcaQueueParamsReqBody_t	params[4];
+	bool				uapsd_enable[4];
+};
+
+struct wfx_grp_addr_table {
+	bool enable;
+	int num_addresses;
+	u8 address_list[8][ETH_ALEN];
+};
+
 // mac80211 interface
 int wfx_start(struct ieee80211_hw *);
 void wfx_stop(struct ieee80211_hw *);

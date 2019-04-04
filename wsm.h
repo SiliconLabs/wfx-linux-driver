@@ -36,17 +36,6 @@ struct wsm_scan {
 	u8			*ch;
 };
 
-struct wfx_wsm_event {
-	struct list_head link;
-	WsmHiEventIndBody_t	evt;
-};
-
-struct wsm_edca_params {
-	/* NOTE: index is a linux queue id. */
-	WsmHiEdcaQueueParamsReqBody_t	params[4];
-	bool				uapsd_enable[4];
-};
-
 struct wsm_rx_filter {
 	bool	bssid;
 	bool	probeResponder;
@@ -56,12 +45,6 @@ struct wsm_protected_mgmt_policy {
 	bool	protectedMgmtEnable;
 	bool	unprotectedMgmtFramesAllowed;
 	bool	encryptionForAuthFrame;
-};
-
-struct wfx_grp_addr_table {
-	bool enable;
-	int num_addresses;
-	u8 address_list[8][ETH_ALEN];
 };
 
 struct wsm_cmd {
