@@ -32,6 +32,7 @@
 #include "main.h"
 #include "queue.h"
 #include "wsm.h"
+#include "sta.h"
 #include "scan.h"
 #include "data_txrx.h"
 

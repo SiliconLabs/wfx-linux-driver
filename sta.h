@@ -25,7 +25,9 @@
 #include <net/mac80211.h>
 
 #include "wfx_api.h"
-#include "wfx.h"
+
+struct wfx_dev;
+struct wfx_vif;
 
 // mac80211 interface
 int wfx_start(struct ieee80211_hw *);
