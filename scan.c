@@ -341,9 +341,7 @@ void wfx_probe_work(struct work_struct *work)
 	const struct wfx_txpriv *txpriv;
 	WsmHiTxReq_t *wsm;
 	struct sk_buff *skb;
-	WsmHiSsidDef_t ssids[1] = { {
-					    .SSIDLength = 0,
-	} };
+	WsmHiSsidDef_t ssids = { };
 	u8 ch[WSM_API_CHANNEL_LIST_SIZE] = {
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct wsm_scan scan = {
@@ -353,7 +351,7 @@ void wfx_probe_work(struct work_struct *work)
 		.scan_req.NumOfChannels		= 1,
 		.scan_req.MinChannelTime	= 0,
 		.scan_req.MaxChannelTime	= 10,
-		.ssids = ssids,
+		.ssids = &ssids,
 		.ch = ch,
 	};
 	u8 *ies;
@@ -399,18 +397,18 @@ void wfx_probe_work(struct work_struct *work)
 		u8 *ssidie =
 			(u8 *)cfg80211_find_ie(WLAN_EID_SSID, ies, ies_len);
 
-		if (ssidie && ssidie[1] && ssidie[1] <= sizeof(ssids[0].SSID)) {
+		if (ssidie && ssidie[1] && ssidie[1] <= sizeof(ssids.SSID)) {
 			u8 *nextie = &ssidie[2 + ssidie[1]];
 
 			/* Store SSID localy */
-			ssids[0].SSIDLength = ssidie[1];
-			memcpy(ssids[0].SSID, &ssidie[2], ssids[0].SSIDLength);
+			ssids.SSIDLength = ssidie[1];
+			memcpy(ssids.SSID, &ssidie[2], ssids.SSIDLength);
 			scan.scan_req.NumOfSSIDs = 1;
 
 			/* Remove SSID from IE list */
 			ssidie[1] = 0;
 			memmove(&ssidie[2], nextie, &ies[ies_len] - nextie);
-			skb_trim(skb, skb->len - ssids[0].SSIDLength);
+			skb_trim(skb, skb->len - ssids.SSIDLength);
 		}
 	}
 
