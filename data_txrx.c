@@ -579,8 +579,10 @@ static int wfx_tx_h_action(struct wfx_vif *wvif, struct wfx_txinfo *t)
 /* Add WSM header */
 static WsmHiTxReqBody_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
-	WsmHiTxReq_t *wsm;
-	u32 wsm_length = sizeof(WsmHiTxReq_t) - sizeof(u32);
+	HiMsgHdr_t *hdr;
+	WsmHiTxReqBody_t *wsm;
+	// Ignore "uint32_t Frame" at end of WsmHiTxReqBody_t
+	u32 wsm_length = sizeof(WsmHiTxReqBody_t) - sizeof(uint32_t) + sizeof(HiMsgHdr_t);
 
 	if (WARN(skb_headroom(t->skb) < wsm_length, "Not enough space for WSM headers"))
 		return NULL;
@@ -590,16 +592,17 @@ static WsmHiTxReqBody_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t
 		return NULL;
 	}
 
-	wsm = (WsmHiTxReq_t *)skb_push(t->skb, wsm_length);
+	hdr = (HiMsgHdr_t *) skb_push(t->skb, wsm_length);
+	wsm = (WsmHiTxReqBody_t *) (hdr + 1); // Pointer to end of HiMsgHdr_t
 	t->txpriv.offset += wsm_length;
-	memset(wsm, 0, wsm_length);
-	wsm->Header.MsgLen = cpu_to_le16(t->skb->len);
-	wsm->Header.s.t.MsgId = cpu_to_le16(WSM_HI_TX_REQ_ID);
-	wsm->Header.s.b.IntId = t->txpriv.vif_id;
-	wsm->Body.QueueId.PeerStaId = t->txpriv.raw_link_id;
+	memset(hdr, 0, wsm_length);
+	hdr->MsgLen = cpu_to_le16(t->skb->len);
+	hdr->s.t.MsgId = cpu_to_le16(WSM_HI_TX_REQ_ID);
+	hdr->s.b.IntId = t->txpriv.vif_id;
+	wsm->QueueId.PeerStaId = t->txpriv.raw_link_id;
 	// Queue index are inverted between WSM and Linux
-	wsm->Body.QueueId.QueueId = 3 - t->queue;
-	return &wsm->Body;
+	wsm->QueueId.QueueId = 3 - t->queue;
+	return wsm;
 }
 
 static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiTxReqBody_t *wsm)
