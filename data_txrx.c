@@ -602,7 +602,7 @@ static WsmHiTxReq_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 	return wsm;
 }
 
-static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiTxReq_t *wsm)
+static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiTxReqBody_t *wsm)
 {
 	bool tx_policy_renew = false;
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
@@ -614,14 +614,14 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 	if (t->txpriv.rate_id == WFX_INVALID_RATE_ID)
 		return -EFAULT;
 
-	wsm->Body.TxFlags.Txrate = t->txpriv.rate_id;
+	wsm->TxFlags.Txrate = t->txpriv.rate_id;
 
 	t->rate = wfx_get_tx_rate(wvif,
 		&t->tx_info->control.rates[0]),
-	wsm->Body.MaxTxRate = t->rate->hw_value;
+	wsm->MaxTxRate = t->rate->hw_value;
 	// correct the max TX rate if needed when using the IBSS mode
-	if (conf->ibss_joined && wsm->Body.MaxTxRate == 0)
-		wsm->Body.MaxTxRate = RATE_INDEX_A_24M;
+	if (conf->ibss_joined && wsm->MaxTxRate == 0)
+		wsm->MaxTxRate = RATE_INDEX_A_24M;
 
 	/* HT rate
 	 * mac80211_rate_control_flags: IEEE80211_TX_RC_MCS
@@ -645,11 +645,11 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 	 * Bit 3 to 0: 0(no-HT), 1(Mixed format), 2 (Greenfield format), other
 	 */
 	if (t->rate->flags & IEEE80211_TX_RC_GREEN_FIELD)
-		wsm->Body.HtTxParameters.FrameFormat =
+		wsm->HtTxParameters.FrameFormat =
 			WSM_FRAME_FORMAT_GF_HT_11N;
 	else
 		/*HT mixed is used*/
-		wsm->Body.HtTxParameters.FrameFormat =
+		wsm->HtTxParameters.FrameFormat =
 			WSM_FRAME_FORMAT_MIXED_FORMAT_HT;
 
 #endif
@@ -665,7 +665,7 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 	 * Bit 5: 0 (lgi), 1 (sgi)
 	 */
 	if (t->rate->flags & IEEE80211_TX_RC_SHORT_GI || wfx_ht_shortGi(&wvif->wdev->ht_info))
-		wsm->Body.HtTxParameters.ShortGi = 1;
+		wsm->HtTxParameters.ShortGi = 1;
 
 	/* LDPC (Low-Density Parity-Check code)
 	 * mac80211_tx_info_flags : IEEE80211_TX_CTL_LDPC
@@ -677,7 +677,7 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 	 */
 	if (t->tx_info->flags & IEEE80211_TX_CTL_LDPC || wfx_ht_fecCoding(&wvif->wdev->ht_info))
 		if (wvif->wdev->pdata.support_ldpc)
-			wsm->Body.HtTxParameters.FecCoding = 1;
+			wsm->HtTxParameters.FecCoding = 1;
 
 	/* Transmit STBC (Space-Time Block Coding)
 	 *
@@ -787,7 +787,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		goto drop;
 	}
 	wsm->Body.DataFlags.FcOffset = flags.FcOffset;
-	ret = wfx_tx_h_rate_policy(wvif, &t, wsm);
+	ret = wfx_tx_h_rate_policy(wvif, &t, &wsm->Body);
 	if (ret)
 		goto drop;
 
