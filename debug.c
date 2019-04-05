@@ -588,9 +588,9 @@ int wfx_debug_init(struct wfx_dev *wdev)
 		return -ENOMEM;
 
 	d = debugfs_create_dir("wfx", wdev->hw->wiphy->debugfsdir);
-	debugfs_create_file("status", 0400, d, wdev, &wfx_status_fops);
-	debugfs_create_file("counters", 0400, d, wdev, &wfx_counters_fops);
-	debugfs_create_file("rx_stats", 0400, d, wdev, &wfx_rx_stats_fops);
+	debugfs_create_file("status", 0444, d, wdev, &wfx_status_fops);
+	debugfs_create_file("counters", 0444, d, wdev, &wfx_counters_fops);
+	debugfs_create_file("rx_stats", 0444, d, wdev, &wfx_rx_stats_fops);
 	debugfs_create_file("send_pds", 0200, d, wdev, &wfx_send_pds_fops);
 
 	d = debugfs_create_dir("wsm_params", d);
