@@ -298,18 +298,14 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	skb_put(skb_rx, read_len);
 	data = skb_rx->data;
 
-#if (KERNEL_VERSION(4, 19, 0) > LINUX_VERSION_CODE)
+#if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
 	/* Some SPI driver (and especially Raspberry one) have race conditions
 	 * during SPI transfers. It impact last byte of transfer.  Work around
 	 * bellow try to detect and solve them.
 	 * See https://github.com/raspberrypi/linux/issues/2200
-	 * FIXME: bug seems now fixed. Place this code under #ifdef LINUX_VERSION
 	 */
-	if (!wdev->pdata.sdio) {
-		// FIXME: Depending of SPI configuration, we may also set value
-		// of data[alloc_len - 2].
+	if (!wdev->pdata.sdio)
 		data[alloc_len - 1] = 0xFF;
-	}
 #endif
 
 	if (wfx_data_read(wdev, data, alloc_len)) {
@@ -320,14 +316,14 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	/* update ctrl_reg with the u16 piggybacked value */
 	*ctrl_reg = (u32) le16_to_cpu(((__le16 *)data)[alloc_len / 2 - 1]);
 
-#if (KERNEL_VERSION(4, 19, 0) > LINUX_VERSION_CODE)
+#if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
 	if (!wdev->pdata.sdio) {
 		/* If last byes has not been overwritten, set ctrl_reg to 0 in
 		 * order to force a new read.
-		 * FIXME: Depending of SPI configuration, we may also
-		 * test value of data[alloc_len - 1].
+		 * Depending of SPI byte-ordering configuration, impacted
+		 * offset can be alloc_len - 2 or alloc_len - 1
 		 */
-		if (data[alloc_len - 2] == 0xFF) {
+		if (data[alloc_len - 2] == 0xFF || data[alloc_len - 1] == 0xFF) {
 			dev_warn(wdev->dev, "SPI DMA error detected (and resolved)\n");
 			*ctrl_reg = 0;
 		}
