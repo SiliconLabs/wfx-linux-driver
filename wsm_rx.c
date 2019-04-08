@@ -139,7 +139,7 @@ static int wsm_receive_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 	int sta_id;
 
 	WARN_ON(!wvif);
-	skb_pull(*skb_p, sizeof(WsmHiRxIndBody_t));
+	skb_pull(*skb_p, sizeof(HiMsgHdr_t) + sizeof(WsmHiRxIndBody_t));
 
 	frame = (struct ieee80211_hdr *)(*skb_p)->data;
 
@@ -162,7 +162,7 @@ static int wsm_receive_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 
 	wfx_rx_cb(wvif, body, sta_id, skb_p);
 	if (*skb_p)
-		skb_push(*skb_p, sizeof(WsmHiRxIndBody_t));
+		skb_push(*skb_p, sizeof(HiMsgHdr_t) + sizeof(WsmHiRxIndBody_t));
 
 	return 0;
 }

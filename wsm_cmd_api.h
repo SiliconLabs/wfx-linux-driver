@@ -768,7 +768,7 @@ typedef struct __attribute__((__packed__)) WsmHiRxIndBody_s {
         uint8_t    RxedRate;                        ///<The data rate at which the frame was successfully received. See enum ::WsmTransmitRate.
         uint8_t    RcpiRssi;                        ///<Bit 1 in MIB ::WsmHiMibRcpiRssiThreshold_t determined if this value represents RCPI or RSSI. The default is RCPI type. This value is expressed in dBm as signed Q8.0 format for RSSI and unsigned Q7.1 format for RCPI.
         WsmHiRxFlags_t RxFlags;                    ///<Additional information about the frame received. See structure ::WsmHiRxFlags_t.
-        uint32_t   Frame[API_VARIABLE_SIZE_ARRAY_DUMMY_SIZE];  ///<Content of the received frame
+        uint32_t   Frame[0];  ///<Content of the received frame
 } WsmHiRxIndBody_t;
 
 typedef struct __attribute__((__packed__)) WsmHiRxInd_s {
