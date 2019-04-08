@@ -979,7 +979,7 @@ typedef struct __attribute__((__packed__)) WsmHiSetBssParamsCnf_s {
 
 
 typedef struct __attribute__((__packed__)) WsmHiPmMode_s {
-        uint8_t    PmMode : 1;                       /*Bit 0 = 0 - Active mode, when this mode is entered, the device automatically transmits a frame with the power management bit cleared to inform the AP that the STA is in the active mode            Bit 0 = 1 - PS mode, when this mode is entered, the device automatically transmits a frame with the power management bit set to inform the AP that the STA has entered the PS mode.            Bit 7 = 1 - Fast power-saving mode is enabled. This bit is only valid with bit 0 is set to 1. */
+        uint8_t    EnterPsm : 1;                       /*Bit 0 = 0 - Active mode, when this mode is entered, the device automatically transmits a frame with the power management bit cleared to inform the AP that the STA is in the active mode            Bit 0 = 1 - PS mode, when this mode is entered, the device automatically transmits a frame with the power management bit set to inform the AP that the STA has entered the PS mode.            Bit 7 = 1 - Fast power-saving mode is enabled. This bit is only valid with bit 0 is set to 1. */
         uint8_t    Reserved : 6;                     ///< reserved for future use, set to 0
         uint8_t    FastPsm : 1;                      /*Bit 7 = 1 - Fast power-saving mode is enabled. This bit is only valid with bit 0 is set to 1.*/
 } WsmHiPmMode_t;
@@ -1179,9 +1179,9 @@ typedef struct __attribute__((__packed__)) WsmHiMapLinkCnf_s {
 
 
 typedef struct __attribute__((__packed__)) WsmHiSuspendResumeFlags_s {
-        uint8_t    ResumeOrSuspend : 1;              /*0 - Stop sending further Tx requests to the device for this link. 1 -Resume Tx. type: WSM*/
+        uint8_t    Resume : 1;              /*0 - Stop sending further Tx requests to the device for this link. 1 -Resume Tx. type: WSM*/
         uint8_t    Ac : 2;                           /*The AC on which Tx must be suspended or resumed. This is applicable only for UAPSD.*/
-        uint8_t    CastType : 1;                     /*1 - Transmit broadcast or multicast frames. This is to instruct the host to transmit broadcast or multicast traffic, if buffered in the host after the DTIM beacon.            0 - Transmit unicast frames.*/
+        uint8_t    BcMcOnly : 1;                     /*1 - Transmit broadcast or multicast frames. This is to instruct the host to transmit broadcast or multicast traffic, if buffered in the host after the DTIM beacon.            0 - Transmit unicast frames.*/
         uint8_t    Reserved1 : 4;                    ///< reserved for future use, set to 0
         uint8_t    Reserved2;                        ///< reserved for future use, set to 0
 } WsmHiSuspendResumeFlags_t;

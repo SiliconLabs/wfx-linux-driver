@@ -561,7 +561,7 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 		while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
 			memset(&wvif->powersave_mode, 0, sizeof(wvif->powersave_mode));
 			if (conf->flags & IEEE80211_CONF_PS) {
-				wvif->powersave_mode.PmMode.PmMode = 1;
+				wvif->powersave_mode.PmMode.EnterPsm = 1;
 				if (conf->dynamic_ps_timeout > 0) {
 					wvif->powersave_mode.PmMode.FastPsm = 1;
 					// Firmware does not support more than 128ms
@@ -831,7 +831,7 @@ int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 	// Kernel disable PowerSave when multiple vifs are in use. In contrary,
 	// it is absolutly necessary to enable PowerSave for WF200
 	if (wvif_count(wvif->wdev) > 1) {
-		pm.PmMode.PmMode = 1;
+		pm.PmMode.EnterPsm = 1;
 		pm.PmMode.FastPsm = 0;
 	}
 
@@ -2191,14 +2191,14 @@ void wfx_suspend_resume(struct wfx_vif *wvif,
 			WsmHiSuspendResumeTxIndBody_t *arg)
 {
 	pr_debug("[AP] %s: %s\n",
-		 arg->SuspendResumeFlags.ResumeOrSuspend ? "start" : "stop",
-		 arg->SuspendResumeFlags.CastType ? "broadcast" : "unicast");
+		 arg->SuspendResumeFlags.Resume ? "start" : "stop",
+		 arg->SuspendResumeFlags.BcMcOnly ? "broadcast" : "unicast");
 
-	if (arg->SuspendResumeFlags.CastType) {
+	if (arg->SuspendResumeFlags.BcMcOnly) {
 		bool cancel_tmo = false;
 
 		spin_lock_bh(&wvif->ps_state_lock);
-		if (!arg->SuspendResumeFlags.ResumeOrSuspend) {
+		if (!arg->SuspendResumeFlags.Resume) {
 			wvif->tx_multicast = false;
 		} else {
 			wvif->tx_multicast = (wvif->aid0_bit_set &&
@@ -2214,9 +2214,9 @@ void wfx_suspend_resume(struct wfx_vif *wvif,
 	} else {
 		spin_lock_bh(&wvif->ps_state_lock);
 		wfx_ps_notify(wvif,
-			      arg->SuspendResumeFlags.ResumeOrSuspend);
+			      arg->SuspendResumeFlags.Resume);
 		spin_unlock_bh(&wvif->ps_state_lock);
-		if (arg->SuspendResumeFlags.ResumeOrSuspend)
+		if (arg->SuspendResumeFlags.Resume)
 			wfx_bh_wakeup(wvif->wdev);
 	}
 }

@@ -252,7 +252,7 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 		seq_printf(seq, "Rates:      0x%.8X\n",
 			   wvif->bss_params.OperationalRateSet);
 		seq_printf(seq, "Powersave WiFi:  ");
-		if (wvif->powersave_mode.PmMode.PmMode)
+		if (wvif->powersave_mode.PmMode.EnterPsm)
 			if (wvif->powersave_mode.PmMode.FastPsm)
 				seq_puts(seq, "dynamic\n");
 			else

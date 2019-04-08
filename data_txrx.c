@@ -374,7 +374,7 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 		struct tx_policy *src = &cache->cache[i].policy;
 
 		if (src->retry_count && !src->uploaded) {
-			dst = arg->TxRateRetryPolicy + arg->NumTxRatePolicy;
+			dst = arg->TxRateRetryPolicy + arg->NumTxRatePolicies;
 
 			dst->PolicyIndex = i;
 			dst->ShortRetryCount = wvif->wdev->short_frame_max_tx_count;
@@ -388,12 +388,12 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 			memcpy(&dst->RateCountIndices0700, src->tbl,
 			       sizeof(src->tbl));
 			src->uploaded = 1;
-			arg->NumTxRatePolicy++;
+			arg->NumTxRatePolicies++;
 		}
 	}
 	spin_unlock_bh(&cache->lock);
 	wfx_debug_tx_cache_miss(wvif->wdev);
-	pr_debug("[TX policy] Upload %d policies\n", arg->NumTxRatePolicy);
+	pr_debug("[TX policy] Upload %d policies\n", arg->NumTxRatePolicies);
 	wsm_set_tx_rate_retry_policy(wvif->wdev, arg, wvif->Id);
 	kfree(arg);
 	return 0;
@@ -898,8 +898,8 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 	if (arg->Status == WSM_REQUEUE) {
 		/* "Requeue" means "implicit suspend" */
 		WsmHiSuspendResumeTxIndBody_t suspend = {
-			.SuspendResumeFlags.ResumeOrSuspend	= 0,
-			.SuspendResumeFlags.CastType		= 1,
+			.SuspendResumeFlags.Resume	= 0,
+			.SuspendResumeFlags.BcMcOnly		= 1,
 		};
 
 		WARN(!arg->TxResultFlags.Requeue, "Incoherent Status and ResultFlags");

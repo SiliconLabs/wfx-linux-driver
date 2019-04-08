@@ -167,10 +167,10 @@ void wfx_scan_work(struct work_struct *work)
 
 	if (first_run) {
 		if (wvif->state == WFX_STATE_STA &&
-		    !(wvif->powersave_mode.PmMode.PmMode)) {
+		    !(wvif->powersave_mode.PmMode.EnterPsm)) {
 			WsmHiSetPmModeReqBody_t pm = wvif->powersave_mode;
 
-			pm.PmMode.PmMode = 1;
+			pm.PmMode.EnterPsm = 1;
 			wfx_set_pm(wvif, &pm);
 		}
 	}
@@ -197,7 +197,7 @@ void wfx_scan_work(struct work_struct *work)
 		__ieee80211_scan_completed_compat(wvif->wdev->hw, wvif->scan.status ? 1 : 0);
 		up(&wvif->scan.lock);
 		if (wvif->state == WFX_STATE_STA &&
-		    !(wvif->powersave_mode.PmMode.PmMode))
+		    !(wvif->powersave_mode.PmMode.EnterPsm))
 			wfx_set_pm(wvif, &wvif->powersave_mode);
 		return;
 	} else {
