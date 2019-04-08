@@ -625,7 +625,7 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 	wsm->MaxTxRate = t->rate->hw_value;
 	// correct the max TX rate if needed when using the IBSS mode
 	if (conf->ibss_joined && wsm->MaxTxRate == 0)
-		wsm->MaxTxRate = RATE_INDEX_A_24M;
+		wsm->MaxTxRate = API_RATE_INDEX_G_24MBPS;
 
 	/* HT rate
 	 * mac80211_rate_control_flags: IEEE80211_TX_RC_MCS

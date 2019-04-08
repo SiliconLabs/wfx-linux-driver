@@ -134,42 +134,6 @@ typedef enum WsmStatus_e {
         WSM_STATUS_REFUSED                         = 0x16         ///<Current device state conflicts with the request (in ::HI_SET_PM_MODE_CNF, ::HI_BEACON_TRANSMIT_CNF, ::HI_START_SCAN_CNF, ::HI_START_CNF or ::HI_JOIN_CNF)
 } WsmStatus;
 
-/**
- * @brief Split MAC (LMAC) list of possible transmission rates.
- *
- * Note that ERP-PBCC is not supported by the hardware. The rate indices for 22 Mbit/s and 33 Mbit/s are only provided for standard compatibility.@n
- * Data rates (in the names) are for 20 MHz channel operation. Corresponding data rates for 10 MHz channel operation are half of them.
- *
- * In this API, some parameters such as 'BasicRateSet' encode a list of rates in a bitstream format.@n
- *     for instance SUPPORTED_B_RATES_MASK = 0x0000000F @n
- *                  SUPPORTED_A_RATES_MASK = 0x00003FC0 @n
- *                  SUPPORTED_N_RATES_MASK = 0x003FC000
- */
-typedef enum WsmTransmitRate_e {
-	RATE_INDEX_B_1M           = 0, ///<ERP-DSSS
-	RATE_INDEX_B_2M           = 1, ///<ERP-DSSS
-	RATE_INDEX_B_5_5M         = 2, ///<ERP-CCK
-	RATE_INDEX_B_11M          = 3, ///<ERP-CCK
-	RATE_INDEX_PBCC_22M       = 4, ///<ERP-PBCC, not supported
-	RATE_INDEX_PBCC_33M       = 5, ///<ERP-PBCC, not supported
-	RATE_INDEX_A_6M           = 6, ///<ERP-OFDM, BPSK coding rate 1/2
-	RATE_INDEX_A_9M           = 7, ///<ERP-OFDM, BPSK coding rate 3/4
-	RATE_INDEX_A_12M          = 8, ///<ERP-OFDM, QPSK coding rate 1/2
-	RATE_INDEX_A_18M          = 9, ///<ERP-OFDM, QPSK coding rate 3/4
-	RATE_INDEX_A_24M          = 10, ///<ERP-OFDM, 16QAM coding rate 1/2
-	RATE_INDEX_A_36M          = 11, ///<ERP-OFDM, 16QAM coding rate 3/4
-	RATE_INDEX_A_48M          = 12, ///<ERP-OFDM, 64QAM coding rate 1/2
-	RATE_INDEX_A_54M          = 13, ///<ERP-OFDM, 64QAM coding rate 3/4
-	RATE_INDEX_N_6_5M         = 14, ///<HT-OFDM, BPSK coding rate 1/2
-	RATE_INDEX_N_13M          = 15, ///<HT-OFDM, QPSK coding rate 1/2
-	RATE_INDEX_N_19_5M        = 16, ///<HT-OFDM, QPSK coding rate 3/4
-	RATE_INDEX_N_26M          = 17, ///<HT-OFDM, 16QAM coding rate 1/2
-	RATE_INDEX_N_39M          = 18, ///<HT-OFDM, 16QAM coding rate 3/4
-	RATE_INDEX_N_52M          = 19, ///<HT-OFDM, 64QAM coding rate 2/3
-	RATE_INDEX_N_58_5M        = 20, ///<HT-OFDM, 64QAM coding rate 3/4
-	RATE_INDEX_N_65M          = 21 ///<HT-OFDM, 64QAM coding rate 5/6
-} WsmTransmitRate;
-
 #define WSM_API_SSID_SIZE                               32
 
 
