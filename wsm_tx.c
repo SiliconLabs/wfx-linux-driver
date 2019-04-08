@@ -125,8 +125,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 {
 	int ret;
-	// sizeof(HiConfigurationReqBody_t) is wider than necessary
-	size_t buf_len = sizeof(u16) + len;
+	size_t buf_len = sizeof(HiConfigurationReqBody_t) + len;
 	HiMsgHdr_t *hdr;
 	HiConfigurationReqBody_t *body = wfx_alloc_wsm(buf_len, &hdr);
 

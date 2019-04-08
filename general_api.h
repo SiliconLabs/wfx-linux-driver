@@ -321,7 +321,7 @@ typedef struct __attribute__((__packed__)) HiStartupInd_s {
  * @todo Need to create a specific doc to explain PDS*/
 typedef struct __attribute__((__packed__)) HiConfigurationReqBody_s {
         uint16_t   Length;                           ///<PdsData length in bytes
-        uint8_t    PdsData[API_VARIABLE_SIZE_ARRAY_DUMMY_SIZE];    ///<variable size PDS data byte array
+        uint8_t    PdsData[0];    ///<variable size PDS data byte array
 } HiConfigurationReqBody_t;
 
 typedef struct __attribute__((__packed__)) HiConfigurationReq_s {
