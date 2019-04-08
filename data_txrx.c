@@ -359,12 +359,14 @@ static void tx_policy_put(struct wfx_vif *wvif, int idx)
 
 static int tx_policy_upload(struct wfx_vif *wvif)
 {
-	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
 	int i;
-	WsmHiMibSetTxRateRetryPolicy_t arg = {
-		.NumTxRatePolicy	= 0,
-	};
+	WsmHiMibTxRateRetryPolicy_t *dst;
+	WsmHiMibSetTxRateRetryPolicy_t *arg;
+	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
 
+	arg = kzalloc(sizeof(WsmHiMibSetTxRateRetryPolicy_t) +
+		      sizeof(WsmHiMibTxRateRetryPolicy_t) * TX_POLICY_CACHE_SIZE,
+		      GFP_KERNEL);
 	spin_lock_bh(&cache->lock);
 
 	/* Upload only modified entries. */
@@ -372,9 +374,7 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 		struct tx_policy *src = &cache->cache[i].policy;
 
 		if (src->retry_count && !src->uploaded) {
-			WsmHiMibTxRateRetryPolicy_t *dst =
-				&arg.TxRateRetryPolicy + arg.NumTxRatePolicy *
-				sizeof(WsmHiMibTxRateRetryPolicy_t);
+			dst = arg->TxRateRetryPolicy + arg->NumTxRatePolicy;
 
 			dst->PolicyIndex = i;
 			dst->ShortRetryCount = wvif->wdev->short_frame_max_tx_count;
@@ -388,13 +388,15 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 			memcpy(&dst->RateCountIndices0700, src->tbl,
 			       sizeof(src->tbl));
 			src->uploaded = 1;
-			++arg.NumTxRatePolicy;
+			arg->NumTxRatePolicy++;
 		}
 	}
 	spin_unlock_bh(&cache->lock);
 	wfx_debug_tx_cache_miss(wvif->wdev);
-	pr_debug("[TX policy] Upload %d policies\n", arg.NumTxRatePolicy);
-	return wsm_set_tx_rate_retry_policy(wvif->wdev, &arg, wvif->Id);
+	pr_debug("[TX policy] Upload %d policies\n", arg->NumTxRatePolicy);
+	wsm_set_tx_rate_retry_policy(wvif->wdev, arg, wvif->Id);
+	kfree(arg);
+	return 0;
 }
 
 void tx_policy_upload_work(struct work_struct *work)

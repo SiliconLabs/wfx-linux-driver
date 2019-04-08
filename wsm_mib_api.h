@@ -587,7 +587,7 @@ typedef struct __attribute__((__packed__)) WsmHiMibTxRateRetryPolicy_s {
 typedef struct __attribute__((__packed__)) WsmHiMibSetTxRateRetryPolicy_s {
         uint8_t    NumTxRatePolicy;                  /*The number of transmit rate policies being sent in this message.*/
         uint8_t    Reserved[3];             ///< reserved for future use, set to 0
-        WsmHiMibTxRateRetryPolicy_t TxRateRetryPolicy;     /*The number of transmit rate policies being sent in this message.*/
+        WsmHiMibTxRateRetryPolicy_t TxRateRetryPolicy[0];     /*The number of transmit rate policies being sent in this message.*/
 } WsmHiMibSetTxRateRetryPolicy_t;
 
 

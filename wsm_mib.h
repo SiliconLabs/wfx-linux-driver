@@ -176,8 +176,8 @@ static inline int wsm_set_tx_rate_retry_policy(struct wfx_dev *wdev,
 					       WsmHiMibSetTxRateRetryPolicy_t *arg,
 					       int Id)
 {
-	size_t size = 4 + arg->NumTxRatePolicy *
-		      sizeof(WsmHiMibTxRateRetryPolicy_t);
+	size_t size = sizeof(WsmHiMibSetTxRateRetryPolicy_t) +
+		      sizeof(WsmHiMibTxRateRetryPolicy_t) * arg->NumTxRatePolicy;
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_SET_TX_RATE_RETRY_POLICY, arg,
 			     size, Id);
