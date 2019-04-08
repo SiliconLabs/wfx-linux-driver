@@ -362,7 +362,7 @@ typedef struct __attribute__((__packed__)) WsmHiIeTlv_s {
 typedef struct __attribute__((__packed__)) WsmHiUpdateIeReqBody_s {
         WsmHiIeFlags_t IeFlags;             ///<Select the template to update.
         uint16_t          NumIEs;              ///<Number of information elements present in this request
-        WsmHiIeTlv_t   IE[API_VARIABLE_SIZE_ARRAY_DUMMY_SIZE]; //Variable length list of IEs to update
+        WsmHiIeTlv_t   IE[0]; //Variable length list of IEs to update
 } WsmHiUpdateIeReqBody_t;
 
 typedef struct __attribute__((__packed__)) WsmHiUpdateIeReq_s {

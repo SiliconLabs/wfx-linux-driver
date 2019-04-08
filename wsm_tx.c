@@ -387,8 +387,7 @@ int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame,
 {
 	int ret;
 	HiMsgHdr_t *hdr;
-	// sizeof(WsmHiUpdateIeReqBody_t) is wider than necessary
-	int buf_len = sizeof(WsmHiIeFlags_t) + sizeof(u16) + ies_len;
+	int buf_len = sizeof(WsmHiUpdateIeReqBody_t) + ies_len;
 	WsmHiUpdateIeReqBody_t *body = wfx_alloc_wsm(buf_len, &hdr);
 
 	memcpy(&body->IeFlags, target_frame, sizeof(WsmHiIeFlags_t));
