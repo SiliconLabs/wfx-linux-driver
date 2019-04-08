@@ -1,3 +1,13 @@
+Changes in 2.1.2
+----------------
+
+  * Driver included a workaround for Raspberry SPI driver described here: [1].
+    However, it was not enabled. This release improve this workaround and
+    enable it when necessary.
+  * In internal versions, testmode did not return correct error code
+
+[1]: https://github.com/raspberrypi/linux/issues/2200
+
 Changes in 2.1.1
 ----------------
 
