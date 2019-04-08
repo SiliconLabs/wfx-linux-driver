@@ -1981,7 +1981,6 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 				wvif->association_mode.Mode = 1;
 				wvif->association_mode.Rateset = 1;
 				wvif->association_mode.Spacing = 1;
-				wvif->association_mode.Snoop = 1;
 				wvif->association_mode.PreambleType =
 				info->use_short_preamble ?
 					WSM_PREAMBLE_SHORT :
