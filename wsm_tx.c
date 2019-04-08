@@ -204,7 +204,7 @@ int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id)
 	WsmHiStartScanReqBody_t *body = wfx_alloc_wsm(buf_len, &hdr);
 	u8 *ptr = (u8 *) body + sizeof(*body);
 
-	WARN(arg->scan_req.NumOfChannels > WSM_API_CHANNEL_LIST_SIZE, "Invalid params");
+	WARN(arg->scan_req.NumOfChannels > WSM_API_MAX_NB_CHANNELS, "Invalid params");
 	WARN(arg->scan_req.NumOfSSIDs > 2, "Invalid params");
 	WARN(arg->scan_req.Band > 1, "Invalid params");
 

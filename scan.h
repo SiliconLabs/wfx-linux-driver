@@ -38,7 +38,7 @@ struct wfx_scan {
 	struct ieee80211_channel **begin;
 	struct ieee80211_channel **curr;
 	struct ieee80211_channel **end;
-	WsmHiSsidDef_t			ssids[WSM_API_SSID_DEF_SIZE];
+	WsmHiSsidDef_t			ssids[WSM_API_MAX_NB_SSIDS];
 	int output_power;
 	int n_ssids;
 	int status;

@@ -78,7 +78,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	if (req->n_ssids == 1 && !req->ssids[0].ssid_len)
 		req->n_ssids = 0;
 
-	if (req->n_ssids > WSM_API_SSID_DEF_SIZE)
+	if (req->n_ssids > WSM_API_MAX_NB_SSIDS)
 		return -EINVAL;
 
 #if (KERNEL_VERSION(3, 19, 0) > LINUX_VERSION_CODE)
@@ -204,7 +204,7 @@ void wfx_scan_work(struct work_struct *work)
 		struct ieee80211_channel *first = *wvif->scan.curr;
 
 		for (it = wvif->scan.curr + 1, i = 1;
-		     it != wvif->scan.end && i < WSM_API_CHANNEL_LIST_SIZE;
+		     it != wvif->scan.end && i < WSM_API_MAX_NB_CHANNELS;
 		     ++it, ++i) {
 			if ((*it)->band != first->band)
 				break;
@@ -343,7 +343,7 @@ void wfx_probe_work(struct work_struct *work)
 	WsmHiTxReqBody_t *wsm;
 	struct sk_buff *skb;
 	WsmHiSsidDef_t ssids = { };
-	u8 ch[WSM_API_CHANNEL_LIST_SIZE] = {
+	u8 ch[WSM_API_MAX_NB_CHANNELS] = {
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	struct wsm_scan scan = {
 		.scan_req.ScanType.Type		= 0, /* WSM_SCAN_TYPE_FG, */

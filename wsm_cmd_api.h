@@ -452,8 +452,8 @@ typedef struct __attribute__((__packed__)) WsmHiSsidDef_s {
  *
  * Note that only 1 scanning process can be active at a time.
  */
-#define WSM_API_SSID_DEF_SIZE                           2
-#define WSM_API_CHANNEL_LIST_SIZE                       14
+#define WSM_API_MAX_NB_SSIDS                           2
+#define WSM_API_MAX_NB_CHANNELS                       14
 typedef struct __attribute__((__packed__)) WsmHiStartScanReqBody_s {
         uint8_t    Band;                             ///<Selects the radio band. Must be set to 0 (=2.4 GHz band).
         WsmHiScanType_t ScanType;           
