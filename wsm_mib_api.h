@@ -16,19 +16,6 @@
 #define WSM_API_IPV4_ADDRESS_SIZE                       4
 #define WSM_API_IPV6_ADDRESS_SIZE                       16
 
-// Nb max of data filters
-#define MAX_NUMBER_DATA_FILTERS             0xA
-
-// Nb of conditions for filtering
-#define MAX_NUMBER_IPV4_ADDR_CONDITIONS     0x4
-#define MAX_NUMBER_IPV6_ADDR_CONDITIONS     0x4
-#define MAX_NUMBER_MAC_ADDR_CONDITIONS      0x4
-#define MAX_NUMBER_UC_MC_BC_CONDITIONS      0x4
-#define MAX_NUMBER_ETHER_TYPE_CONDITIONS    0x4
-#define MAX_NUMBER_PORT_CONDITIONS          0x4
-#define MAX_NUMBER_MAGIC_CONDITIONS         0x4
-#define MAX_NUMBER_ARP_CONDITIONS           0x2
-#define MAX_NUMBER_NS_CONDITIONS            0x2
 
 /**
  * @addtogroup SPLIT_MAC_API
@@ -145,55 +132,19 @@ typedef struct __attribute__((__packed__)) WsmHiMibGlBlockAckInfo_s {
  * @{
  */
 
-/**
- * @brief ARP/NS frame treatment
- * */
-typedef enum WsmArpNsFrameTreatment_e {
-        WSM_ARP_NS_FILTERING_DISABLE                  = 0x0,
-        WSM_ARP_NS_FILTERING_ENABLE                   = 0x1,
-        WSM_ARP_NS_REPLY_ENABLE                       = 0x2
-} WsmArpNsFrameTreatment;
+// Nb max of data filters
+#define MAX_NUMBER_DATA_FILTERS             0xA
 
-/**
- * @structure WsmHiMibArpIpAddrTable_t
- * @brief Address Resolution Protocol (ARP) request IP address data filtering
- * */
-typedef struct __attribute__((__packed__)) WsmHiMibArpIpAddrTable_s {
-        uint8_t    ConditionIdx;                             ///< Condition index (0 to 1)
-        uint8_t    ArpEnable;                                ///< see WsmArpNsFrameTreatment
-        uint8_t    reserved[2];                              ///< Padding
-        uint8_t    Ipv4Address[WSM_API_IPV4_ADDRESS_SIZE];   ///< The IP V4 address
-} WsmHiMibArpIpAddrTable_t;
-
-#define WSM_API_OUI_SIZE                                3
-#define WSM_API_MATCH_DATA_SIZE                         3
-typedef struct __attribute__((__packed__)) WsmHiIeTableEntry_s {
-        uint8_t    IeId;                             /*Information element number*/
-        uint8_t    HasChanged : 1;                   /*Bit 0 = 1 - If IE has changed*/
-        uint8_t    NoLonger : 1;                     /*Bit 1 = 1 - If IE is no longer present.*/
-        uint8_t    HasAppeared : 1;                  /*Bit 2 = 1 - If IE has appeared.*/
-        uint8_t    Reserved : 1;                     ///< reserved for future use, set to 0
-        uint8_t    NumMatchData : 4;                 /*Bits 7 to 4 - Number of valid MatchData bytes. Applicable to IE 221 only.*/
-        uint8_t    Oui[WSM_API_OUI_SIZE];            /*OUI of the information element 221. This field is only present for IE 221. 0*/
-        uint8_t    MatchData[WSM_API_MATCH_DATA_SIZE];   /*OUI type of IE 221. This field is only present for IE 221. 0*/
-} WsmHiIeTableEntry_t;
-
-#define WSM_API_IE_TABLE_SIZE                           4
-typedef struct __attribute__((__packed__)) WsmHiMibBcnFilterTable_s {
-        uint32_t   NumOfInfoElmts;                   /*Number of information elements. Value of 0 clears the table.*/
-        WsmHiIeTableEntry_t IeTable[WSM_API_IE_TABLE_SIZE];   /*IE-Table details. type: WsmHiIeTableEntry_t*/
-} WsmHiMibBcnFilterTable_t;
-
-typedef enum WsmBeaconFilter_e {
-        WSM_BEACON_FILTER_DISABLE                  = 0x0,         /*Beacon filtering is disabled (default).*/
-        WSM_BEACON_FILTER_ENABLE                   = 0x1,         /*Beacon filtering is enabled.*/
-        WSM_BEACON_FILTER_AUTO_ERP                 = 0x2          /*Auto ERP filtering is enabled (bit 1 has to be 1as well).*/
-} WsmBeaconFilter;
-
-typedef struct __attribute__((__packed__)) WsmHiMibBcnFilterEnable_s {
-        uint32_t   Enable;                           /* type: WsmBeaconFilter*/
-        uint32_t   BcnCount;                         /*The value of received beacons for which the device wakes up the host.*/
-} WsmHiMibBcnFilterEnable_t;
+// Nb of conditions for filtering
+#define MAX_NUMBER_IPV4_ADDR_CONDITIONS     0x4
+#define MAX_NUMBER_IPV6_ADDR_CONDITIONS     0x4
+#define MAX_NUMBER_MAC_ADDR_CONDITIONS      0x4
+#define MAX_NUMBER_UC_MC_BC_CONDITIONS      0x4
+#define MAX_NUMBER_ETHER_TYPE_CONDITIONS    0x4
+#define MAX_NUMBER_PORT_CONDITIONS          0x4
+#define MAX_NUMBER_MAGIC_CONDITIONS         0x4
+#define MAX_NUMBER_ARP_CONDITIONS           0x2
+#define MAX_NUMBER_NS_CONDITIONS            0x2
 
 /**
  * @structure WsmHiMibEthertypeDataFrameCondition_t
@@ -299,17 +250,6 @@ typedef struct __attribute__((__packed__)) WsmHiMibIpv6AddrDataFrameCondition_s 
 } WsmHiMibIpv6AddrDataFrameCondition_t;
 
 /**
- * @structure WsmHiMibNsIpAddrTable_t
- * @brief Neighbor Solicitation (NS) IP address data filtering
- * */
-typedef struct __attribute__((__packed__)) WsmHiMibNsIpAddrTable_s {
-        uint8_t    ConditionIdx;                             ///< Condition index (0 to 1)
-        uint8_t    NsEnable;                                 ///< see WsmArpNsFrameTreatment
-        uint8_t    reserved[2];                              ///< Padding
-        uint8_t    Ipv6Address[WSM_API_IPV6_ADDRESS_SIZE];   ///< The IP V6 address
-} WsmHiMibNsIpAddrTable_t;
-
-/**
  * @brief Type unicast, multicast and broadcast address
  * These three bits field define a condition.
  * */
@@ -362,6 +302,67 @@ typedef struct __attribute__((__packed__)) WsmHiMibSetDataFiltering_s {
         uint8_t    Enable;                           ///< 0: Disable the filtering feature, 1: Enable the filtering feature
         uint8_t    reserved[2];                      ///< Padding
 } WsmHiMibSetDataFiltering_t;
+
+/**
+ * @brief ARP/NS frame treatment
+ * */
+typedef enum WsmArpNsFrameTreatment_e {
+        WSM_ARP_NS_FILTERING_DISABLE                  = 0x0,
+        WSM_ARP_NS_FILTERING_ENABLE                   = 0x1,
+        WSM_ARP_NS_REPLY_ENABLE                       = 0x2
+} WsmArpNsFrameTreatment;
+
+/**
+ * @structure WsmHiMibArpIpAddrTable_t
+ * @brief Address Resolution Protocol (ARP) request IP address data filtering
+ * */
+typedef struct __attribute__((__packed__)) WsmHiMibArpIpAddrTable_s {
+        uint8_t    ConditionIdx;                             ///< Condition index (0 to 1)
+        uint8_t    ArpEnable;                                ///< see WsmArpNsFrameTreatment
+        uint8_t    reserved[2];                              ///< Padding
+        uint8_t    Ipv4Address[WSM_API_IPV4_ADDRESS_SIZE];   ///< The IP V4 address
+} WsmHiMibArpIpAddrTable_t;
+
+/**
+ * @structure WsmHiMibNsIpAddrTable_t
+ * @brief Neighbor Solicitation (NS) IP address data filtering
+ * */
+typedef struct __attribute__((__packed__)) WsmHiMibNsIpAddrTable_s {
+        uint8_t    ConditionIdx;                             ///< Condition index (0 to 1)
+        uint8_t    NsEnable;                                 ///< see WsmArpNsFrameTreatment
+        uint8_t    reserved[2];                              ///< Padding
+        uint8_t    Ipv6Address[WSM_API_IPV6_ADDRESS_SIZE];   ///< The IP V6 address
+} WsmHiMibNsIpAddrTable_t;
+
+#define WSM_API_OUI_SIZE                                3
+#define WSM_API_MATCH_DATA_SIZE                         3
+typedef struct __attribute__((__packed__)) WsmHiIeTableEntry_s {
+        uint8_t    IeId;                             /*Information element number*/
+        uint8_t    HasChanged : 1;                   /*Bit 0 = 1 - If IE has changed*/
+        uint8_t    NoLonger : 1;                     /*Bit 1 = 1 - If IE is no longer present.*/
+        uint8_t    HasAppeared : 1;                  /*Bit 2 = 1 - If IE has appeared.*/
+        uint8_t    Reserved : 1;                     ///< reserved for future use, set to 0
+        uint8_t    NumMatchData : 4;                 /*Bits 7 to 4 - Number of valid MatchData bytes. Applicable to IE 221 only.*/
+        uint8_t    Oui[WSM_API_OUI_SIZE];            /*OUI of the information element 221. This field is only present for IE 221. 0*/
+        uint8_t    MatchData[WSM_API_MATCH_DATA_SIZE];   /*OUI type of IE 221. This field is only present for IE 221. 0*/
+} WsmHiIeTableEntry_t;
+
+#define WSM_API_IE_TABLE_SIZE                           4
+typedef struct __attribute__((__packed__)) WsmHiMibBcnFilterTable_s {
+        uint32_t   NumOfInfoElmts;                   /*Number of information elements. Value of 0 clears the table.*/
+        WsmHiIeTableEntry_t IeTable[WSM_API_IE_TABLE_SIZE];   /*IE-Table details. type: WsmHiIeTableEntry_t*/
+} WsmHiMibBcnFilterTable_t;
+
+typedef enum WsmBeaconFilter_e {
+        WSM_BEACON_FILTER_DISABLE                  = 0x0,         /*Beacon filtering is disabled (default).*/
+        WSM_BEACON_FILTER_ENABLE                   = 0x1,         /*Beacon filtering is enabled.*/
+        WSM_BEACON_FILTER_AUTO_ERP                 = 0x2          /*Auto ERP filtering is enabled (bit 1 has to be 1as well).*/
+} WsmBeaconFilter;
+
+typedef struct __attribute__((__packed__)) WsmHiMibBcnFilterEnable_s {
+        uint32_t   Enable;                           /* type: WsmBeaconFilter*/
+        uint32_t   BcnCount;                         /*The value of received beacons for which the device wakes up the host.*/
+} WsmHiMibBcnFilterEnable_t;
 
 /**
  * @}
