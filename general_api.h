@@ -95,11 +95,6 @@ typedef struct __attribute__((__packed__)) HiGenericMsg_s {
         uint8_t Body[API_VARIABLE_SIZE_ARRAY_DUMMY_SIZE];
 } HiGenericMsg_t;
 
-typedef struct __attribute__((__packed__)) HiGenericCnf_s {
-        HiMsgHdr_t  Header;
-        uint32_t    Status;
-} HiGenericCnf_t;
-
 typedef enum HiGeneralRequestsIds_e {
  HI_CONFIGURATION_REQ_ID                         =0x09,
  HI_CONTROL_GPIO_REQ_ID                          =0x26,
@@ -205,29 +200,14 @@ typedef struct __attribute__((__packed__)) HiStartupIndBody_s {
         uint8_t    FirmwareLabel[API_FIRMWARE_LABEL_SIZE];
 } HiStartupIndBody_t;
 
-typedef struct __attribute__((__packed__)) HiStartupInd_s {
-        HiMsgHdr_t Header;
-        HiStartupIndBody_t Body;
-} HiStartupInd_t;
-
 typedef struct __attribute__((__packed__)) HiConfigurationReqBody_s {
         uint16_t   Length;
         uint8_t    PdsData[0];
 } HiConfigurationReqBody_t;
 
-typedef struct __attribute__((__packed__)) HiConfigurationReq_s {
-        HiMsgHdr_t Header;
-        HiConfigurationReqBody_t Body;
-} HiConfigurationReq_t;
-
 typedef struct __attribute__((__packed__)) HiConfigurationCnfBody_s {
         uint32_t   Status;
 } HiConfigurationCnfBody_t;
-
-typedef struct __attribute__((__packed__)) HiConfigurationCnf_s {
-        HiMsgHdr_t Header;
-        HiConfigurationCnfBody_t Body;
-} HiConfigurationCnf_t;
 
 typedef enum HiGpioMode_e {
         HI_GPIO_MODE_D0                            = 0x0,
@@ -244,11 +224,6 @@ typedef struct __attribute__((__packed__)) HiControlGpioReqBody_s {
 	uint8_t GpioMode;
 } HiControlGpioReqBody_t;
 
-typedef struct __attribute__((__packed__)) HiControlGpioReq_s {
-        HiMsgHdr_t Header;
-        HiControlGpioReqBody_t Body;
-} HiControlGpioReq_t;
-
 typedef enum HiGpioError_e {
         HI_GPIO_ERROR_0                            = 0x0,
         HI_GPIO_ERROR_1                            = 0x1,
@@ -259,13 +234,6 @@ typedef struct __attribute__((__packed__)) HiControlGpioCnfBody_s {
 	uint32_t Status;
 	uint32_t Value;
 } HiControlGpioCnfBody_t;
-
-typedef struct __attribute__((__packed__)) HiControlGpioCnf_s {
-        HiMsgHdr_t Header;
-        HiControlGpioCnfBody_t Body;
-} HiControlGpioCnf_t;
-
-typedef HiMsgHdr_t HI_SHUT_DOWN_REQ;
 
 typedef enum HiGenericIndicationType_e {
         HI_GENERIC_INDICATION_TYPE_RAW               = 0x0,
@@ -305,11 +273,6 @@ typedef struct __attribute__((__packed__)) HiGenericIndBody_s {
         HiIndicationData_t IndicationData;
 } HiGenericIndBody_t;
 
-typedef struct __attribute__((__packed__)) HiGenericInd_s {
-        HiMsgHdr_t Header;
-        HiGenericIndBody_t Body;
-} HiGenericInd_t;
-
 typedef enum WsmHiDbg_e {
         WSM_HI_DBG_UNDEF_INST                      = 0x0,
         WSM_HI_DBG_PREFETCH_ABORT                  = 0x1,
@@ -322,11 +285,6 @@ typedef enum WsmHiDbg_e {
 typedef struct __attribute__((__packed__)) HiExceptionIndBody_s {
         uint8_t    Data[HI_EXCEPTION_DATA_SIZE];
 } HiExceptionIndBody_t;
-
-typedef struct __attribute__((__packed__)) HiExceptionInd_s {
-        HiMsgHdr_t Header;
-        HiExceptionIndBody_t Body;
-} HiExceptionInd_t;
 
 typedef enum WsmHiError_e {
         WSM_HI_ERROR_FIRMWARE_ROLLBACK             = 0x0,
@@ -342,11 +300,6 @@ typedef struct __attribute__((__packed__)) HiErrorIndBody_s {
         uint32_t   Type;
         uint8_t    Data[API_DATA_SIZE_124];
 } HiErrorIndBody_t;
-
-typedef struct __attribute__((__packed__)) HiErrorInd_s {
-        HiMsgHdr_t Header;
-        HiErrorIndBody_t Body;
-} HiErrorInd_t;
 
 typedef enum SecureLinkState_e {
         SECURE_LINK_NA_MODE                        = 0x0,
@@ -367,19 +320,9 @@ typedef struct __attribute__((__packed__)) HiSetSlMacKeyReqBody_s {
         uint8_t    KeyValue[API_KEY_VALUE_SIZE];
 } HiSetSlMacKeyReqBody_t;
 
-typedef struct __attribute__((__packed__)) HiSetSlMacKeyReq_s {
-        HiMsgHdr_t Header;
-        HiSetSlMacKeyReqBody_t Body;
-} HiSetSlMacKeyReq_t;
-
 typedef struct __attribute__((__packed__)) HiSetSlMacKeyCnfBody_s {
         uint32_t   Status;
 } HiSetSlMacKeyCnfBody_t;
-
-typedef struct __attribute__((__packed__)) HiSetSlMacKeyCnf_s {
-        HiMsgHdr_t Header;
-        HiSetSlMacKeyCnfBody_t Body;
-} HiSetSlMacKeyCnf_t;
 
 #define API_HOST_PUB_KEY_SIZE                           32
 #define API_HOST_PUB_KEY_MAC_SIZE                       64
@@ -389,11 +332,6 @@ typedef struct __attribute__((__packed__)) HiSlExchangePubKeysReqBody_s {
         uint8_t    HostPubKeyMac[API_HOST_PUB_KEY_MAC_SIZE];
 } HiSlExchangePubKeysReqBody_t;
 
-typedef struct __attribute__((__packed__)) HiSlExchangePubKeysReq_s {
-        HiMsgHdr_t Header;
-        HiSlExchangePubKeysReqBody_t Body;
-} HiSlExchangePubKeysReq_t;
-
 #define API_NCP_PUB_KEY_SIZE                            32
 #define API_NCP_PUB_KEY_MAC_SIZE                        64
 
@@ -402,11 +340,6 @@ typedef struct __attribute__((__packed__)) HiSlExchangePubKeysCnfBody_s {
         uint8_t    NcpPubKey[API_NCP_PUB_KEY_SIZE];
         uint8_t    NcpPubKeyMac[API_NCP_PUB_KEY_MAC_SIZE];
 } HiSlExchangePubKeysCnfBody_t;
-
-typedef struct __attribute__((__packed__)) HiSlExchangePubKeysCnf_s {
-        HiMsgHdr_t Header;
-        HiSlExchangePubKeysCnfBody_t Body;
-} HiSlExchangePubKeysCnf_t;
 
 typedef enum SlConfigureSkeyInvld_e {
         SL_CONFIGURE_SKEY_INVLD_INVALIDATE         = 0x87,
@@ -420,38 +353,18 @@ typedef struct __attribute__((__packed__)) HiSlConfigureReqBody_s {
         uint8_t    SkeyInvld;
 } HiSlConfigureReqBody_t;
 
-typedef struct __attribute__((__packed__)) HiSlConfigureReq_s {
-        HiMsgHdr_t Header;
-        HiSlConfigureReqBody_t Body;
-} HiSlConfigureReq_t;
-
 #define API_NCP_ENCR_BMP_SIZE      32
 
 typedef struct __attribute__((__packed__)) HiSlConfigureCnfBody_s {
         uint32_t Status;
 } HiSlConfigureCnfBody_t;
 
-typedef struct __attribute__((__packed__)) HiSlConfigureCnf_s {
-        HiMsgHdr_t Header;
-        HiSlConfigureCnfBody_t Body;
-} HiSlConfigureCnf_t;
-
 typedef struct __attribute__((__packed__)) HiPreventRollbackReqBody_s {
         uint32_t   MagicWord;
 } HiPreventRollbackReqBody_t;
 
-typedef struct __attribute__((__packed__)) HiPreventRollbackReq_s {
-        HiMsgHdr_t Header;
-        HiPreventRollbackReqBody_t Body;
-} HiPreventRollbackReq_t;
-
 typedef struct __attribute__((__packed__)) HiPreventRollbackCnfBody_s {
         uint32_t    Status;
 } HiPreventRollbackCnfBody_t;
-
-typedef struct __attribute__((__packed__)) HiPreventRollbackCnf_s {
-        HiMsgHdr_t Header;
-        HiPreventRollbackCnfBody_t Body;
-} HiPreventRollbackCnf_t;
 
 #endif

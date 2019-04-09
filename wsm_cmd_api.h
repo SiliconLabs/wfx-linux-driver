@@ -104,19 +104,9 @@ typedef struct __attribute__((__packed__)) WsmHiResetReqBody_s {
         WsmHiResetFlags_t ResetFlags;
 } WsmHiResetReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiResetReq_s {
-        HiMsgHdr_t Header;
-        WsmHiResetReqBody_t Body;
-} WsmHiResetReq_t;
-
 typedef struct __attribute__((__packed__)) WsmHiResetCnfBody_s {
         uint32_t   Status;
 } WsmHiResetCnfBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiResetCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiResetCnfBody_t Body;
-} WsmHiResetCnf_t;
 
 typedef union WsmMibData_u {
 
@@ -173,11 +163,6 @@ typedef struct __attribute__((__packed__)) WsmHiReadMibReqBody_s {
         uint16_t   Reserved;
 } WsmHiReadMibReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiReadMibReq_s {
-        HiMsgHdr_t Header;
-        WsmHiReadMibReqBody_t Body;
-} WsmHiReadMibReq_t;
-
 typedef struct __attribute__((__packed__)) WsmHiReadMibCnfBody_s {
         uint32_t   Status;
         uint16_t   MibId;
@@ -185,30 +170,15 @@ typedef struct __attribute__((__packed__)) WsmHiReadMibCnfBody_s {
         uint8_t    MibData[0];
 } WsmHiReadMibCnfBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiReadMibCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiReadMibCnfBody_t Body;
-} WsmHiReadMibCnf_t;
-
 typedef struct __attribute__((__packed__)) WsmHiWriteMibReqBody_s {
         uint16_t   MibId;
         uint16_t   Length;
         uint8_t    MibData[0];
 } WsmHiWriteMibReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiWriteMibReq_s {
-        HiMsgHdr_t Header;
-        WsmHiWriteMibReqBody_t Body;
-} WsmHiWriteMibReq_t;
-
 typedef struct __attribute__((__packed__)) WsmHiWriteMibCnfBody_s {
         uint32_t   Status;
 } WsmHiWriteMibCnfBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiWriteMibCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiWriteMibCnfBody_t Body;
-} WsmHiWriteMibCnf_t;
 
 typedef struct __attribute__((__packed__)) WsmHiIeFlags_s {
         uint8_t    Beacon : 1;
@@ -230,19 +200,9 @@ typedef struct __attribute__((__packed__)) WsmHiUpdateIeReqBody_s {
         WsmHiIeTlv_t   IE[0];
 } WsmHiUpdateIeReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiUpdateIeReq_s {
-        HiMsgHdr_t Header;
-        WsmHiUpdateIeReqBody_t Body;
-} WsmHiUpdateIeReq_t;
-
 typedef struct __attribute__((__packed__)) WsmHiUpdateIeCnfBody_s {
         uint32_t   Status;
 } WsmHiUpdateIeCnfBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiUpdateIeCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiUpdateIeCnfBody_t Body;
-} WsmHiUpdateIeCnf_t;
 
 typedef struct __attribute__((__packed__)) WsmHiScanType_s {
         uint8_t    Type : 1;
@@ -286,30 +246,13 @@ typedef struct __attribute__((__packed__)) WsmHiStartScanReqBody_s {
 
 } WsmHiStartScanReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiStartScanReq_s {
-        HiMsgHdr_t Header;
-        WsmHiStartScanReqBody_t Body;
-} WsmHiStartScanReq_t;
-
 typedef struct __attribute__((__packed__)) WsmHiStartScanCnfBody_s {
         uint32_t   Status;
 } WsmHiStartScanCnfBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiStartScanCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiStartScanCnfBody_t Body;
-} WsmHiStartScanCnf_t;
-
-typedef HiMsgHdr_t WSM_HI_STOP_SCAN_REQ;
-
 typedef struct __attribute__((__packed__)) WsmHiStopScanCnfBody_s {
         uint32_t   Status;
 } WsmHiStopScanCnfBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiStopScanCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiStopScanCnfBody_t Body;
-} WsmHiStopScanCnf_t;
 
 typedef enum WsmPmModeStatus_e {
         WSM_PM_MODE_ACTIVE                         = 0x0,
@@ -323,11 +266,6 @@ typedef struct __attribute__((__packed__)) WsmHiScanCmplIndBody_s {
         uint8_t    NumChannelsCompleted;
         uint16_t   Reserved;
 } WsmHiScanCmplIndBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiScanCmplInd_s {
-        HiMsgHdr_t Header;
-        WsmHiScanCmplIndBody_t Body;
-} WsmHiScanCmplInd_t;
 
 typedef enum WsmQueueId_e {
         WSM_QUEUE_ID_BACKGROUND                    = 0x0,
@@ -389,11 +327,6 @@ typedef struct __attribute__((__packed__)) WsmHiTxReqBody_s {
         uint32_t   Frame[0];
 } WsmHiTxReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiTxReq_s {
-        HiMsgHdr_t Header;
-        WsmHiTxReqBody_t Body;
-} WsmHiTxReq_t;
-
 typedef enum WsmQosAckplcy_e {
         WSM_QOS_ACKPLCY_NORMAL                         = 0x0,
         WSM_QOS_ACKPLCY_TXNOACK                        = 0x1,
@@ -420,20 +353,10 @@ typedef struct __attribute__((__packed__)) WsmHiTxCnfBody_s {
         uint32_t   TxQueueDelay;
 } WsmHiTxCnfBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiTxCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiTxCnfBody_t Body;
-} WsmHiTxCnf_t;
-
 typedef struct __attribute__((__packed__)) WsmHiMultiTransmitCnfBody_s {
         uint32_t   NumTxConfs;
         WsmHiTxCnfBody_t   TxConfPayload[API_VARIABLE_SIZE_ARRAY_DUMMY_SIZE];
 } WsmHiMultiTransmitCnfBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiMultiTransmitCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiMultiTransmitCnfBody_t Body;
-} WsmHiMultiTransmitCnf_t;
 
 typedef enum WsmRiFlagsEncrypt_e {
         WSM_RI_FLAGS_UNENCRYPTED                   = 0x0,
@@ -478,11 +401,6 @@ typedef struct __attribute__((__packed__)) WsmHiRxIndBody_s {
         uint32_t   Frame[0];
 } WsmHiRxIndBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiRxInd_s {
-        HiMsgHdr_t Header;
-        WsmHiRxIndBody_t Body;
-} WsmHiRxInd_t;
-
 typedef enum WsmAckplcy_e {
         WSM_ACKPLCY_NORMAL                         = 0x0,
         WSM_ACKPLCY_TXNOACK                        = 0x1
@@ -500,19 +418,9 @@ typedef struct __attribute__((__packed__)) WsmHiEdcaQueueParamsReqBody_s {
     uint32_t    Reserved3;
 } WsmHiEdcaQueueParamsReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiEdcaQueueParamsReq_s {
-        HiMsgHdr_t Header;
-        WsmHiEdcaQueueParamsReqBody_t Body;
-} WsmHiEdcaQueueParamsReq_t;
-
 typedef struct __attribute__((__packed__)) WsmHiEdcaQueueParamsCnfBody_s {
         uint32_t   Status;
 } WsmHiEdcaQueueParamsCnfBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiEdcaQueueParamsCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiEdcaQueueParamsCnfBody_t Body;
-} WsmHiEdcaQueueParamsCnf_t;
 
 typedef enum WsmMode_e {
         WSM_MODE_IBSS                              = 0x0,
@@ -551,28 +459,13 @@ typedef struct __attribute__((__packed__)) WsmHiJoinReqBody_s {
         uint32_t   BasicRateSet;
 } WsmHiJoinReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiJoinReq_s {
-        HiMsgHdr_t Header;
-        WsmHiJoinReqBody_t Body;
-} WsmHiJoinReq_t;
-
 typedef struct __attribute__((__packed__)) WsmHiJoinCnfBody_s {
         uint32_t   Status;
 } WsmHiJoinCnfBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiJoinCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiJoinCnfBody_t Body;
-} WsmHiJoinCnf_t;
-
 typedef struct __attribute__((__packed__)) WsmHiJoinCompleteIndBody_s {
         uint32_t   Status;
 } WsmHiJoinCompleteIndBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiJoinCompleteInd_s {
-        HiMsgHdr_t Header;
-        WsmHiJoinCompleteIndBody_t Body;
-} WsmHiJoinCompleteInd_t;
 
 typedef struct __attribute__((__packed__)) WsmHiBssFlags_s {
         uint8_t    LostCountOnly : 1;
@@ -586,19 +479,9 @@ typedef struct __attribute__((__packed__)) WsmHiSetBssParamsReqBody_s {
         uint32_t   OperationalRateSet;
 } WsmHiSetBssParamsReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiSetBssParamsReq_s {
-        HiMsgHdr_t Header;
-        WsmHiSetBssParamsReqBody_t Body;
-} WsmHiSetBssParamsReq_t;
-
 typedef struct __attribute__((__packed__)) WsmHiSetBssParamsCnfBody_s {
         uint32_t   Status;
 } WsmHiSetBssParamsCnfBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiSetBssParamsCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiSetBssParamsCnfBody_t Body;
-} WsmHiSetBssParamsCnf_t;
 
 typedef struct __attribute__((__packed__)) WsmHiPmMode_s {
         uint8_t    EnterPsm : 1;
@@ -613,30 +496,15 @@ typedef struct __attribute__((__packed__)) WsmHiSetPmModeReqBody_s {
         uint8_t    MinAutoPsPollPeriod;
 } WsmHiSetPmModeReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiSetPmModeReq_s {
-        HiMsgHdr_t Header;
-        WsmHiSetPmModeReqBody_t Body;
-} WsmHiSetPmModeReq_t;
-
 typedef struct __attribute__((__packed__)) WsmHiSetPmModeCnfBody_s {
         uint32_t   Status;
 } WsmHiSetPmModeCnfBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiSetPmModeCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiSetPmModeCnfBody_t Body;
-} WsmHiSetPmModeCnf_t;
 
 typedef struct __attribute__((__packed__)) WsmHiSetPmModeCmplIndBody_s {
         uint32_t   Status;
         uint8_t    PmMode;
         uint8_t    Reserved[3];
 } WsmHiSetPmModeCmplIndBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiSetPmModeCmplInd_s {
-        HiMsgHdr_t Header;
-        WsmHiSetPmModeCmplIndBody_t Body;
-} WsmHiSetPmModeCmplInd_t;
 
 
 typedef struct __attribute__((__packed__)) WsmHiStartReqBody_s {
@@ -653,19 +521,9 @@ typedef struct __attribute__((__packed__)) WsmHiStartReqBody_s {
         uint32_t   BasicRateSet;
 } WsmHiStartReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiStartReq_s {
-        HiMsgHdr_t Header;
-        WsmHiStartReqBody_t Body;
-} WsmHiStartReq_t;
-
 typedef struct __attribute__((__packed__)) WsmHiStartCnfBody_s {
         uint32_t   Status;
 } WsmHiStartCnfBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiStartCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiStartCnfBody_t Body;
-} WsmHiStartCnf_t;
 
 typedef enum WsmBeacon_e {
         WSM_BEACON_STOP                       = 0x0,
@@ -677,19 +535,9 @@ typedef struct __attribute__((__packed__)) WsmHiBeaconTransmitReqBody_s {
         uint8_t    Reserved[3];
 } WsmHiBeaconTransmitReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiBeaconTransmitReq_s {
-        HiMsgHdr_t Header;
-        WsmHiBeaconTransmitReqBody_t Body;
-} WsmHiBeaconTransmitReq_t;
-
 typedef struct __attribute__((__packed__)) WsmHiBeaconTransmitCnfBody_s {
         uint32_t   Status;
 } WsmHiBeaconTransmitCnfBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiBeaconTransmitCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiBeaconTransmitCnfBody_t Body;
-} WsmHiBeaconTransmitCnf_t;
 
 typedef enum WsmStaMapDirection_e {
         WSM_STA_MAP                       = 0x0,
@@ -708,19 +556,9 @@ typedef struct __attribute__((__packed__)) WsmHiMapLinkReqBody_s {
         uint8_t    PeerStaId;
 } WsmHiMapLinkReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMapLinkReq_s {
-        HiMsgHdr_t Header;
-        WsmHiMapLinkReqBody_t Body;
-} WsmHiMapLinkReq_t;
-
 typedef struct __attribute__((__packed__)) WsmHiMapLinkCnfBody_s {
         uint32_t   Status;
 } WsmHiMapLinkCnfBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiMapLinkCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiMapLinkCnfBody_t Body;
-} WsmHiMapLinkCnf_t;
 
 typedef struct __attribute__((__packed__)) WsmHiSuspendResumeFlags_s {
         uint8_t    Resume : 1;
@@ -736,11 +574,6 @@ typedef struct __attribute__((__packed__)) WsmHiSuspendResumeTxIndBody_s {
         WsmHiSuspendResumeFlags_t SuspendResumeFlags;
         uint16_t   					TxResumeFlagsPerIf;
 } WsmHiSuspendResumeTxIndBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiSuspendResumeTxInd_s {
-        HiMsgHdr_t Header;
-        WsmHiSuspendResumeTxIndBody_t Body;
-} WsmHiSuspendResumeTxInd_t;
 
 
 #define MAX_KEY_ENTRIES         24
@@ -852,38 +685,18 @@ typedef struct __attribute__((__packed__)) WsmHiAddKeyReqBody_s {
         WsmPrivacyKeyData_t Key;
 } WsmHiAddKeyReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiAddKeyReq_s {
-        HiMsgHdr_t Header;
-        WsmHiAddKeyReqBody_t Body;
-} WsmHiAddKeyReq_t;
-
 typedef struct __attribute__((__packed__)) WsmHiAddKeyCnfBody_s {
         uint32_t   Status;
 } WsmHiAddKeyCnfBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiAddKeyCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiAddKeyCnfBody_t Body;
-} WsmHiAddKeyCnf_t;
 
 typedef struct __attribute__((__packed__)) WsmHiRemoveKeyReqBody_s {
         uint8_t    EntryIndex;
         uint8_t    Reserved[3];
 } WsmHiRemoveKeyReqBody_t;
 
-typedef struct __attribute__((__packed__)) WsmHiRemoveKeyReq_s {
-        HiMsgHdr_t Header;
-        WsmHiRemoveKeyReqBody_t Body;
-} WsmHiRemoveKeyReq_t;
-
 typedef struct __attribute__((__packed__)) WsmHiRemoveKeyCnfBody_s {
         uint32_t   Status;
 } WsmHiRemoveKeyCnfBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiRemoveKeyCnf_s {
-        HiMsgHdr_t Header;
-        WsmHiRemoveKeyCnfBody_t Body;
-} WsmHiRemoveKeyCnf_t;
 
 typedef enum WsmEventInd_e {
         WSM_EVENT_IND_BSSLOST                      = 0x1,
@@ -911,11 +724,6 @@ typedef struct __attribute__((__packed__)) WsmHiEventIndBody_s {
         uint32_t   EventId;
         WsmEventData_t EventData;
 } WsmHiEventIndBody_t;
-
-typedef struct __attribute__((__packed__)) WsmHiEventInd_s {
-        HiMsgHdr_t Header;
-        WsmHiEventIndBody_t Body;
-} WsmHiEventInd_t;
 
 
 #endif
