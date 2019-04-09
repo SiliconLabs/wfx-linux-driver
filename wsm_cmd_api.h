@@ -108,56 +108,6 @@ typedef struct __attribute__((__packed__)) WsmHiResetCnfBody_s {
         uint32_t   Status;
 } WsmHiResetCnfBody_t;
 
-typedef union WsmMibData_u {
-
-        uint32_t                                        OperationalPowerMode;
-        WsmHiMibGlBlockAckInfo_t                  MibBlockAckInfo;
-        uint32_t                                        UseMultiTxConfMsg;
-
-        WsmHiMibEthertypeDataFrameCondition_t     EtherTypeDataFrameCondition;
-        WsmHiMibPortsDataFrameCondition_t         PortsDataFrameCondition;
-        WsmHiMibMagicDataFrameCondition_t         MagicDataFrameCondition;
-        WsmHiMibMacAddrDataFrameCondition_t      MacAddrDataFrameCondition;
-        WsmHiMibIpv4AddrDataFrameCondition_t     IPv4AddrDataFrameCondition;
-        WsmHiMibIpv6AddrDataFrameCondition_t     IPv6AddrDataFrameCondition;
-        WsmHiMibUcMcBcDataFrameCondition_t      UcMcBcDataFrameCondition;
-        WsmHiMibConfigDataFilter_t                 ConfigDataFilter;
-        WsmHiMibSetDataFiltering_t                 SetDataFiltering;
-        WsmHiMibArpIpAddrTable_t                  ArpIpAddressesTable;
-        WsmHiMibNsIpAddrTable_t                   NsIpAddressesTable;
-        uint32_t                                      RxFilter;
-        WsmHiMibBcnFilterTable_t                   BeaconFilterTable;
-        WsmHiMibBcnFilterEnable_t                  BeaconFilterEnable;
-
-        WsmHiMibGroupSeqCounter_t                  GroupSeqCounter;
-        WsmHiMibTsfCounter_t                        TSFCounter;
-        WsmHiMibStatsTable_t                        StatisticsTable;
-        WsmHiMibCountTable_t                        CountTable;
-
-        WsmHiMibMacAddress_t                        dot11MacAdress;
-        uint32_t                                        dot11MaxTransmitMsduLifeTime;
-        uint32_t                                        dot11MaxReceiveLifeTime;
-        WsmHiMibWepDefaultKeyId_t                 dot11WepdefaultKeyId;
-        uint32_t                                        dot11RtsThreshold;
-        uint32_t                                        SlotTime;
-        int32_t                                        CurrentTxPowerLevel;
-        uint32_t                                        useCtsToSelf;
-        WsmHiMibTemplateFrame_t                     TemplateFrame;
-        WsmHiMibBeaconWakeUpPeriod_t              BeaconWakeUpPeriod;
-        WsmHiMibRcpiRssiThreshold_t                RcpiRssiThreshold;
-        WsmHiMibBlockAckPolicy_t                   BlockAckPolicy;
-        WsmHiMibOverrideIntRate_t                  MibOverrideInternalTxRate;
-        WsmHiMibSetAssociationMode_t               SetAssociationMode;
-        WsmHiMibSetUapsdInformation_t              SetUapsdInformation;
-        WsmHiMibSetTxRateRetryPolicy_t           SetTxRateRetryPolicy;
-        uint32_t                                        ProtectedMgmtFramesPolicy;
-        uint32_t                                        SetHtProtection;
-        WsmHiMibKeepAlivePeriod_t                  KeepAlivePeriod;
-        WsmHiMibArpKeepAlivePeriod_t              ArpKeepAlivePeriod;
-        WsmHiMibInactivityTimer_t                   InactivityTimer;
-        uint32_t                                        InterfaceProtection;
-} WsmMibData_t;
-
 typedef struct __attribute__((__packed__)) WsmHiReadMibReqBody_s {
         uint16_t   MibId;
         uint16_t   Reserved;
