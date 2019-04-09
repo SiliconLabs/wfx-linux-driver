@@ -258,6 +258,8 @@ static int wfx_set_uapsd_param(struct wfx_vif		*wvif,
 static int wfx_vif_setup(struct wfx_vif *wvif)
 {
 	int i;
+	// FIXME: parameters are set by kernel juste after interface_add.
+	// Keep WsmHiEdcaQueueParamsReqBody_t blank?
 	static const WsmHiEdcaQueueParamsReqBody_t default_edca_params[] = {
 		[IEEE80211_AC_VO] = {
 			.QueueId = WSM_QUEUE_ID_VOICE,
@@ -340,8 +342,6 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 }
 
 int wfx_add_interface(struct ieee80211_hw *hw,
-	// FIXME: parameters are set by kernel juste after interface_add.
-	// Keep WsmHiEdcaQueueParamsReqBody_t blank?
 			 struct ieee80211_vif *vif)
 {
 	int i;
