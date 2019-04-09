@@ -554,21 +554,13 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 		wvif = NULL;
 		while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
 			memset(&wvif->powersave_mode, 0, sizeof(wvif->powersave_mode));
-			// Kernel disable PowerSave when multiple vifs are in
-			// use. In contrary, it is absolutly necessary to
-			// enable PowerSave for WF200
-			if (wvif_count(wdev) > 1) {
+			if (conf->flags & IEEE80211_CONF_PS) {
 				wvif->powersave_mode.PmMode.PmMode = 1;
-				wvif->powersave_mode.PmMode.FastPsm = 0;
-			} else {
-				if (conf->flags & IEEE80211_CONF_PS) {
-					wvif->powersave_mode.PmMode.PmMode = 1;
-					if (conf->dynamic_ps_timeout > 0) {
-						wvif->powersave_mode.PmMode.FastPsm = 1;
-						// Firmware does not support more than 128ms
-						wvif->powersave_mode.FastPsmIdlePeriod =
-							min(conf->dynamic_ps_timeout * 2, 255);
-					}
+				if (conf->dynamic_ps_timeout > 0) {
+					wvif->powersave_mode.PmMode.FastPsm = 1;
+					// Firmware does not support more than 128ms
+					wvif->powersave_mode.FastPsmIdlePeriod =
+						min(conf->dynamic_ps_timeout * 2, 255);
 				}
 			}
 			if (wvif->state == WFX_STATE_STA && wvif->bss_params.AID)
@@ -827,6 +819,12 @@ int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 	memcpy(&uapsd_flags, &wvif->uapsd_info, sizeof(uapsd_flags));
 
 	if (uapsd_flags != 0) {
+		pm.PmMode.FastPsm = 0;
+	}
+	// Kernel disable PowerSave when multiple vifs are in use. In contrary,
+	// it is absolutly necessary to enable PowerSave for WF200
+	if (wvif_count(wvif->wdev) > 1) {
+		pm.PmMode.PmMode = 1;
 		pm.PmMode.FastPsm = 0;
 	}
 
