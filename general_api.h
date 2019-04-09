@@ -394,8 +394,8 @@ typedef struct __attribute__((__packed__)) HiControlGpioReqBody_s {
 } HiControlGpioReqBody_t;
 
 typedef struct __attribute__((__packed__)) HiControlGpioReq_s {
-        HiMsgHdr_t Header;             
-        HiControlGpioReqBody_t Body;               
+        HiMsgHdr_t Header;
+        HiControlGpioReqBody_t Body;
 } HiControlGpioReq_t;
 
 /**
@@ -415,8 +415,8 @@ typedef struct __attribute__((__packed__)) HiControlGpioCnfBody_s {
 } HiControlGpioCnfBody_t;
 
 typedef struct __attribute__((__packed__)) HiControlGpioCnf_s {
-        HiMsgHdr_t Header;             
-        HiControlGpioCnfBody_t Body;               
+        HiMsgHdr_t Header;
+        HiControlGpioCnfBody_t Body;
 } HiControlGpioCnf_t;
 
 
@@ -425,7 +425,7 @@ typedef struct __attribute__((__packed__)) HiControlGpioCnf_s {
  * A hardware reset and complete reboot is required to resume from that state.
  * There is no confirmation to this command.
  * It is effective when WUP register bit and WUP pin (when used) are both to 0.*/
-typedef HiMsgHdr_t HI_SHUT_DOWN_REQ; 
+typedef HiMsgHdr_t HI_SHUT_DOWN_REQ;
 
 
 /**
@@ -479,8 +479,8 @@ typedef struct __attribute__((__packed__)) HiGenericIndBody_s {
 } HiGenericIndBody_t;
 
 typedef struct __attribute__((__packed__)) HiGenericInd_s {
-        HiMsgHdr_t Header;             
-        HiGenericIndBody_t Body;               
+        HiMsgHdr_t Header;
+        HiGenericIndBody_t Body;
 } HiGenericInd_t;
 
 
@@ -504,7 +504,7 @@ typedef struct __attribute__((__packed__)) HiExceptionIndBody_s {
 } HiExceptionIndBody_t;
 
 typedef struct __attribute__((__packed__)) HiExceptionInd_s {
-        HiMsgHdr_t Header;             
+        HiMsgHdr_t Header;
         HiExceptionIndBody_t Body;
 } HiExceptionInd_t;
 
@@ -536,7 +536,7 @@ typedef struct __attribute__((__packed__)) HiErrorIndBody_s {
 } HiErrorIndBody_t;
 
 typedef struct __attribute__((__packed__)) HiErrorInd_s {
-        HiMsgHdr_t Header;             
+        HiMsgHdr_t Header;
         HiErrorIndBody_t Body;
 } HiErrorInd_t;
 
@@ -580,7 +580,7 @@ typedef enum SlMacKeyDest_e {
 #define API_KEY_VALUE_SIZE      32
 /**
  * @brief Set the Secure Link MAC key
- * 
+ *
  * This API can be used in two contexts:
  * - for *Trused Eval* chips : used to set a temporary *SecureLink MAC key* in RAM.
  * - for *Trused Enforced* chips : used to permanently burn the *SecureLink MAC key* in OTP memory
@@ -591,8 +591,8 @@ typedef struct __attribute__((__packed__)) HiSetSlMacKeyReqBody_s {
 } HiSetSlMacKeyReqBody_t;
 
 typedef struct __attribute__((__packed__)) HiSetSlMacKeyReq_s {
-        HiMsgHdr_t Header;             
-        HiSetSlMacKeyReqBody_t Body;               
+        HiMsgHdr_t Header;
+        HiSetSlMacKeyReqBody_t Body;
 } HiSetSlMacKeyReq_t;
 
 /**
@@ -602,15 +602,15 @@ typedef struct __attribute__((__packed__)) HiSetSlMacKeyCnfBody_s {
 } HiSetSlMacKeyCnfBody_t;
 
 typedef struct __attribute__((__packed__)) HiSetSlMacKeyCnf_s {
-        HiMsgHdr_t Header;             
-        HiSetSlMacKeyCnfBody_t Body;               
+        HiMsgHdr_t Header;
+        HiSetSlMacKeyCnfBody_t Body;
 } HiSetSlMacKeyCnf_t;
 
 #define API_HOST_PUB_KEY_SIZE                           32
 #define API_HOST_PUB_KEY_MAC_SIZE                       64
 /**
  * @brief Exchange Secure Link Public Keys
- * 
+ *
  * This API is used by the Host to send its *curve25519* public key to Device, and get back Device public key in the confirmation message.
  * Once keys are exchanged and authenticated (using their respective MAC), each peer computes the Secure Link *session key* that will be used
  * to encrypt/decrypt future Host<->Device messages.
@@ -621,8 +621,8 @@ typedef struct __attribute__((__packed__)) HiSlExchangePubKeysReqBody_s {
 } HiSlExchangePubKeysReqBody_t;
 
 typedef struct __attribute__((__packed__)) HiSlExchangePubKeysReq_s {
-        HiMsgHdr_t Header;             
-        HiSlExchangePubKeysReqBody_t Body;               
+        HiMsgHdr_t Header;
+        HiSlExchangePubKeysReqBody_t Body;
 } HiSlExchangePubKeysReq_t;
 
 #define API_NCP_PUB_KEY_SIZE                            32
@@ -636,8 +636,8 @@ typedef struct __attribute__((__packed__)) HiSlExchangePubKeysCnfBody_s {
 } HiSlExchangePubKeysCnfBody_t;
 
 typedef struct __attribute__((__packed__)) HiSlExchangePubKeysCnf_s {
-        HiMsgHdr_t Header;             
-        HiSlExchangePubKeysCnfBody_t Body;               
+        HiMsgHdr_t Header;
+        HiSlExchangePubKeysCnfBody_t Body;
 } HiSlExchangePubKeysCnf_t;
 
 
@@ -652,11 +652,11 @@ typedef enum SlConfigureSkeyInvld_e {
 #define API_ENCR_BMP_SIZE        32
 /**
  * @brief Configure Secure Link Layer
- * 
+ *
  * This API can be used to:
  * - Set/update the Secure Link *encryption bitmap*
  * - Optionally (and additionally), invalidate the current *session key*
- * 
+ *
  * Upon request reception, Device will update its own encryption bitmap and
  *  return the updated value in the confirmation.
  */
@@ -666,8 +666,8 @@ typedef struct __attribute__((__packed__)) HiSlConfigureReqBody_s {
 } HiSlConfigureReqBody_t;
 
 typedef struct __attribute__((__packed__)) HiSlConfigureReq_s {
-        HiMsgHdr_t Header;             
-        HiSlConfigureReqBody_t Body;               
+        HiMsgHdr_t Header;
+        HiSlConfigureReqBody_t Body;
 } HiSlConfigureReq_t;
 
 #define API_NCP_ENCR_BMP_SIZE      32
@@ -678,8 +678,8 @@ typedef struct __attribute__((__packed__)) HiSlConfigureCnfBody_s {
 } HiSlConfigureCnfBody_t;
 
 typedef struct __attribute__((__packed__)) HiSlConfigureCnf_s {
-        HiMsgHdr_t Header;             
-        HiSlConfigureCnfBody_t Body;               
+        HiMsgHdr_t Header;
+        HiSlConfigureCnfBody_t Body;
 } HiSlConfigureCnf_t;
 
 
@@ -696,22 +696,22 @@ typedef struct __attribute__((__packed__)) HiSlConfigureCnf_s {
  * @brief APIs for preventing Rollback of unsafe firmware images.
  *
  * By enabling this feature Device is able to prevent unsafe/outdated firmwares to boot.
- * 
- * Each firmware owns its internal *rollback revision number* which is compared to 
+ *
+ * Each firmware owns its internal *rollback revision number* which is compared to
  *   an equivalent revision number burned in Device OTP memory. Depending on the comparison result,
  *   two cases can occur:
  * - Firmware revision number is higher or equal to the OTP number -> the firmware is allowed
  *   to proceed
  * - Firmware revision number is lower than the OTP value -> the firmware is not allowed to proceed.
- *   An *Error indication* will be returned to the driver indicating the cause of the error (::WSM_HI_ERROR_FIRMWARE_ROLLBACK). 
- * 
+ *   An *Error indication* will be returned to the driver indicating the cause of the error (::WSM_HI_ERROR_FIRMWARE_ROLLBACK).
+ *
  * @note The firmware *rollback revision number* is different that the *firmware version*.
- * The former is incremented only when some important fixes (i.e. Security patches) are provided 
+ * The former is incremented only when some important fixes (i.e. Security patches) are provided
  * by a given version of the firmware,that MUST be applied to Device and should not be reverted.
  *  Usually, subsequent firmware versions are supposed to embed the same rollback revision number.
- * 
+ *
  * The rollback capability relies on the use of a dedicated API ::HiPreventRollbackReqBody_t.
- * 
+ *
  * All Device drivers supporting *Rollback Prevention* should send this request just after booting a new firmware.
  *   This way, any newer *rollback revision number* included in a firmware will be burned in the OTP.
  *
@@ -720,23 +720,23 @@ typedef struct __attribute__((__packed__)) HiSlConfigureCnf_s {
 
 
 /**
- *@brief Prevent Rollback request 
+ *@brief Prevent Rollback request
  *
  * *Prevent Rollback* asks WLAN firmware to burn a new *Firmware Rollback* value in a dedicated OTP section.
- * 
+ *
  * The new value is encoded in the firmware itself. Once burned, this value will prevent from starting
  *  all firmwares whose internal rollback value is lower than the OTP value.
- * 
+ *
  * *Magic Word* is used to prevent mistakenly sent requests to burn the OTP.
- * 
+ *
 */
 typedef struct __attribute__((__packed__)) HiPreventRollbackReqBody_s {
         uint32_t   MagicWord;                        /**< Magic Word - should be 0x5C8912F3*/
 } HiPreventRollbackReqBody_t;
 
 typedef struct __attribute__((__packed__)) HiPreventRollbackReq_s {
-        HiMsgHdr_t Header;             
-        HiPreventRollbackReqBody_t Body;               
+        HiMsgHdr_t Header;
+        HiPreventRollbackReqBody_t Body;
 } HiPreventRollbackReq_t;
 
 /**
@@ -744,15 +744,15 @@ typedef struct __attribute__((__packed__)) HiPreventRollbackReq_s {
  *
  * The request might have failed for the following reasons:
  * - Wrong *magic word* value
- * 
+ *
 */
 typedef struct __attribute__((__packed__)) HiPreventRollbackCnfBody_s {
         uint32_t    Status;             			///<Confirmation status, see enum ::HiStatus
 } HiPreventRollbackCnfBody_t;
 
 typedef struct __attribute__((__packed__)) HiPreventRollbackCnf_s {
-        HiMsgHdr_t Header;             
-        HiPreventRollbackCnfBody_t Body;               
+        HiMsgHdr_t Header;
+        HiPreventRollbackCnfBody_t Body;
 } HiPreventRollbackCnf_t;
 
 /**
