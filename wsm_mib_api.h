@@ -152,7 +152,7 @@ typedef struct __attribute__((__packed__)) WsmHiMibGlBlockAckInfo_s {
  * */
 typedef struct __attribute__((__packed__)) WsmHiMibEthertypeDataFrameCondition_s {
         uint8_t    ConditionIdx;                     ///< Condition index (0 to 3)
-        uint8_t    reserved;                         ///< Padding
+        uint8_t    Reserved;                         ///< Padding
         uint16_t   EtherType;                        ///< EtherType to match
 } WsmHiMibEthertypeDataFrameCondition_t;
 
@@ -182,9 +182,9 @@ typedef struct __attribute__((__packed__)) WsmHiMibPortsDataFrameCondition_s {
         uint8_t    ConditionIdx;              ///< Index of the port condition (0 to 3)
         uint8_t    Protocol;                  ///< see WsmUdpTcpProtocol
         uint8_t    WhichPort;                 ///< see WsmWhichPort
-        uint8_t    reserved;                  ///< Padding
+        uint8_t    Reserved1;                 ///< Padding
         uint16_t   PortNumber;                ///< The UDP port number to filter on
-        uint8_t    reserved2[2];              ///< Padding
+        uint8_t    Reserved2[2];              ///< Padding
 } WsmHiMibPortsDataFrameCondition_t;
 
 /**
@@ -196,7 +196,7 @@ typedef struct __attribute__((__packed__)) WsmHiMibMagicDataFrameCondition_s {
         uint8_t    ConditionIdx;                              ///< Condition index (0 to 3)
         uint8_t    Offset;                                    ///< Offset in bytes from the end of the 802.11 header
         uint8_t    MagicPatternLength;                        ///< The length of the magic pattern. A maximum length of 32 bytes (WSM_MAX_MAGIC_PATTERN_LENGTH) is supported
-        uint8_t    reserved;                                  ///< Padding
+        uint8_t    Reserved;                                  ///< Padding
         uint8_t    MagicPattern[WSM_API_MAGIC_PATTERN_SIZE];  ///< The magic byte pattern to match
 } WsmHiMibMagicDataFrameCondition_t;
 
@@ -234,7 +234,7 @@ typedef enum WsmIpAddrMode_e {
 typedef struct __attribute__((__packed__)) WsmHiMibIpv4AddrDataFrameCondition_s {
         uint8_t    ConditionIdx;                           ///< Condition index (0 to 3)
         uint8_t    AddressMode;                            ///< Source or destination address - see WsmIpAddrMode
-        uint8_t    reserved[2];                            ///< Padding
+        uint8_t    Reserved[2];                            ///< Padding
         uint8_t    IPv4Address[WSM_API_IPV4_ADDRESS_SIZE]; ///< The IPv4 address to filter on
 } WsmHiMibIpv4AddrDataFrameCondition_t;
 
@@ -245,7 +245,7 @@ typedef struct __attribute__((__packed__)) WsmHiMibIpv4AddrDataFrameCondition_s 
 typedef struct __attribute__((__packed__)) WsmHiMibIpv6AddrDataFrameCondition_s {
         uint8_t    ConditionIdx;                           ///< Condition index (0 to 3)
         uint8_t    AddressMode;                            ///< Source or destination address - see WsmIpAddrMode
-        uint8_t    reserved[2];                            ///< Padding
+        uint8_t    Reserved[2];                            ///< Padding
         uint8_t    IPv6Address[WSM_API_IPV6_ADDRESS_SIZE]; ///< The IPv6 address to filter on
 } WsmHiMibIpv6AddrDataFrameCondition_t;
 
@@ -260,7 +260,7 @@ typedef union __attribute__((__packed__)) WsmHiAddrType_u
         uint8_t    TypeUnicast   : 1;                      ///< bit0
         uint8_t    TypeMulticast : 1;                      ///< bit1
         uint8_t    TypeBroadcast : 1;                      ///< bit2
-        uint8_t    reserved      : 5;                      ///< reserved
+        uint8_t    Reserved      : 5;                      ///< reserved
     }bits;
 }WsmHiAddrType_t;
 
@@ -272,7 +272,7 @@ typedef union __attribute__((__packed__)) WsmHiAddrType_u
 typedef struct __attribute__((__packed__)) WsmHiMibUcMcBcDataFrameCondition_s {
         uint8_t            ConditionIdx;                   ///< Condition index (0 to 3)
         WsmHiAddrType_t Param;                          ///< See WsmHiAddrType_t
-        uint8_t            reserved[2];                    ///< Padding
+        uint8_t            Reserved[2];                    ///< Padding
 } WsmHiMibUcMcBcDataFrameCondition_t;
 
 /**
@@ -282,7 +282,7 @@ typedef struct __attribute__((__packed__)) WsmHiMibUcMcBcDataFrameCondition_s {
 typedef struct __attribute__((__packed__)) WsmHiMibConfigDataFilter_s {
         uint8_t    FilterIdx;                        ///< Filter index
         uint8_t    Enable;                           ///< 0 - Disable filtering. 1 - Enable filtering
-        uint8_t    reserved[2];                      ///< Padding
+        uint8_t    Reserved1[2];                     ///< Padding
         uint8_t    EthTypeCond;                      ///< Ethernet type condition 0 (bit0) to 3 (bit3)
         uint8_t    PortCond;                         ///< Port condition 0 (bit0) to 3 (bit3)
         uint8_t    MagicCond;                        ///< Magic pattern condition 0 (bit0) to 3 (bit3)
@@ -290,7 +290,7 @@ typedef struct __attribute__((__packed__)) WsmHiMibConfigDataFilter_s {
         uint8_t    Ipv4Cond;                         ///< Ipv4 address condition 0 (bit0) to 3 (bit3)
         uint8_t    Ipv6Cond;                         ///< Ipv6 address condition 0 (bit0) to 3 (bit3)
         uint8_t    UcMcBcCond;                       ///< Unicast Multicast Broadcast condition 0 (bit0) to 3 (bit3)
-        uint8_t    reserved2;                        ///< Padding
+        uint8_t    Reserved2;                        ///< Padding
 } WsmHiMibConfigDataFilter_t;
 
 /**
@@ -300,7 +300,7 @@ typedef struct __attribute__((__packed__)) WsmHiMibConfigDataFilter_s {
 typedef struct __attribute__((__packed__)) WsmHiMibSetDataFiltering_s {
         uint8_t    DefaultFilter;                    ///< 0: Accept all frames, 1: Discard all frames
         uint8_t    Enable;                           ///< 0: Disable the filtering feature, 1: Enable the filtering feature
-        uint8_t    reserved[2];                      ///< Padding
+        uint8_t    Reserved[2];                      ///< Padding
 } WsmHiMibSetDataFiltering_t;
 
 /**
@@ -319,7 +319,7 @@ typedef enum WsmArpNsFrameTreatment_e {
 typedef struct __attribute__((__packed__)) WsmHiMibArpIpAddrTable_s {
         uint8_t    ConditionIdx;                             ///< Condition index (0 to 1)
         uint8_t    ArpEnable;                                ///< see WsmArpNsFrameTreatment
-        uint8_t    reserved[2];                              ///< Padding
+        uint8_t    Reserved[2];                              ///< Padding
         uint8_t    Ipv4Address[WSM_API_IPV4_ADDRESS_SIZE];   ///< The IP V4 address
 } WsmHiMibArpIpAddrTable_t;
 
@@ -330,7 +330,7 @@ typedef struct __attribute__((__packed__)) WsmHiMibArpIpAddrTable_s {
 typedef struct __attribute__((__packed__)) WsmHiMibNsIpAddrTable_s {
         uint8_t    ConditionIdx;                             ///< Condition index (0 to 1)
         uint8_t    NsEnable;                                 ///< see WsmArpNsFrameTreatment
-        uint8_t    reserved[2];                              ///< Padding
+        uint8_t    Reserved[2];                              ///< Padding
         uint8_t    Ipv6Address[WSM_API_IPV6_ADDRESS_SIZE];   ///< The IP V6 address
 } WsmHiMibNsIpAddrTable_t;
 
@@ -556,7 +556,7 @@ typedef struct __attribute__((__packed__)) WsmHiMibSetUapsdInformation_s {
         uint8_t    TrigVoice : 1;                    /*Bit 3 = 1 Trigger enable for voice AC*/
         uint8_t    PseudoUapsd : 1;                  /*Bit 4 = 0 - Disable pseudo U-APSD operation; = 1 - Enable pseudo U-APSD operation*/
         uint8_t    NotAppendPspoll : 1;              /*Bit 5 = 1 - Do not append PS-Poll to a host queued data frame in the pseudo U-APSD operation.*/
-        uint8_t    Reserved : 2;                     /*Reserved, set to 0.*/
+        uint8_t    Reserved1 : 2;                    /*Reserved, set to 0.*/
         uint8_t    DelivBckgrnd : 1;                 /*Bit 8 = 1 Delivery enable for background AC*/
         uint8_t    DelivBe : 1;                      /*Bit 9 = 1 Delivery enable for best effort AC*/
         uint8_t    DelivVideo : 1;                   /*Bit 10 = 1 Delivery enable for video AC*/
@@ -568,7 +568,6 @@ typedef struct __attribute__((__packed__)) WsmHiMibSetUapsdInformation_s {
 } WsmHiMibSetUapsdInformation_t;
 
 
-#define WSM_API_RESERVED2_SIZE      3
 typedef struct __attribute__((__packed__)) WsmHiMibTxRateRetryPolicy_s {
         uint8_t    PolicyIndex;                      /*The rate retry policy index of this policy. Valid values are 0 to 7.*/
         uint8_t    ShortRetryCount;                  /*ShortRetryCount to be used with this policy*/
@@ -576,9 +575,9 @@ typedef struct __attribute__((__packed__)) WsmHiMibTxRateRetryPolicy_s {
         uint8_t    IndexUse : 2;
         uint8_t    Terminate : 1;                    /*Bit 02 - 0 : Do not terminate retries when the Tx rate retry policy finishes.            1: Terminate retries when the Tx rate retry policy finishes.*/
         uint8_t    CountInit : 1;                    /*Bit 03 - 0: Do not count initial frame transmission as part of the rate retry counting.            1:  Count initial frame transmission as part of the rate retry counting but not as a retry attempt.*/
-        uint8_t    Reserved : 4;                     ///< reserved for future use, set to 0
+        uint8_t    Reserved1 : 4;                    ///< reserved for future use, set to 0
         uint8_t    RateRecoveryCount;                /*The number of successful first time transmissions before the device will attempt to move to a higher data rate within TxRateRetryPolicy.            Only valid for policies with PolicyFlags  bits 01 to 00 = 10b*/
-        uint8_t    Reserved2[WSM_API_RESERVED2_SIZE];   ///< reserved for future use, set to 0
+        uint8_t    Reserved2[3];                     ///< reserved for future use, set to 0
         uint32_t   RateCountIndices0700;             /*Counts for rate index 7 to 0*/
         uint32_t   RateCountIndices1508;             /*Counts for rate index 15 to 8*/
         uint32_t   RateCountIndices2316;             /*Counts for rate index 23 to 16*/

@@ -278,7 +278,7 @@ typedef enum HiFwType_e {
  */
 typedef struct __attribute__((__packed__)) HiCapabilities_s {
         uint8_t    LinkMode : 2;                     ///<Bit 0-1 : reg OTPCTRL_FB_STATUS_fb_secure_link_mode @todo add details
-        uint8_t    Reserved : 6;                     ///<Bit 2-7 : Reserved
+        uint8_t    Reserved1: 6;                     ///<Bit 2-7 : Reserved
         uint8_t    Reserved2;                        ///<Bit 8-15 : Reserved
         uint8_t    Reserved3;                        ///<Bit 16-23 : Reserved
         uint8_t    Reserved4;                        ///<Bit 24-31 : Reserved

@@ -147,7 +147,7 @@ typedef enum WsmStatus_e {
 typedef struct __attribute__((__packed__)) WsmHiResetFlags_s {
         uint8_t    ResetStat : 1;                    ///< 0=Reset statistics - 1=Do not reset statistics
         uint8_t    ResetAllInt : 1;                  ///< Set high to reset all interfaces, not only the one indicated by header.IntId
-        uint8_t    Reserved : 6;                     ///< reserved for future use, set to 0
+        uint8_t    Reserved1 : 6;                     ///< reserved for future use, set to 0
         uint8_t    Reserved2[3];                     ///< reserved for future use, set to 0
 } WsmHiResetFlags_t;
 
@@ -568,12 +568,12 @@ typedef struct __attribute__((__packed__)) WsmHiHtTxParameters_s {
         uint8_t    FrameFormat : 4;                  ///<Transmission frame format. See enum ::WsmFrameFormat
         uint8_t    FecCoding : 1;                    ///<FEC coding selection. 0: legacy, BCC. 1: LDPC
         uint8_t    ShortGi : 1;                      ///<Guard Interval size. 0: legacy, long GI. 1: short GI
-        uint8_t    Reserved : 1;                     ///<reserved for future use, set to 0
+        uint8_t    Reserved1 : 1;                    ///<reserved for future use, set to 0
         uint8_t    Stbc : 1;                         ///<STBC requirement for this frame. See enum ::WsmStbc
-        uint8_t    Reserved1;                        ///<reserved for future use, set to 0
+        uint8_t    Reserved2;                        ///<reserved for future use, set to 0
         uint8_t    Aggregation : 1;                  ///<Set high to use A-MPDU aggregation
-        uint8_t	   Reserved2 : 7;					 ///<reserved for future use, set to 0
-        uint8_t    Reserved3;                        ///<reserved for future use, set to 0
+        uint8_t	   Reserved3 : 7;                    ///<reserved for future use, set to 0
+        uint8_t    Reserved4;                        ///<reserved for future use, set to 0
 } WsmHiHtTxParameters_t;
 
 /**
@@ -630,8 +630,8 @@ typedef struct __attribute__((__packed__)) WsmHiTxResultFlags_s {
         uint8_t    Requeue : 1;                      ///<Only valid when Status=WSM_REQUEUE. 1: Host should re-queue this frame later. 0:Host should not re-queue this frame.
         uint8_t    AckPolicy : 2;                    ///<Only valid when Status=WSM_SUCCESS. See enum ::WsmQosAckplcy.
         uint8_t    TxopLimit : 1;                    ///<When high : The TXOP limit for the ACI was temporarily increased to allow this frame to transmit.
-        uint8_t    Reserved  : 3;                    ///<reserved for future use
-        uint8_t    Reserved1;                        ///<reserved for future use
+        uint8_t    Reserved1 : 3;                     ///<reserved for future use
+        uint8_t    Reserved2;                        ///<reserved for future use
 } WsmHiTxResultFlags_t;
 
 /**
@@ -707,7 +707,7 @@ typedef struct __attribute__((__packed__)) WsmHiRxFlags_s {
         uint8_t    MatchSsid : 1;                    ///<Bit 10 : 1 - Indicates the frame contains a matching SSID
         uint8_t    MatchBssid : 1;                   ///<Bit 11 : 1 - Indicates the frame contains a matching BSSID
         uint8_t    More : 1;                         ///<Bit 12 : 1 - Indicates the More bit is set in the Framectl field
-        uint8_t    Reserved2 : 1;                    ///<Bit 13 : 1 - Reserved for future used, set to 0
+        uint8_t    Reserved1 : 1;                    ///<Bit 13 : 1 - Reserved for future used, set to 0
         uint8_t    Ht : 1;                           ///<Bit 14 : 1 - Indicates the frame received is an HT packet
         uint8_t    Stbc : 1;                         ///<Bit 15 : 1 - Indicates the frame received used STBC
         uint8_t    MatchUcAddr : 1;                  ///<Bit 16 : 1 - Indicates the address 1 field matches the station unicast MAC Address
@@ -715,10 +715,10 @@ typedef struct __attribute__((__packed__)) WsmHiRxFlags_s {
         uint8_t    MatchBcAddr : 1;                  ///<Bit 18 : 1 - Indicates the address 1 field matches a broadcast address
         uint8_t    KeyType : 1;                      ///<Bit 19 : Reports the key type used with encrypted frames; 0 - Indicates the pairwise key used; 1 - Indicates the group key used
         uint8_t    KeyIndex : 4;                     ///<Bits 23 to 20 - Index of the key used for decryption
-        uint8_t    Reserved3 : 1;                    ///<Bit 24 - Reserved for future use
+        uint8_t    Reserved2 : 1;                    ///<Bit 24 - Reserved for future use
         uint8_t    PeerStaId : 4;                    ///<Bits 28 to 25 - Peer STA id (from 1 to 14)
-        uint8_t    Reserved4 : 2;                    ///<Bits 30 to 29 - Reserved for future use, set to 0
-        uint8_t    Reserved5 : 1;                    ///<Bit 31 - Reserved for future use
+        uint8_t    Reserved3 : 2;                    ///<Bits 30 to 29 - Reserved for future use, set to 0
+        uint8_t    Reserved4 : 1;                    ///<Bit 31 - Reserved for future use
 } WsmHiRxFlags_t;
 
 /**
@@ -760,14 +760,14 @@ typedef enum WsmAckplcy_e {
  */
 typedef struct __attribute__((__packed__)) WsmHiEdcaQueueParamsReqBody_s {
         uint8_t    QueueId;                          ///< Specifies the Access Category Index (ACI) of the queue. See enum ::WsmQueueId
-    uint8_t    Reserved0;           ///<Reserved for future used. Set to 0.
+    uint8_t    Reserved1;           ///<Reserved for future used. Set to 0.
     uint8_t    AIFSN;               ///<AIFS (in slots) for the access category.
-    uint8_t    Reserved1;           ///<Reserved for future use
+    uint8_t    Reserved2;           ///<Reserved for future use
     uint16_t   CwMin;               ///<CwMin (in slots) for the access category. Must be 2^n-1.
     uint16_t   CwMax;               ///<CwMax (in slots) for the access category. Must be 2^n-1.
     uint16_t   TxOpLimit;           ///<TX OP limit (in microseconds) for the access category.
     uint16_t   AllowedMediumTime;   ///< Medium time of TSPEC (in 32 us units) allowed per one second averaging period for this queue.
-    uint32_t    Reserved2;           ///<Reserved for future used. Set to 0.
+    uint32_t    Reserved3;           ///<Reserved for future used. Set to 0.
 } WsmHiEdcaQueueParamsReqBody_t;
 
 typedef struct __attribute__((__packed__)) WsmHiEdcaQueueParamsReq_s {
