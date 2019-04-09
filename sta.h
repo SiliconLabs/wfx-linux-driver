@@ -24,7 +24,7 @@
 #include <linux/version.h>
 #include <net/mac80211.h>
 
-#include "wfx_api.h"
+#include "wsm_cmd_api.h"
 
 struct wfx_dev;
 struct wfx_vif;

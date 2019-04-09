@@ -5,7 +5,7 @@
 #define _WFX_TRACE_H
 
 #include <linux/tracepoint.h>
-#include "wfx_api.h"
+#include "wsm_cmd_api.h"
 #include "hwbus.h"
 
 #if (KERNEL_VERSION(4, 1, 0) > LINUX_VERSION_CODE)

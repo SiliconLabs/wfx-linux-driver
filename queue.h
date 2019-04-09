@@ -21,7 +21,7 @@
 #ifndef WFX_QUEUE_H
 #define WFX_QUEUE_H
 
-#include "wfx_api.h"
+#include "wsm_cmd_api.h"
 
 /* private */ struct wfx_queue_item;
 

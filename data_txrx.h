@@ -23,7 +23,7 @@
 
 #include <linux/list.h>
 
-#include "wfx_api.h"
+#include "wsm_cmd_api.h"
 
 /* extern */ struct wfx_txpriv;
 /* extern */ struct wfx_dev;

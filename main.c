@@ -33,7 +33,7 @@
 #include <linux/etherdevice.h>
 
 #include "wfx_version.h"
-#include "wfx_api.h"
+#include "wsm_cmd_api.h"
 #include "wfx.h"
 #include "fwio.h"
 #include "hwio.h"

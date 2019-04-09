@@ -28,7 +28,7 @@
 #include <linux/version.h>
 #include <net/mac80211.h>
 
-#include "wfx_api.h"
+#include "wsm_cmd_api.h"
 #include "main.h"
 #include "queue.h"
 #include "wsm_mib.h"
