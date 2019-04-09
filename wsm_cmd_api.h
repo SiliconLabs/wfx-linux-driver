@@ -109,7 +109,6 @@ typedef union HiWsmCommandsIds_u {
 	HiWsmIndicationsIds indication; ///< Indication from the wlan device to the host
 } HiWsmCommandsIds_t;
 
-
 /**************************************************/
 
 /**
@@ -136,10 +135,7 @@ typedef enum WsmStatus_e {
 
 #define WSM_API_SSID_SIZE                               32
 
-
-
 /**************************************************/
-
 
 /**
  * @brief Reset flags used in command ::WsmHiResetReqBody_t
@@ -176,7 +172,6 @@ typedef struct __attribute__((__packed__)) WsmHiResetCnf_s {
         HiMsgHdr_t Header;
         WsmHiResetCnfBody_t Body;
 } WsmHiResetCnf_t;
-
 
 /**
  * @brief Union of all MIB body elements
@@ -262,8 +257,6 @@ typedef struct __attribute__((__packed__)) WsmHiReadMibCnf_s {
         WsmHiReadMibCnfBody_t Body;
 } WsmHiReadMibCnf_t;
 
-
-
 /**
  * @brief Write a Configuration Information (MIB element)
  *
@@ -290,8 +283,6 @@ typedef struct __attribute__((__packed__)) WsmHiWriteMibCnf_s {
         HiMsgHdr_t Header;
         WsmHiWriteMibCnfBody_t Body;
 } WsmHiWriteMibCnf_t;
-
-
 
 /**
  * @brief Select the template to update used in command ::WsmHiUpdateIeReqBody_t
@@ -344,8 +335,6 @@ typedef struct __attribute__((__packed__)) WsmHiUpdateIeCnf_s {
         HiMsgHdr_t Header;
         WsmHiUpdateIeCnfBody_t Body;
 } WsmHiUpdateIeCnf_t;
-
-
 
 /**
  * @addtogroup WSM_Scanning
@@ -451,7 +440,6 @@ typedef struct __attribute__((__packed__)) WsmHiStartScanCnf_s {
         WsmHiStartScanCnfBody_t Body;
 } WsmHiStartScanCnf_t;
 
-
 /**
  * @brief Stop a pending scanning process
  *
@@ -471,7 +459,6 @@ typedef struct __attribute__((__packed__)) WsmHiStopScanCnf_s {
         HiMsgHdr_t Header;
         WsmHiStopScanCnfBody_t Body;
 } WsmHiStopScanCnf_t;
-
 
 /**
  * @brief 802.11 Power Mode status reported in ::WsmHiScanCmplIndBody_t or ::WsmHiSetPmModeCmplIndBody_t.
@@ -500,7 +487,6 @@ typedef struct __attribute__((__packed__)) WsmHiScanCmplInd_s {
  * @}
  */
 /* end of WSM_Scanning */
-
 
 /**
  * @brief The different Access Category Index (ACI) of a message queue.
@@ -541,7 +527,6 @@ typedef struct __attribute__((__packed__)) WsmHiQueueId_s {
         uint8_t    PeerStaId : 4;                    ///<Identify the destination STA (from 1 to ::HiStartupIndBody_t::NumLinksAP) or indicate a broadcast (or multicast) packet when set to 0. It corresponds to ::WsmHiMapLinkReqBody_t::PerStaId . It is mainly used when the device is an AP. Must be set to 0 when unused.
         uint8_t    Reserved : 2;                     ///<reserved for future use, set to 0
 } WsmHiQueueId_t;
-
 
 /**
  * @brief Some parameters about the data payload used in message ::WsmHiTxReqBody_t.
@@ -611,7 +596,6 @@ typedef struct __attribute__((__packed__)) WsmHiTxReq_s {
         WsmHiTxReqBody_t Body;
 } WsmHiTxReq_t;
 
-
 /**
  * @brief Ack policy values in QoS control field.
  *
@@ -656,7 +640,6 @@ typedef struct __attribute__((__packed__)) WsmHiTxCnf_s {
         WsmHiTxCnfBody_t Body;
 } WsmHiTxCnf_t;
 
-
 /**
  * @brief Confirmation of one or more previous ::WsmHiTxReqBody_t Tx request messages.
  *
@@ -675,7 +658,6 @@ typedef struct __attribute__((__packed__)) WsmHiMultiTransmitCnf_s {
         HiMsgHdr_t Header;
         WsmHiMultiTransmitCnfBody_t Body;
 } WsmHiMultiTransmitCnf_t;
-
 
 /**
  * @brief Received frame encryption type
@@ -740,8 +722,6 @@ typedef struct __attribute__((__packed__)) WsmHiRxInd_s {
         WsmHiRxIndBody_t Body;
 } WsmHiRxInd_t;
 
-
-
 /**
  * @brief Specifies the acknowledge type.
  *
@@ -786,9 +766,6 @@ typedef struct __attribute__((__packed__)) WsmHiEdcaQueueParamsCnf_s {
         HiMsgHdr_t Header;
         WsmHiEdcaQueueParamsCnfBody_t Body;
 } WsmHiEdcaQueueParamsCnf_t;
-
-
-
 
 /**
  * @addtogroup WSM_STA_specific
@@ -879,7 +856,6 @@ typedef struct __attribute__((__packed__)) WsmHiJoinCnf_s {
         WsmHiJoinCnfBody_t Body;
 } WsmHiJoinCnf_t;
 
-
 /**
 * @struct WsmHiJoinCompleteIndBody_t
 * @brief Indicates that the join requested with previous ::WsmHiJoinReqBody_t has completed
@@ -893,8 +869,6 @@ typedef struct __attribute__((__packed__)) WsmHiJoinCompleteInd_s {
         WsmHiJoinCompleteIndBody_t Body;
 } WsmHiJoinCompleteInd_t;
 
-
-
 /**
 * @brief BSS configuration control flag, used in command ::WsmHiSetBssParamsReqBody_t
 */
@@ -902,7 +876,6 @@ typedef struct __attribute__((__packed__)) WsmHiBssFlags_s {
         uint8_t    LostCountOnly : 1;                ///<Bit 0 = 1: Only update the beacon lost count limit and reset the internal beacon lost counter.
         uint8_t    Reserved : 7;                     ///< reserved for future use, set to 0
 } WsmHiBssFlags_t;
-
 
 /**
 * @brief Connection configuration after association to a BSS
@@ -926,7 +899,6 @@ typedef struct __attribute__((__packed__)) WsmHiSetBssParamsReq_s {
         WsmHiSetBssParamsReqBody_t Body;
 } WsmHiSetBssParamsReq_t;
 
-
 /**
 * @brief Confirmation message of configuration command ::WsmHiSetBssParamsReqBody_t
 */
@@ -938,9 +910,6 @@ typedef struct __attribute__((__packed__)) WsmHiSetBssParamsCnf_s {
         HiMsgHdr_t Header;
         WsmHiSetBssParamsCnfBody_t Body;
 } WsmHiSetBssParamsCnf_t;
-
-
-
 
 typedef struct __attribute__((__packed__)) WsmHiPmMode_s {
         uint8_t    EnterPsm : 1;                       /*Bit 0 = 0 - Active mode, when this mode is entered, the device automatically transmits a frame with the power management bit cleared to inform the AP that the STA is in the active mode            Bit 0 = 1 - PS mode, when this mode is entered, the device automatically transmits a frame with the power management bit set to inform the AP that the STA has entered the PS mode.            Bit 7 = 1 - Fast power-saving mode is enabled. This bit is only valid with bit 0 is set to 1. */
@@ -986,13 +955,10 @@ typedef struct __attribute__((__packed__)) WsmHiSetPmModeCmplInd_s {
         WsmHiSetPmModeCmplIndBody_t Body;
 } WsmHiSetPmModeCmplInd_t;
 
-
 /**
  * @}
  */
 /* end of WSM_STA_specific */
-
-
 
 /**
  * @addtogroup WSM_AP_specific
@@ -1034,7 +1000,6 @@ typedef struct __attribute__((__packed__)) WsmHiStartReq_s {
         WsmHiStartReqBody_t Body;
 } WsmHiStartReq_t;
 
-
 /**
 * @brief Confirmation message of start AP command ::WsmHiStartReqBody_t
 */
@@ -1046,8 +1011,6 @@ typedef struct __attribute__((__packed__)) WsmHiStartCnf_s {
         HiMsgHdr_t Header;
         WsmHiStartCnfBody_t Body;
 } WsmHiStartCnf_t;
-
-
 
 /**
  * @brief Enum to control the beacon transmission in ::WsmHiBeaconTransmitReqBody_t.
@@ -1075,7 +1038,6 @@ typedef struct __attribute__((__packed__)) WsmHiBeaconTransmitReq_s {
         WsmHiBeaconTransmitReqBody_t Body;
 } WsmHiBeaconTransmitReq_t;
 
-
 /**
 * @struct WsmHiBeaconTransmitCnfBody_t
 * @brief Confirmation message of beacon transmission management command ::WsmHiBeaconTransmitReqBody_t
@@ -1088,7 +1050,6 @@ typedef struct __attribute__((__packed__)) WsmHiBeaconTransmitCnf_s {
         HiMsgHdr_t Header;
         WsmHiBeaconTransmitCnfBody_t Body;
 } WsmHiBeaconTransmitCnf_t;
-
 
 /**
  * @brief Enum for STA mapping used in ::WsmHiMapLinkReqBody_t::MapLinkFlags.
@@ -1126,7 +1087,6 @@ typedef struct __attribute__((__packed__)) WsmHiMapLinkReq_s {
         WsmHiMapLinkReqBody_t Body;
 } WsmHiMapLinkReq_t;
 
-
 /**
 * @struct WsmHiMapLinkCnfBody_t
 * @brief Confirmation message of peer addition/removal command ::WsmHiMapLinkReqBody_t
@@ -1139,8 +1099,6 @@ typedef struct __attribute__((__packed__)) WsmHiMapLinkCnf_s {
         HiMsgHdr_t Header;
         WsmHiMapLinkCnfBody_t Body;
 } WsmHiMapLinkCnf_t;
-
-
 
 typedef struct __attribute__((__packed__)) WsmHiSuspendResumeFlags_s {
         uint8_t    Resume : 1;              /*0 - Stop sending further Tx requests to the device for this link. 1 -Resume Tx. type: WSM*/
@@ -1167,9 +1125,6 @@ typedef struct __attribute__((__packed__)) WsmHiSuspendResumeTxInd_s {
  * @}
  */
 /* end of WSM_AP_specific */
-
-
-
 
 
 /**
@@ -1330,12 +1285,10 @@ typedef struct __attribute__((__packed__)) WsmHiRemoveKeyCnf_s {
         WsmHiRemoveKeyCnfBody_t Body;
 } WsmHiRemoveKeyCnf_t;
 
-
 /**
  * @}
  */
 /* end of WSM_Key_Management */
-
 
 typedef enum WsmEventInd_e {
         WSM_EVENT_IND_BSSLOST                      = 0x1,         /*BSS lost*/
@@ -1370,8 +1323,6 @@ typedef struct __attribute__((__packed__)) WsmHiEventInd_s {
         HiMsgHdr_t Header;
         WsmHiEventIndBody_t Body;
 } WsmHiEventInd_t;
-
-
 
 
 /**************************************************/

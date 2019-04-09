@@ -138,7 +138,6 @@ typedef struct __attribute__((__packed__)) HiGenericMsg_s {
         uint8_t Body[API_VARIABLE_SIZE_ARRAY_DUMMY_SIZE]; ///<variable size payload of the message
 } HiGenericMsg_t;
 
-
 /**
  * @brief Generic confirmation message with the body reduced to the Status field.
  *
@@ -169,7 +168,6 @@ typedef struct __attribute__((__packed__)) HiGenericCnf_s {
  * @{
  */
 
-
 /**
  * @brief General request message IDs
  *
@@ -186,7 +184,6 @@ typedef enum HiGeneralRequestsIds_e {
  HI_SHUT_DOWN_REQ_ID                             =0x32, ///< \b SHUT_DOWN request Id use body ::HI_SHUT_DOWN_REQ and never returns
 } HiGeneralRequestsIds;
 
-
 /**
  * @brief General confirmation message IDs
  *
@@ -202,7 +199,6 @@ typedef enum HiGeneralConfirmationsIds_e {
  HI_PREVENT_ROLLBACK_CNF_ID                      =0xe7, ///< \b PREVENT_ROLLBACK confirmation Id use body ::HiPreventRollbackCnfBody_t
 } HiGeneralConfirmationsIds;
 
-
 /**
  * @brief General indications message IDs
  *
@@ -216,7 +212,6 @@ typedef enum HiGeneralIndicationsIds_e {
  HI_ERROR_IND_ID                                 =0xe4 ///< \b ERROR indication Id content is ::HiErrorIndBody_t
 } HiGeneralIndicationsIds;
 
-
 /**
  * @brief General command message IDs
  *
@@ -227,8 +222,6 @@ typedef union HiGeneralCommandsIds_u {
 	HiGeneralConfirmationsIds confirmation; ///< Confirmation of a request from the wlan device to the host
 	HiGeneralIndicationsIds indication; ///< Indication from the wlan device to the host
 } HiGeneralCommandsIds_t;
-
-
 
 /**************************************************/
 
@@ -260,7 +253,6 @@ typedef enum HiStatus_e {
 /**************************************************/
 
 
-
 /**
  * @addtogroup General_Configuration
  * @brief General configuration commands
@@ -273,9 +265,6 @@ typedef enum HiFwType_e {
         HI_FW_TYPE_WFM                             = 0x1,         /*WLAN Full MAC (WFM)*/
         HI_FW_TYPE_WSM                             = 0x2          /*WLAN Split MAC (WSM)*/
 } HiFwType;
-
-
-
 
 /**
  * @brief Capabilities offered by the WLAN used in command ::HiStartupIndBody_t
@@ -343,8 +332,6 @@ typedef struct __attribute__((__packed__)) HiStartupInd_s {
         HiStartupIndBody_t Body;
 } HiStartupInd_t;
 
-
-
 /**
  * @brief Configure the device.
  * It sends a PDS compressed file that configures the device regarding board dependent parameters.
@@ -369,7 +356,6 @@ typedef struct __attribute__((__packed__)) HiConfigurationCnf_s {
         HiMsgHdr_t Header;
         HiConfigurationCnfBody_t Body;
 } HiConfigurationCnf_t;
-
 
 /**
  * @brief Configure GPIO mode. Used in ::HiControlGpioReqBody_t
@@ -419,14 +405,12 @@ typedef struct __attribute__((__packed__)) HiControlGpioCnf_s {
         HiControlGpioCnfBody_t Body;
 } HiControlGpioCnf_t;
 
-
 /**
  * @brief SHUT_DOWN command.
  * A hardware reset and complete reboot is required to resume from that state.
  * There is no confirmation to this command.
  * It is effective when WUP register bit and WUP pin (when used) are both to 0.*/
 typedef HiMsgHdr_t HI_SHUT_DOWN_REQ;
-
 
 /**
  * @brief specifies the type of data reported by the indication message ::HiGenericIndBody_t
@@ -461,7 +445,6 @@ typedef struct __attribute__((__packed__)) HiRxStats_s {
         uint8_t    IsExtPwrClk;                      ///<Indicate if the low power clock is external
 } HiRxStats_t;
 
-
 #define MAX_GENERIC_INDICATION_DATA_SIZE              376 // in bytes
 typedef union HiIndicationData_u {
         HiRxStats_t                                   RxStats;
@@ -482,8 +465,6 @@ typedef struct __attribute__((__packed__)) HiGenericInd_s {
         HiMsgHdr_t Header;
         HiGenericIndBody_t Body;
 } HiGenericInd_t;
-
-
 
 typedef enum WsmHiDbg_e {
         WSM_HI_DBG_UNDEF_INST                      = 0x0,         /*undefined*/
@@ -508,7 +489,6 @@ typedef struct __attribute__((__packed__)) HiExceptionInd_s {
         HiExceptionIndBody_t Body;
 } HiExceptionInd_t;
 
-
 /**
  * @brief specifies the type of error reported by the indication message ::HiErrorIndBody_t
  *
@@ -521,7 +501,6 @@ typedef enum WsmHiError_e {
 		WSM_HI_ERROR_OOR_VOLTAGE                   = 0x4,         ///<Out-of-range power supply voltage detected
 		WSM_HI_ERROR_PDS_VERSION                   = 0x5          ///<wrong PDS version detected, no data returned
 } WsmHiError;
-
 
 /**
  * @brief Error indication message.
@@ -567,7 +546,6 @@ typedef enum SecureLinkState_e {
 		SECURE_LINK_TRUSTED_MODE                   = 0x2,   ///<Trusted (Evaluation) mode
 		SECURE_LINK_TRUSTED_ACTIVE_ENFORCED        = 0x3    ///<Trusted (Enforced) mode
 } SecureLinkState;
-
 
 /**
  * @brief destination of the *Secure Link MAC key*, used by request message ::HiSetSlMacKeyReqBody_t
@@ -640,7 +618,6 @@ typedef struct __attribute__((__packed__)) HiSlExchangePubKeysCnf_s {
         HiSlExchangePubKeysCnfBody_t Body;
 } HiSlExchangePubKeysCnf_t;
 
-
 /**
  * @brief used in request message ::HiSlConfigureReqBody_t to trigger *Session Key* invalidation
  */
@@ -682,7 +659,6 @@ typedef struct __attribute__((__packed__)) HiSlConfigureCnf_s {
         HiSlConfigureCnfBody_t Body;
 } HiSlConfigureCnf_t;
 
-
 /**
  * @}
  */
@@ -717,7 +693,6 @@ typedef struct __attribute__((__packed__)) HiSlConfigureCnf_s {
  *
  * @{
  */
-
 
 /**
  *@brief Prevent Rollback request

@@ -16,7 +16,6 @@
 #define WSM_API_IPV4_ADDRESS_SIZE                       4
 #define WSM_API_IPV6_ADDRESS_SIZE                       16
 
-
 /**
  * @addtogroup SPLIT_MAC_API
  *
@@ -29,7 +28,6 @@
  * MIB elements are written/read using the requests ::WsmHiWriteMibReqBody_t and ::WsmHiReadMibReqBody_t.
  * @{
  */
-
 
 /**
  * @brief list of all MIB elements indirectly configured (or read) using commands ::WsmHiWriteMibReqBody_t (or ::WsmHiReadMibReqBody_t).
@@ -441,7 +439,6 @@ typedef struct __attribute__((__packed__)) WsmHiMibWepDefaultKeyId_s {
         uint8_t    Reserved[3];                      /*Reserved 0*/
 } WsmHiMibWepDefaultKeyId_t;
 
-
 /**
  * @brief 802.11n High Throughput (HT) transmission mode. Used in MIB ::WsmHiMibTemplateFrame_t.
  */
@@ -524,7 +521,6 @@ typedef struct __attribute__((__packed__)) WsmHiMibOverrideIntRate_s {
         uint8_t    Reserved[2];   /*Reserved 0*/
 } WsmHiMibOverrideIntRate_t;
 
-
 typedef enum WsmMpduStartSpacing_e {
         WSM_MPDU_START_SPACING_NO_RESTRIC          = 0x0,         /*No restriction*/
         WSM_MPDU_START_SPACING_QUARTER             = 0x1,         /*1/4 us*/
@@ -567,7 +563,6 @@ typedef struct __attribute__((__packed__)) WsmHiMibSetUapsdInformation_s {
         uint16_t   AutoTriggerStep;                  /*The stepping in milliseconds to adjust the auto-trigger interval from minimum to maximum or from maximum to minimum.*/
 } WsmHiMibSetUapsdInformation_t;
 
-
 typedef struct __attribute__((__packed__)) WsmHiMibTxRateRetryPolicy_s {
         uint8_t    PolicyIndex;                      /*The rate retry policy index of this policy. Valid values are 0 to 7.*/
         uint8_t    ShortRetryCount;                  /*ShortRetryCount to be used with this policy*/
@@ -589,7 +584,6 @@ typedef struct __attribute__((__packed__)) WsmHiMibSetTxRateRetryPolicy_s {
         uint8_t    Reserved[3];             ///< reserved for future use, set to 0
         WsmHiMibTxRateRetryPolicy_t TxRateRetryPolicy[0];     /*The number of transmit rate policies being sent in this message.*/
 } WsmHiMibSetTxRateRetryPolicy_t;
-
 
 typedef struct __attribute__((__packed__)) WsmHiMibKeepAlivePeriod_s {
         uint16_t   KeepAlivePeriod;                  /*The period in seconds to send keep-alive frames to the AP if the device is idle.            The default keep-alive period is 150 seconds. Set this field to zero to disable the keep-alive feature.            The keep-alive frames may be synchronized to beacon receiving depending on the mode that the device is operating.*/
@@ -614,7 +608,6 @@ typedef struct __attribute__((__packed__)) WsmHiMibInactivityTimer_s {
  * @}
  */
 /* end of WSM_Read_write */
-
 
 
 /**
