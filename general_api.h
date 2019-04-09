@@ -90,11 +90,6 @@ typedef struct __attribute__((__packed__)) HiMsgHdr_s {
         MsginfoUnion_t s;
 } HiMsgHdr_t ;
 
-typedef struct __attribute__((__packed__)) HiGenericMsg_s {
-        HiMsgHdr_t Header;
-        uint8_t Body[API_VARIABLE_SIZE_ARRAY_DUMMY_SIZE];
-} HiGenericMsg_t;
-
 typedef enum HiGeneralRequestsIds_e {
  HI_CONFIGURATION_REQ_ID                         =0x09,
  HI_CONTROL_GPIO_REQ_ID                          =0x26,
