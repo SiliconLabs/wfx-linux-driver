@@ -290,7 +290,7 @@ typedef struct __attribute__((__packed__)) WsmHiReadMibCnfBody_s {
         uint32_t   Status;                           ///< See ::WsmStatus. If WSM_STATUS_SUCCESS is returned, MIB data will follow.
         uint16_t   MibId;                            ///< ID of the MIB to be read (see MIB elements list ::WsmMibIds)
         uint16_t   Length;                           ///< Length of the MIB data in bytes.
-        WsmMibData_t MibData;                      ///< The MIB data.
+        uint8_t    MibData[0];                       ///< The MIB data.
 } WsmHiReadMibCnfBody_t;
 
 typedef struct __attribute__((__packed__)) WsmHiReadMibCnf_s {
@@ -308,7 +308,7 @@ typedef struct __attribute__((__packed__)) WsmHiReadMibCnf_s {
 typedef struct __attribute__((__packed__)) WsmHiWriteMibReqBody_s {
         uint16_t   MibId;                            ///<ID of the MIB to be written.
         uint16_t   Length;                           ///<Length of the MIB data in bytes.
-        WsmMibData_t MibData;                      ///<The MIB data.
+        uint8_t    MibData[0];                       ///< The MIB data.
 } WsmHiWriteMibReqBody_t;
 
 typedef struct __attribute__((__packed__)) WsmHiWriteMibReq_s {

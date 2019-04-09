@@ -155,22 +155,19 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len)
 	int ret;
 	HiMsgHdr_t *hdr;
 	WsmHiReadMibReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
-	WsmHiReadMibCnfBody_t *reply = kmalloc(sizeof(*reply), GFP_KERNEL);
+	WsmHiReadMibCnfBody_t *reply = kmalloc(sizeof(*reply) + val_len, GFP_KERNEL);
 
 	body->MibId = cpu_to_le16(id);
 	wfx_fill_header(hdr, -1, WSM_HI_READ_MIB_REQ_ID, sizeof(*body));
 	ret = wfx_cmd_send(wdev, hdr, reply, sizeof(*reply), false);
 
-	reply->Length -= 4; // Drop header
-	if (val_len < reply->Length) {
-		dev_err(wdev->dev, "Buffer is too small to receive %s (%zu < %d)\n",
-			get_mib_name(id), val_len, reply->Length);
-		ret = -ENOMEM;
-	}
-	if (id != reply->MibId) {
+	if (!ret && id != reply->MibId) {
 		dev_warn(wdev->dev, "%s: confirmation mismatch request\n", __func__);
 		ret = -EIO;
 	}
+	if (ret == -ENOMEM)
+		dev_err(wdev->dev, "Buffer is too small to receive %s (%zu < %d)\n",
+			get_mib_name(id), val_len, reply->Length);
 	if (!ret)
 		memcpy(val, &reply->MibData, reply->Length);
 	else
@@ -183,8 +180,7 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len)
 int wsm_write_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len, int Id)
 {
 	int ret;
-	// sizeof(WsmHiWriteMibReqBody_t) is wider than necessary
-	int buf_len = 2 * sizeof(u16) + val_len;
+	int buf_len = sizeof(WsmHiWriteMibReqBody_t) + val_len;
 	HiMsgHdr_t *hdr;
 	WsmHiWriteMibReqBody_t *body = wfx_alloc_wsm(buf_len, &hdr);
 

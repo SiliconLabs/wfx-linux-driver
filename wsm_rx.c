@@ -47,7 +47,7 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 		if (wdev->wsm_cmd.len_recv >= len)
 			memcpy(wdev->wsm_cmd.buf_recv, buf, len);
 		else
-			status = -EINVAL;
+			status = -ENOMEM;
 	}
 	wdev->wsm_cmd.ret = status;
 
