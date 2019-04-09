@@ -85,11 +85,11 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 	if (async)
 		return 0;
 
-	ret = wait_for_completion_timeout(&wdev->wsm_cmd.done, 3 * HZ);
+	ret = wait_for_completion_timeout(&wdev->wsm_cmd.done, 1 * HZ);
 	if (!ret) {
 		dev_err(wdev->dev, "chip is abnormally long to answer");
 		reinit_completion(&wdev->wsm_cmd.ready);
-		ret = wait_for_completion_timeout(&wdev->wsm_cmd.done, 7 * HZ);
+		ret = wait_for_completion_timeout(&wdev->wsm_cmd.done, 3 * HZ);
 	}
 	if (!ret) {
 		dev_err(wdev->dev, "chip did not answer");
