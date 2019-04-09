@@ -80,11 +80,11 @@ typedef enum WsmOpPowerMode_e {
         WSM_OP_POWER_MODE_QUIESCENT                = 0x2
 } WsmOpPowerMode;
 
-typedef struct __attribute__((__packed__)) WsmHiMibGlBlockAckInfo_s {
+typedef struct WsmHiMibGlBlockAckInfo_s {
         uint8_t    BufferSize;
         uint8_t    MaxNumAgreements;
         uint8_t    Reserved[2];
-} WsmHiMibGlBlockAckInfo_t;
+} __packed WsmHiMibGlBlockAckInfo_t;
 
 #define MAX_NUMBER_DATA_FILTERS             0xA
 
@@ -98,11 +98,11 @@ typedef struct __attribute__((__packed__)) WsmHiMibGlBlockAckInfo_s {
 #define MAX_NUMBER_ARP_CONDITIONS           0x2
 #define MAX_NUMBER_NS_CONDITIONS            0x2
 
-typedef struct __attribute__((__packed__)) WsmHiMibEthertypeDataFrameCondition_s {
+typedef struct WsmHiMibEthertypeDataFrameCondition_s {
         uint8_t    ConditionIdx;
         uint8_t    Reserved;
         uint16_t   EtherType;
-} WsmHiMibEthertypeDataFrameCondition_t;
+} __packed WsmHiMibEthertypeDataFrameCondition_t;
 
 typedef enum WsmUdpTcpProtocol_e {
         WSM_PROTOCOL_UDP                       = 0x0,
@@ -116,23 +116,23 @@ typedef enum WsmWhichPort_e {
         WSM_PORT_SRC_OR_DST                    = 0x2
 } WsmWhichPort;
 
-typedef struct __attribute__((__packed__)) WsmHiMibPortsDataFrameCondition_s {
+typedef struct WsmHiMibPortsDataFrameCondition_s {
         uint8_t    ConditionIdx;
         uint8_t    Protocol;
         uint8_t    WhichPort;
         uint8_t    Reserved1;
         uint16_t   PortNumber;
         uint8_t    Reserved2[2];
-} WsmHiMibPortsDataFrameCondition_t;
+} __packed WsmHiMibPortsDataFrameCondition_t;
 
 #define WSM_API_MAGIC_PATTERN_SIZE                 32
-typedef struct __attribute__((__packed__)) WsmHiMibMagicDataFrameCondition_s {
+typedef struct WsmHiMibMagicDataFrameCondition_s {
         uint8_t    ConditionIdx;
         uint8_t    Offset;
         uint8_t    MagicPatternLength;
         uint8_t    Reserved;
         uint8_t    MagicPattern[WSM_API_MAGIC_PATTERN_SIZE];
-} WsmHiMibMagicDataFrameCondition_t;
+} __packed WsmHiMibMagicDataFrameCondition_t;
 
 typedef enum WsmMacAddrType_e {
         WSM_MAC_ADDR_A1                            = 0x0,
@@ -140,33 +140,32 @@ typedef enum WsmMacAddrType_e {
         WSM_MAC_ADDR_A3                            = 0x2
 } WsmMacAddrType;
 
-typedef struct __attribute__((__packed__)) WsmHiMibMacAddrDataFrameCondition_s {
+typedef struct WsmHiMibMacAddrDataFrameCondition_s {
         uint8_t    ConditionIdx;
         uint8_t    AddressType;
         uint8_t    MacAddress[WSM_API_MAC_ADDR_SIZE];
-} WsmHiMibMacAddrDataFrameCondition_t;
+} __packed WsmHiMibMacAddrDataFrameCondition_t;
 
 typedef enum WsmIpAddrMode_e {
         WSM_IP_ADDR_SRC                            = 0x0,
         WSM_IP_ADDR_DST                            = 0x1
 } WsmIpAddrMode;
 
-typedef struct __attribute__((__packed__)) WsmHiMibIpv4AddrDataFrameCondition_s {
+typedef struct WsmHiMibIpv4AddrDataFrameCondition_s {
         uint8_t    ConditionIdx;
         uint8_t    AddressMode;
         uint8_t    Reserved[2];
         uint8_t    IPv4Address[WSM_API_IPV4_ADDRESS_SIZE];
-} WsmHiMibIpv4AddrDataFrameCondition_t;
+} __packed WsmHiMibIpv4AddrDataFrameCondition_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibIpv6AddrDataFrameCondition_s {
+typedef struct WsmHiMibIpv6AddrDataFrameCondition_s {
         uint8_t    ConditionIdx;
         uint8_t    AddressMode;
         uint8_t    Reserved[2];
         uint8_t    IPv6Address[WSM_API_IPV6_ADDRESS_SIZE];
-} WsmHiMibIpv6AddrDataFrameCondition_t;
+} __packed WsmHiMibIpv6AddrDataFrameCondition_t;
 
-typedef union __attribute__((__packed__)) WsmHiAddrType_u
-{
+typedef union WsmHiAddrType_u {
     uint8_t value;
     struct {
         uint8_t    TypeUnicast   : 1;
@@ -174,15 +173,15 @@ typedef union __attribute__((__packed__)) WsmHiAddrType_u
         uint8_t    TypeBroadcast : 1;
         uint8_t    Reserved      : 5;
     }bits;
-}WsmHiAddrType_t;
+} __packed WsmHiAddrType_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibUcMcBcDataFrameCondition_s {
+typedef struct WsmHiMibUcMcBcDataFrameCondition_s {
         uint8_t            ConditionIdx;
         WsmHiAddrType_t Param;
         uint8_t            Reserved[2];
-} WsmHiMibUcMcBcDataFrameCondition_t;
+} __packed WsmHiMibUcMcBcDataFrameCondition_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibConfigDataFilter_s {
+typedef struct WsmHiMibConfigDataFilter_s {
         uint8_t    FilterIdx;
         uint8_t    Enable;
         uint8_t    Reserved1[2];
@@ -194,13 +193,13 @@ typedef struct __attribute__((__packed__)) WsmHiMibConfigDataFilter_s {
         uint8_t    Ipv6Cond;
         uint8_t    UcMcBcCond;
         uint8_t    Reserved2;
-} WsmHiMibConfigDataFilter_t;
+} __packed WsmHiMibConfigDataFilter_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibSetDataFiltering_s {
+typedef struct WsmHiMibSetDataFiltering_s {
         uint8_t    DefaultFilter;
         uint8_t    Enable;
         uint8_t    Reserved[2];
-} WsmHiMibSetDataFiltering_t;
+} __packed WsmHiMibSetDataFiltering_t;
 
 typedef enum WsmArpNsFrameTreatment_e {
         WSM_ARP_NS_FILTERING_DISABLE                  = 0x0,
@@ -208,23 +207,23 @@ typedef enum WsmArpNsFrameTreatment_e {
         WSM_ARP_NS_REPLY_ENABLE                       = 0x2
 } WsmArpNsFrameTreatment;
 
-typedef struct __attribute__((__packed__)) WsmHiMibArpIpAddrTable_s {
+typedef struct WsmHiMibArpIpAddrTable_s {
         uint8_t    ConditionIdx;
         uint8_t    ArpEnable;
         uint8_t    Reserved[2];
         uint8_t    Ipv4Address[WSM_API_IPV4_ADDRESS_SIZE];
-} WsmHiMibArpIpAddrTable_t;
+} __packed WsmHiMibArpIpAddrTable_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibNsIpAddrTable_s {
+typedef struct WsmHiMibNsIpAddrTable_s {
         uint8_t    ConditionIdx;
         uint8_t    NsEnable;
         uint8_t    Reserved[2];
         uint8_t    Ipv6Address[WSM_API_IPV6_ADDRESS_SIZE];
-} WsmHiMibNsIpAddrTable_t;
+} __packed WsmHiMibNsIpAddrTable_t;
 
 #define WSM_API_OUI_SIZE                                3
 #define WSM_API_MATCH_DATA_SIZE                         3
-typedef struct __attribute__((__packed__)) WsmHiIeTableEntry_s {
+typedef struct WsmHiIeTableEntry_s {
         uint8_t    IeId;
         uint8_t    HasChanged : 1;
         uint8_t    NoLonger : 1;
@@ -233,13 +232,13 @@ typedef struct __attribute__((__packed__)) WsmHiIeTableEntry_s {
         uint8_t    NumMatchData : 4;
         uint8_t    Oui[WSM_API_OUI_SIZE];
         uint8_t    MatchData[WSM_API_MATCH_DATA_SIZE];
-} WsmHiIeTableEntry_t;
+} __packed WsmHiIeTableEntry_t;
 
 #define WSM_API_IE_TABLE_SIZE                           4
-typedef struct __attribute__((__packed__)) WsmHiMibBcnFilterTable_s {
+typedef struct WsmHiMibBcnFilterTable_s {
         uint32_t   NumOfInfoElmts;
         WsmHiIeTableEntry_t IeTable[WSM_API_IE_TABLE_SIZE];
-} WsmHiMibBcnFilterTable_t;
+} __packed WsmHiMibBcnFilterTable_t;
 
 typedef enum WsmBeaconFilter_e {
         WSM_BEACON_FILTER_DISABLE                  = 0x0,
@@ -247,29 +246,29 @@ typedef enum WsmBeaconFilter_e {
         WSM_BEACON_FILTER_AUTO_ERP                 = 0x2
 } WsmBeaconFilter;
 
-typedef struct __attribute__((__packed__)) WsmHiMibBcnFilterEnable_s {
+typedef struct WsmHiMibBcnFilterEnable_s {
         uint32_t   Enable;
         uint32_t   BcnCount;
-} WsmHiMibBcnFilterEnable_t;
+} __packed WsmHiMibBcnFilterEnable_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibGroupSeqCounter_s {
+typedef struct WsmHiMibGroupSeqCounter_s {
         uint32_t   Bits4716;
         uint16_t   Bits1500;
         uint16_t   Reserved;
-} WsmHiMibGroupSeqCounter_t;
+} __packed WsmHiMibGroupSeqCounter_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibTsfCounter_s {
+typedef struct WsmHiMibTsfCounter_s {
         uint32_t   TSFCounterlo;
         uint32_t   TSFCounterhi;
-} WsmHiMibTsfCounter_t;
+} __packed WsmHiMibTsfCounter_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibStatsTable_s {
+typedef struct WsmHiMibStatsTable_s {
         uint16_t   LatestSnr;
         uint8_t    LatestRcpi;
         int8_t    LatestRssi;
-} WsmHiMibStatsTable_t;
+} __packed WsmHiMibStatsTable_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibCountTable_s {
+typedef struct WsmHiMibCountTable_s {
         uint32_t   CountPlcpErrors;
         uint32_t   CountFcsErrors;
         uint32_t   CountTxPackets;
@@ -293,17 +292,17 @@ typedef struct __attribute__((__packed__)) WsmHiMibCountTable_s {
         uint32_t   CountRxCMACReplays;
         uint32_t   CountRxMgmtCCMPReplays;
         uint32_t   CountRxBIPMICErrors;
-} WsmHiMibCountTable_t;
+} __packed WsmHiMibCountTable_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibMacAddress_s {
+typedef struct WsmHiMibMacAddress_s {
         uint8_t    MacAddr[WSM_API_MAC_ADDR_SIZE];
         uint16_t   Reserved;
-} WsmHiMibMacAddress_t;
+} __packed WsmHiMibMacAddress_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibWepDefaultKeyId_s {
+typedef struct WsmHiMibWepDefaultKeyId_s {
         uint8_t    WepDefaultKeyId;
         uint8_t    Reserved[3];
-} WsmHiMibWepDefaultKeyId_t;
+} __packed WsmHiMibWepDefaultKeyId_t;
 
 typedef enum WsmTxMode_e {
         WSM_TX_MODE_MIXED                        = 0x0,
@@ -323,21 +322,21 @@ typedef enum WsmTmplt_e {
 
 #define WSM_API_MAX_TEMPLATE_FRAME_SIZE                              1024
 
-typedef struct __attribute__((__packed__)) WsmHiMibTemplateFrame_s {
+typedef struct WsmHiMibTemplateFrame_s {
         uint8_t    FrameType;
         uint8_t    InitRate : 7;
         uint8_t    Mode : 1;
         uint16_t   FrameLength;
         uint8_t    Frame[WSM_API_MAX_TEMPLATE_FRAME_SIZE];
-} WsmHiMibTemplateFrame_t;
+} __packed WsmHiMibTemplateFrame_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibBeaconWakeUpPeriod_s {
+typedef struct WsmHiMibBeaconWakeUpPeriod_s {
         uint8_t    WakeupPeriodMin;
         uint8_t    ReceiveDTIM;
         uint16_t   WakeupPeriodMax;
-} WsmHiMibBeaconWakeUpPeriod_t;
+} __packed WsmHiMibBeaconWakeUpPeriod_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibRcpiRssiThreshold_s {
+typedef struct WsmHiMibRcpiRssiThreshold_s {
         uint8_t    Detection : 1;
         uint8_t    RcpiRssi : 1;
         uint8_t    Upperthresh : 1;
@@ -346,20 +345,20 @@ typedef struct __attribute__((__packed__)) WsmHiMibRcpiRssiThreshold_s {
         uint8_t    LowerThreshold;
         uint8_t    UpperThreshold;
         uint8_t    RollingAverageCount;
-} WsmHiMibRcpiRssiThreshold_t;
+} __packed WsmHiMibRcpiRssiThreshold_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibBlockAckPolicy_s {
+typedef struct WsmHiMibBlockAckPolicy_s {
         uint8_t    BlockAckTxTidPolicy;
         uint8_t    Reserved1;
         uint8_t    BlockAckRxTidPolicy;
         uint8_t    Reserved2;
-} WsmHiMibBlockAckPolicy_t;
+} __packed WsmHiMibBlockAckPolicy_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibOverrideIntRate_s {
+typedef struct WsmHiMibOverrideIntRate_s {
         uint8_t    InternalTxRate;
         uint8_t    NonErpInternalTxRate;
         uint8_t    Reserved[2];
-} WsmHiMibOverrideIntRate_t;
+} __packed WsmHiMibOverrideIntRate_t;
 
 typedef enum WsmMpduStartSpacing_e {
         WSM_MPDU_START_SPACING_NO_RESTRIC          = 0x0,
@@ -372,7 +371,7 @@ typedef enum WsmMpduStartSpacing_e {
         WSM_MPDU_START_SPACING_SIXTEEN             = 0x7
 } WsmMpduStartSpacing;
 
-typedef struct __attribute__((__packed__)) WsmHiMibSetAssociationMode_s {
+typedef struct WsmHiMibSetAssociationMode_s {
         uint8_t    PreambtypeUse : 1;
         uint8_t    Mode : 1;
         uint8_t    Rateset : 1;
@@ -383,9 +382,9 @@ typedef struct __attribute__((__packed__)) WsmHiMibSetAssociationMode_s {
         uint8_t    MixedOrGreenfieldType;
         uint8_t    MpduStartSpacing;
         uint32_t   BasicRateSet;
-} WsmHiMibSetAssociationMode_t;
+} __packed WsmHiMibSetAssociationMode_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibSetUapsdInformation_s {
+typedef struct WsmHiMibSetUapsdInformation_s {
         uint8_t    TrigBckgrnd : 1;
         uint8_t    TrigBe : 1;
         uint8_t    TrigVideo : 1;
@@ -401,9 +400,9 @@ typedef struct __attribute__((__packed__)) WsmHiMibSetUapsdInformation_s {
         uint16_t   MinAutoTriggerInterval;
         uint16_t   MaxAutoTriggerInterval;
         uint16_t   AutoTriggerStep;
-} WsmHiMibSetUapsdInformation_t;
+} __packed WsmHiMibSetUapsdInformation_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibTxRateRetryPolicy_s {
+typedef struct WsmHiMibTxRateRetryPolicy_s {
         uint8_t    PolicyIndex;
         uint8_t    ShortRetryCount;
         uint8_t    LongRetryCount;
@@ -416,33 +415,33 @@ typedef struct __attribute__((__packed__)) WsmHiMibTxRateRetryPolicy_s {
         uint32_t   RateCountIndices0700;
         uint32_t   RateCountIndices1508;
         uint32_t   RateCountIndices2316;
-} WsmHiMibTxRateRetryPolicy_t;
+} __packed WsmHiMibTxRateRetryPolicy_t;
 
 #define WSM_MIB_NUM_TX_RATE_RETRY_POLICIES	16
-typedef struct __attribute__((__packed__)) WsmHiMibSetTxRateRetryPolicy_s {
+typedef struct WsmHiMibSetTxRateRetryPolicy_s {
         uint8_t    NumTxRatePolicies;
         uint8_t    Reserved[3];
         WsmHiMibTxRateRetryPolicy_t TxRateRetryPolicy[0];
-} WsmHiMibSetTxRateRetryPolicy_t;
+} __packed WsmHiMibSetTxRateRetryPolicy_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibKeepAlivePeriod_s {
+typedef struct WsmHiMibKeepAlivePeriod_s {
         uint16_t   KeepAlivePeriod;
         uint8_t    Reserved[2];
-} WsmHiMibKeepAlivePeriod_t;
+} __packed WsmHiMibKeepAlivePeriod_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibArpKeepAlivePeriod_s {
+typedef struct WsmHiMibArpKeepAlivePeriod_s {
         uint16_t   ArpKeepAlivePeriod;
         uint8_t    EncrType;
         uint8_t    Reserved;
         uint8_t    SenderIpv4Address[WSM_API_IPV4_ADDRESS_SIZE];
         uint8_t    TargetIpv4Address[WSM_API_IPV4_ADDRESS_SIZE];
-} WsmHiMibArpKeepAlivePeriod_t;
+} __packed WsmHiMibArpKeepAlivePeriod_t;
 
-typedef struct __attribute__((__packed__)) WsmHiMibInactivityTimer_s {
+typedef struct WsmHiMibInactivityTimer_s {
         uint8_t    MinActiveTime;
         uint8_t    MaxActiveTime;
         uint16_t   Reserved;
-} WsmHiMibInactivityTimer_t;
+} __packed WsmHiMibInactivityTimer_t;
 
 
 #endif
