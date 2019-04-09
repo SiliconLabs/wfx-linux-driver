@@ -583,8 +583,7 @@ static WsmHiTxReqBody_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t
 {
 	HiMsgHdr_t *hdr;
 	WsmHiTxReqBody_t *wsm;
-	// Ignore "uint32_t Frame" at end of WsmHiTxReqBody_t
-	u32 wsm_length = sizeof(WsmHiTxReqBody_t) - sizeof(uint32_t) + sizeof(HiMsgHdr_t);
+	u32 wsm_length = sizeof(WsmHiTxReqBody_t) + sizeof(HiMsgHdr_t);
 
 	if (WARN(skb_headroom(t->skb) < wsm_length, "Not enough space for WSM headers"))
 		return NULL;

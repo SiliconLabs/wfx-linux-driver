@@ -639,7 +639,7 @@ typedef struct __attribute__((__packed__)) WsmHiTxReqBody_s {
         uint32_t   Reserved;                         ///<reserved for future use, set to 0
         uint32_t   ExpireTime;                       ///<The elapsed time in TUs, after the initial transmission of an MSDU, after which further attempts to transmit the MSDU will be terminated. Overrides the global dot11MaxTransmitMsduLifeTime setting when different from 0.
         WsmHiHtTxParameters_t HtTxParameters;      ///<High throughput transmit parameters. Set to 0 for non-HT transmissions.
-        uint32_t   Frame;                            ///<A 802.11 frame. See TxFlags Bit 7 above.
+        uint32_t   Frame[0];                            ///<A 802.11 frame. See TxFlags Bit 7 above.
 } WsmHiTxReqBody_t;
 
 typedef struct __attribute__((__packed__)) WsmHiTxReq_s {
