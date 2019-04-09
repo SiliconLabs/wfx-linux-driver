@@ -9,7 +9,11 @@
 #ifndef _GENERAL_API_H_
 #define _GENERAL_API_H_
 
-#include "basic_types.h"
+#ifdef __KERNEL__
+#include <linux/types.h>
+#else
+#include <stdint.h>
+#endif
 
 //< API Internal Version encoding
 #define HI_API_VERSION_MINOR							0x00
