@@ -140,6 +140,7 @@ struct wfx_dev {
 	atomic_t				bh_rx; /* record that the IRQ triggered */
 	atomic_t			bh_tx;
 	atomic_t			bh_term;
+	int				chip_frozen;
 	atomic_t				device_awake; /* =WUP signal */
 
 	struct workqueue_struct         *bh_workqueue;

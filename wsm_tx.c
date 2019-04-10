@@ -70,6 +70,9 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 	if (wdev->bh_error)
 		return 0;
 
+	if (wdev->chip_frozen)
+		return -ETIMEDOUT;
+
 	mutex_lock(&wdev->wsm_cmd.lock);
 	WARN(wdev->wsm_cmd.buf_send, "Data locking error");
 
@@ -93,6 +96,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, HiMsgHdr_t *request, void *reply, 
 	}
 	if (!ret) {
 		dev_err(wdev->dev, "chip did not answer");
+		wdev->chip_frozen = 1;
 		reinit_completion(&wdev->wsm_cmd.done);
 		ret = -ETIMEDOUT;
 	} else {

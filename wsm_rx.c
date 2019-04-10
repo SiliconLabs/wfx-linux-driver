@@ -349,6 +349,7 @@ static int wsm_exception_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void 
 	size_t len = hdr->MsgLen - 4; // drop header
 	dev_err(wdev->dev, "Firmware exception.\n");
 	print_hex_dump_bytes("Dump: ", DUMP_PREFIX_NONE, buf, len);
+	wdev->chip_frozen = 1;
 
 	return -1;
 }
