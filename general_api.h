@@ -66,12 +66,12 @@ typedef enum ApiRateIndex_e {
 } ApiRateIndex;
 
 typedef struct U16msginfo_s {
-	uint8_t Id :7;
-	uint8_t MsgType :1;
-	uint8_t Reserved :1;
-	uint8_t IntId :2;
-	uint8_t HostCount :3;
-	uint8_t SecLink :2;
+	uint8_t Id:7;
+	uint8_t MsgType:1;
+	uint8_t Reserved:1;
+	uint8_t IntId:2;
+	uint8_t HostCount:3;
+	uint8_t SecLink:2;
 } __packed U16msginfo_t;
 
 typedef struct MsginfoBytes_s {
@@ -148,8 +148,8 @@ typedef enum HiFwType_e {
 } HiFwType;
 
 typedef struct HiCapabilities_s {
-	uint8_t    LinkMode : 2;
-	uint8_t    Reserved1: 6;
+	uint8_t    LinkMode:2;
+	uint8_t    Reserved1:6;
 	uint8_t    Reserved2;
 	uint8_t    Reserved3;
 	uint8_t    Reserved4;

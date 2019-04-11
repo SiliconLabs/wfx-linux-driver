@@ -168,10 +168,10 @@ typedef struct WsmHiMibIpv6AddrDataFrameCondition_s {
 typedef union WsmHiAddrType_u {
 	uint8_t value;
 	struct {
-		uint8_t    TypeUnicast   : 1;
-		uint8_t    TypeMulticast : 1;
-		uint8_t    TypeBroadcast : 1;
-		uint8_t    Reserved      : 5;
+		uint8_t    TypeUnicast:1;
+		uint8_t    TypeMulticast:1;
+		uint8_t    TypeBroadcast:1;
+		uint8_t    Reserved:5;
 	} bits;
 } __packed WsmHiAddrType_t;
 
@@ -225,11 +225,11 @@ typedef struct WsmHiMibNsIpAddrTable_s {
 #define WSM_API_MATCH_DATA_SIZE                         3
 typedef struct WsmHiIeTableEntry_s {
 	uint8_t    IeId;
-	uint8_t    HasChanged : 1;
-	uint8_t    NoLonger : 1;
-	uint8_t    HasAppeared : 1;
-	uint8_t    Reserved : 1;
-	uint8_t    NumMatchData : 4;
+	uint8_t    HasChanged:1;
+	uint8_t    NoLonger:1;
+	uint8_t    HasAppeared:1;
+	uint8_t    Reserved:1;
+	uint8_t    NumMatchData:4;
 	uint8_t    Oui[WSM_API_OUI_SIZE];
 	uint8_t    MatchData[WSM_API_MATCH_DATA_SIZE];
 } __packed WsmHiIeTableEntry_t;
@@ -324,8 +324,8 @@ typedef enum WsmTmplt_e {
 
 typedef struct WsmHiMibTemplateFrame_s {
 	uint8_t    FrameType;
-	uint8_t    InitRate : 7;
-	uint8_t    Mode : 1;
+	uint8_t    InitRate:7;
+	uint8_t    Mode:1;
 	uint16_t   FrameLength;
 	uint8_t    Frame[WSM_API_MAX_TEMPLATE_FRAME_SIZE];
 } __packed WsmHiMibTemplateFrame_t;
@@ -337,11 +337,11 @@ typedef struct WsmHiMibBeaconWakeUpPeriod_s {
 } __packed WsmHiMibBeaconWakeUpPeriod_t;
 
 typedef struct WsmHiMibRcpiRssiThreshold_s {
-	uint8_t    Detection : 1;
-	uint8_t    RcpiRssi : 1;
-	uint8_t    Upperthresh : 1;
-	uint8_t    Lowerthresh : 1;
-	uint8_t    Reserved : 4;
+	uint8_t    Detection:1;
+	uint8_t    RcpiRssi:1;
+	uint8_t    Upperthresh:1;
+	uint8_t    Lowerthresh:1;
+	uint8_t    Reserved:4;
 	uint8_t    LowerThreshold;
 	uint8_t    UpperThreshold;
 	uint8_t    RollingAverageCount;
@@ -372,12 +372,12 @@ typedef enum WsmMpduStartSpacing_e {
 } WsmMpduStartSpacing;
 
 typedef struct WsmHiMibSetAssociationMode_s {
-	uint8_t    PreambtypeUse : 1;
-	uint8_t    Mode : 1;
-	uint8_t    Rateset : 1;
-	uint8_t    Spacing : 1;
-	uint8_t    Snoop : 1;
-	uint8_t    Reserved : 3;
+	uint8_t    PreambtypeUse:1;
+	uint8_t    Mode:1;
+	uint8_t    Rateset:1;
+	uint8_t    Spacing:1;
+	uint8_t    Snoop:1;
+	uint8_t    Reserved:3;
 	uint8_t    PreambleType;
 	uint8_t    MixedOrGreenfieldType;
 	uint8_t    MpduStartSpacing;
@@ -385,18 +385,18 @@ typedef struct WsmHiMibSetAssociationMode_s {
 } __packed WsmHiMibSetAssociationMode_t;
 
 typedef struct WsmHiMibSetUapsdInformation_s {
-	uint8_t    TrigBckgrnd : 1;
-	uint8_t    TrigBe : 1;
-	uint8_t    TrigVideo : 1;
-	uint8_t    TrigVoice : 1;
-	uint8_t    PseudoUapsd : 1;
-	uint8_t    NotAppendPspoll : 1;
-	uint8_t    Reserved1 : 2;
-	uint8_t    DelivBckgrnd : 1;
-	uint8_t    DelivBe : 1;
-	uint8_t    DelivVideo : 1;
-	uint8_t    DelivVoice : 1;
-	uint8_t    Reserved2 : 4;
+	uint8_t    TrigBckgrnd:1;
+	uint8_t    TrigBe:1;
+	uint8_t    TrigVideo:1;
+	uint8_t    TrigVoice:1;
+	uint8_t    PseudoUapsd:1;
+	uint8_t    NotAppendPspoll:1;
+	uint8_t    Reserved1:2;
+	uint8_t    DelivBckgrnd:1;
+	uint8_t    DelivBe:1;
+	uint8_t    DelivVideo:1;
+	uint8_t    DelivVoice:1;
+	uint8_t    Reserved2:4;
 	uint16_t   MinAutoTriggerInterval;
 	uint16_t   MaxAutoTriggerInterval;
 	uint16_t   AutoTriggerStep;
@@ -406,10 +406,10 @@ typedef struct WsmHiMibTxRateRetryPolicy_s {
 	uint8_t    PolicyIndex;
 	uint8_t    ShortRetryCount;
 	uint8_t    LongRetryCount;
-	uint8_t    IndexUse : 2;
-	uint8_t    Terminate : 1;
-	uint8_t    CountInit : 1;
-	uint8_t    Reserved1 : 4;
+	uint8_t    IndexUse:2;
+	uint8_t    Terminate:1;
+	uint8_t    CountInit:1;
+	uint8_t    Reserved1:4;
 	uint8_t    RateRecoveryCount;
 	uint8_t    Reserved2[3];
 	uint32_t   RateCountIndices0700;

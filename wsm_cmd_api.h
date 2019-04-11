@@ -94,9 +94,9 @@ typedef enum WsmStatus_e {
 #define WSM_API_SSID_SIZE                               32
 
 typedef struct WsmHiResetFlags_s {
-	uint8_t    ResetStat : 1;
-	uint8_t    ResetAllInt : 1;
-	uint8_t    Reserved1 : 6;
+	uint8_t    ResetStat:1;
+	uint8_t    ResetAllInt:1;
+	uint8_t    Reserved1:6;
 	uint8_t    Reserved2[3];
 } __packed WsmHiResetFlags_t;
 
@@ -131,10 +131,10 @@ typedef struct WsmHiWriteMibCnfBody_s {
 } __packed WsmHiWriteMibCnfBody_t;
 
 typedef struct WsmHiIeFlags_s {
-	uint8_t    Beacon : 1;
-	uint8_t    ProbeResp : 1;
-	uint8_t    ProbeReq : 1;
-	uint8_t    Reserved1 : 5;
+	uint8_t    Beacon:1;
+	uint8_t    ProbeResp:1;
+	uint8_t    ProbeReq:1;
+	uint8_t    Reserved1:5;
 	uint8_t    Reserved2;
 } __packed WsmHiIeFlags_t;
 
@@ -155,16 +155,16 @@ typedef struct WsmHiUpdateIeCnfBody_s {
 } __packed WsmHiUpdateIeCnfBody_t;
 
 typedef struct WsmHiScanType_s {
-	uint8_t    Type : 1;
-	uint8_t    Mode : 1;
-	uint8_t    Reserved : 6;
+	uint8_t    Type:1;
+	uint8_t    Mode:1;
+	uint8_t    Reserved:6;
 } __packed WsmHiScanType_t;
 
 typedef struct WsmHiScanFlags_s {
-	uint8_t    Fbg : 1;
-	uint8_t    Reserved1 : 1;
-	uint8_t    Pre : 1;
-	uint8_t    Reserved2 : 5;
+	uint8_t    Fbg:1;
+	uint8_t    Reserved1:1;
+	uint8_t    Pre:1;
+	uint8_t    Reserved2:5;
 } __packed WsmHiScanFlags_t;
 
 typedef struct WsmHiAutoScanParam_s {
@@ -236,32 +236,32 @@ typedef enum WsmStbc_e {
 } WsmStbc;
 
 typedef struct WsmHiQueueId_s {
-	uint8_t    QueueId : 2;
-	uint8_t    PeerStaId : 4;
-	uint8_t    Reserved : 2;
+	uint8_t    QueueId:2;
+	uint8_t    PeerStaId:4;
+	uint8_t    Reserved:2;
 } __packed WsmHiQueueId_t;
 
 typedef struct WsmHiDataFlags_s {
-	uint8_t    More     : 1;
-	uint8_t    FcOffset : 3;
-	uint8_t    Reserved : 4;
+	uint8_t    More:1;
+	uint8_t    FcOffset:3;
+	uint8_t    Reserved:4;
 } __packed WsmHiDataFlags_t;
 
 typedef struct WsmHiTxFlags_s {
-	uint8_t    StartExp : 1;
-	uint8_t    Reserved : 3;
-	uint8_t    Txrate   : 4;
+	uint8_t    StartExp:1;
+	uint8_t    Reserved:3;
+	uint8_t    Txrate:4;
 } __packed WsmHiTxFlags_t;
 
 typedef struct WsmHiHtTxParameters_s {
-	uint8_t    FrameFormat : 4;
-	uint8_t    FecCoding : 1;
-	uint8_t    ShortGi : 1;
-	uint8_t    Reserved1 : 1;
-	uint8_t    Stbc : 1;
+	uint8_t    FrameFormat:4;
+	uint8_t    FecCoding:1;
+	uint8_t    ShortGi:1;
+	uint8_t    Reserved1:1;
+	uint8_t    Stbc:1;
 	uint8_t    Reserved2;
-	uint8_t    Aggregation : 1;
-	uint8_t    Reserved3 : 7;
+	uint8_t    Aggregation:1;
+	uint8_t    Reserved3:7;
 	uint8_t    Reserved4;
 } __packed WsmHiHtTxParameters_t;
 
@@ -285,11 +285,11 @@ typedef enum WsmQosAckplcy_e {
 } WsmQosAckplcy;
 
 typedef struct WsmHiTxResultFlags_s {
-	uint8_t    Aggr : 1;
-	uint8_t    Requeue : 1;
-	uint8_t    AckPolicy : 2;
-	uint8_t    TxopLimit : 1;
-	uint8_t    Reserved1 : 3;
+	uint8_t    Aggr:1;
+	uint8_t    Requeue:1;
+	uint8_t    AckPolicy:2;
+	uint8_t    TxopLimit:1;
+	uint8_t    Reserved1:3;
 	uint8_t    Reserved2;
 } __packed WsmHiTxResultFlags_t;
 
@@ -317,29 +317,29 @@ typedef enum WsmRiFlagsEncrypt_e {
 } WsmRiFlagsEncrypt;
 
 typedef struct WsmHiRxFlags_s {
-	uint8_t    Encryp : 3;
-	uint8_t    InAggr : 1;
-	uint8_t    FirstAggr : 1;
-	uint8_t    LastAggr : 1;
-	uint8_t    Defrag : 1;
-	uint8_t    Beacon : 1;
-	uint8_t    Tim : 1;
-	uint8_t    Bitmap : 1;
-	uint8_t    MatchSsid : 1;
-	uint8_t    MatchBssid : 1;
-	uint8_t    More : 1;
-	uint8_t    Reserved1 : 1;
-	uint8_t    Ht : 1;
-	uint8_t    Stbc : 1;
-	uint8_t    MatchUcAddr : 1;
-	uint8_t    MatchMcAddr : 1;
-	uint8_t    MatchBcAddr : 1;
-	uint8_t    KeyType : 1;
-	uint8_t    KeyIndex : 4;
-	uint8_t    Reserved2 : 1;
-	uint8_t    PeerStaId : 4;
-	uint8_t    Reserved3 : 2;
-	uint8_t    Reserved4 : 1;
+	uint8_t    Encryp:3;
+	uint8_t    InAggr:1;
+	uint8_t    FirstAggr:1;
+	uint8_t    LastAggr:1;
+	uint8_t    Defrag:1;
+	uint8_t    Beacon:1;
+	uint8_t    Tim:1;
+	uint8_t    Bitmap:1;
+	uint8_t    MatchSsid:1;
+	uint8_t    MatchBssid:1;
+	uint8_t    More:1;
+	uint8_t    Reserved1:1;
+	uint8_t    Ht:1;
+	uint8_t    Stbc:1;
+	uint8_t    MatchUcAddr:1;
+	uint8_t    MatchMcAddr:1;
+	uint8_t    MatchBcAddr:1;
+	uint8_t    KeyType:1;
+	uint8_t    KeyIndex:4;
+	uint8_t    Reserved2:1;
+	uint8_t    PeerStaId:4;
+	uint8_t    Reserved3:2;
+	uint8_t    Reserved4:1;
 } __packed WsmHiRxFlags_t;
 
 typedef struct WsmHiRxIndBody_s {
@@ -384,10 +384,10 @@ typedef enum WsmPreamble_e {
 } WsmPreamble;
 
 typedef struct WsmHiJoinFlags_s {
-	uint8_t    Reserved1 : 2;
-	uint8_t    ForceNoBeacon : 1;
-	uint8_t    ForceWithInd  : 1;
-	uint8_t    Reserved2 : 4;
+	uint8_t    Reserved1:2;
+	uint8_t    ForceNoBeacon:1;
+	uint8_t    ForceWithInd:1;
+	uint8_t    Reserved2:4;
 
 } __packed WsmHiJoinFlags_t;
 
@@ -418,8 +418,8 @@ typedef struct WsmHiJoinCompleteIndBody_s {
 } __packed WsmHiJoinCompleteIndBody_t;
 
 typedef struct WsmHiBssFlags_s {
-	uint8_t    LostCountOnly : 1;
-	uint8_t    Reserved : 7;
+	uint8_t    LostCountOnly:1;
+	uint8_t    Reserved:7;
 } __packed WsmHiBssFlags_t;
 
 typedef struct WsmHiSetBssParamsReqBody_s {
@@ -434,9 +434,9 @@ typedef struct WsmHiSetBssParamsCnfBody_s {
 } __packed WsmHiSetBssParamsCnfBody_t;
 
 typedef struct WsmHiPmMode_s {
-	uint8_t    EnterPsm : 1;
-	uint8_t    Reserved : 6;
-	uint8_t    FastPsm : 1;
+	uint8_t    EnterPsm:1;
+	uint8_t    Reserved:6;
+	uint8_t    FastPsm:1;
 } __packed WsmHiPmMode_t;
 
 typedef struct WsmHiSetPmModeReqBody_s {
@@ -495,9 +495,9 @@ typedef enum WsmStaMapDirection_e {
 } WsmStaMapDirection;
 
 typedef struct WsmHiMapLinkFlags_s {
-	uint8_t    MapDirection : 1;
-	uint8_t    Mfpc : 1;
-	uint8_t    Reserved : 6;
+	uint8_t    MapDirection:1;
+	uint8_t    Mfpc:1;
+	uint8_t    Reserved:6;
 } __packed WsmHiMapLinkFlags_t;
 
 typedef struct WsmHiMapLinkReqBody_s {
@@ -511,10 +511,10 @@ typedef struct WsmHiMapLinkCnfBody_s {
 } __packed WsmHiMapLinkCnfBody_t;
 
 typedef struct WsmHiSuspendResumeFlags_s {
-	uint8_t    Resume : 1;
-	uint8_t    Ac : 2;
-	uint8_t    BcMcOnly : 1;
-	uint8_t    Reserved1 : 4;
+	uint8_t    Resume:1;
+	uint8_t    Ac:2;
+	uint8_t    BcMcOnly:1;
+	uint8_t    Reserved1:4;
 	uint8_t    Reserved2;
 } __packed WsmHiSuspendResumeFlags_t;
 
