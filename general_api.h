@@ -91,29 +91,29 @@ typedef struct HiMsgHdr_s {
 } __packed HiMsgHdr_t ;
 
 typedef enum HiGeneralRequestsIds_e {
-	HI_CONFIGURATION_REQ_ID                         =0x09,
-	HI_CONTROL_GPIO_REQ_ID                          =0x26,
-	HI_SET_SL_MAC_KEY_REQ_ID                        =0x27,
-	HI_SL_EXCHANGE_PUB_KEYS_REQ_ID                  =0x28,
-	HI_SL_CONFIGURE_REQ_ID                          =0x29,
-	HI_PREVENT_ROLLBACK_REQ_ID                      =0x2a,
-	HI_SHUT_DOWN_REQ_ID                             =0x32,
+	HI_CONFIGURATION_REQ_ID                         = 0x09,
+	HI_CONTROL_GPIO_REQ_ID                          = 0x26,
+	HI_SET_SL_MAC_KEY_REQ_ID                        = 0x27,
+	HI_SL_EXCHANGE_PUB_KEYS_REQ_ID                  = 0x28,
+	HI_SL_CONFIGURE_REQ_ID                          = 0x29,
+	HI_PREVENT_ROLLBACK_REQ_ID                      = 0x2a,
+	HI_SHUT_DOWN_REQ_ID                             = 0x32,
 } HiGeneralRequestsIds;
 
 typedef enum HiGeneralConfirmationsIds_e {
-	HI_CONFIGURATION_CNF_ID                         =0x09,
-	HI_CONTROL_GPIO_CNF_ID                          =0x26,
-	HI_SET_SL_MAC_KEY_CNF_ID                        =0x27,
-	HI_SL_EXCHANGE_PUB_KEYS_CNF_ID                  =0x28,
-	HI_SL_CONFIGURE_CNF_ID                          =0x29,
-	HI_PREVENT_ROLLBACK_CNF_ID                      =0xe7,
+	HI_CONFIGURATION_CNF_ID                         = 0x09,
+	HI_CONTROL_GPIO_CNF_ID                          = 0x26,
+	HI_SET_SL_MAC_KEY_CNF_ID                        = 0x27,
+	HI_SL_EXCHANGE_PUB_KEYS_CNF_ID                  = 0x28,
+	HI_SL_CONFIGURE_CNF_ID                          = 0x29,
+	HI_PREVENT_ROLLBACK_CNF_ID                      = 0xe7,
 } HiGeneralConfirmationsIds;
 
 typedef enum HiGeneralIndicationsIds_e {
-	HI_EXCEPTION_IND_ID                             =0xe0,
-	HI_STARTUP_IND_ID                               =0xe1,
-	HI_GENERIC_IND_ID                               =0xe3,
-	HI_ERROR_IND_ID                                 =0xe4
+	HI_EXCEPTION_IND_ID                             = 0xe0,
+	HI_STARTUP_IND_ID                               = 0xe1,
+	HI_GENERIC_IND_ID                               = 0xe3,
+	HI_ERROR_IND_ID                                 = 0xe4
 } HiGeneralIndicationsIds;
 
 typedef union HiGeneralCommandsIds_u {
