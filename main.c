@@ -1,7 +1,7 @@
 /*
  * mac80211 glue code for mac80211 Silicon Labs WFX drivers
  *
- * Copyright (c) 2017, Silicon Laboratories, Inc.
+ * Copyright (c) 2017-2019, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  * Copyright (c) 2008, Johannes Berg <johannes@sipsolutions.net>
  * Copyright (c) 2008 Nokia Corporation and/or its subsidiary(-ies).

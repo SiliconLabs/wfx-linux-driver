@@ -1,7 +1,7 @@
 /*
  * Low-level device IO routines for Silicon Labs WFX drivers
  *
- * Copyright (c) 2017, Silicon Laboratories, Inc.
+ * Copyright (c) 2017-2019, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  *
  * This program is free software; you can redistribute it and/or modify

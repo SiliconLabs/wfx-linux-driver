@@ -1,7 +1,7 @@
 /*
  * DebugFS code for Silicon Labs WFX mac80211 driver
  *
- * Copyright (c) 2017, Silicon Laboratories, Inc.
+ * Copyright (c) 2017-2019, Silicon Laboratories, Inc.
  * Copyright (c) 2011, ST-Ericsson
  *
  * This program is free software; you can redistribute it and/or modify

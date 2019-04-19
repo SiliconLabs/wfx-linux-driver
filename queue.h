@@ -1,7 +1,7 @@
 /*
  * O(1) TX queue with built-in allocator for Silicon Labs WFX drivers
  *
- * Copyright (c) 2017, Silicon Laboratories, Inc.
+ * Copyright (c) 2017-2018, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  *
  * This program is free software; you can redistribute it and/or modify

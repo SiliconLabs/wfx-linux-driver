@@ -1,7 +1,7 @@
 /*
  * Mac80211 SDIO driver for Silicon Labs WFX device
  *
- * Copyright (c) 2017, Silicon Laboratories, Inc.
+ * Copyright (c) 2017-2019, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  *
  * This program is free software; you can redistribute it and/or modify

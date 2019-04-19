@@ -1,7 +1,7 @@
 /*
  * WSM host interface (HI) interface for Silicon Labs WFX mac80211 drivers
  *
- * Copyright (c) 2017, Silicon Laboratories, Inc.
+ * Copyright (c) 2017-2019, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  * Copyright (C) 2010, ST-Ericsson SA
  *
