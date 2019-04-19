@@ -1,3 +1,8 @@
+// SPDX-License-Identifier: GPL-2.0-only
+/*
+ * Copyright (c) 2018-2019, Silicon Laboratories, Inc.
+ */
+
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM wfx
 
