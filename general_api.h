@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 /*
+ * WFx hardware interface definitions
+ *
  * Copyright (c) 2018-2019, Silicon Laboratories Inc.
  */
 #ifndef _GENERAL_API_H_

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Common hwbus abstraction layer interface for WFX wireless driver
+ * Common bus abstraction layer.
  *
  * Copyright (c) 2017-2018, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Mac80211 SPI driver for Silicon Labs WFX device
+ * SPI interface.
  *
  * Copyright (c) 2017-2019, Silicon Laboratories, Inc.
  * Copyright (c) 2011, Sagrad Inc.

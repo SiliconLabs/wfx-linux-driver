@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * DebugFS code for Silicon Labs WFX mac80211 driver
+ * Debugfs interface.
  *
  * Copyright (c) 2017-2019, Silicon Laboratories, Inc.
  * Copyright (c) 2011, ST-Ericsson

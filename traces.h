@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
+ * Tracepoints definitions.
+ *
  * Copyright (c) 2018-2019, Silicon Laboratories, Inc.
  */
 
