@@ -440,19 +440,19 @@ Next, follow these steps:
  11. Load symbols from all loaded modules (note that `lx-symbols` does not
      recognize `~`)
 
-          (gdb) lx-symbols /home/jerome/wfx/wfx_linux_driver
+          (gdb) lx-symbols /home/jpouiller/wfx-linux-driver
           loading vmlinux
-          scanning for modules in /home/jerome/wfx/wfx_linux_driver
-          scanning for modules in /home/jerome/wfx/wfx_linux_kernel
-          loading @0x7f111000: /home/jerome/wfx/wfx_linux_driver/wfx.ko
-          loading @0x7f10a000: /home/jerome/wfx/wfx_linux_kernel/drivers/spi/spidev.ko
+          scanning for modules in /home/jpouiller/wfx-linux-driver
+          scanning for modules in /home/jpouiller/linux
+          loading @0x7f111000: /home/jpouiller/wfx-linux-driver/wfx.ko
+          loading @0x7f10a000: /home/jpouiller/linux/drivers/spi/spidev.ko
           [...]
 
 
   12. Place a breakpoint:
 
           (gdb) b wfx_scan_start
-          Breakpoint 1 at 0x7f136664: file /home/jerome/wfx/wfx_linux_driver/scan.c, line 32.
+          Breakpoint 1 at 0x7f136664: file /home/jpouiller/wfx-linux-driver/scan.c, line 32.
 
   13. Continue execution:
 
