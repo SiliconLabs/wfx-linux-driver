@@ -276,7 +276,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	struct sk_buff *skb_rx = NULL;
 	struct wmsg *wsm;
 	size_t wsm_len;
-	u8 wsm_id, wsm_info;
+	u8 wsm_info;
 	u8 wsm_seq;
 	int rx_resync = 1;
 
@@ -344,13 +344,11 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	}
 	_trace_wsm_recv((u16 *) data);
 
-	wsm_id = wsm->s.t.MsgId;
 	wsm_info = wsm->s.t.MsgInfo;
 	wsm_seq = (wsm_info >> 3) & HI_MSG_SEQ_RANGE;
-
 	skb_trim(skb_rx, wsm_len);
 
-	if (wsm_id != HI_EXCEPTION_IND_ID) {
+	if (wsm->id != HI_EXCEPTION_IND_ID) {
 		if (wsm_seq != wdev->wsm_rx_seq &&  !rx_resync) {
 			dev_warn(wdev->dev, "wrong message sequence: %d != %d\n",
 					wsm_seq, wdev->wsm_rx_seq);
@@ -361,7 +359,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	}
 
 	/* is it a confirmation message? */
-	if ((wsm_id & HI_MSG_TYPE_MASK) == 0) {
+	if ((wsm->id & HI_MSG_TYPE_MASK) == 0) {
 		if (wsm_release_tx_buffer(wdev, 1) < 0)
 			goto err;
 	}

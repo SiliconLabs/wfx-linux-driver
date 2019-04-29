@@ -44,7 +44,7 @@ static void wfx_fill_header(struct wmsg *hdr, int if_id, unsigned cmd, size_t si
 	WARN(if_id > 0x3, "Invalid interface ID %d", if_id);
 
 	hdr->len = cpu_to_le16(size + 4);
-	hdr->s.b.Id = cmd;
+	hdr->id = cmd;
 	hdr->s.b.IntId = if_id;
 }
 
@@ -61,7 +61,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply,
 {
 	const char *mib_name = "";
 	const char *mib_sep = "";
-	int cmd = request->s.b.Id;
+	int cmd = request->id;
 	int vif = request->s.b.IntId;
 	int ret;
 

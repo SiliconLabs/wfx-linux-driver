@@ -32,14 +32,14 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf
 {
 	// All confirm messages start with Status
 	int status = le32_to_cpu(*((__le32 *) buf));
-	int cmd = hdr->s.t.MsgId;
+	int cmd = hdr->id;
 	int len = hdr->len - 4; // drop header
 
 	WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
 
-	if (cmd != wdev->wsm_cmd.buf_send->s.b.Id) {
+	if (cmd != wdev->wsm_cmd.buf_send->id) {
 		dev_warn(wdev->dev, "Chip response mismatch request: %#.4X vs %#.4X\n",
-			 cmd, wdev->wsm_cmd.buf_send->s.b.Id);
+			 cmd, wdev->wsm_cmd.buf_send->id);
 		return -EINVAL;
 	}
 
@@ -394,7 +394,7 @@ static const struct {
 int wsm_handle_rx(struct wfx_dev *wdev, struct wmsg *wsm, struct sk_buff **skb_p)
 {
 	int i;
-	int wsm_id = wsm->s.t.MsgId;
+	int wsm_id = wsm->id;
 
 	if (wsm_id == WSM_HI_RX_IND_ID)
 		return wsm_receive_indication(wdev, &wsm[0], &wsm[1], skb_p);

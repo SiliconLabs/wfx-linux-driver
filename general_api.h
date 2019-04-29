@@ -66,8 +66,6 @@ typedef enum ApiRateIndex_e {
 } ApiRateIndex;
 
 typedef struct U16msginfo_s {
-	uint8_t Id:7;
-	uint8_t MsgType:1;
 	uint8_t Reserved:1;
 	uint8_t IntId:2;
 	uint8_t HostCount:3;
@@ -75,7 +73,6 @@ typedef struct U16msginfo_s {
 } __packed U16msginfo_t;
 
 typedef struct MsginfoBytes_s {
-	uint8_t MsgId;
 	uint8_t MsgInfo;
 } MsginfoBytes_t;
 
@@ -86,6 +83,7 @@ typedef union  MsginfoUnion_u {
 
 struct wmsg {
 	uint16_t    len;
+	uint8_t     id;
 	MsginfoUnion_t s;
 } __packed;
 
