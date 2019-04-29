@@ -32,12 +32,11 @@
 #define GENERAL_INTERFACE_ID                2
 
 #define HI_MSG_ID_MASK                      0x00FF
-#define HI_MSG_TYPE_MASK                    0x0080
 #define HI_MSG_SEQ_RANGE                    0x0007
 
 #define HI_REQ_BASE                         0x00
 #define HI_CNF_BASE                         0x00
-#define HI_IND_BASE                         HI_MSG_TYPE_MASK
+#define HI_IND_BASE                         0x80
 
 typedef enum ApiRateIndex_e {
 	API_RATE_INDEX_B_1MBPS                   = 0,
@@ -81,6 +80,7 @@ typedef union  MsginfoUnion_u {
 	U16msginfo_t b;
 } MsginfoUnion_t;
 
+#define WMSG_ID_IS_INDICATION               0x80
 struct wmsg {
 	uint16_t    len;
 	uint8_t     id;

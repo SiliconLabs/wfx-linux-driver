@@ -359,7 +359,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	}
 
 	/* is it a confirmation message? */
-	if ((wsm->id & HI_MSG_TYPE_MASK) == 0) {
+	if ((wsm->id & WMSG_ID_IS_INDICATION) == 0) {
 		if (wsm_release_tx_buffer(wdev, 1) < 0)
 			goto err;
 	}
