@@ -80,7 +80,6 @@ typedef struct MsginfoBytes_s {
 } MsginfoBytes_t;
 
 typedef union  MsginfoUnion_u {
-	uint16_t U16MsgInfo;
 	MsginfoBytes_t t;
 	U16msginfo_t b;
 } MsginfoUnion_t;
