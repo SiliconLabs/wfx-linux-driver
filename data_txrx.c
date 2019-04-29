@@ -597,7 +597,7 @@ static WsmHiTxReqBody_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t
 	wsm = (WsmHiTxReqBody_t *) (hdr + 1); // Pointer to end of struct wmsg
 	t->txpriv.offset += wsm_length;
 	memset(hdr, 0, wsm_length);
-	hdr->MsgLen = cpu_to_le16(t->skb->len);
+	hdr->len = cpu_to_le16(t->skb->len);
 	hdr->s.t.MsgId = cpu_to_le16(WSM_HI_TX_REQ_ID);
 	hdr->s.b.IntId = t->txpriv.vif_id;
 	wsm->QueueId.PeerStaId = t->txpriv.raw_link_id;

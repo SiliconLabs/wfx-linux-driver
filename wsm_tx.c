@@ -43,7 +43,7 @@ static void wfx_fill_header(struct wmsg *hdr, int if_id, unsigned cmd, size_t si
 	WARN(size > 0xFFF, "Requested buffer is too large: %zu bytes", size);
 	WARN(if_id > 0x3, "Invalid interface ID %d", if_id);
 
-	hdr->MsgLen = cpu_to_le16(size + 4);
+	hdr->len = cpu_to_le16(size + 4);
 	hdr->s.b.Id = cmd;
 	hdr->s.b.IntId = if_id;
 }

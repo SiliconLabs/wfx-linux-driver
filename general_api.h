@@ -86,7 +86,7 @@ typedef union  MsginfoUnion_u {
 } MsginfoUnion_t;
 
 struct wmsg {
-	uint16_t    MsgLen;
+	uint16_t    len;
 	MsginfoUnion_t s;
 } __packed;
 

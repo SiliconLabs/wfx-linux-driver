@@ -334,7 +334,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 #endif
 
 	wsm = (struct wmsg *) data;
-	wsm_len = le16_to_cpu(wsm->MsgLen);
+	wsm_len = le16_to_cpu(wsm->len);
 	if (round_up(wsm_len, 2) != read_len - 2) {
 		dev_err(wdev->dev, "inconsistent message length: %zu != %zu\n",
 			wsm_len, read_len - 2);
@@ -419,7 +419,7 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 
 	wsm = (struct wmsg *)data;
 	BUG_ON(tx_len < sizeof(*wsm));
-	BUG_ON(le16_to_cpu(wsm->MsgLen) != tx_len);
+	BUG_ON(le16_to_cpu(wsm->len) != tx_len);
 
 	tx_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, tx_len);
 

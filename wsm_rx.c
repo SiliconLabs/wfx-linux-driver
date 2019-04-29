@@ -33,7 +33,7 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf
 	// All confirm messages start with Status
 	int status = le32_to_cpu(*((__le32 *) buf));
 	int cmd = hdr->s.t.MsgId;
-	int len = hdr->MsgLen - 4; // drop header
+	int len = hdr->len - 4; // drop header
 
 	WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
 
@@ -346,7 +346,7 @@ void wsm_unlock_tx(struct wfx_dev *wdev)
 
 static int wsm_exception_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
-	size_t len = hdr->MsgLen - 4; // drop header
+	size_t len = hdr->len - 4; // drop header
 	dev_err(wdev->dev, "Firmware exception.\n");
 	print_hex_dump_bytes("Dump: ", DUMP_PREFIX_NONE, buf, len);
 	wdev->chip_frozen = 1;
@@ -617,7 +617,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	if (try_wait_for_completion(&wdev->wsm_cmd.ready)) {
 		WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
 		*data = (u8 *) wdev->wsm_cmd.buf_send;
-		*tx_len = le16_to_cpu(wdev->wsm_cmd.buf_send->MsgLen);
+		*tx_len = le16_to_cpu(wdev->wsm_cmd.buf_send->len);
 		*burst = 1;
 		return 1;
 	}
@@ -679,7 +679,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 		wvif->pspoll_mask &= ~BIT(txpriv->raw_link_id);
 
 		*data = (u8 *) hdr;
-		*tx_len = le16_to_cpu(hdr->MsgLen);
+		*tx_len = le16_to_cpu(hdr->len);
 
 		/* allow bursting if txop is set */
 		if (wvif->edca.params[queue_num].TxOpLimit)
