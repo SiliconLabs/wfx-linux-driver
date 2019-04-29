@@ -599,7 +599,7 @@ static WsmHiTxReqBody_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t
 	memset(hdr, 0, wsm_length);
 	hdr->len = cpu_to_le16(t->skb->len);
 	hdr->id = cpu_to_le16(WSM_HI_TX_REQ_ID);
-	hdr->s.b.IntId = t->txpriv.vif_id;
+	hdr->interface = t->txpriv.vif_id;
 	wsm->QueueId.PeerStaId = t->txpriv.raw_link_id;
 	// Queue index are inverted between WSM and Linux
 	wsm->QueueId.QueueId = 3 - t->queue;

@@ -45,7 +45,7 @@ static void wfx_fill_header(struct wmsg *hdr, int if_id, unsigned cmd, size_t si
 
 	hdr->len = cpu_to_le16(size + 4);
 	hdr->id = cmd;
-	hdr->s.b.IntId = if_id;
+	hdr->interface = if_id;
 }
 
 static void *wfx_alloc_wsm(size_t body_len, struct wmsg **hdr)
@@ -62,7 +62,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply,
 	const char *mib_name = "";
 	const char *mib_sep = "";
 	int cmd = request->id;
-	int vif = request->s.b.IntId;
+	int vif = request->interface;
 	int ret;
 
 	WARN(wdev->wsm_cmd.buf_recv && wdev->wsm_cmd.async, "API usage error");

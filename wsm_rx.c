@@ -132,7 +132,7 @@ static int wsm_startup_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 
 static int wsm_receive_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf, struct sk_buff **skb_p)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 	WsmHiRxIndBody_t *body = buf;
 	struct ieee80211_hdr *frame;
 	__le16 fctl;
@@ -169,7 +169,7 @@ static int wsm_receive_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 
 static int wsm_event_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 	WsmHiEventIndBody_t *body = buf;
 	struct wfx_wsm_event *event;
 	int first;
@@ -200,7 +200,7 @@ static int wsm_event_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *bu
 
 static int wsm_pm_mode_complete_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 
 	WARN_ON(!wvif);
 	complete(&wvif->set_pm_mode_complete);
@@ -210,7 +210,7 @@ static int wsm_pm_mode_complete_indication(struct wfx_dev *wdev, struct wmsg *hd
 
 static int wsm_scan_complete_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 	WsmHiScanCmplIndBody_t *body = buf;
 
 	WARN_ON(!wvif);
@@ -221,7 +221,7 @@ static int wsm_scan_complete_indication(struct wfx_dev *wdev, struct wmsg *hdr, 
 
 static int wsm_join_complete_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 
 	WARN_ON(!wvif);
 	dev_warn(wdev->dev, "unattended JoinCompleteInd\n");
@@ -231,7 +231,7 @@ static int wsm_join_complete_indication(struct wfx_dev *wdev, struct wmsg *hdr, 
 
 static int wsm_suspend_resume_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 	WsmHiSuspendResumeTxIndBody_t *body = buf;
 
 	WARN_ON(!wvif);
@@ -669,8 +669,8 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 		if (wfx_queue_get(queue, tx_allowed_mask, &hdr, &tx_info, &txpriv))
 			continue;
 		wsm = (WsmHiTxReqBody_t *) hdr->body;
-		// Note: txpriv->vif_id is reundant with hdr->s.b.IntId
-		wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
+		// Note: txpriv->vif_id is reundant with hdr->interface
+		wvif = wdev_to_wvif(wdev, hdr->interface);
 		WARN_ON(!wvif);
 
 		if (wsm_handle_tx_data(wvif, wsm, tx_info, txpriv, queue))

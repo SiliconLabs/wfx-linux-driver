@@ -32,8 +32,6 @@
 #define WFX_WAKEUP_WAIT_STEP_MAX 300  /*in us */
 #define WFX_WAKEUP_WAIT_MAX 2000      /*in us */
 
-#define WSM_TX_SEQ(seq)               ((seq & HI_MSG_SEQ_RANGE) << 3)
-
 static int wfx_bh(void *arg);
 static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev);
 
@@ -276,8 +274,6 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	struct sk_buff *skb_rx = NULL;
 	struct wmsg *wsm;
 	size_t wsm_len;
-	u8 wsm_info;
-	u8 wsm_seq;
 	int rx_resync = 1;
 
 	size_t alloc_len;
@@ -344,17 +340,15 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	}
 	_trace_wsm_recv((u16 *) data);
 
-	wsm_info = wsm->s.t.MsgInfo;
-	wsm_seq = (wsm_info >> 3) & HI_MSG_SEQ_RANGE;
 	skb_trim(skb_rx, wsm_len);
 
 	if (wsm->id != HI_EXCEPTION_IND_ID) {
-		if (wsm_seq != wdev->wsm_rx_seq &&  !rx_resync) {
+		if (wsm->seqnum != wdev->wsm_rx_seq &&  !rx_resync) {
 			dev_warn(wdev->dev, "wrong message sequence: %d != %d\n",
-					wsm_seq, wdev->wsm_rx_seq);
+					wsm->seqnum, wdev->wsm_rx_seq);
 			goto err;
 		}
-		wdev->wsm_rx_seq = (wsm_seq + 1) & 7;
+		wdev->wsm_rx_seq = (wsm->seqnum + 1) % (WMSG_COUNTER_MAX + 1);
 		rx_resync = 0;
 	}
 
@@ -421,8 +415,7 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 
 	tx_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, tx_len);
 
-	wsm->s.t.MsgInfo &= 0xff ^ WSM_TX_SEQ(HI_MSG_SEQ_RANGE);
-	wsm->s.t.MsgInfo |= WSM_TX_SEQ(wdev->wsm_tx_seq);
+	wsm->seqnum = wdev->wsm_tx_seq;
 	if (wfx_data_write(wdev, data, tx_len)) {
 		dev_err(wdev->dev, "bh: tx blew up, len %zu\n", tx_len);
 		wsm_release_tx_buffer(wdev, 1);
@@ -431,7 +424,7 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 
 	_trace_wsm_send((u16 *) data);
 
-	wdev->wsm_tx_seq = (wdev->wsm_tx_seq + 1) & HI_MSG_SEQ_RANGE;
+	wdev->wsm_tx_seq = (wdev->wsm_tx_seq + 1) % (WMSG_COUNTER_MAX + 1);
 
 	if (tx_burst > 1)
 		wfx_debug_tx_burst(wdev);

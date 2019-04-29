@@ -64,27 +64,16 @@ typedef enum ApiRateIndex_e {
 	API_RATE_NUM_ENTRIES                     = 22
 } ApiRateIndex;
 
-typedef struct U16msginfo_s {
-	uint8_t Reserved:1;
-	uint8_t IntId:2;
-	uint8_t HostCount:3;
-	uint8_t SecLink:2;
-} __packed U16msginfo_t;
-
-typedef struct MsginfoBytes_s {
-	uint8_t MsgInfo;
-} MsginfoBytes_t;
-
-typedef union  MsginfoUnion_u {
-	MsginfoBytes_t t;
-	U16msginfo_t b;
-} MsginfoUnion_t;
-
 #define WMSG_ID_IS_INDICATION               0x80
+#define WMSG_COUNTER_MAX                    7
+#define WMSG_ENCRYPTED_ENABLE               3
 struct wmsg {
 	uint16_t    len;
 	uint8_t     id;
-	MsginfoUnion_t s;
+	uint8_t     reserved:1;
+	uint8_t     interface:2;
+	uint8_t     seqnum:3;
+	uint8_t     encrypted:2;
 	uint8_t     body[];
 } __packed;
 
