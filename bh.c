@@ -274,7 +274,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 {
 	size_t read_len = 0;
 	struct sk_buff *skb_rx = NULL;
-	HiMsgHdr_t *wsm;
+	struct wmsg *wsm;
 	size_t wsm_len;
 	u8 wsm_id, wsm_info;
 	u8 wsm_seq;
@@ -333,7 +333,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	}
 #endif
 
-	wsm = (HiMsgHdr_t *) data;
+	wsm = (struct wmsg *) data;
 	wsm_len = le16_to_cpu(wsm->MsgLen);
 	if (round_up(wsm_len, 2) != read_len - 2) {
 		dev_err(wdev->dev, "inconsistent message length: %zu != %zu\n",
@@ -400,7 +400,7 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 	size_t tx_len;
 	u8 *data;
 	int ret, tx_burst;
-	HiMsgHdr_t *wsm;
+	struct wmsg *wsm;
 
 	if (!atomic_read(&wdev->device_awake)) {
 		if (wfx_device_wakeup(wdev))
@@ -417,7 +417,7 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 	}
 	wfx_dbg_filter_wsm(wdev, data);
 
-	wsm = (HiMsgHdr_t *)data;
+	wsm = (struct wmsg *)data;
 	BUG_ON(tx_len < sizeof(*wsm));
 	BUG_ON(le16_to_cpu(wsm->MsgLen) != tx_len);
 

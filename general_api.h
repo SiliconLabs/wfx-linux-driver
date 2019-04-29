@@ -85,10 +85,10 @@ typedef union  MsginfoUnion_u {
 	U16msginfo_t b;
 } MsginfoUnion_t;
 
-typedef struct HiMsgHdr_s {
+struct wmsg {
 	uint16_t    MsgLen;
 	MsginfoUnion_t s;
-} __packed HiMsgHdr_t ;
+} __packed;
 
 typedef enum HiGeneralRequestsIds_e {
 	HI_CONFIGURATION_REQ_ID                         = 0x09,

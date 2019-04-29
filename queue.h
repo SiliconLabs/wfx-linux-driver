@@ -99,7 +99,7 @@ int wfx_queue_put(struct wfx_queue *queue,
 		     struct wfx_txpriv *txpriv);
 int wfx_queue_get(struct wfx_queue *queue,
 		     u32 link_id_map,
-		     HiMsgHdr_t **tx,
+		     struct wmsg **tx,
 		     struct ieee80211_tx_info **tx_info,
 		     const struct wfx_txpriv **txpriv);
 int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id);

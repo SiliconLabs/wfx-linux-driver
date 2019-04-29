@@ -379,7 +379,7 @@ void wfx_probe_work(struct work_struct *work)
 		wsm_unlock_tx(wvif->wdev);
 		return;
 	}
-	wsm = (WsmHiTxReqBody_t *) (skb->data + sizeof(HiMsgHdr_t));
+	wsm = (WsmHiTxReqBody_t *) (skb->data + sizeof(struct wmsg));
 	scan.scan_req.MaxTransmitRate = wsm->MaxTxRate;
 	scan.scan_req.Band = WSM_PHY_BAND_2_4G;
 	if (wvif->state == WFX_STATE_STA ||

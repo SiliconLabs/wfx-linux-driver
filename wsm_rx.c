@@ -28,7 +28,7 @@
 #include "debug.h"
 #include "sta.h"
 
-static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
+static int wsm_generic_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	// All confirm messages start with Status
 	int status = le32_to_cpu(*((__le32 *) buf));
@@ -60,7 +60,7 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 	return status;
 }
 
-static int wsm_tx_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
+static int wsm_tx_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	WsmHiTxCnfBody_t *body = buf;
 
@@ -68,7 +68,7 @@ static int wsm_tx_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
 	return 0;
 }
 
-static int wsm_multi_tx_confirm(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
+static int wsm_multi_tx_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	WsmHiMultiTransmitCnfBody_t *body = buf;
 	WsmHiTxCnfBody_t *buf_loc = (WsmHiTxCnfBody_t *) &body->TxConfPayload;
@@ -112,7 +112,7 @@ int wsm_fwd_probe_req(struct wfx_vif *wvif, bool enable)
 }
 
 
-static int wsm_startup_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
+static int wsm_startup_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	HiStartupIndBody_t *body = buf;
 
@@ -130,7 +130,7 @@ static int wsm_startup_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 	return 0;
 }
 
-static int wsm_receive_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf, struct sk_buff **skb_p)
+static int wsm_receive_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf, struct sk_buff **skb_p)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	WsmHiRxIndBody_t *body = buf;
@@ -139,7 +139,7 @@ static int wsm_receive_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 	int sta_id;
 
 	WARN_ON(!wvif);
-	skb_pull(*skb_p, sizeof(HiMsgHdr_t) + sizeof(WsmHiRxIndBody_t));
+	skb_pull(*skb_p, sizeof(struct wmsg) + sizeof(WsmHiRxIndBody_t));
 
 	frame = (struct ieee80211_hdr *)(*skb_p)->data;
 
@@ -162,12 +162,12 @@ static int wsm_receive_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *b
 
 	wfx_rx_cb(wvif, body, sta_id, skb_p);
 	if (*skb_p)
-		skb_push(*skb_p, sizeof(HiMsgHdr_t) + sizeof(WsmHiRxIndBody_t));
+		skb_push(*skb_p, sizeof(struct wmsg) + sizeof(WsmHiRxIndBody_t));
 
 	return 0;
 }
 
-static int wsm_event_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
+static int wsm_event_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	WsmHiEventIndBody_t *body = buf;
@@ -198,7 +198,7 @@ static int wsm_event_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 	return 0;
 }
 
-static int wsm_pm_mode_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
+static int wsm_pm_mode_complete_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 
@@ -208,7 +208,7 @@ static int wsm_pm_mode_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr
 	return 0;
 }
 
-static int wsm_scan_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
+static int wsm_scan_complete_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	WsmHiScanCmplIndBody_t *body = buf;
@@ -219,7 +219,7 @@ static int wsm_scan_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, v
 	return 0;
 }
 
-static int wsm_join_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
+static int wsm_join_complete_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 
@@ -229,7 +229,7 @@ static int wsm_join_complete_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, v
 	return 0;
 }
 
-static int wsm_suspend_resume_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
+static int wsm_suspend_resume_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 	WsmHiSuspendResumeTxIndBody_t *body = buf;
@@ -240,7 +240,7 @@ static int wsm_suspend_resume_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, 
 	return 0;
 }
 
-static int wsm_error_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
+static int wsm_error_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	HiErrorIndBody_t *body = buf;
 
@@ -248,7 +248,7 @@ static int wsm_error_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf
 	return 0;
 }
 
-static int wsm_generic_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
+static int wsm_generic_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	HiGenericIndBody_t *body = buf;
 
@@ -344,7 +344,7 @@ void wsm_unlock_tx(struct wfx_dev *wdev)
 	}
 }
 
-static int wsm_exception_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void *buf)
+static int wsm_exception_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	size_t len = hdr->MsgLen - 4; // drop header
 	dev_err(wdev->dev, "Firmware exception.\n");
@@ -356,7 +356,7 @@ static int wsm_exception_indication(struct wfx_dev *wdev, HiMsgHdr_t *hdr, void 
 
 static const struct {
 	int msg_id;
-	int (*handler)(struct wfx_dev *, HiMsgHdr_t *, void *);
+	int (*handler)(struct wfx_dev *, struct wmsg *, void *);
 } wsm_handlers[] = {
 	/* Confirmations */
 	{ WSM_HI_TX_CNF_ID,              wsm_tx_confirm },
@@ -391,7 +391,7 @@ static const struct {
 	//{ WSM_HI_RX_IND_ID,            wsm_receive_indication },
 };
 
-int wsm_handle_rx(struct wfx_dev *wdev, HiMsgHdr_t *wsm, struct sk_buff **skb_p)
+int wsm_handle_rx(struct wfx_dev *wdev, struct wmsg *wsm, struct sk_buff **skb_p)
 {
 	int i;
 	int wsm_id = wsm->s.t.MsgId;
@@ -418,7 +418,7 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif,
 	bool handled = false;
 	u8 *buf8 = (u8 *) wsm;
 	const struct ieee80211_hdr *frame =
-		(struct ieee80211_hdr *) (buf8 + txpriv->offset - sizeof(HiMsgHdr_t));
+		(struct ieee80211_hdr *) (buf8 + txpriv->offset - sizeof(struct wmsg));
 	__le16 fctl = frame->frame_control;
 
 	enum {
@@ -599,7 +599,7 @@ found:
 int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	       size_t *tx_len, int *burst)
 {
-	HiMsgHdr_t *hdr = NULL;
+	struct wmsg *hdr = NULL;
 	WsmHiTxReqBody_t *wsm = NULL;
 	struct ieee80211_tx_info *tx_info;
 	struct wfx_queue *queue = NULL;

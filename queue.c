@@ -376,7 +376,7 @@ int wfx_queue_put(struct wfx_queue *queue,
 
 int wfx_queue_get(struct wfx_queue *queue,
 		     u32 link_id_map,
-		     HiMsgHdr_t **tx,
+		     struct wmsg **tx,
 		     struct ieee80211_tx_info **tx_info,
 		     const struct wfx_txpriv **txpriv)
 {
@@ -395,7 +395,7 @@ int wfx_queue_get(struct wfx_queue *queue,
 	}
 
 	if (!WARN_ON(ret)) {
-		*tx = (HiMsgHdr_t *) item->skb->data;
+		*tx = (struct wmsg *) item->skb->data;
 		*tx_info = IEEE80211_SKB_CB(item->skb);
 		*txpriv = &item->txpriv;
 		wsm = (WsmHiTxReqBody_t *) (*tx + 1);

@@ -581,9 +581,9 @@ static int wfx_tx_h_action(struct wfx_vif *wvif, struct wfx_txinfo *t)
 /* Add WSM header */
 static WsmHiTxReqBody_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
-	HiMsgHdr_t *hdr;
+	struct wmsg *hdr;
 	WsmHiTxReqBody_t *wsm;
-	u32 wsm_length = sizeof(WsmHiTxReqBody_t) + sizeof(HiMsgHdr_t);
+	u32 wsm_length = sizeof(WsmHiTxReqBody_t) + sizeof(struct wmsg);
 
 	if (WARN(skb_headroom(t->skb) < wsm_length, "Not enough space for WSM headers"))
 		return NULL;
@@ -593,8 +593,8 @@ static WsmHiTxReqBody_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t
 		return NULL;
 	}
 
-	hdr = (HiMsgHdr_t *) skb_push(t->skb, wsm_length);
-	wsm = (WsmHiTxReqBody_t *) (hdr + 1); // Pointer to end of HiMsgHdr_t
+	hdr = (struct wmsg *) skb_push(t->skb, wsm_length);
+	wsm = (WsmHiTxReqBody_t *) (hdr + 1); // Pointer to end of struct wmsg
 	t->txpriv.offset += wsm_length;
 	memset(hdr, 0, wsm_length);
 	hdr->MsgLen = cpu_to_le16(t->skb->len);

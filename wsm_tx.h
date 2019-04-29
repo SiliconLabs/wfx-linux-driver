@@ -38,7 +38,7 @@ struct wsm_cmd {
 	struct completion ready;
 	struct completion done;
 	bool              async;
-	HiMsgHdr_t        *buf_send;
+	struct wmsg        *buf_send;
 	void              *buf_recv;
 	size_t            len_recv;
 	int               ret;
