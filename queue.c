@@ -398,7 +398,7 @@ int wfx_queue_get(struct wfx_queue *queue,
 		*tx = (struct wmsg *) item->skb->data;
 		*tx_info = IEEE80211_SKB_CB(item->skb);
 		*txpriv = &item->txpriv;
-		wsm = (WsmHiTxReqBody_t *) (*tx + 1);
+		wsm = (WsmHiTxReqBody_t *) (*tx)->body;
 		wsm->PacketId = item->packet_id;
 		list_move_tail(&item->head, &queue->pending);
 		++queue->num_pending;

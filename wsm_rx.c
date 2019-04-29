@@ -668,7 +668,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 
 		if (wfx_queue_get(queue, tx_allowed_mask, &hdr, &tx_info, &txpriv))
 			continue;
-		wsm = (WsmHiTxReqBody_t *) (hdr + 1); // Point to end of hdr
+		wsm = (WsmHiTxReqBody_t *) hdr->body;
 		// Note: txpriv->vif_id is reundant with hdr->s.b.IntId
 		wvif = wdev_to_wvif(wdev, hdr->s.b.IntId);
 		WARN_ON(!wvif);

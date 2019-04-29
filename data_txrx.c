@@ -594,7 +594,7 @@ static WsmHiTxReqBody_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t
 	}
 
 	hdr = (struct wmsg *) skb_push(t->skb, wsm_length);
-	wsm = (WsmHiTxReqBody_t *) (hdr + 1); // Pointer to end of struct wmsg
+	wsm = (WsmHiTxReqBody_t *) hdr->body;
 	t->txpriv.offset += wsm_length;
 	memset(hdr, 0, wsm_length);
 	hdr->len = cpu_to_le16(t->skb->len);

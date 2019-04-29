@@ -52,7 +52,7 @@ static void *wfx_alloc_wsm(size_t body_len, struct wmsg **hdr)
 {
 	*hdr = kzalloc(sizeof(struct wmsg) + body_len, GFP_KERNEL);
 	if (*hdr)
-		return *hdr + 1;
+		return (*hdr)->body;
 	else
 		return NULL;
 }

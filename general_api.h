@@ -85,6 +85,7 @@ struct wmsg {
 	uint16_t    len;
 	uint8_t     id;
 	MsginfoUnion_t s;
+	uint8_t     body[];
 } __packed;
 
 typedef enum HiGeneralRequestsIds_e {
