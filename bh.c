@@ -23,15 +23,18 @@
  * wakeup the device : it must wait the device is ready before continuing
  * it returns 0 if the device is awake, else < 0
  */
-static int wfx_device_wakeup(struct wfx_dev *wdev)
+static int device_wakeup(struct wfx_dev *wdev)
 {
 	int ret = 0;
 	u32 Control_reg;
 	int rdy_timeout = 0;
 
-	if (wdev->pdata.gpio_wakeup)
-		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
+	if (!wdev->pdata.gpio_wakeup)
+		return 0;
+	if (atomic_read(&wdev->device_awake))
+		return 0;
 
+	gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
 	do {
 		usleep_range(WFX_WAKEUP_WAIT_STEP_MIN, WFX_WAKEUP_WAIT_STEP_MAX);
 		rdy_timeout += WFX_WAKEUP_WAIT_STEP_MIN;
@@ -67,14 +70,16 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 /*
  * allow the device to go in sleep mode
  */
-static int wfx_device_wakedown(struct wfx_dev *wdev)
+static int device_release(struct wfx_dev *wdev)
 {
-	int ret = 0;
+	if (!wdev->pdata.gpio_wakeup)
+		return 0;
+	if (!atomic_read(&wdev->device_awake))
+		return 0;
 
 	gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
 	atomic_set(&wdev->device_awake, 0);
-
-	return ret;
+	return 0;
 }
 
 /*
@@ -82,15 +87,16 @@ static int wfx_device_wakedown(struct wfx_dev *wdev)
  * but we want to be sure the device stays awake after the last Rx data has been read.
  * Then we just set the WUP signal here
  */
-static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev)
+static int device_keep_awake(struct wfx_dev *wdev)
 {
-	int ret = 0;
+	if (!wdev->pdata.gpio_wakeup)
+		return 0;
+	if (atomic_read(&wdev->device_awake))
+		return 0;
 
-	if (wdev->pdata.gpio_wakeup) {
-		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
-		atomic_set(&wdev->device_awake, 1);
-	}
-	return ret;
+	gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
+	atomic_set(&wdev->device_awake, 1);
+	return 0;
 }
 
 static inline void wsm_alloc_tx_buffer(struct wfx_dev *wdev)
@@ -124,10 +130,10 @@ static int wsm_release_tx_buffer(struct wfx_dev *wdev, int count)
 static int wfx_check_pending_rx(struct wfx_dev *wdev, u32 *ctrl_reg)
 {
 	int i;
+
 	/* before reading the ctrl_reg we must be sure the device is awake */
-	if (!atomic_read(&wdev->device_awake))
-		if (wfx_device_wakeup(wdev))
-			return -1; /* wake-up error */
+	if (device_wakeup(wdev))
+		return -EIO;
 
 	for (i = 0; i < 4; i++) {
 		if (control_reg_read(wdev, ctrl_reg))
@@ -240,10 +246,8 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 	int ret, tx_burst;
 	struct wmsg *wsm;
 
-	if (!atomic_read(&wdev->device_awake)) {
-		if (wfx_device_wakeup(wdev))
-			return -1;
-	}
+	if (device_wakeup(wdev))
+		return -EIO;
 
 	wsm_alloc_tx_buffer(wdev);
 
@@ -301,7 +305,7 @@ static void bh_work(struct work_struct *work)
 				/* no data to process and allowed to go to sleep */
 				status = 10 * HZ; /* wakeup at least every 10s */
 				pr_debug("[BH] Device wakedown. No data.\n");
-				wfx_device_wakedown(wdev);
+				device_release(wdev);
 			} else if (wdev->hw_bufs_used) {
 				/* we are waiting for confirmation msg */
 				status = 1 * HZ; /*only sleep for 1s*/
@@ -476,8 +480,7 @@ void wfx_irq_handler(struct wfx_dev *wdev)
 		pr_debug("[BH] error.\n");
 		return;
 	}
-	if (!atomic_read(&wdev->device_awake))
-		wfx_prevent_device_to_sleep(wdev);
+	device_keep_awake(wdev);
 
 	if (wdev->pdata.sdio)
 		control_reg_read(wdev, &ctrl_reg);
