@@ -271,7 +271,7 @@ bool wsm_tx_flush(struct wfx_dev *wdev)
 	 * It is safe to use unprotected access, as hw_bufs_used
 	 * can only decrements.
 	 */
-	if (!wdev->hw_bufs_used)
+	if (!wdev->hif.tx_buffers_used)
 		return true;
 
 	if (wdev->bh_error) {
@@ -292,14 +292,14 @@ bool wsm_tx_flush(struct wfx_dev *wdev)
 			return true;
 
 		timeout = timestamp + WSM_CMD_LAST_CHANCE_TIMEOUT - jiffies;
-		if (timeout < 0 || wait_event_timeout(wdev->bh_evt_wq,
-						      !wdev->hw_bufs_used,
+		if (timeout < 0 || wait_event_timeout(wdev->hif.tx_buffers_empty,
+						      !wdev->hif.tx_buffers_used,
 						      timeout) <= 0) {
 			/* Hmmm... Not good. Frame had stuck in firmware. */
 			wdev->bh_error = 1;
 			dev_err(wdev->dev,
 				  "[WSM] TX Frames (%d) stuck in firmware, killing BH\n",
-				  wdev->hw_bufs_used);
+				  wdev->hif.tx_buffers_used);
 			wake_up(&wdev->bh_wq);
 			return false;
 		}

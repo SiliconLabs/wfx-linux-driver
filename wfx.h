@@ -21,6 +21,7 @@
 #include "wsm_mib.h"
 #include "sta.h"
 #include "scan.h"
+#include "bh.h"
 #include "data_txrx.h"
 
 #if (KERNEL_VERSION(4, 7, 0) > LINUX_VERSION_CODE)
@@ -120,6 +121,7 @@ struct wfx_dev {
 	/* Hardware interface */
 	const struct hwbus_ops		*hwbus_ops;
 	void				*hwbus_priv;
+	struct wfx_hif			hif;
 
 	struct wfx_debug_priv	*debug;
 
@@ -148,14 +150,9 @@ struct wfx_dev {
 	atomic_t				device_awake; /* =WUP signal */
 
 	struct workqueue_struct         *bh_workqueue;
-	struct work_struct              bh_work;
 
 	int				bh_error;
 	wait_queue_head_t		bh_wq;
-	wait_queue_head_t		bh_evt_wq;
-	int				wsm_rx_seq;
-	int				wsm_tx_seq;
-	int				hw_bufs_used;
 
 	/* Keep wfx200 awake (WUP = 1) 1 second after each scan to avoid
 	 * FW issue with sleeping/waking up.

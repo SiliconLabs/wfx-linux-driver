@@ -31,16 +31,16 @@ static int device_wakeup(struct wfx_dev *wdev)
 
 	if (!wdev->pdata.gpio_wakeup)
 		return 0;
-	if (atomic_read(&wdev->device_awake))
+	if (atomic_read(&wdev->hif.device_awake))
 		return 0;
 
 	gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
 	do {
 		usleep_range(WFX_WAKEUP_WAIT_STEP_MIN, WFX_WAKEUP_WAIT_STEP_MAX);
 		rdy_timeout += WFX_WAKEUP_WAIT_STEP_MIN;
-	} while (!atomic_read(&wdev->device_awake) &&
+	} while (!atomic_read(&wdev->hif.device_awake) &&
 		 (rdy_timeout < WFX_WAKEUP_WAIT_MAX));
-	if (!atomic_read(&wdev->device_awake)) { /* timeout */
+	if (!atomic_read(&wdev->hif.device_awake)) { /* timeout */
 		/* no IRQ then maybe the device was not sleeping
 		 * try to read the control register */
 		int error = control_reg_read(wdev, &Control_reg);
@@ -52,7 +52,7 @@ static int device_wakeup(struct wfx_dev *wdev)
 			ret = -EIO;
 		} else {
 			dev_dbg(wdev->dev, "bh: device correctly wake up\n");
-			atomic_set(&wdev->device_awake, 1);
+			atomic_set(&wdev->hif.device_awake, 1);
 			ret = 0;
 		}
 	} else {
@@ -74,11 +74,11 @@ static int device_release(struct wfx_dev *wdev)
 {
 	if (!wdev->pdata.gpio_wakeup)
 		return 0;
-	if (!atomic_read(&wdev->device_awake))
+	if (!atomic_read(&wdev->hif.device_awake))
 		return 0;
 
 	gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
-	atomic_set(&wdev->device_awake, 0);
+	atomic_set(&wdev->hif.device_awake, 0);
 	return 0;
 }
 
@@ -91,25 +91,25 @@ static int device_keep_awake(struct wfx_dev *wdev)
 {
 	if (!wdev->pdata.gpio_wakeup)
 		return 0;
-	if (atomic_read(&wdev->device_awake))
+	if (atomic_read(&wdev->hif.device_awake))
 		return 0;
 
 	gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
-	atomic_set(&wdev->device_awake, 1);
+	atomic_set(&wdev->hif.device_awake, 1);
 	return 0;
 }
 
 static inline void wsm_alloc_tx_buffer(struct wfx_dev *wdev)
 {
-	wdev->hw_bufs_used++;
+	wdev->hif.tx_buffers_used++;
 }
 
 static void wsm_release_tx_buffer(struct wfx_dev *wdev, int count)
 {
-	WARN(wdev->hw_bufs_used < count, "corrupted buffer counter");
-	wdev->hw_bufs_used -= count;
-	if (!wdev->hw_bufs_used)
-		wake_up(&wdev->bh_evt_wq);
+	WARN(wdev->hif.tx_buffers_used < count, "corrupted buffer counter");
+	wdev->hif.tx_buffers_used -= count;
+	if (!wdev->hif.tx_buffers_used)
+		wake_up(&wdev->hif.tx_buffers_empty);
 }
 
 /*
@@ -184,10 +184,10 @@ static int rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	skb_trim(skb_rx, wsm->len);
 
 	if (wsm->id != HI_EXCEPTION_IND_ID) {
-		if (wsm->seqnum != wdev->wsm_rx_seq)
+		if (wsm->seqnum != wdev->hif.rx_seqnum)
 			dev_warn(wdev->dev, "wrong message sequence: %d != %d\n",
-				 wsm->seqnum, wdev->wsm_rx_seq);
-		wdev->wsm_rx_seq = (wsm->seqnum + 1) % (WMSG_COUNTER_MAX + 1);
+				 wsm->seqnum, wdev->hif.rx_seqnum);
+		wdev->hif.rx_seqnum = (wsm->seqnum + 1) % (WMSG_COUNTER_MAX + 1);
 	}
 
 	/* is it a confirmation message? */
@@ -247,8 +247,8 @@ static int tx_helper(struct wfx_dev *wdev)
 	BUG_ON(tx_len < sizeof(*wsm));
 	BUG_ON(wsm->len != tx_len);
 
-	wsm->seqnum = wdev->wsm_tx_seq;
-	wdev->wsm_tx_seq = (wdev->wsm_tx_seq + 1) % (WMSG_COUNTER_MAX + 1);
+	wsm->seqnum = wdev->hif.tx_seqnum;
+	wdev->hif.tx_seqnum = (wdev->hif.tx_seqnum + 1) % (WMSG_COUNTER_MAX + 1);
 
 	tx_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, tx_len);
 	ret = wfx_data_write(wdev, data, tx_len);
@@ -269,7 +269,7 @@ static int tx_helper(struct wfx_dev *wdev)
  */
 static void bh_work(struct work_struct *work)
 {
-	struct wfx_dev *wdev = container_of(work, struct wfx_dev, bh_work);
+	struct wfx_dev *wdev = container_of(work, struct wfx_dev, hif.bh);
 	int term, irq_seen;
 	int tx_allowed;
 	long status;
@@ -279,21 +279,21 @@ static void bh_work(struct work_struct *work)
 	u32 ctrl_reg = 0;
 
 	for (;;) {
-		if (!pending_rx && (!pending_tx || wdev->hw_bufs_used >= wdev->wsm_caps.NumInpChBufs)) {
+		if (!pending_rx && (!pending_tx || wdev->hif.tx_buffers_used >= wdev->wsm_caps.NumInpChBufs)) {
 			/* enable IRQ on Rx data available to wake us up */
 			config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY);
 
-			if (!wdev->hw_bufs_used && /* !pending_rx && !pending_tx && */ wdev->pdata.gpio_wakeup &&
-			    atomic_read(&wdev->device_awake) && !atomic_read(&wdev->scan_in_progress)) {
+			if (!wdev->hif.tx_buffers_used && /* !pending_rx && !pending_tx && */ wdev->pdata.gpio_wakeup &&
+			    atomic_read(&wdev->hif.device_awake) && !atomic_read(&wdev->scan_in_progress)) {
 				/* no data to process and allowed to go to sleep */
 				status = 10 * HZ; /* wakeup at least every 10s */
 				pr_debug("[BH] Device wakedown. No data.\n");
 				device_release(wdev);
-			} else if (wdev->hw_bufs_used) {
+			} else if (wdev->hif.tx_buffers_used) {
 				/* we are waiting for confirmation msg */
 				status = 1 * HZ; /*only sleep for 1s*/
 				pr_debug("[BH] no wakedown : hw_bufs_used=%d  rx=%d  tx=%d\n",
-					wdev->hw_bufs_used, pending_rx, pending_tx);
+					wdev->hif.tx_buffers_used, pending_rx, pending_tx);
 			} else {
 				status = MAX_SCHEDULE_TIMEOUT;
 			}
@@ -315,7 +315,7 @@ static void bh_work(struct work_struct *work)
 			/* because of the ctrl_reg read in SDIO IRQ we want to disable the IRQ when possible
 			 * if device is already awake then we can update the IRQ enable now
 			 * else we do it when we wake-up the device*/
-			if (wdev->pdata.sdio && atomic_read(&wdev->device_awake))
+			if (wdev->pdata.sdio && atomic_read(&wdev->hif.device_awake))
 				config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_WRDY);
 
 			pr_debug("[BH] - rx: %d, tx: %d, term: %d, bh_err: %d, status: %ld , conf_mutex: %d\n",
@@ -334,10 +334,10 @@ static void bh_work(struct work_struct *work)
 				int i;
 
 				/* Check to see if we have any outstanding frames */
-				if (wdev->hw_bufs_used && !pending_rx) {
+				if (wdev->hif.tx_buffers_used && !pending_rx) {
 					pending_rx = wfx_check_pending_rx(wdev, &ctrl_reg);
 					dev_warn(wdev->dev, "Missed interrupt? (%d frames outstanding) pending_rx=%d\n",
-						   wdev->hw_bufs_used, pending_rx);
+						   wdev->hif.tx_buffers_used, pending_rx);
 
 					if (pending_rx < 0)
 						break;
@@ -355,7 +355,7 @@ static void bh_work(struct work_struct *work)
 					/* And terminate BH thread if the frame is "stuck" */
 					if (pending && timeout < 0) {
 						dev_warn(wdev->dev, "Timeout waiting for TX confirm (%d/%d pending, %ld vs %lu).\n",
-							wdev->hw_bufs_used, pending, timestamp, jiffies);
+							wdev->hif.tx_buffers_used, pending, timestamp, jiffies);
 					}
 				}
 			}
@@ -377,9 +377,9 @@ rx:
 
 tx:
 		pending_tx += atomic_xchg(&wdev->bh_tx, 0);
-		BUG_ON(wdev->hw_bufs_used > wdev->wsm_caps.NumInpChBufs);
+		BUG_ON(wdev->hif.tx_buffers_used > wdev->wsm_caps.NumInpChBufs);
 		/* do not send more messages than buffers available in the device */
-		tx_allowed = wdev->wsm_caps.NumInpChBufs - wdev->hw_bufs_used;
+		tx_allowed = wdev->wsm_caps.NumInpChBufs - wdev->hif.tx_buffers_used;
 		tx_allowed = min(tx_allowed, 4);
 
 		while (pending_tx && (tx_allowed > 0)) {
@@ -402,7 +402,7 @@ tx:
 		/* then Re-read ctrl reg to be sure that no Rx msg is pending */
 		/* this read is also used as Dummy Read for SDIO retry mechanism to ack last Rx or Tx access */
 		if (!pending_rx) {
-			int memo_device_awake = atomic_read(&wdev->device_awake);
+			int memo_device_awake = atomic_read(&wdev->hif.device_awake);
 
 			pending_rx = wfx_check_pending_rx(wdev, &ctrl_reg);
 			if (pending_rx < 0) {
@@ -496,18 +496,14 @@ int wfx_bh_register(struct wfx_dev *wdev)
 	if (!wdev->bh_workqueue)
 		return -ENOMEM;
 
-	INIT_WORK(&wdev->bh_work, bh_work);
+	INIT_WORK(&wdev->hif.bh, bh_work);
+	init_waitqueue_head(&wdev->hif.tx_buffers_empty);
+	atomic_set(&wdev->hif.device_awake, 1);
 
 	atomic_set(&wdev->bh_rx, 0);
 	atomic_set(&wdev->bh_tx, 0);
 	atomic_set(&wdev->bh_term, 0);
-	wdev->wsm_rx_seq = 0;
-	wdev->wsm_tx_seq = 0;
-	wdev->bh_error = 0;
-	wdev->hw_bufs_used = 0;
-	atomic_set(&wdev->device_awake, 1);
 	init_waitqueue_head(&wdev->bh_wq);
-	init_waitqueue_head(&wdev->bh_evt_wq);
 
 	return err;
 }

@@ -315,7 +315,7 @@ int wfx_probe(struct wfx_dev *wdev)
 	if (err)
 		goto err2;
 
-	WARN_ON(!queue_work(wdev->bh_workqueue, &wdev->bh_work));
+	WARN_ON(!queue_work(wdev->bh_workqueue, &wdev->hif.bh));
 
 	err = wait_for_completion_interruptible_timeout(&wdev->firmware_ready, 10 * HZ);
 	if (err <= 0) {

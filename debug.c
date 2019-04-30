@@ -291,9 +291,9 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 		   wdev->wsm_caps.NumInpChBufs,
 		   wdev->wsm_caps.SizeInpChBuf);
 	seq_printf(seq, "Used bufs:  %d\n",
-		   wdev->hw_bufs_used);
+		   wdev->hif.tx_buffers_used);
 	seq_printf(seq, "Device:     %s\n",
-		   atomic_read(&wdev->device_awake) ? "awake" : "asleep");
+		   atomic_read(&wdev->hif.device_awake) ? "awake" : "asleep");
 
 	seq_printf(seq, "Datapath:   %s\n",
 		   atomic_read(&wdev->tx_lock) ? "locked" : "unlocked");
