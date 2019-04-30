@@ -48,8 +48,6 @@ int wfx_register_bh(struct wfx_dev *wdev)
 
 	INIT_WORK(&wdev->bh_work, wfx_bh_work);
 
-	pr_debug("[BH] register.\n");
-
 	atomic_set(&wdev->bh_rx, 0);
 	atomic_set(&wdev->bh_tx, 0);
 	atomic_set(&wdev->bh_term, 0);
@@ -71,8 +69,6 @@ void wfx_unregister_bh(struct wfx_dev *wdev)
 
 	destroy_workqueue(wdev->bh_workqueue);
 	wdev->bh_workqueue = NULL;
-
-	pr_debug("[BH] unregistered.\n");
 }
 
 /* SDIO card uses level sensitive interrupts then if they are not clear fast enough
@@ -151,26 +147,14 @@ static int wfx_device_wakeup(struct wfx_dev *wdev)
 	u32 Control_reg;
 	int rdy_timeout = 0;
 
-	if (wdev->pdata.gpio_wakeup) {
+	if (wdev->pdata.gpio_wakeup)
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
-		dev_dbg(wdev->dev, "bh: wake up device\n");
-	}
 
-	/* wait the IRQ indicating the device is ready*/
-#if 0
-	wait_event_interruptible_timeout(wdev->bh_wq,
-					atomic_read(&wdev->device_awake),
-					HZ / 50);
-	/* typically HZ=100, then here wait 2 jiffies
-	 * indeed waiting 1 jiffie is dangerous because if n jiffies is
-	 * requested, effective wait is ]n+1, n-1[ */
-#else
 	do {
 		usleep_range(WFX_WAKEUP_WAIT_STEP_MIN, WFX_WAKEUP_WAIT_STEP_MAX);
 		rdy_timeout += WFX_WAKEUP_WAIT_STEP_MIN;
 	} while (!atomic_read(&wdev->device_awake) &&
 		 (rdy_timeout < WFX_WAKEUP_WAIT_MAX));
-#endif
 	if (!atomic_read(&wdev->device_awake)) { /* timeout */
 		/* no IRQ then maybe the device was not sleeping
 		 * try to read the control register */
@@ -222,7 +206,6 @@ static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev)
 
 	if (wdev->pdata.gpio_wakeup) {
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
-		dev_dbg(wdev->dev, "%s: wake up chip", __func__);
 		atomic_set(&wdev->device_awake, 1);
 	}
 	return ret;
@@ -257,15 +240,12 @@ static int wfx_check_pending_rx(struct wfx_dev *wdev, u32 *ctrl_reg)
 
 static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 {
-	size_t read_len = 0;
+	size_t read_len;
 	struct sk_buff *skb_rx = NULL;
 	struct wmsg *wsm;
 	int rx_resync = 1;
-
 	size_t alloc_len;
 	u8 *data;
-
-	pr_debug("[BH] %s\n", __func__);
 
 	if (!(*ctrl_reg & CTRL_NEXT_LEN_MASK))
 		return 0;
@@ -273,7 +253,6 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	// ctrl_reg units are 16bits words and piggyback is not accounted
 	read_len = ((*ctrl_reg & CTRL_NEXT_LEN_MASK) * 2) + 2;
 	alloc_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, read_len);
-
 	skb_rx = dev_alloc_skb(alloc_len);
 	if (!skb_rx)
 		goto err;
@@ -442,9 +421,8 @@ static int wfx_bh(void *arg)
 			 * then read ctrl reg to be sure a Rx msg is pending */
 			if (irq_seen) {
 				pending_rx = wfx_check_pending_rx(wdev, &ctrl_reg);
-				if (pending_rx < 0) {
-					break; /* error */
-				}
+				if (pending_rx < 0)
+					break;
 			}
 			/* because of the ctrl_reg read in SDIO IRQ we want to disable the IRQ when possible
 			 * if device is already awake then we can update the IRQ enable now
@@ -473,13 +451,17 @@ static int wfx_bh(void *arg)
 					dev_warn(wdev->dev, "Missed interrupt? (%d frames outstanding) pending_rx=%d\n",
 						   wdev->hw_bufs_used, pending_rx);
 
-					if (pending_rx < 0) {
-						break; /* error */
-					}
+					if (pending_rx < 0)
+						break;
 
 					/* Get a timestamp of "oldest" frame */
 					for (i = 0; i < 4; ++i)
 						pending += wfx_queue_get_xmit_timestamp(&wdev->tx_queue[i], &timestamp, wdev->pending_frame_id);
+
+					/* Check if frame transmission is timed out.
+					 * Add an extra second with respect to possible
+					 * interrupt loss.
+					 */
 					timeout = timestamp + WSM_CMD_LAST_CHANCE_TIMEOUT + 1 * HZ  - jiffies;
 
 					/* And terminate BH thread if the frame is "stuck" */
@@ -487,10 +469,9 @@ static int wfx_bh(void *arg)
 						dev_warn(wdev->dev, "Timeout waiting for TX confirm (%d/%d pending, %ld vs %lu).\n",
 							wdev->hw_bufs_used, pending, timestamp, jiffies);
 					}
-				} /* end of timeout event */
+				}
 			}
-		} /* end of the wait_event global processing */
-		dev_dbg(wdev->dev, "bh: wait event\n");
+		}
 
 		/*
 		 * process Rx then Tx because Rx processing can release some buffers for the Tx
