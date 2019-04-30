@@ -19,16 +19,8 @@
 #define WFX_WAKEUP_WAIT_STEP_MAX 300  /*in us */
 #define WFX_WAKEUP_WAIT_MAX 2000      /*in us */
 
-static int wfx_bh(void *arg);
+static void bh_work(struct work_struct *work);
 static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev);
-
-static void wfx_bh_work(struct work_struct *work)
-{
-	struct wfx_dev *wdev =
-		container_of(work, struct wfx_dev, bh_work);
-
-	wfx_bh(wdev);
-}
 
 static inline void wsm_alloc_tx_buffer(struct wfx_dev *wdev)
 {
@@ -46,7 +38,7 @@ int wfx_register_bh(struct wfx_dev *wdev)
 	if (!wdev->bh_workqueue)
 		return -ENOMEM;
 
-	INIT_WORK(&wdev->bh_work, wfx_bh_work);
+	INIT_WORK(&wdev->bh_work, bh_work);
 
 	atomic_set(&wdev->bh_rx, 0);
 	atomic_set(&wdev->bh_tx, 0);
@@ -377,8 +369,9 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 /*
  * main state machine of the Bus handler
  */
-static int wfx_bh(void *arg)
+static void bh_work(struct work_struct *work)
 {
+	struct wfx_dev *wdev = container_of(work, struct wfx_dev, bh_work);
 	int term, irq_seen;
 	int tx_allowed;
 	long status;
@@ -386,7 +379,6 @@ static int wfx_bh(void *arg)
 	int pending_tx = 0;
 	int pending_rx = 0;
 	u32 ctrl_reg = 0;
-	struct wfx_dev *wdev = arg;
 
 	for (;;) {
 		if (!pending_rx && (!pending_tx || wdev->hw_bufs_used >= wdev->wsm_caps.NumInpChBufs)) {
@@ -546,5 +538,4 @@ tx:
 		dev_dbg(wdev->dev, "bh: main exited on error\n");
 		wdev->bh_error = 1;
 	}
-	return 0;
 }
