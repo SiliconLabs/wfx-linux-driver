@@ -19,118 +19,6 @@
 #define WFX_WAKEUP_WAIT_STEP_MAX 300  /*in us */
 #define WFX_WAKEUP_WAIT_MAX 2000      /*in us */
 
-static void bh_work(struct work_struct *work);
-static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev);
-
-static inline void wsm_alloc_tx_buffer(struct wfx_dev *wdev)
-{
-	++wdev->hw_bufs_used;
-}
-
-int wfx_register_bh(struct wfx_dev *wdev)
-{
-	int err = 0;
-
-	/* Realtime workqueue */
-	wdev->bh_workqueue = alloc_workqueue("wfx_bh",
-					     WQ_MEM_RECLAIM | WQ_HIGHPRI | WQ_CPU_INTENSIVE, 1);
-
-	if (!wdev->bh_workqueue)
-		return -ENOMEM;
-
-	INIT_WORK(&wdev->bh_work, bh_work);
-
-	atomic_set(&wdev->bh_rx, 0);
-	atomic_set(&wdev->bh_tx, 0);
-	atomic_set(&wdev->bh_term, 0);
-	wdev->wsm_rx_seq = 0;
-	wdev->wsm_tx_seq = 0;
-	wdev->bh_error = 0;
-	wdev->hw_bufs_used = 0;
-	atomic_set(&wdev->device_awake, 1);
-	init_waitqueue_head(&wdev->bh_wq);
-	init_waitqueue_head(&wdev->bh_evt_wq);
-
-	return err;
-}
-
-void wfx_unregister_bh(struct wfx_dev *wdev)
-{
-	atomic_add(1, &wdev->bh_term);
-	wake_up(&wdev->bh_wq);
-
-	flush_workqueue(wdev->bh_workqueue);
-
-	destroy_workqueue(wdev->bh_workqueue);
-	wdev->bh_workqueue = NULL;
-}
-
-/* SDIO card uses level sensitive interrupts then if they are not clear fast enough
- * we can see the same IT multiple times.
- * In SPI we use an edge interrupt then we do not have the issue.
- *
- * clear the interrupt by reading control register.
- * we can do it even if WUP_pin=0 because when we have an interrupt
- * it means that INEO has data to transfer and then it is not sleeping
- *
- * when sleep is activated we have an interrupt for each wlan_ready (and not only for Rx data).
- * Thus in both SPI and SDIO we should read control_reg to differentiate both IT sources.
- *
- * But reading the ctrl_reg is SPI is not possible in an IT because spi_sync() schedule an event.
- *
- * Then in the IRQ handler, for SPI case, we just force the device to stay awake and we record it.
- * And we read the ctrl_reg as fast as possible in wfx_bh().
- * In SDIO case we must read ctrl_reg in the IRQ else we see many times the same IT
- */
-void wfx_irq_handler(struct wfx_dev *wdev)
-{
-	u32 ctrl_reg;
-
-	if (wdev->bh_error) {
-		pr_debug("[BH] error.\n");
-		return;
-	}
-	if (!atomic_read(&wdev->device_awake))
-		wfx_prevent_device_to_sleep(wdev);
-
-	if (wdev->pdata.sdio)
-		control_reg_read(wdev, &ctrl_reg);
-
-	atomic_set(&wdev->bh_rx, 1);
-	pr_debug("[BH] %s IRQ wake_up work queue.\n", __func__);
-	wake_up(&wdev->bh_wq);
-}
-
-void wfx_bh_wakeup(struct wfx_dev *wdev)
-{
-	pr_debug("[BH] %s wakeup.\n", __func__);
-	if (wdev->bh_error) {
-		dev_err(wdev->dev, "bh: wakeup failed\n");
-		return;
-	}
-
-	if (atomic_add_return(1, &wdev->bh_tx) == 1)
-		wake_up(&wdev->bh_wq);
-}
-
-/*
- * it returns -EINVAL in case of error
- * and 1 if we must try to Tx because we have just released buffers whereas all were used.
- */
-static int wsm_release_tx_buffer(struct wfx_dev *wdev, int count)
-{
-	int ret = wdev->hw_bufs_used >= wdev->wsm_caps.NumInpChBufs ? 1 : 0;
-
-	wdev->hw_bufs_used -= count;
-	if (wdev->hw_bufs_used < 0) {
-		dev_warn(wdev->dev, "wrong buffers use %d\n", wdev->hw_bufs_used);
-		ret = -EINVAL;
-	}
-	if (!wdev->hw_bufs_used)
-		wake_up(&wdev->bh_evt_wq);
-	return ret;
-}
-
 /*
  * wakeup the device : it must wait the device is ready before continuing
  * it returns 0 if the device is awake, else < 0
@@ -202,6 +90,29 @@ static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev)
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
 		atomic_set(&wdev->device_awake, 1);
 	}
+	return ret;
+}
+
+static inline void wsm_alloc_tx_buffer(struct wfx_dev *wdev)
+{
+	++wdev->hw_bufs_used;
+}
+
+/*
+ * it returns -EINVAL in case of error
+ * and 1 if we must try to Tx because we have just released buffers whereas all were used.
+ */
+static int wsm_release_tx_buffer(struct wfx_dev *wdev, int count)
+{
+	int ret = wdev->hw_bufs_used >= wdev->wsm_caps.NumInpChBufs ? 1 : 0;
+
+	wdev->hw_bufs_used -= count;
+	if (wdev->hw_bufs_used < 0) {
+		dev_warn(wdev->dev, "wrong buffers use %d\n", wdev->hw_bufs_used);
+		ret = -EINVAL;
+	}
+	if (!wdev->hw_bufs_used)
+		wake_up(&wdev->bh_evt_wq);
 	return ret;
 }
 
@@ -539,3 +450,90 @@ tx:
 		wdev->bh_error = 1;
 	}
 }
+
+/* SDIO card uses level sensitive interrupts then if they are not clear fast enough
+ * we can see the same IT multiple times.
+ * In SPI we use an edge interrupt then we do not have the issue.
+ *
+ * clear the interrupt by reading control register.
+ * we can do it even if WUP_pin=0 because when we have an interrupt
+ * it means that INEO has data to transfer and then it is not sleeping
+ *
+ * when sleep is activated we have an interrupt for each wlan_ready (and not only for Rx data).
+ * Thus in both SPI and SDIO we should read control_reg to differentiate both IT sources.
+ *
+ * But reading the ctrl_reg is SPI is not possible in an IT because spi_sync() schedule an event.
+ *
+ * Then in the IRQ handler, for SPI case, we just force the device to stay awake and we record it.
+ * And we read the ctrl_reg as fast as possible in wfx_bh().
+ * In SDIO case we must read ctrl_reg in the IRQ else we see many times the same IT
+ */
+void wfx_irq_handler(struct wfx_dev *wdev)
+{
+	u32 ctrl_reg;
+
+	if (wdev->bh_error) {
+		pr_debug("[BH] error.\n");
+		return;
+	}
+	if (!atomic_read(&wdev->device_awake))
+		wfx_prevent_device_to_sleep(wdev);
+
+	if (wdev->pdata.sdio)
+		control_reg_read(wdev, &ctrl_reg);
+
+	atomic_set(&wdev->bh_rx, 1);
+	pr_debug("[BH] %s IRQ wake_up work queue.\n", __func__);
+	wake_up(&wdev->bh_wq);
+}
+
+void wfx_bh_wakeup(struct wfx_dev *wdev)
+{
+	pr_debug("[BH] %s wakeup.\n", __func__);
+	if (wdev->bh_error) {
+		dev_err(wdev->dev, "bh: wakeup failed\n");
+		return;
+	}
+
+	if (atomic_add_return(1, &wdev->bh_tx) == 1)
+		wake_up(&wdev->bh_wq);
+}
+
+int wfx_register_bh(struct wfx_dev *wdev)
+{
+	int err = 0;
+
+	/* Realtime workqueue */
+	wdev->bh_workqueue = alloc_workqueue("wfx_bh",
+					     WQ_MEM_RECLAIM | WQ_HIGHPRI | WQ_CPU_INTENSIVE, 1);
+
+	if (!wdev->bh_workqueue)
+		return -ENOMEM;
+
+	INIT_WORK(&wdev->bh_work, bh_work);
+
+	atomic_set(&wdev->bh_rx, 0);
+	atomic_set(&wdev->bh_tx, 0);
+	atomic_set(&wdev->bh_term, 0);
+	wdev->wsm_rx_seq = 0;
+	wdev->wsm_tx_seq = 0;
+	wdev->bh_error = 0;
+	wdev->hw_bufs_used = 0;
+	atomic_set(&wdev->device_awake, 1);
+	init_waitqueue_head(&wdev->bh_wq);
+	init_waitqueue_head(&wdev->bh_evt_wq);
+
+	return err;
+}
+
+void wfx_unregister_bh(struct wfx_dev *wdev)
+{
+	atomic_add(1, &wdev->bh_term);
+	wake_up(&wdev->bh_wq);
+
+	flush_workqueue(wdev->bh_workqueue);
+
+	destroy_workqueue(wdev->bh_workqueue);
+	wdev->bh_workqueue = NULL;
+}
+
