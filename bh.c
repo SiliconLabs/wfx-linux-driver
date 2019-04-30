@@ -101,25 +101,15 @@ static int device_keep_awake(struct wfx_dev *wdev)
 
 static inline void wsm_alloc_tx_buffer(struct wfx_dev *wdev)
 {
-	++wdev->hw_bufs_used;
+	wdev->hw_bufs_used++;
 }
 
-/*
- * it returns -EINVAL in case of error
- * and 1 if we must try to Tx because we have just released buffers whereas all were used.
- */
-static int wsm_release_tx_buffer(struct wfx_dev *wdev, int count)
+static void wsm_release_tx_buffer(struct wfx_dev *wdev, int count)
 {
-	int ret = wdev->hw_bufs_used >= wdev->wsm_caps.NumInpChBufs ? 1 : 0;
-
+	WARN(wdev->hw_bufs_used < count, "corrupted buffer counter");
 	wdev->hw_bufs_used -= count;
-	if (wdev->hw_bufs_used < 0) {
-		dev_warn(wdev->dev, "wrong buffers use %d\n", wdev->hw_bufs_used);
-		ret = -EINVAL;
-	}
 	if (!wdev->hw_bufs_used)
 		wake_up(&wdev->bh_evt_wq);
-	return ret;
 }
 
 /*
@@ -206,8 +196,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 
 		if (wsm->id == WSM_HI_MULTI_TRANSMIT_CNF_ID)
 			release_count = ((WsmHiMultiTransmitCnfBody_t *) wsm->body)->NumTxConfs;
-		if (wsm_release_tx_buffer(wdev, release_count) < 0)
-			goto err;
+		wsm_release_tx_buffer(wdev, release_count);
 	}
 
 	/* wfx_wsm_rx takes care on SKB livetime */
