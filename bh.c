@@ -260,7 +260,6 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	size_t read_len = 0;
 	struct sk_buff *skb_rx = NULL;
 	struct wmsg *wsm;
-	size_t wsm_len;
 	int rx_resync = 1;
 
 	size_t alloc_len;
@@ -293,17 +292,18 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	*ctrl_reg = le16_to_cpup((u16 *) (data + alloc_len - 2));
 
 	wsm = (struct wmsg *) data;
-	wsm_len = le16_to_cpu(wsm->len);
-	if (round_up(wsm_len, 2) != read_len - 2) {
+	le16_to_cpus(wsm->len);
+
+	if (round_up(wsm->len, 2) != read_len - 2) {
 		dev_err(wdev->dev, "inconsistent message length: %d != %zu\n",
-			wsm_len, read_len - 2);
+			wsm->len, read_len - 2);
 		print_hex_dump(KERN_INFO, "wsm: ", DUMP_PREFIX_OFFSET, 16, 1,
 			       data, read_len, true);
 		goto err;
 	}
 	_trace_wsm_recv(wsm);
 
-	skb_trim(skb_rx, wsm_len);
+	skb_trim(skb_rx, wsm->len);
 
 	if (wsm->id != HI_EXCEPTION_IND_ID) {
 		if (wsm->seqnum != wdev->wsm_rx_seq &&  !rx_resync) {
