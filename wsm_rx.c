@@ -614,7 +614,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 		int queue_num;
 		struct ieee80211_hdr *hdr80211;
 
-		if (atomic_add_return(0, &wdev->tx_lock))
+		if (atomic_read(&wdev->tx_lock))
 			break;
 
 		wvif = NULL;
