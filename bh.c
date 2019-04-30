@@ -127,7 +127,7 @@ void wfx_bh_wakeup(struct wfx_dev *wdev)
  * it returns -EINVAL in case of error
  * and 1 if we must try to Tx because we have just released buffers whereas all were used.
  */
-int wsm_release_tx_buffer(struct wfx_dev *wdev, int count)
+static int wsm_release_tx_buffer(struct wfx_dev *wdev, int count)
 {
 	int ret = wdev->hw_bufs_used >= wdev->wsm_caps.NumInpChBufs ? 1 : 0;
 
@@ -317,7 +317,11 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 
 	/* is it a confirmation message? */
 	if ((wsm->id & WMSG_ID_IS_INDICATION) == 0) {
-		if (wsm_release_tx_buffer(wdev, 1) < 0)
+		int release_count = 1;
+
+		if (wsm->id == WSM_HI_MULTI_TRANSMIT_CNF_ID)
+			release_count = ((WsmHiMultiTransmitCnfBody_t *) wsm->body)->NumTxConfs;
+		if (wsm_release_tx_buffer(wdev, release_count) < 0)
 			goto err;
 	}
 

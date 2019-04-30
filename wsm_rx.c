@@ -61,26 +61,16 @@ static int wsm_multi_tx_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *bu
 	WsmHiMultiTransmitCnfBody_t *body = buf;
 	WsmHiTxCnfBody_t *buf_loc = (WsmHiTxCnfBody_t *) &body->TxConfPayload;
 	int count = body->NumTxConfs;
-	int ret = 0;
 	int i;
 
-	if (count <= 0)
-		return -EINVAL;
-
-	if (count > 1) {
-		ret = wsm_release_tx_buffer(wdev, count - 1);
-		if (ret < 0)
-			return ret;
-		if (ret > 0)
-			wfx_bh_wakeup(wdev);
-	}
+	WARN(count <= 0, "Corrupted message");
 
 	wfx_debug_txed_multi(wdev, count);
 	for (i = 0; i < count; ++i) {
 		wfx_tx_confirm_cb(wdev, buf_loc);
 		buf_loc++;
 	}
-	return ret;
+	return 0;
 }
 
 int wfx_unmap_link(struct wfx_vif *wvif, int sta_id)
