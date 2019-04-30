@@ -112,6 +112,7 @@ static inline int wsm_set_operational_mode(struct wfx_dev *wdev, enum WsmOpPower
 {
 	WsmHiMibGlOperationalPowerMode_t val = {
 		.PowerMode = mode,
+		.WupIndActivation = 1,
 	};
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_GL_OPERATIONAL_POWER_MODE,

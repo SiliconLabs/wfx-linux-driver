@@ -108,6 +108,16 @@ static int wsm_startup_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 	return 0;
 }
 
+static int wsm_wakeup_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+{
+	if (!wdev->pdata.gpio_wakeup
+	    || !gpiod_get_value(wdev->pdata.gpio_wakeup)) {
+		dev_warn(wdev->dev, "unexpected wake-up indication\n");
+		return -EIO;
+	}
+	return 0;
+}
+
 static int wsm_receive_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf, struct sk_buff **skb_p)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
@@ -286,6 +296,7 @@ static const struct {
 	{ WSM_HI_SUSPEND_RESUME_TX_IND_ID, wsm_suspend_resume_indication },
 	{ HI_ERROR_IND_ID,               wsm_error_indication },
 	{ HI_STARTUP_IND_ID,             wsm_startup_indication },
+	{ HI_WAKEUP_IND_ID,              wsm_wakeup_indication },
 	{ HI_GENERIC_IND_ID,             wsm_generic_indication },
 	{ HI_EXCEPTION_IND_ID,           wsm_exception_indication },
 	// FIXME: allocate skb_p from wsm_receive_indication and make it generic

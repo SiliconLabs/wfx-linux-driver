@@ -89,6 +89,7 @@ typedef enum HiGeneralConfirmationsIds_e {
 typedef enum HiGeneralIndicationsIds_e {
 	HI_EXCEPTION_IND_ID                             = 0xe0,
 	HI_STARTUP_IND_ID                               = 0xe1,
+	HI_WAKEUP_IND_ID                                = 0xe2,
 	HI_GENERIC_IND_ID                               = 0xe3,
 	HI_ERROR_IND_ID                                 = 0xe4
 } HiGeneralIndicationsIds;
