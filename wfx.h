@@ -153,8 +153,8 @@ struct wfx_dev {
 	int				bh_error;
 	wait_queue_head_t		bh_wq;
 	wait_queue_head_t		bh_evt_wq;
-	u8				wsm_rx_seq;
-	u8				wsm_tx_seq;
+	int				wsm_rx_seq;
+	int				wsm_tx_seq;
 	int				hw_bufs_used;
 
 	/* Keep wfx200 awake (WUP = 1) 1 second after each scan to avoid

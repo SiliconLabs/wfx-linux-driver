@@ -51,6 +51,8 @@ int wfx_register_bh(struct wfx_dev *wdev)
 	atomic_set(&wdev->bh_rx, 0);
 	atomic_set(&wdev->bh_tx, 0);
 	atomic_set(&wdev->bh_term, 0);
+	wdev->wsm_rx_seq = 0;
+	wdev->wsm_tx_seq = 0;
 	wdev->bh_error = 0;
 	wdev->hw_bufs_used = 0;
 	atomic_set(&wdev->device_awake, 1);
@@ -243,7 +245,6 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	size_t read_len;
 	struct sk_buff *skb_rx = NULL;
 	struct wmsg *wsm;
-	int rx_resync = 1;
 	size_t alloc_len;
 	u8 *data;
 
@@ -284,13 +285,10 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	skb_trim(skb_rx, wsm->len);
 
 	if (wsm->id != HI_EXCEPTION_IND_ID) {
-		if (wsm->seqnum != wdev->wsm_rx_seq &&  !rx_resync) {
+		if (wsm->seqnum != wdev->wsm_rx_seq)
 			dev_warn(wdev->dev, "wrong message sequence: %d != %d\n",
-					wsm->seqnum, wdev->wsm_rx_seq);
-			goto err;
-		}
+				 wsm->seqnum, wdev->wsm_rx_seq);
 		wdev->wsm_rx_seq = (wsm->seqnum + 1) % (WMSG_COUNTER_MAX + 1);
-		rx_resync = 0;
 	}
 
 	/* is it a confirmation message? */
