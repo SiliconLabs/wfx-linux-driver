@@ -139,7 +139,7 @@ static int wfx_check_pending_rx(struct wfx_dev *wdev, u32 *ctrl_reg)
 	return *ctrl_reg & CTRL_NEXT_LEN_MASK;
 }
 
-static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
+static int rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 {
 	size_t read_len;
 	struct sk_buff *skb_rx = NULL;
@@ -228,7 +228,7 @@ err:
  * Note that returning 1 means that a msg has been sent but we don't know if there is
  * pending data to send. Then you must try again calling this fct.
  */
-static int wfx_bh_tx_helper(struct wfx_dev *wdev)
+static int tx_helper(struct wfx_dev *wdev)
 {
 	size_t tx_len;
 	u8 *data;
@@ -367,8 +367,8 @@ static void bh_work(struct work_struct *work)
 rx:
 		done = 0;
 		while (pending_rx && (done < 32)) {
-			/* ctrl_reg is updated in wfx_bh_rx_helper() using the piggy backing */
-			ret = wfx_bh_rx_helper(wdev, (u32 *) &ctrl_reg);
+			/* ctrl_reg is updated in rx_helper() using the piggy backing */
+			ret = rx_helper(wdev, (u32 *) &ctrl_reg);
 			if (ret < 0) // Ignore piggyback on error
 				ctrl_reg = 0;
 			pending_rx = ctrl_reg & CTRL_NEXT_LEN_MASK;
@@ -383,7 +383,7 @@ tx:
 		tx_allowed = min(tx_allowed, 4);
 
 		while (pending_tx && (tx_allowed > 0)) {
-			done = wfx_bh_tx_helper(wdev);
+			done = tx_helper(wdev);
 			if (done < 0)
 				break; /* error */
 			tx_allowed--;
@@ -455,7 +455,7 @@ tx:
  * And we read the ctrl_reg as fast as possible in wfx_bh().
  * In SDIO case we must read ctrl_reg in the IRQ else we see many times the same IT
  */
-void wfx_irq_handler(struct wfx_dev *wdev)
+void wfx_bh_request_rx(struct wfx_dev *wdev)
 {
 	u32 ctrl_reg;
 
@@ -473,7 +473,7 @@ void wfx_irq_handler(struct wfx_dev *wdev)
 	wake_up(&wdev->bh_wq);
 }
 
-void wfx_bh_wakeup(struct wfx_dev *wdev)
+void wfx_bh_request_tx(struct wfx_dev *wdev)
 {
 	pr_debug("[BH] %s wakeup.\n", __func__);
 	if (wdev->bh_error) {
@@ -485,7 +485,7 @@ void wfx_bh_wakeup(struct wfx_dev *wdev)
 		wake_up(&wdev->bh_wq);
 }
 
-int wfx_register_bh(struct wfx_dev *wdev)
+int wfx_bh_register(struct wfx_dev *wdev)
 {
 	int err = 0;
 
@@ -512,7 +512,7 @@ int wfx_register_bh(struct wfx_dev *wdev)
 	return err;
 }
 
-void wfx_unregister_bh(struct wfx_dev *wdev)
+void wfx_bh_unregister(struct wfx_dev *wdev)
 {
 	atomic_add(1, &wdev->bh_term);
 	wake_up(&wdev->bh_wq);

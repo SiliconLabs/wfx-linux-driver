@@ -10,9 +10,9 @@
 
 /* extern */ struct wfx_dev;
 
-int wfx_register_bh(struct wfx_dev *wdev);
-void wfx_unregister_bh(struct wfx_dev *wdev);
-void wfx_irq_handler(struct wfx_dev *wdev);
-void wfx_bh_wakeup(struct wfx_dev *wdev);
+int wfx_bh_register(struct wfx_dev *wdev);
+void wfx_bh_unregister(struct wfx_dev *wdev);
+void wfx_bh_request_rx(struct wfx_dev *wdev);
+void wfx_bh_request_tx(struct wfx_dev *wdev);
 
 #endif /* WFX_BH_H */

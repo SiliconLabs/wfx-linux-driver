@@ -242,6 +242,8 @@ int wfx_data_write(struct wfx_dev *wdev, const void *buf, size_t len)
 	ret = wdev->hwbus_ops->copy_to_io(wdev->hwbus_priv, WFX_REG_IN_OUT_QUEUE, buf, len);
 	_trace_io_write(WFX_REG_IN_OUT_QUEUE, buf, len);
 	wdev->hwbus_ops->unlock(wdev->hwbus_priv);
+	if (ret)
+		dev_err(wdev->dev, "%s: bus communication error: %d", __func__, ret);
 	return ret;
 }
 

@@ -317,7 +317,7 @@ void wsm_tx_unlock(struct wfx_dev *wdev)
 
 	if (tx_lock == 0) {
 		if (!wdev->bh_error)
-			wfx_bh_wakeup(wdev);
+			wfx_bh_request_tx(wdev);
 		pr_debug("[WSM] TX is unlocked.\n");
 	}
 }

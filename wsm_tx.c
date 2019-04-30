@@ -70,7 +70,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply,
 	wdev->wsm_cmd.async = async;
 	complete(&wdev->wsm_cmd.ready);
 
-	wfx_bh_wakeup(wdev);
+	wfx_bh_request_tx(wdev);
 
 	// NOTE: no timeout is catched async is enabled
 	if (async)

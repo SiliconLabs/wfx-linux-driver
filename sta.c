@@ -1611,7 +1611,7 @@ static void __wfx_sta_notify(struct wfx_vif *wvif,
 			wvif->pspoll_mask &= ~bit;
 			if (link_id && !wvif->sta_asleep_mask)
 				schedule_work(&wvif->multicast_stop_work);
-			wfx_bh_wakeup(wvif->wdev);
+			wfx_bh_request_tx(wvif->wdev);
 		}
 		break;
 	}
@@ -2140,7 +2140,7 @@ void wfx_mcast_timeout(struct timer_list *t)
 	wvif->tx_multicast = wvif->aid0_bit_set &&
 			     wvif->buffered_multicasts;
 	if (wvif->tx_multicast)
-		wfx_bh_wakeup(wvif->wdev);
+		wfx_bh_request_tx(wvif->wdev);
 	spin_unlock_bh(&wvif->ps_state_lock);
 }
 
@@ -2191,7 +2191,7 @@ void wfx_suspend_resume(struct wfx_vif *wvif,
 					      wvif->buffered_multicasts);
 			if (wvif->tx_multicast) {
 				cancel_tmo = true;
-				wfx_bh_wakeup(wvif->wdev);
+				wfx_bh_request_tx(wvif->wdev);
 			}
 		}
 		spin_unlock_bh(&wvif->ps_state_lock);
@@ -2203,7 +2203,7 @@ void wfx_suspend_resume(struct wfx_vif *wvif,
 			      arg->SuspendResumeFlags.Resume);
 		spin_unlock_bh(&wvif->ps_state_lock);
 		if (arg->SuspendResumeFlags.Resume)
-			wfx_bh_wakeup(wvif->wdev);
+			wfx_bh_request_tx(wvif->wdev);
 	}
 }
 

@@ -307,7 +307,7 @@ int wfx_probe(struct wfx_dev *wdev)
 	int err = -EINVAL;
 	const void *macaddr;
 
-	err = wfx_register_bh(wdev);
+	err = wfx_bh_register(wdev);
 	if (err)
 		goto err1;
 
@@ -390,7 +390,7 @@ int wfx_probe(struct wfx_dev *wdev)
 err3:
 	ieee80211_unregister_hw(wdev->hw);
 err2:
-	wfx_unregister_bh(wdev);
+	wfx_bh_unregister(wdev);
 err1:
 	return err;
 }
@@ -398,7 +398,7 @@ err1:
 void wfx_release(struct wfx_dev *wdev)
 {
 	ieee80211_unregister_hw(wdev->hw);
-	wfx_unregister_bh(wdev);
+	wfx_bh_unregister(wdev);
 }
 
 extern struct sdio_driver wfx_sdio_driver;

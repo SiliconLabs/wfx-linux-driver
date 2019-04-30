@@ -796,7 +796,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 
 	rcu_read_unlock();
 
-	wfx_bh_wakeup(wdev);
+	wfx_bh_request_tx(wdev);
 
 	return;
 
@@ -850,7 +850,7 @@ static int wfx_handle_pspoll(struct wfx_vif *wvif, struct sk_buff *skb)
 	for (i = 0; i < 4; ++i) {
 		if (wfx_queue_get_num_queued(&wvif->wdev->tx_queue[i],
 						pspoll_mask)) {
-			wfx_bh_wakeup(wvif->wdev);
+			wfx_bh_request_tx(wvif->wdev);
 			drop = 1;
 			break;
 		}
@@ -971,7 +971,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 		wfx_queue_remove(queue, arg->PacketId);
 	}
 	/* XXX TODO:  Only wake if there are pending transmits.. */
-	wfx_bh_wakeup(wdev);
+	wfx_bh_request_tx(wdev);
 }
 
 static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
