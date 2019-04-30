@@ -289,8 +289,8 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 		goto err;
 	}
 
-	/* update ctrl_reg with the u16 piggybacked value */
-	*ctrl_reg = (u32) le16_to_cpu(((__le16 *)data)[alloc_len / 2 - 1]);
+	// Get piggyback value
+	*ctrl_reg = le16_to_cpup((u16 *) (data + alloc_len - 2));
 
 	wsm = (struct wmsg *) data;
 	wsm_len = le16_to_cpu(wsm->len);
