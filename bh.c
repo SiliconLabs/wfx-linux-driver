@@ -267,12 +267,11 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 
 	pr_debug("[BH] %s\n", __func__);
 
-	read_len = (*ctrl_reg & CTRL_NEXT_LEN_MASK) * 2;
-	if (!read_len)
+	if (!(*ctrl_reg & CTRL_NEXT_LEN_MASK))
 		return 0;
 
-	read_len = read_len + 2;
-
+	// ctrl_reg units are 16bits words and piggyback is not accounted
+	read_len = ((*ctrl_reg & CTRL_NEXT_LEN_MASK) * 2) + 2;
 	alloc_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, read_len);
 
 	skb_rx = dev_alloc_skb(alloc_len);
