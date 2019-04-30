@@ -442,102 +442,6 @@ static int wfx_rx_stats_show(struct seq_file *seq, void *v)
 }
 DEFINE_SHOW_ATTRIBUTE(wfx_rx_stats);
 
-struct wfx_dbg_param {
-	u16 filter_val;
-	u8 data_size;
-	u8 data_offset;
-	u8 data_shift;
-	const char *fs_name;
-	u8 is_mib;
-	u32 data_val;
-	struct wfx_dev *wdev;
-	struct list_head active_list;
-};
-
-const struct wfx_dbg_param wfx_dbg_params[] = {
-	{ WSM_MIB_ID_BEACON_WAKEUP_PERIOD,  8,  8,  0, "wake_up_period_min", true },
-	{ WSM_MIB_ID_BEACON_WAKEUP_PERIOD,  1,  9,  0, "receive_all_dtim",   true },
-	{ WSM_MIB_ID_BEACON_WAKEUP_PERIOD, 16, 10,  0, "wake_up_period_max", true },
-	{ WSM_MIB_ID_BLOCK_ACK_POLICY,      8,  8,  0, "ba_tx_tid_policy",   true },
-	{ WSM_MIB_ID_BLOCK_ACK_POLICY,      8, 10,  0, "ba_rx_tid_policy",   true },
-	{ WSM_HI_TX_REQ_ID,                 1, 20,  5, "sgi" },
-	{ WSM_HI_TX_REQ_ID,                 1, 20,  4, "ldpc" },
-};
-
-static int wfx_dbg_param_set(void *data, u64 val)
-{
-	struct wfx_dbg_param *param = data;
-	struct wfx_dev *wdev = param->wdev;
-	int max_value = ((1 << param->data_size) - 1) << param->data_shift;
-
-	if ((int) val == -1) {
-		if (!list_empty(&param->active_list))
-			list_del_init(&param->active_list);
-	} else {
-		if (val > max_value)
-			return -ERANGE;
-		param->data_val = (u32) val;
-		if (list_empty(&param->active_list))
-			list_add(&param->active_list, &wdev->debug->dbg_params_active);
-	}
-	return 0;
-}
-
-static int wfx_dbg_param_get(void *data, u64 *val)
-{
-	struct wfx_dbg_param *param = data;
-
-	if (list_empty(&param->active_list))
-		*val = (u64) -1;
-	else
-		*val = param->data_val;
-	return 0;
-}
-#if (KERNEL_VERSION(4, 6, 0) > LINUX_VERSION_CODE)
-DEFINE_SIMPLE_ATTRIBUTE(wfx_dbg_param_fops, wfx_dbg_param_get, wfx_dbg_param_set, "%lld\n");
-#else
-DEFINE_DEBUGFS_ATTRIBUTE(wfx_dbg_param_fops, wfx_dbg_param_get, wfx_dbg_param_set, "%lld\n");
-#endif
-
-void wfx_dbg_filter_wsm(struct wfx_dev *wdev, void *buf)
-{
-	struct wfx_dbg_param *p;
-	u32 data_mask, old_val;
-	u32 *buf32 = buf;
-	u16 *buf16 = buf;
-	u8 *buf8 = buf;
-	int match;
-
-	// debugfs is created long time after device start to send data to chip
-	if (!wdev->debug)
-		return;
-	list_for_each_entry(p, &wdev->debug->dbg_params_active, active_list) {
-		match = 0;
-		if (p->is_mib) {
-			if ((buf16[1] & 0xFF) == WSM_HI_WRITE_MIB_REQ_ID && buf16[2] == p->filter_val)
-				match = 1;
-		} else {
-			if ((buf16[1] & 0xFF) == p->filter_val)
-				match = 1;
-		}
-		if (match) {
-			if (p->data_size == 32) {
-				old_val = buf32[p->data_offset / 4];
-				buf32[p->data_offset / 4] = cpu_to_le32(p->data_val);
-			} else if (p->data_size == 16) {
-				old_val = buf16[p->data_offset / 2];
-				buf16[p->data_offset / 2] = cpu_to_le16(p->data_val);
-			} else {
-				data_mask = ((1 << p->data_size) - 1) << p->data_shift;
-				old_val = (buf8[p->data_offset] & data_mask) >> p->data_shift;
-				buf8[p->data_offset] &= ~data_mask;
-				buf8[p->data_offset] |= p->data_val << p->data_shift;
-			}
-			dev_dbg(wdev->dev, "force parameter %s: %d -> %d\n", p->fs_name, old_val, p->data_val);
-		}
-	}
-}
-
 static ssize_t wfx_send_pds_write(struct file *file, const char __user *user_buf,
 			     size_t count, loff_t *ppos)
 {
@@ -567,9 +471,7 @@ static const struct file_operations wfx_send_pds_fops = {
 
 int wfx_debug_init(struct wfx_dev *wdev)
 {
-	struct wfx_dbg_param *p;
 	struct dentry *d;
-	int i;
 
 	wdev->debug = devm_kzalloc(wdev->dev, sizeof(*wdev->debug), GFP_KERNEL);
 	if (!wdev->debug)
@@ -580,35 +482,6 @@ int wfx_debug_init(struct wfx_dev *wdev)
 	debugfs_create_file("counters", 0444, d, wdev, &wfx_counters_fops);
 	debugfs_create_file("rx_stats", 0444, d, wdev, &wfx_rx_stats_fops);
 	debugfs_create_file("send_pds", 0200, d, wdev, &wfx_send_pds_fops);
-
-	d = debugfs_create_dir("wsm_params", d);
-	INIT_LIST_HEAD(&wdev->debug->dbg_params_active);
-	wdev->debug->dbg_params = devm_kmemdup(wdev->dev, wfx_dbg_params, sizeof(wfx_dbg_params), GFP_KERNEL);
-	for (i = 0; i < ARRAY_SIZE(wfx_dbg_params); i++) {
-		p = &wdev->debug->dbg_params[i];
-		if (p->is_mib)
-			WARN(p->data_offset < 8, "Data overlap header");
-		else
-			WARN(p->data_offset < 4, "Data overlap header");
-		if (p->data_size == 32)
-			WARN(p->data_offset & 3, "Unaligned 32bit parameter");
-		else if (p->data_size == 16)
-			WARN(p->data_offset & 1, "Unaligned 16bit parameter");
-		else if (p->data_size <= 8)
-			;
-		else
-			WARN(1, "Invalid parameter size");
-		WARN(p->data_shift && p->data_shift + p->data_size > 8, "Shift + size cannot yet > 8");
-		WARN(!p->data_size, "Parameter size can't be 0");
-
-		INIT_LIST_HEAD(&p->active_list);
-		p->wdev = wdev;
-#if (KERNEL_VERSION(4, 6, 0) > LINUX_VERSION_CODE)
-		debugfs_create_file(p->fs_name, 0600, d, p, &wfx_dbg_param_fops);
-#else
-		debugfs_create_file_unsafe(p->fs_name, 0600, d, p, &wfx_dbg_param_fops);
-#endif
-	}
 
 	return 0;
 }

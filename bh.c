@@ -394,7 +394,6 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 		WARN_ON(ret < 0);
 		return ret;
 	}
-	wfx_dbg_filter_wsm(wdev, data);
 
 	wsm = (struct wmsg *)data;
 	BUG_ON(tx_len < sizeof(*wsm));
