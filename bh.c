@@ -233,7 +233,7 @@ static int wfx_prevent_device_to_sleep(struct wfx_dev *wdev)
  * It updates the ctrl_reg value and returns 1 when there's a message to read
  * it returns negative values in case of errors
  */
-static int wfx_check_pending_rx(struct wfx_dev *wdev, u32 *ctrl_reg_ptr)
+static int wfx_check_pending_rx(struct wfx_dev *wdev, u32 *ctrl_reg)
 {
 	int i;
 	/* before reading the ctrl_reg we must be sure the device is awake */
@@ -242,17 +242,17 @@ static int wfx_check_pending_rx(struct wfx_dev *wdev, u32 *ctrl_reg_ptr)
 			return -1; /* wake-up error */
 
 	for (i = 0; i < 4; i++) {
-		if (control_reg_read(wdev, ctrl_reg_ptr))
+		if (control_reg_read(wdev, ctrl_reg))
 			return -EIO;
-		if (*ctrl_reg_ptr & CTRL_WLAN_READY)
+		if (*ctrl_reg & CTRL_WLAN_READY)
 			break;
-		dev_err(wdev->dev, "Chip is not ready! (ctrl: %08x) %d/4\n", *ctrl_reg_ptr, i + 1);
+		dev_err(wdev->dev, "Chip is not ready! (ctrl: %08x) %d/4\n", *ctrl_reg, i + 1);
 		udelay(1000);
 	}
-	if (!(*ctrl_reg_ptr & CTRL_WLAN_READY))
-		*ctrl_reg_ptr = 0;
+	if (!(*ctrl_reg & CTRL_WLAN_READY))
+		*ctrl_reg = 0;
 
-	return *ctrl_reg_ptr & CTRL_NEXT_LEN_MASK;
+	return *ctrl_reg & CTRL_NEXT_LEN_MASK;
 }
 
 static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
