@@ -249,31 +249,25 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 	if (device_wakeup(wdev))
 		return -EIO;
 
-	wsm_alloc_tx_buffer(wdev);
-
 	ret = wsm_get_tx(wdev, &data, &tx_len, &tx_burst); /* returns 1 if it founds some data to Tx */
-	if (ret <= 0) {
-		wsm_release_tx_buffer(wdev, 1);
-		WARN_ON(ret < 0);
+	WARN_ON(ret < 0);
+	if (ret <= 0)
 		return ret;
-	}
 
-	wsm = (struct wmsg *)data;
+	wsm = (struct wmsg *) data;
 	BUG_ON(tx_len < sizeof(*wsm));
-	BUG_ON(le16_to_cpu(wsm->len) != tx_len);
-
-	tx_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, tx_len);
+	BUG_ON(wsm->len != tx_len);
 
 	wsm->seqnum = wdev->wsm_tx_seq;
-	if (wfx_data_write(wdev, data, tx_len)) {
-		dev_err(wdev->dev, "bh: tx blew up, len %zu\n", tx_len);
-		wsm_release_tx_buffer(wdev, 1);
-		return -1;
-	}
+	wdev->wsm_tx_seq = (wdev->wsm_tx_seq + 1) % (WMSG_COUNTER_MAX + 1);
+
+	tx_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, tx_len);
+	ret = wfx_data_write(wdev, data, tx_len);
+	if (ret)
+		return ret;
 
 	_trace_wsm_send(wsm);
-
-	wdev->wsm_tx_seq = (wdev->wsm_tx_seq + 1) % (WMSG_COUNTER_MAX + 1);
+	wsm_alloc_tx_buffer(wdev);
 
 	if (tx_burst > 1)
 		wfx_debug_tx_burst(wdev);
