@@ -104,26 +104,27 @@ static int device_keep_awake(struct wfx_dev *wdev)
  * It updates the ctrl_reg value and returns 1 when there's a message to read
  * it returns negative values in case of errors
  */
-static int wfx_check_pending_rx(struct wfx_dev *wdev, u32 *ctrl_reg)
+static int wfx_check_pending_rx(struct wfx_dev *wdev)
 {
 	int i;
+	int ctrl_reg;
 
 	/* before reading the ctrl_reg we must be sure the device is awake */
 	if (device_wakeup(wdev))
 		return -EIO;
 
 	for (i = 0; i < 4; i++) {
-		if (control_reg_read(wdev, ctrl_reg))
+		if (control_reg_read(wdev, &ctrl_reg))
 			return -EIO;
-		if (*ctrl_reg & CTRL_WLAN_READY)
+		if (ctrl_reg & CTRL_WLAN_READY)
 			break;
-		dev_err(wdev->dev, "Chip is not ready! (ctrl: %08x) %d/4\n", *ctrl_reg, i + 1);
+		dev_err(wdev->dev, "Chip is not ready! (ctrl: %08x) %d/4\n", ctrl_reg, i + 1);
 		udelay(1000);
 	}
-	if (!(*ctrl_reg & CTRL_WLAN_READY))
-		*ctrl_reg = 0;
+	if (!(ctrl_reg & CTRL_WLAN_READY))
+		ctrl_reg = 0;
 
-	return *ctrl_reg & CTRL_NEXT_LEN_MASK;
+	return ctrl_reg;
 }
 
 static int rx_helper(struct wfx_dev *wdev, size_t read_len)
@@ -296,9 +297,10 @@ static void bh_work(struct work_struct *work)
 			/* bh_rx=1 means an IRQ triggered but it can be for Rx data to read or for the device coming out of sleep
 			 * then read ctrl reg to be sure a Rx msg is pending */
 			if (irq_seen) {
-				pending_rx = wfx_check_pending_rx(wdev, &ctrl_reg);
-				if (pending_rx < 0)
+				ctrl_reg = wfx_check_pending_rx(wdev);
+				if (ctrl_reg < 0)
 					break;
+				pending_rx = ctrl_reg & CTRL_NEXT_LEN_MASK;
 			}
 			/* because of the ctrl_reg read in SDIO IRQ we want to disable the IRQ when possible
 			 * if device is already awake then we can update the IRQ enable now
@@ -323,12 +325,13 @@ static void bh_work(struct work_struct *work)
 
 				/* Check to see if we have any outstanding frames */
 				if (wdev->hif.tx_buffers_used && !pending_rx) {
-					pending_rx = wfx_check_pending_rx(wdev, &ctrl_reg);
+					ctrl_reg = wfx_check_pending_rx(wdev);
 					dev_warn(wdev->dev, "Missed interrupt? (%d frames outstanding) pending_rx=%d\n",
 						   wdev->hif.tx_buffers_used, pending_rx);
 
-					if (pending_rx < 0)
+					if (ctrl_reg < 0)
 						break;
+					pending_rx = ctrl_reg & CTRL_NEXT_LEN_MASK;
 
 					/* Get a timestamp of "oldest" frame */
 					for (i = 0; i < 4; ++i)
@@ -394,10 +397,10 @@ tx:
 		if (!pending_rx) {
 			int memo_device_awake = atomic_read(&wdev->hif.device_awake);
 
-			pending_rx = wfx_check_pending_rx(wdev, &ctrl_reg);
-			if (pending_rx < 0) {
-				break; /* error */
-			}
+			ctrl_reg = wfx_check_pending_rx(wdev);
+			if (ctrl_reg < 0)
+				break;
+			pending_rx = ctrl_reg & CTRL_NEXT_LEN_MASK;
 
 			if (pending_rx == 0 && memo_device_awake == 0) {
 				/* device has been waked-up by wfx_check_pending_rx() just above
@@ -405,10 +408,10 @@ tx:
 				 * to avoid going to sleep and wake-up immediately
 				 * we do here what is done (when an IRQ is seen) at the beginning of this fct*/
 				if (atomic_xchg(&wdev->bh_rx, 0)) {
-					pending_rx = wfx_check_pending_rx(wdev, &ctrl_reg);
-					if (pending_rx < 0) {
-						break; /* error */
-					}
+					ctrl_reg = wfx_check_pending_rx(wdev);
+					if (ctrl_reg < 0)
+						break;
+					pending_rx = ctrl_reg & CTRL_NEXT_LEN_MASK;
 				}
 			}
 		}
