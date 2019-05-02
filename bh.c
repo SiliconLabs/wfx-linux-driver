@@ -325,7 +325,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 			       data, read_len, true);
 		goto err;
 	}
-	_trace_wsm_recv((u16 *) data);
+	_trace_wsm_recv(wsm);
 
 	skb_trim(skb_rx, wsm_len);
 
@@ -408,7 +408,7 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 		return -1;
 	}
 
-	_trace_wsm_send((u16 *) data);
+	_trace_wsm_send(wsm);
 
 	wdev->wsm_tx_seq = (wdev->wsm_tx_seq + 1) % (WMSG_COUNTER_MAX + 1);
 

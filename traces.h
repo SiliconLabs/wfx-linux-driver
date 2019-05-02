@@ -161,8 +161,8 @@ wsm_mib_list_enum
 #define wsm_mib_list wsm_mib_list_enum { -1, NULL }
 
 DECLARE_EVENT_CLASS(wsm_data,
-	TP_PROTO(u16 *wsm_buf, bool is_recv),
-	TP_ARGS(wsm_buf, is_recv),
+	TP_PROTO(struct wmsg *wsm, bool is_recv),
+	TP_ARGS(wsm, is_recv),
 	TP_STRUCT__entry(
 		__field(int, msg_id)
 		__field(const char *, msg_type)
@@ -175,24 +175,24 @@ DECLARE_EVENT_CLASS(wsm_data,
 	),
 	TP_fast_assign(
 		int header_len;
-		__entry->msg_len = le16_to_cpu(wsm_buf[0]);
-		__entry->msg_id = le16_to_cpu(wsm_buf[1]) & 0xFF;
-		__entry->if_id = (le16_to_cpu(wsm_buf[1]) >> 9) & 3;
+		__entry->msg_len = wsm->len;
+		__entry->msg_id = wsm->id;
+		__entry->if_id = wsm->interface;
 		if (is_recv)
 			__entry->msg_type = __entry->msg_id & 0x80 ? "IND" : "CNF";
 		else
 			__entry->msg_type = "REQ";
 		if (!is_recv &&
 		    (__entry->msg_id == WSM_HI_READ_MIB_REQ_ID || __entry->msg_id == WSM_HI_WRITE_MIB_REQ_ID)) {
-			__entry->mib = le16_to_cpu(wsm_buf[2]);
-			header_len = 8;
+			__entry->mib = le16_to_cpup((u16 *) wsm->body);
+			header_len = 4;
 		} else {
 			__entry->mib = -1;
-			header_len = 4;
+			header_len = 0;
 		}
 		__entry->is_longer =  __entry->msg_len - header_len > 32 ? true : false;
 		__entry->buf_len = min(32, __entry->msg_len - header_len);
-		memcpy(__entry->buf, ((char *) wsm_buf) + header_len, __entry->buf_len);
+		memcpy(__entry->buf, wsm->body + header_len, __entry->buf_len);
 	),
 	TP_printk("%d:%s_%s%s%s: %s%s (%d bytes)",
 		__entry->if_id,
@@ -206,13 +206,13 @@ DECLARE_EVENT_CLASS(wsm_data,
 	)
 );
 DEFINE_EVENT(wsm_data, wsm_send,
-	TP_PROTO(u16 *wsm_buf, bool is_recv),
-	TP_ARGS(wsm_buf, is_recv));
-#define _trace_wsm_send(wsm_buf) trace_wsm_send(wsm_buf, false)
+	TP_PROTO(struct wmsg *wsm, bool is_recv),
+	TP_ARGS(wsm, is_recv));
+#define _trace_wsm_send(wsm) trace_wsm_send(wsm, false)
 DEFINE_EVENT(wsm_data, wsm_recv,
-	TP_PROTO(u16 *wsm_buf, bool is_recv),
-	TP_ARGS(wsm_buf, is_recv));
-#define _trace_wsm_recv(wsm_buf) trace_wsm_recv(wsm_buf, true)
+	TP_PROTO(struct wmsg *wsm, bool is_recv),
+	TP_ARGS(wsm, is_recv));
+#define _trace_wsm_recv(wsm) trace_wsm_recv(wsm, true)
 
 #undef wfx_reg_name
 #define wfx_reg_name(sym, name) TRACE_DEFINE_ENUM(sym);
