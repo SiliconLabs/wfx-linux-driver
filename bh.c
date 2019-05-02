@@ -99,19 +99,6 @@ static int device_keep_awake(struct wfx_dev *wdev)
 	return 0;
 }
 
-static inline void wsm_alloc_tx_buffer(struct wfx_dev *wdev)
-{
-	wdev->hif.tx_buffers_used++;
-}
-
-static void wsm_release_tx_buffer(struct wfx_dev *wdev, int count)
-{
-	WARN(wdev->hif.tx_buffers_used < count, "corrupted buffer counter");
-	wdev->hif.tx_buffers_used -= count;
-	if (!wdev->hif.tx_buffers_used)
-		wake_up(&wdev->hif.tx_buffers_empty);
-}
-
 /*
  * read the control register to check if there are Rx messages to read
  * It updates the ctrl_reg value and returns 1 when there's a message to read
@@ -145,6 +132,7 @@ static int rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	struct sk_buff *skb_rx = NULL;
 	struct wmsg *wsm;
 	size_t alloc_len;
+	int release_count;
 	u8 *data;
 
 	if (!(*ctrl_reg & CTRL_NEXT_LEN_MASK))
@@ -192,11 +180,14 @@ static int rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 
 	/* is it a confirmation message? */
 	if ((wsm->id & WMSG_ID_IS_INDICATION) == 0) {
-		int release_count = 1;
-
 		if (wsm->id == WSM_HI_MULTI_TRANSMIT_CNF_ID)
-			release_count = ((WsmHiMultiTransmitCnfBody_t *) wsm->body)->NumTxConfs;
-		wsm_release_tx_buffer(wdev, release_count);
+			release_count = le32_to_cpu(((WsmHiMultiTransmitCnfBody_t *) wsm->body)->NumTxConfs);
+		else
+			release_count = 1;
+		WARN(wdev->hif.tx_buffers_used < release_count, "corrupted buffer counter");
+		wdev->hif.tx_buffers_used -= release_count;
+		if (!wdev->hif.tx_buffers_used)
+			wake_up(&wdev->hif.tx_buffers_empty);
 	}
 
 	/* wfx_wsm_rx takes care on SKB livetime */
@@ -256,7 +247,7 @@ static int tx_helper(struct wfx_dev *wdev)
 		return ret;
 
 	_trace_wsm_send(wsm);
-	wsm_alloc_tx_buffer(wdev);
+	wdev->hif.tx_buffers_used++;
 
 	if (tx_burst > 1)
 		wfx_debug_tx_burst(wdev);
