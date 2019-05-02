@@ -129,44 +129,42 @@ static int wfx_check_pending_rx(struct wfx_dev *wdev)
 
 static int rx_helper(struct wfx_dev *wdev, size_t read_len)
 {
-	struct sk_buff *skb_rx = NULL;
+	struct sk_buff *skb;
 	struct wmsg *wsm;
 	size_t alloc_len;
 	int release_count;
 	int piggyback = 0;
-	u8 *data;
 
 	WARN_ON(read_len < 4);
 
 	// piggyback is not accounted
 	read_len += 2;
 	alloc_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, read_len);
-	skb_rx = dev_alloc_skb(alloc_len);
-	if (!skb_rx)
+	skb = dev_alloc_skb(alloc_len);
+	if (!skb)
 		goto err;
 
-	skb_trim(skb_rx, 0);
-	skb_put(skb_rx, read_len);
-	data = skb_rx->data;
+	skb_trim(skb, 0);
+	skb_put(skb, read_len);
 
-	if (wfx_data_read(wdev, data, alloc_len)) {
+	if (wfx_data_read(wdev, skb->data, alloc_len)) {
 		dev_err(wdev->dev, "bh: rx blew up, len %zu\n", alloc_len);
 		goto err;
 	}
 
 	// Get piggyback value
-	piggyback = le16_to_cpup((u16 *) (data + alloc_len - 2));
+	piggyback = le16_to_cpup((u16 *) (skb->data + alloc_len - 2));
 
-	wsm = (struct wmsg *) data;
+	wsm = (struct wmsg *) skb->data;
 	le16_to_cpus(wsm->len);
 	if (round_up(wsm->len, 2) != read_len - 2) {
 		dev_err(wdev->dev, "inconsistent message length: %d != %zu\n",
 			wsm->len, read_len - 2);
 		print_hex_dump(KERN_INFO, "wsm: ", DUMP_PREFIX_OFFSET, 16, 1,
-			       data, read_len, true);
+			       wsm, read_len, true);
 		goto err;
 	}
-	skb_trim(skb_rx, wsm->len);
+	skb_trim(skb, wsm->len);
 	_trace_wsm_recv(wsm);
 
 	if (wsm->id != HI_EXCEPTION_IND_ID) {
@@ -188,23 +186,19 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len)
 	}
 
 	/* wfx_wsm_rx takes care on SKB livetime */
-	wsm_handle_rx(wdev, wsm, &skb_rx);
+	wsm_handle_rx(wdev, wsm, &skb);
 
-	if (skb_rx) {
-		dev_kfree_skb(skb_rx);
-		skb_rx = NULL;
-	}
+	if (skb)
+		dev_kfree_skb(skb);
 
 	_trace_piggyback(piggyback, false);
 	return piggyback;
 
 err:
-	if (skb_rx) {
-		dev_kfree_skb(skb_rx);
-		skb_rx = NULL;
-	}
+	if (skb)
+		dev_kfree_skb(skb);
 	_trace_piggyback(piggyback, true);
-	return piggyback;
+	return -EIO;
 }
 
 /*
