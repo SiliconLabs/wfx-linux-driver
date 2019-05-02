@@ -31,6 +31,7 @@ struct wfx_spi_priv {
 	struct spi_device	*func;
 	struct wfx_dev		*core;
 	struct gpio_desc *gpio_reset;
+	struct work_struct request_rx;
 	bool need_swab;
 };
 
@@ -214,8 +215,15 @@ static irqreturn_t wfx_spi_irq_handler(int irq, void *priv)
 		WARN(!bus->core, "race condition in driver init/deinit");
 		return IRQ_NONE;
 	}
-	wfx_bh_request_rx(bus->core);
+	schedule_work(&bus->request_rx);
 	return IRQ_HANDLED;
+}
+
+static void wfx_spi_request_rx(struct work_struct *work)
+{
+	struct wfx_spi_priv *bus = container_of(work, struct wfx_spi_priv, request_rx);
+
+	wfx_bh_request_rx(bus->core);
 }
 
 static size_t wfx_spi_align_size(void *priv, size_t size)
@@ -273,6 +281,7 @@ static int wfx_spi_probe(struct spi_device *func)
 	if (ret)
 		return ret;
 
+	INIT_WORK(&bus->request_rx, wfx_spi_request_rx);
 	bus->core = wfx_init_common(&func->dev, &wfx_spi_pdata,
 				    &wfx_spi_hwbus_ops, bus);
 	if (!bus->core)
@@ -295,6 +304,7 @@ static int wfx_spi_disconnect(struct spi_device *func)
 	// A few IRQ will be sent during device release. Hopefully, no IRQ
 	// should happen after wdev/wvif are released.
 	devm_free_irq(&func->dev, func->irq, bus);
+	flush_work(&bus->request_rx);
 	return 0;
 }
 
