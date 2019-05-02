@@ -159,7 +159,6 @@ static int rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 
 	wsm = (struct wmsg *) data;
 	le16_to_cpus(wsm->len);
-
 	if (round_up(wsm->len, 2) != read_len - 2) {
 		dev_err(wdev->dev, "inconsistent message length: %d != %zu\n",
 			wsm->len, read_len - 2);
@@ -167,9 +166,8 @@ static int rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 			       data, read_len, true);
 		goto err;
 	}
-	_trace_wsm_recv(wsm);
-
 	skb_trim(skb_rx, wsm->len);
+	_trace_wsm_recv(wsm);
 
 	if (wsm->id != HI_EXCEPTION_IND_ID) {
 		if (wsm->seqnum != wdev->hif.rx_seqnum)
@@ -178,8 +176,7 @@ static int rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 		wdev->hif.rx_seqnum = (wsm->seqnum + 1) % (WMSG_COUNTER_MAX + 1);
 	}
 
-	/* is it a confirmation message? */
-	if ((wsm->id & WMSG_ID_IS_INDICATION) == 0) {
+	if (!(wsm->id & WMSG_ID_IS_INDICATION)) {
 		if (wsm->id == WSM_HI_MULTI_TRANSMIT_CNF_ID)
 			release_count = le32_to_cpu(((WsmHiMultiTransmitCnfBody_t *) wsm->body)->NumTxConfs);
 		else
