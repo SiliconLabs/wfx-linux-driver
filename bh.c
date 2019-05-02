@@ -284,16 +284,6 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	skb_put(skb_rx, read_len);
 	data = skb_rx->data;
 
-#if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
-	/* Some SPI driver (and especially Raspberry one) have race conditions
-	 * during SPI transfers. It impact last byte of transfer.  Work around
-	 * bellow try to detect and solve them.
-	 * See https://github.com/raspberrypi/linux/issues/2200
-	 */
-	if (!wdev->pdata.sdio)
-		data[alloc_len - 1] = 0xFF;
-#endif
-
 	if (wfx_data_read(wdev, data, alloc_len)) {
 		dev_err(wdev->dev, "bh: rx blew up, len %zu\n", alloc_len);
 		goto err;
@@ -301,20 +291,6 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 
 	/* update ctrl_reg with the u16 piggybacked value */
 	*ctrl_reg = (u32) le16_to_cpu(((__le16 *)data)[alloc_len / 2 - 1]);
-
-#if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
-	if (!wdev->pdata.sdio) {
-		/* If last byes has not been overwritten, set ctrl_reg to 0 in
-		 * order to force a new read.
-		 * Depending of SPI byte-ordering configuration, impacted
-		 * offset can be alloc_len - 2 or alloc_len - 1
-		 */
-		if (data[alloc_len - 2] == 0xFF || data[alloc_len - 1] == 0xFF) {
-			dev_warn(wdev->dev, "SPI DMA error detected (and resolved)\n");
-			*ctrl_reg = 0;
-		}
-	}
-#endif
 
 	wsm = (struct wmsg *) data;
 	wsm_len = le16_to_cpu(wsm->len);

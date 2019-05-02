@@ -94,8 +94,6 @@ static int wfx_spi_copy_from_io(void *priv, unsigned int addr,
 {
 	struct wfx_spi_priv *bus = priv;
 	u16 regaddr = (addr << 12) | (count / 2) | SET_READ;
-	u16 *dst16 = dst;
-	int ret, i;
 	struct spi_message      m;
 	struct spi_transfer     t_addr = {
 		.tx_buf         = &regaddr,
@@ -105,8 +103,24 @@ static int wfx_spi_copy_from_io(void *priv, unsigned int addr,
 		.rx_buf         = dst,
 		.len            = count,
 	};
+	u16 *dst16 = dst;
+#if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
+	u8 *dst8 = dst;
+#endif
+	int ret, i;
 
 	WARN(count % 2, "buffer size must be a multiple of 2");
+
+#if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
+	/* Some SPI driver (and especially Raspberry one) have race conditions
+	 * during SPI transfers. It impact last byte of transfer. Work around
+	 * bellow try to detect and solve them.
+	 * See https://github.com/raspberrypi/linux/issues/2200
+	 */
+	if (addr == WFX_REG_IN_OUT_QUEUE)
+		dst8[count - 1] = 0xFF;
+#endif
+
 	cpu_to_le16s(&regaddr);
 	if (bus->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
 		swab16s(&regaddr);
@@ -125,6 +139,15 @@ static int wfx_spi_copy_from_io(void *priv, unsigned int addr,
 		spi_message_add_tail(&t_addr, &m);
 		spi_message_add_tail(&t_msg, &m);
 		ret = spi_sync(bus->func, &m);
+	}
+#endif
+
+#if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
+	/* If last byte has not been overwritten, read ctrl_reg manually
+	 */
+	if (addr == WFX_REG_IN_OUT_QUEUE && !ret && dst8[count - 1] == 0xFF) {
+		dev_warn(bus->core->dev, "SPI DMA error detected (and resolved)\n");
+		ret = wfx_spi_read_ctrl_reg(bus, (u16 *) (dst8 + count - 2));
 	}
 #endif
 
