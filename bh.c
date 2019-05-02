@@ -264,7 +264,7 @@ static void bh_work(struct work_struct *work)
 	int done;
 	size_t read_len;
 	int pending_tx = 0;
-	int pending_rx = 0;
+	bool pending_rx = false;
 	u32 ctrl_reg = 0;
 
 	for (;;) {
@@ -402,7 +402,7 @@ tx:
 				break;
 			pending_rx = ctrl_reg & CTRL_NEXT_LEN_MASK;
 
-			if (pending_rx == 0 && memo_device_awake == 0) {
+			if (!pending_rx && memo_device_awake == 0) {
 				/* device has been waked-up by wfx_check_pending_rx() just above
 				 * that has generated an IRQ and thus set wdev->bh_rx to 1.
 				 * to avoid going to sleep and wake-up immediately
