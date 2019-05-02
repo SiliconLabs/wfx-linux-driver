@@ -18,6 +18,8 @@
 #include "main.h"
 #include "bh.h"
 
+#define DETECT_INVALID_CTRL_ACCESS
+
 static int gpio_reset = -2;
 module_param(gpio_reset, int, 0644);
 MODULE_PARM_DESC(gpio_reset, "gpio number for reset. -1 for none.");
@@ -38,6 +40,45 @@ static const struct wfx_platform_data wfx_spi_pdata = {
 	.support_ldpc = true,
 	.sdio = false,
 };
+
+/*
+ * Read of control register need a particular attention because it should be
+ * done only after an IRQ raise. We can detect if this event happens by reading
+ * control register twice (it is safe to read twice since we can garantee that
+ * no data acess was done since IRQ raising). In add, this function optimize it
+ * by doing only one SPI request.
+ */
+static int wfx_spi_read_ctrl_reg(struct wfx_spi_priv *bus, u16 *dst)
+{
+	int ret, i;
+	u16 tx_buf[4] = { };
+	u16 rx_buf[4] = { };
+	struct spi_message m;
+	struct spi_transfer t = {
+		.rx_buf = rx_buf,
+		.tx_buf = tx_buf,
+		.len = sizeof(tx_buf),
+	};
+	u16 regaddr = (WFX_REG_CONTROL << 12) | (sizeof(u16) / 2) | SET_READ;
+
+	cpu_to_le16s(regaddr);
+	if (bus->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
+		swab16s(&regaddr);
+
+	tx_buf[0] = tx_buf[2] = regaddr;
+	spi_message_init(&m);
+	spi_message_add_tail(&t, &m);
+	for (i = 0, rx_buf[1] = rx_buf[3] + 1; rx_buf[1] != rx_buf[3] && i < 3; i++)
+		ret = spi_sync(bus->func, &m);
+
+	if (rx_buf[1] != rx_buf[3])
+		ret = -ETIMEDOUT;
+	else if (i > 1)
+		dev_info(bus->core->dev, "success read after %d failures\n", i - 1);
+
+	*dst = rx_buf[1];
+	return ret;
+}
 
 /*
  * WFx chip read data 16bits at time and place them directly into (little
@@ -67,19 +108,29 @@ static int wfx_spi_copy_from_io(void *priv, unsigned int addr,
 
 	WARN(count % 2, "buffer size must be a multiple of 2");
 	cpu_to_le16s(&regaddr);
-
 	if (bus->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
 		swab16s(&regaddr);
 
+#ifndef DETECT_INVALID_CTRL_ACCESS
 	spi_message_init(&m);
 	spi_message_add_tail(&t_addr, &m);
 	spi_message_add_tail(&t_msg, &m);
 	ret = spi_sync(bus->func, &m);
+#else
+	if (addr == WFX_REG_CONTROL && count == sizeof(u32)) {
+		memset(dst, 0, count);
+		ret = wfx_spi_read_ctrl_reg(bus, dst);
+	} else {
+		spi_message_init(&m);
+		spi_message_add_tail(&t_addr, &m);
+		spi_message_add_tail(&t_msg, &m);
+		ret = spi_sync(bus->func, &m);
+	}
+#endif
 
 	if (bus->func->bits_per_word == 8 || IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
 		for (i = 0; i < count / 2; i++)
 			swab16s(&dst16[i]);
-
 	return ret;
 }
 
