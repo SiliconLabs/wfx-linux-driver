@@ -12,8 +12,6 @@
 #include "hwbus.h"
 #include "traces.h"
 
-#define ENABLE_BUS_RETRY
-
 /*
  * Internal helpers.
  *
@@ -38,6 +36,8 @@ static int read32(struct wfx_dev *wdev, int reg, u32 *val)
 	if (ret >= 0)
 		*val = le32_to_cpu(*tmp);
 	kfree(tmp);
+	if (ret)
+		dev_err(wdev->dev, "%s: bus communication error: %d", __func__, ret);
 	return ret;
 }
 
@@ -51,28 +51,17 @@ static int write32(struct wfx_dev *wdev, int reg, u32 val)
 	*tmp = cpu_to_le32(val);
 	ret = wdev->hwbus_ops->copy_to_io(wdev->hwbus_priv, reg, tmp, sizeof(u32));
 	kfree(tmp);
+	if (ret)
+		dev_err(wdev->dev, "%s: bus communication error: %d", __func__, ret);
 	return ret;
 }
 
 static int read32_locked(struct wfx_dev *wdev, int reg, u32 *val)
 {
-	int ret, i;
+	int ret;
 
 	wdev->hwbus_ops->lock(wdev->hwbus_priv);
-#ifndef ENABLE_BUS_RETRY
 	ret = read32(wdev, reg, val);
-#else
-	for (i = 0; i < 3; i++) {
-		ret = read32(wdev, reg, val);
-		if (!ret)
-			break;
-		mdelay(1);
-	}
-	if (i == 3)
-		ret = -ETIMEDOUT;
-	else if (i > 0)
-		dev_info(wdev->dev, "success read after %d failures\n", i);
-#endif
 	_trace_io_read32(reg, *val);
 	wdev->hwbus_ops->unlock(wdev->hwbus_priv);
 	return ret;
@@ -80,23 +69,10 @@ static int read32_locked(struct wfx_dev *wdev, int reg, u32 *val)
 
 static int write32_locked(struct wfx_dev *wdev, int reg, u32 val)
 {
-	int ret, i;
+	int ret;
 
 	wdev->hwbus_ops->lock(wdev->hwbus_priv);
-#ifndef ENABLE_BUS_RETRY
 	ret = write32(wdev, reg, val);
-#else
-	for (i = 0; i < 3; i++) {
-		ret = write32(wdev, reg, val);
-		if (!ret)
-			break;
-		mdelay(1);
-	}
-	if (i == 3)
-		ret = -ETIMEDOUT;
-	else if (i > 0)
-		dev_info(wdev->dev, "success write after %d failures\n", i);
-#endif
 	_trace_io_write32(reg, val);
 	wdev->hwbus_ops->unlock(wdev->hwbus_priv);
 	return ret;
@@ -243,53 +219,27 @@ static int indirect_write32_locked(struct wfx_dev *wdev, int reg, u32 addr, u32 
 
 int wfx_data_read(struct wfx_dev *wdev, void *buf, size_t len)
 {
-	int ret, i;
+	int ret;
 
 	WARN((long) buf & 3, "%s: unaligned buffer", __func__);
 	WARN(len > round_down(0xFFF, 2) * sizeof(u16), "%s: request exceed WFx capability", __func__);
 	wdev->hwbus_ops->lock(wdev->hwbus_priv);
-#ifndef ENABLE_BUS_RETRY
 	ret = wdev->hwbus_ops->copy_from_io(wdev->hwbus_priv, WFX_REG_IN_OUT_QUEUE, buf, len);
-#else
-	for (i = 0; i < 3; i++) {
-		ret = wdev->hwbus_ops->copy_from_io(wdev->hwbus_priv, WFX_REG_IN_OUT_QUEUE, buf, len);
-		if (!ret)
-			break;
-		mdelay(1);
-	}
-	if (i == 3) {
-		ret = -ETIMEDOUT;
-		memset(buf, 0xFF, len); // Never return undefined value
-	} else if (i > 0) {
-		dev_info(wdev->dev, "success read after %d failures\n", i);
-	}
-#endif
 	_trace_io_read(WFX_REG_IN_OUT_QUEUE, buf, len);
 	wdev->hwbus_ops->unlock(wdev->hwbus_priv);
+	if (ret)
+		dev_err(wdev->dev, "%s: bus communication error: %d", __func__, ret);
 	return ret;
 }
 
 int wfx_data_write(struct wfx_dev *wdev, const void *buf, size_t len)
 {
-	int ret, i;
+	int ret;
 
 	WARN((long) buf & 3, "%s: unaligned buffer", __func__);
 	WARN(len > wdev->wsm_caps.SizeInpChBuf, "%s: request exceed WFx capability", __func__);
 	wdev->hwbus_ops->lock(wdev->hwbus_priv);
-#ifndef ENABLE_BUS_RETRY
 	ret = wdev->hwbus_ops->copy_to_io(wdev->hwbus_priv, WFX_REG_IN_OUT_QUEUE, buf, len);
-#else
-	for (i = 0; i < 3; i++) {
-		ret = wdev->hwbus_ops->copy_to_io(wdev->hwbus_priv, WFX_REG_IN_OUT_QUEUE, buf, len);
-		if (!ret)
-			break;
-		mdelay(1);
-	}
-	if (i == 3)
-		ret = -ETIMEDOUT;
-	else if (i > 0)
-		dev_info(wdev->dev, "success write after %d failures\n", i);
-#endif
 	_trace_io_write(WFX_REG_IN_OUT_QUEUE, buf, len);
 	wdev->hwbus_ops->unlock(wdev->hwbus_priv);
 	return ret;
