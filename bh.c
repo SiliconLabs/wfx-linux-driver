@@ -126,20 +126,19 @@ static int wfx_check_pending_rx(struct wfx_dev *wdev, u32 *ctrl_reg)
 	return *ctrl_reg & CTRL_NEXT_LEN_MASK;
 }
 
-static int rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
+static int rx_helper(struct wfx_dev *wdev, size_t read_len)
 {
-	size_t read_len;
 	struct sk_buff *skb_rx = NULL;
 	struct wmsg *wsm;
 	size_t alloc_len;
 	int release_count;
+	int piggyback = 0;
 	u8 *data;
 
-	if (!(*ctrl_reg & CTRL_NEXT_LEN_MASK))
-		return 0;
+	WARN_ON(read_len < 4);
 
-	// ctrl_reg units are 16bits words and piggyback is not accounted
-	read_len = ((*ctrl_reg & CTRL_NEXT_LEN_MASK) * 2) + 2;
+	// piggyback is not accounted
+	read_len += 2;
 	alloc_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, read_len);
 	skb_rx = dev_alloc_skb(alloc_len);
 	if (!skb_rx)
@@ -155,7 +154,7 @@ static int rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	}
 
 	// Get piggyback value
-	*ctrl_reg = le16_to_cpup((u16 *) (data + alloc_len - 2));
+	piggyback = le16_to_cpup((u16 *) (data + alloc_len - 2));
 
 	wsm = (struct wmsg *) data;
 	le16_to_cpus(wsm->len);
@@ -195,16 +194,16 @@ static int rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 		skb_rx = NULL;
 	}
 
-	_trace_piggyback(*ctrl_reg, false);
-	return 0;
+	_trace_piggyback(piggyback, false);
+	return piggyback;
 
 err:
 	if (skb_rx) {
 		dev_kfree_skb(skb_rx);
 		skb_rx = NULL;
 	}
-	_trace_piggyback(*ctrl_reg, true);
-	return -1;
+	_trace_piggyback(piggyback, true);
+	return piggyback;
 }
 
 /*
@@ -261,7 +260,8 @@ static void bh_work(struct work_struct *work)
 	int term, irq_seen;
 	int tx_allowed;
 	long status;
-	int ret, done;
+	int done;
+	size_t read_len;
 	int pending_tx = 0;
 	int pending_rx = 0;
 	u32 ctrl_reg = 0;
@@ -355,9 +355,11 @@ static void bh_work(struct work_struct *work)
 rx:
 		done = 0;
 		while (pending_rx && (done < 32)) {
-			/* ctrl_reg is updated in rx_helper() using the piggy backing */
-			ret = rx_helper(wdev, (u32 *) &ctrl_reg);
-			if (ret < 0) // Ignore piggyback on error
+			// ctrl_reg units are 16bits words
+			read_len = (ctrl_reg & CTRL_NEXT_LEN_MASK) * 2;
+			if (read_len)
+				ctrl_reg = rx_helper(wdev, read_len);
+			else
 				ctrl_reg = 0;
 			pending_rx = ctrl_reg & CTRL_NEXT_LEN_MASK;
 			done++;
