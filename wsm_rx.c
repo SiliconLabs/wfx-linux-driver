@@ -546,7 +546,6 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	u32 tx_allowed_mask = 0;
 	u32 vif_tx_allowed_mask = 0;
 	const struct wfx_txpriv *txpriv = NULL;
-	int count = 0;
 	struct wfx_vif *wvif;
 	/* More is used only for broadcasts. */
 	bool more = false;
@@ -566,7 +565,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 		struct ieee80211_hdr *hdr80211;
 
 		if (atomic_read(&wdev->tx_lock))
-			break;
+			return 0;
 
 		wvif = NULL;
 		while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
@@ -601,7 +600,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 		}
 
 		if (ret)
-			break;
+			return 0;
 
 		queue_num = queue - wdev->tx_queue;
 
@@ -639,10 +638,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 		pr_debug("[WSM] Tx sta_id=%d >>> frame_ctrl=0x%.4x  tx_len=%zu, %p %c\n",
 			txpriv->link_id, hdr80211->frame_control, *tx_len, *data,
 			wsm->DataFlags.More ? 'M' : ' ');
-		++count;
-		break;
+		return 1;
 	}
-
-	return count;
 }
 
