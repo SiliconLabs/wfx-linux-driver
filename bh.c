@@ -439,7 +439,7 @@ static int wfx_bh(void *arg)
 			config_reg_write_bits(wdev, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY, CFG_IRQ_ENABLE_DATA | CFG_IRQ_ENABLE_WRDY);
 
 			if (!wdev->hw_bufs_used && /* !pending_rx && !pending_tx && */ wdev->pdata.gpio_wakeup &&
-			    atomic_read(&wdev->device_awake) && !atomic_read(&wdev->wait_for_scan)) {
+			    atomic_read(&wdev->device_awake) && !atomic_read(&wdev->scan_in_progress)) {
 				/* no data to process and allowed to go to sleep */
 				status = 10 * HZ; /* wakeup at least every 10s */
 				pr_debug("[BH] Device wakedown. No data.\n");

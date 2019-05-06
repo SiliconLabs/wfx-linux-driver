@@ -30,14 +30,14 @@ static int wfx_scan_start(struct wfx_vif *wvif, struct wsm_scan *scan)
 	tmo += scan->scan_req.NumOfChannels *
 	       ((20 * (scan->scan_req.MaxChannelTime)) + 10);
 	atomic_set(&wvif->scan.in_progress, 1);
-	atomic_set(&wvif->wdev->wait_for_scan, 1);
+	atomic_set(&wvif->wdev->scan_in_progress, 1);
 
 	schedule_delayed_work(&wvif->scan.timeout, msecs_to_jiffies(tmo));
 	ret = wsm_scan(wvif->wdev, scan, wvif->Id);
 	if (ret) {
 		wfx_scan_failed_cb(wvif);
 		atomic_set(&wvif->scan.in_progress, 0);
-		atomic_set(&wvif->wdev->wait_for_scan, 0);
+		atomic_set(&wvif->wdev->scan_in_progress, 0);
 		cancel_delayed_work_sync(&wvif->scan.timeout);
 		wfx_scan_restart_delayed(wvif);
 	}
@@ -273,7 +273,7 @@ static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
 
 static void wfx_scan_complete(struct wfx_vif *wvif)
 {
-	atomic_set(&wvif->wdev->wait_for_scan, 0);
+	atomic_set(&wvif->wdev->scan_in_progress, 0);
 
 	if (wvif->scan.direct_probe) {
 		dev_dbg(wvif->wdev->dev, "[SCAN] Direct probe complete.\n");

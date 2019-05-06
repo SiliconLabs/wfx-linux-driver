@@ -160,7 +160,7 @@ struct wfx_dev {
 	/* Keep wfx200 awake (WUP = 1) 1 second after each scan to avoid
 	 * FW issue with sleeping/waking up.
 	 */
-	atomic_t				wait_for_scan;
+	atomic_t			scan_in_progress;
 
 	/* WSM */
 	struct wsm_cmd			wsm_cmd;
