@@ -536,7 +536,7 @@ found:
  *   But it does not guaranty that we have the time to send them all in the duration of the TxOp.
  */
 int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
-	       size_t *tx_len, int *burst)
+	       size_t *tx_len)
 {
 	struct wmsg *hdr = NULL;
 	WsmHiTxReqBody_t *wsm = NULL;
@@ -552,12 +552,12 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	bool more = false;
 	bool vif_more = false;
 	int not_found;
+	int burst;
 
 	if (try_wait_for_completion(&wdev->wsm_cmd.ready)) {
 		WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
 		*data = (u8 *) wdev->wsm_cmd.buf_send;
 		*tx_len = le16_to_cpu(wdev->wsm_cmd.buf_send->len);
-		*burst = 1;
 		return 1;
 	}
 	for (;;) {
@@ -622,12 +622,12 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 
 		/* allow bursting if txop is set */
 		if (wvif->edca.params[queue_num].TxOpLimit)
-			*burst = (int)wfx_queue_get_num_queued(queue, tx_allowed_mask) + 1;
+			burst = (int)wfx_queue_get_num_queued(queue, tx_allowed_mask) + 1;
 		else
-			*burst = 1;
+			burst = 1;
 
 		/* store index of bursting queue */
-		if (*burst > 1)
+		if (burst > 1)
 			wdev->tx_burst_idx = queue_num;
 		else
 			wdev->tx_burst_idx = -1;

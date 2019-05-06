@@ -214,13 +214,13 @@ static int tx_helper(struct wfx_dev *wdev)
 {
 	size_t tx_len;
 	u8 *data;
-	int ret, tx_burst;
+	int ret;
 	struct wmsg *wsm;
 
 	if (device_wakeup(wdev))
 		return -EIO;
 
-	ret = wsm_get_tx(wdev, &data, &tx_len, &tx_burst); /* returns 1 if it founds some data to Tx */
+	ret = wsm_get_tx(wdev, &data, &tx_len); /* returns 1 if it founds some data to Tx */
 	WARN_ON(ret < 0);
 	if (ret <= 0)
 		return ret;
@@ -240,10 +240,7 @@ static int tx_helper(struct wfx_dev *wdev)
 	_trace_wsm_send(wsm);
 	wdev->hif.tx_buffers_used++;
 
-	if (tx_burst > 1)
-		wfx_debug_tx_burst(wdev);
-
-	return tx_burst;
+	return 1;
 }
 
 /*
