@@ -142,17 +142,7 @@ struct wfx_dev {
 	u8				long_frame_max_tx_count;
 	u8				short_frame_max_tx_count;
 
-	/* BH */
-	atomic_t				bh_rx; /* record that the IRQ triggered */
-	atomic_t			bh_tx;
-	atomic_t			bh_term;
 	int				chip_frozen;
-	atomic_t				device_awake; /* =WUP signal */
-
-	struct workqueue_struct         *bh_workqueue;
-
-	int				bh_error;
-	wait_queue_head_t		bh_wq;
 
 	/* Keep wfx200 awake (WUP = 1) 1 second after each scan to avoid
 	 * FW issue with sleeping/waking up.

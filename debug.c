@@ -278,22 +278,13 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 	seq_printf(seq, "RC in use:  %d\n", i);
 
 	seq_puts(seq, "\n");
-	seq_printf(seq, "Bus Handler (BH) status:  %s\n",
-		   atomic_read(&wdev->bh_term) ? "terminated" : "alive");
-	seq_printf(seq, "Pending IRQ: %d\n",
-		   atomic_read(&wdev->bh_rx));
-	seq_printf(seq, "Pending TX: %d\n",
-		   atomic_read(&wdev->bh_tx));
-	if (wdev->bh_error)
-		seq_printf(seq, "BH errcode: %d\n",
-			   wdev->bh_error);
 	seq_printf(seq, "TX bufs:    %d x %d bytes\n",
 		   wdev->wsm_caps.NumInpChBufs,
 		   wdev->wsm_caps.SizeInpChBuf);
 	seq_printf(seq, "Used bufs:  %d\n",
 		   wdev->hif.tx_buffers_used);
 	seq_printf(seq, "Device:     %s\n",
-		   atomic_read(&wdev->hif.device_awake) ? "awake" : "asleep");
+		   gpiod_get_value(wdev->pdata.gpio_wakeup) ? "awake" : "asleep");
 
 	seq_printf(seq, "Datapath:   %s\n",
 		   atomic_read(&wdev->tx_lock) ? "locked" : "unlocked");

@@ -730,9 +730,6 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	WsmHiDataFlags_t flags = { };
 	int ret;
 
-	if (wdev->bh_error)
-		goto drop;
-
 	// control.vif can be NULL for injected frames
 	if (IEEE80211_SKB_CB(skb)->control.vif)
 		wvif = (struct wfx_vif *) IEEE80211_SKB_CB(skb)->control.vif->drv_priv;

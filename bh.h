@@ -16,11 +16,12 @@ struct wfx_dev;
 
 struct wfx_hif {
 	struct work_struct bh;
-	atomic_t device_awake;
+	struct completion wakeup_done;
+	wait_queue_head_t tx_buffers_empty;
+	atomic_t ctrl_reg;
 	int rx_seqnum;
 	int tx_seqnum;
 	int tx_buffers_used;
-	wait_queue_head_t tx_buffers_empty;
 };
 
 int wfx_bh_register(struct wfx_dev *wdev);
