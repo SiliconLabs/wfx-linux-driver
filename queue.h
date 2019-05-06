@@ -105,6 +105,8 @@ bool wfx_queue_get_xmit_timestamp(struct wfx_queue *queue,
 bool wfx_queue_stats_is_empty(struct wfx_queue_stats *stats,
 				 u32 link_id_map);
 
+void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms);
+
 static inline u8 wfx_queue_get_queue_id(u32 packet_id)
 {
 	return (packet_id >> 16) & 0xFF;

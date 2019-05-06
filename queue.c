@@ -568,6 +568,26 @@ void wfx_queue_unlock(struct wfx_queue *queue)
 	spin_unlock_bh(&queue->lock);
 }
 
+void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
+{
+	struct wfx_queue *queue;
+	struct wfx_queue_item *item;
+	unsigned long tmp;
+	int i;
+
+	dev_info(wdev->dev, "Frames stuck in firmware since %dms or more:\n", limit_ms);
+	for (i = 0; i < 4; i++) {
+		queue = &wdev->tx_queue[i];
+		spin_lock_bh(&queue->lock);
+		list_for_each_entry(item, &queue->pending, head) {
+			tmp = item->xmit_timestamp + msecs_to_jiffies(limit_ms);
+			if (time_is_before_jiffies(tmp))
+				dev_info(wdev->dev, "   id %08x sent %ums ago", item->packet_id, jiffies_to_msecs(jiffies - item->xmit_timestamp));
+		}
+		spin_unlock_bh(&queue->lock);
+	}
+}
+
 bool wfx_queue_get_xmit_timestamp(struct wfx_queue *queue,
 				     unsigned long *timestamp,
 				     u32 pending_frame_id)
