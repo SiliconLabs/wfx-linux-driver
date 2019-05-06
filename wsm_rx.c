@@ -245,83 +245,6 @@ static int wsm_generic_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 	}
 }
 
-void wsm_tx_lock_flush(struct wfx_dev *wdev)
-{
-	mutex_lock(&wdev->wsm_cmd.lock);
-	if (atomic_add_return(1, &wdev->tx_lock) == 1)
-		if (wsm_tx_flush(wdev))
-			pr_debug("[WSM] TX is locked.\n");
-	mutex_unlock(&wdev->wsm_cmd.lock);
-}
-
-void wsm_tx_lock(struct wfx_dev *wdev)
-{
-	if (atomic_add_return(1, &wdev->tx_lock) == 1)
-		pr_debug("[WSM] TX is locked (async).\n");
-}
-
-bool wsm_tx_flush(struct wfx_dev *wdev)
-{
-	unsigned long timestamp = jiffies;
-	long timeout;
-
-	/* Flush must be called with TX lock held. */
-	BUG_ON(!atomic_read(&wdev->tx_lock));
-	/* First check if we really need to do something.
-	 * It is safe to use unprotected access, as hw_bufs_used
-	 * can only decrements.
-	 */
-	if (!wdev->hif.tx_buffers_used)
-		return true;
-
-	if (wdev->bh_error) {
-		/* In case of failure do not wait for magic. */
-		dev_err(wdev->dev, "fatal error occurred. TX is not flushed.\n");
-		return false;
-	} else {
-		bool pending = false;
-		int i;
-
-		/* Get a timestamp of "oldest" frame */
-		for (i = 0; i < 4; ++i)
-			pending |= wfx_queue_get_xmit_timestamp(
-				&wdev->tx_queue[i],
-					&timestamp, 0xffffffff);
-		/* If there's nothing pending, we're good */
-		if (!pending)
-			return true;
-
-		timeout = timestamp + WSM_CMD_LAST_CHANCE_TIMEOUT - jiffies;
-		if (timeout < 0 || wait_event_timeout(wdev->hif.tx_buffers_empty,
-						      !wdev->hif.tx_buffers_used,
-						      timeout) <= 0) {
-			/* Hmmm... Not good. Frame had stuck in firmware. */
-			wdev->bh_error = 1;
-			dev_err(wdev->dev,
-				  "[WSM] TX Frames (%d) stuck in firmware, killing BH\n",
-				  wdev->hif.tx_buffers_used);
-			wake_up(&wdev->bh_wq);
-			return false;
-		}
-		/* Ok, everything is flushed. */
-		return true;
-	}
-}
-
-void wsm_tx_unlock(struct wfx_dev *wdev)
-{
-	int tx_lock;
-
-	tx_lock = atomic_sub_return(1, &wdev->tx_lock);
-	BUG_ON(tx_lock < 0);
-
-	if (tx_lock == 0) {
-		if (!wdev->bh_error)
-			wfx_bh_request_tx(wdev);
-		pr_debug("[WSM] TX is unlocked.\n");
-	}
-}
-
 static int wsm_exception_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	size_t len = hdr->len - 4; // drop header
@@ -385,6 +308,83 @@ int wsm_handle_rx(struct wfx_dev *wdev, struct wmsg *wsm, struct sk_buff **skb_p
 		}
 	dev_err(wdev->dev, "Unsupported WSM ID %02x\n", wsm_id);
 	return -EIO;
+}
+
+void wsm_tx_lock(struct wfx_dev *wdev)
+{
+	if (atomic_add_return(1, &wdev->tx_lock) == 1)
+		pr_debug("[WSM] TX is locked (async).\n");
+}
+
+void wsm_tx_unlock(struct wfx_dev *wdev)
+{
+	int tx_lock;
+
+	tx_lock = atomic_sub_return(1, &wdev->tx_lock);
+	BUG_ON(tx_lock < 0);
+
+	if (tx_lock == 0) {
+		if (!wdev->bh_error)
+			wfx_bh_request_tx(wdev);
+		pr_debug("[WSM] TX is unlocked.\n");
+	}
+}
+
+bool wsm_tx_flush(struct wfx_dev *wdev)
+{
+	unsigned long timestamp = jiffies;
+	long timeout;
+
+	/* Flush must be called with TX lock held. */
+	BUG_ON(!atomic_read(&wdev->tx_lock));
+	/* First check if we really need to do something.
+	 * It is safe to use unprotected access, as hw_bufs_used
+	 * can only decrements.
+	 */
+	if (!wdev->hif.tx_buffers_used)
+		return true;
+
+	if (wdev->bh_error) {
+		/* In case of failure do not wait for magic. */
+		dev_err(wdev->dev, "fatal error occurred. TX is not flushed.\n");
+		return false;
+	} else {
+		bool pending = false;
+		int i;
+
+		/* Get a timestamp of "oldest" frame */
+		for (i = 0; i < 4; ++i)
+			pending |= wfx_queue_get_xmit_timestamp(
+				&wdev->tx_queue[i],
+					&timestamp, 0xffffffff);
+		/* If there's nothing pending, we're good */
+		if (!pending)
+			return true;
+
+		timeout = timestamp + WSM_CMD_LAST_CHANCE_TIMEOUT - jiffies;
+		if (timeout < 0 || wait_event_timeout(wdev->hif.tx_buffers_empty,
+						      !wdev->hif.tx_buffers_used,
+						      timeout) <= 0) {
+			/* Hmmm... Not good. Frame had stuck in firmware. */
+			wdev->bh_error = 1;
+			dev_err(wdev->dev,
+				  "[WSM] TX Frames (%d) stuck in firmware, killing BH\n",
+				  wdev->hif.tx_buffers_used);
+			wake_up(&wdev->bh_wq);
+			return false;
+		}
+		/* Ok, everything is flushed. */
+		return true;
+	}
+}
+
+void wsm_tx_lock_flush(struct wfx_dev *wdev)
+{
+	mutex_lock(&wdev->wsm_cmd.lock);
+	if (atomic_add_return(1, &wdev->tx_lock) == 1)
+		if (wsm_tx_flush(wdev))
+			pr_debug("[WSM] TX is locked.\n");
+	mutex_unlock(&wdev->wsm_cmd.lock);
 }
 
 static bool wsm_handle_tx_data(struct wfx_vif *wvif,
