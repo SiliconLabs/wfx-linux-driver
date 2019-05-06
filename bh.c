@@ -425,7 +425,7 @@ static int wfx_bh_tx_helper(struct wfx_dev *wdev)
 static int wfx_bh(void *arg)
 {
 	int term, irq_seen;
-	int tx_burst, tx_allowed;
+	int tx_allowed;
 	long status;
 	int ret, done;
 	int pending_tx = 0;
@@ -532,8 +532,8 @@ tx:
 		pending_tx += atomic_xchg(&wdev->bh_tx, 0);
 		BUG_ON(wdev->hw_bufs_used > wdev->wsm_caps.NumInpChBufs);
 		/* do not send more messages than buffers available in the device */
-		tx_burst = wdev->wsm_caps.NumInpChBufs - wdev->hw_bufs_used;
-		tx_allowed = min(tx_burst, 4);
+		tx_allowed = wdev->wsm_caps.NumInpChBufs - wdev->hw_bufs_used;
+		tx_allowed = min(tx_allowed, 4);
 
 		while (pending_tx && (tx_allowed > 0)) {
 			done = wfx_bh_tx_helper(wdev);
