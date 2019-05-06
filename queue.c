@@ -215,7 +215,7 @@ void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
 
 	do {
 		done = true;
-		wsm_lock_tx(wdev);
+		wsm_tx_lock_flush(wdev);
 		for (i = 0; i < 4 && done; ++i) {
 			queue = &wdev->tx_queue[i];
 			spin_lock_bh(&queue->lock);
@@ -225,7 +225,7 @@ void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
 			spin_unlock_bh(&queue->lock);
 		}
 		if (!done) {
-			wsm_unlock_tx(wdev);
+			wsm_tx_unlock(wdev);
 			msleep(1);
 		}
 	} while (!done);

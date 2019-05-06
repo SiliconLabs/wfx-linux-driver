@@ -255,22 +255,22 @@ static int wsm_generic_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 	}
 }
 
-void wsm_lock_tx(struct wfx_dev *wdev)
+void wsm_tx_lock_flush(struct wfx_dev *wdev)
 {
 	mutex_lock(&wdev->wsm_cmd.lock);
 	if (atomic_add_return(1, &wdev->tx_lock) == 1)
-		if (wsm_flush_tx(wdev))
+		if (wsm_tx_flush(wdev))
 			pr_debug("[WSM] TX is locked.\n");
 	mutex_unlock(&wdev->wsm_cmd.lock);
 }
 
-void wsm_lock_tx_async(struct wfx_dev *wdev)
+void wsm_tx_lock(struct wfx_dev *wdev)
 {
 	if (atomic_add_return(1, &wdev->tx_lock) == 1)
 		pr_debug("[WSM] TX is locked (async).\n");
 }
 
-bool wsm_flush_tx(struct wfx_dev *wdev)
+bool wsm_tx_flush(struct wfx_dev *wdev)
 {
 	unsigned long timestamp = jiffies;
 	long timeout;
@@ -318,7 +318,7 @@ bool wsm_flush_tx(struct wfx_dev *wdev)
 	}
 }
 
-void wsm_unlock_tx(struct wfx_dev *wdev)
+void wsm_tx_unlock(struct wfx_dev *wdev)
 {
 	int tx_lock;
 
@@ -472,10 +472,10 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif,
 	switch (action) {
 	case do_probe:
 		pr_debug("[WSM] Convert probe request to scan.\n");
-		wsm_lock_tx_async(wvif->wdev);
+		wsm_tx_lock(wvif->wdev);
 		wvif->wdev->pending_frame_id = wsm->PacketId;
 		if (!schedule_work(&wvif->scan.probe_work.work))
-			wsm_unlock_tx(wvif->wdev);
+			wsm_tx_unlock(wvif->wdev);
 		handled = true;
 		break;
 	case do_drop:
@@ -485,11 +485,11 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif,
 		break;
 	case do_wep:
 		pr_debug("[WSM] Issue set_default_wep_key.\n");
-		wsm_lock_tx_async(wvif->wdev);
+		wsm_tx_lock(wvif->wdev);
 		wvif->wep_default_key_id = tx_info->control.hw_key->keyidx;
 		wvif->wdev->pending_frame_id = wsm->PacketId;
 		if (!schedule_work(&wvif->wep_key_work))
-			wsm_unlock_tx(wvif->wdev);
+			wsm_tx_unlock(wvif->wdev);
 		handled = true;
 		break;
 	case do_tx:

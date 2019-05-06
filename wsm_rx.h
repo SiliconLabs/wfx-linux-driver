@@ -20,10 +20,10 @@ int wfx_unmap_link(struct wfx_vif *wvif, int link_id);
 int wsm_handle_rx(struct wfx_dev *wdev, struct wmsg *wsm, struct sk_buff **skb_p);
 int wsm_get_tx(struct wfx_dev *wdev, u8 **data, size_t *tx_len, int *burst);
 
-void wsm_lock_tx(struct wfx_dev *wdev);
-void wsm_lock_tx_async(struct wfx_dev *wdev);
-void wsm_unlock_tx(struct wfx_dev *wdev);
+void wsm_tx_lock_flush(struct wfx_dev *wdev);
+void wsm_tx_lock(struct wfx_dev *wdev);
+void wsm_tx_unlock(struct wfx_dev *wdev);
 
-bool wsm_flush_tx(struct wfx_dev *wdev);
+bool wsm_tx_flush(struct wfx_dev *wdev);
 
 #endif /* WFX_WSM_RX_H */

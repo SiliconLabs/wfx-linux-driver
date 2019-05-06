@@ -99,7 +99,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 		return ret;
 	}
 
-	wsm_lock_tx(wdev);
+	wsm_tx_lock_flush(wdev);
 
 	BUG_ON(wvif->scan.req);
 	wvif->scan.req = req;
@@ -179,7 +179,7 @@ void wfx_scan_work(struct work_struct *work)
 
 		wvif->scan.req = NULL;
 		wfx_scan_restart_delayed(wvif);
-		wsm_unlock_tx(wvif->wdev);
+		wsm_tx_unlock(wvif->wdev);
 		mutex_unlock(&wvif->wdev->conf_mutex);
 		__ieee80211_scan_completed_compat(wvif->wdev->hw, wvif->scan.status ? 1 : 0);
 		up(&wvif->scan.lock);
@@ -263,7 +263,7 @@ static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
 	if (wvif->delayed_unjoin) {
 		wvif->delayed_unjoin = false;
 		if (!schedule_work(&wvif->unjoin_work))
-			wsm_unlock_tx(wvif->wdev);
+			wsm_tx_unlock(wvif->wdev);
 	} else if (wvif->delayed_link_loss) {
 		dev_dbg(wvif->wdev->dev, "[CQM] Requeue BSS loss.\n");
 		wvif->delayed_link_loss = 0;
@@ -280,7 +280,7 @@ static void wfx_scan_complete(struct wfx_vif *wvif)
 		wfx_scan_restart_delayed(wvif);
 		wvif->scan.direct_probe = 0;
 		up(&wvif->scan.lock);
-		wsm_unlock_tx(wvif->wdev);
+		wsm_tx_unlock(wvif->wdev);
 	} else {
 		wfx_scan_work(&wvif->scan.work);
 	}
@@ -363,7 +363,7 @@ void wfx_probe_work(struct work_struct *work)
 			      &skb, &txpriv)) {
 		up(&wvif->scan.lock);
 		mutex_unlock(&wvif->wdev->conf_mutex);
-		wsm_unlock_tx(wvif->wdev);
+		wsm_tx_unlock(wvif->wdev);
 		return;
 	}
 	wsm = (WsmHiTxReqBody_t *) (skb->data + sizeof(struct wmsg));
@@ -408,7 +408,7 @@ void wfx_probe_work(struct work_struct *work)
 	skb_pull(skb, 4);
 	wvif->scan.direct_probe = 1;
 	if (!ret) {
-		wsm_flush_tx(wvif->wdev);
+		wsm_tx_flush(wvif->wdev);
 		ret = wfx_scan_start(wvif, &scan);
 	}
 	mutex_unlock(&wvif->wdev->conf_mutex);
@@ -421,6 +421,6 @@ void wfx_probe_work(struct work_struct *work)
 	if (ret) {
 		wvif->scan.direct_probe = 0;
 		up(&wvif->scan.lock);
-		wsm_unlock_tx(wvif->wdev);
+		wsm_tx_unlock(wvif->wdev);
 	}
 }

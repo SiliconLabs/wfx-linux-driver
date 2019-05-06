@@ -394,7 +394,7 @@ void tx_policy_upload_work(struct work_struct *work)
 	pr_debug("[TX] TX policy upload.\n");
 	tx_policy_upload(wvif);
 
-	wsm_unlock_tx(wvif->wdev);
+	wsm_tx_unlock(wvif->wdev);
 	wfx_tx_queues_unlock(wvif->wdev);
 }
 
@@ -682,11 +682,11 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 		 * Better to reimplement task scheduling with
 		 * a counter. TODO.
 		 */
-		wsm_lock_tx_async(wvif->wdev);
+		wsm_tx_lock(wvif->wdev);
 		wfx_tx_queues_lock(wvif->wdev);
 		if (!schedule_work(&wvif->tx_policy_upload_work)) {
 			wfx_tx_queues_unlock(wvif->wdev);
-			wsm_unlock_tx(wvif->wdev);
+			wsm_tx_unlock(wvif->wdev);
 		}
 	}
 	return 0;
@@ -1243,9 +1243,9 @@ void wfx_link_id_reset_work(struct work_struct *work)
 			wvif->link_id_db[temp_link_id - 1].status =
 				WFX_LINK_RESET;
 			spin_unlock_bh(&wvif->ps_state_lock);
-			wsm_lock_tx_async(wvif->wdev);
+			wsm_tx_lock(wvif->wdev);
 			if (!schedule_work(&wvif->link_id_work))
-				wsm_unlock_tx(wvif->wdev);
+				wsm_tx_unlock(wvif->wdev);
 		}
 	} else {
 		spin_lock_bh(&wvif->ps_state_lock);
@@ -1254,9 +1254,9 @@ void wfx_link_id_reset_work(struct work_struct *work)
 		wvif->link_id_db[wvif->action_link_id - 1].status =
 			WFX_LINK_RESET_REMAP;
 		spin_unlock_bh(&wvif->ps_state_lock);
-		wsm_lock_tx_async(wvif->wdev);
+		wsm_tx_lock(wvif->wdev);
 		if (!schedule_work(&wvif->link_id_work))
-			wsm_unlock_tx(wvif->wdev);
+			wsm_tx_unlock(wvif->wdev);
 		flush_work(&wvif->link_id_work);
 	}
 }
@@ -1309,10 +1309,10 @@ int wfx_alloc_link_id(struct wfx_vif *wvif, const u8 *mac)
 		ether_addr_copy(entry->mac, mac);
 		memset(&entry->buffered, 0, WFX_MAX_TID);
 		skb_queue_head_init(&entry->rx_queue);
-		wsm_lock_tx_async(wvif->wdev);
+		wsm_tx_lock(wvif->wdev);
 
 		if (!schedule_work(&wvif->link_id_work))
-			wsm_unlock_tx(wvif->wdev);
+			wsm_tx_unlock(wvif->wdev);
 	} else {
 		dev_info(wvif->wdev->dev,
 			   "[AP] Early: no more link IDs available.\n");
@@ -1326,9 +1326,9 @@ void wfx_link_id_work(struct work_struct *work)
 	struct wfx_vif *wvif =
 		container_of(work, struct wfx_vif, link_id_work);
 
-	wsm_flush_tx(wvif->wdev);
+	wsm_tx_flush(wvif->wdev);
 	wfx_link_id_gc_work(&wvif->link_id_gc_work.work);
-	wsm_unlock_tx(wvif->wdev);
+	wsm_tx_unlock(wvif->wdev);
 }
 
 void wfx_link_id_gc_work(struct work_struct *work)
@@ -1344,7 +1344,7 @@ void wfx_link_id_gc_work(struct work_struct *work)
 	if (wvif->state != WFX_STATE_AP)
 		return;
 
-	wsm_lock_tx(wvif->wdev);
+	wsm_tx_lock_flush(wvif->wdev);
 	spin_lock_bh(&wvif->ps_state_lock);
 	for (i = 0; i < WFX_MAX_STA_IN_AP_MODE; ++i) {
 		bool need_reset;
@@ -1410,5 +1410,5 @@ void wfx_link_id_gc_work(struct work_struct *work)
 	spin_unlock_bh(&wvif->ps_state_lock);
 	if (next_gc != -1)
 		schedule_delayed_work(&wvif->link_id_gc_work, next_gc);
-	wsm_unlock_tx(wvif->wdev);
+	wsm_tx_unlock(wvif->wdev);
 }
