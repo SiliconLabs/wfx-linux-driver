@@ -223,22 +223,16 @@ typedef enum HiGenericIndicationType_e {
 	HI_GENERIC_INDICATION_TYPE_RX_STATS          = 0x2
 } HiGenericIndicationType;
 
-#define API_NB_RX_BY_RATE_SIZE                          22
-#define API_PER_SIZE                                    22
-#define API_SNR_SIZE                                    22
-#define API_RSSI_SIZE                                   22
-#define API_CFO_SIZE                                    22
-
 typedef struct HiRxStats_s {
 	uint32_t   NbRxFrame;
 	uint32_t   NbCrcFrame;
 	uint32_t   PerTotal;
 	uint32_t   Throughput;
-	uint32_t   NbRxByRate[API_NB_RX_BY_RATE_SIZE];
-	uint16_t   Per[API_PER_SIZE];
-	int16_t    Snr[API_SNR_SIZE];
-	int16_t    Rssi[API_RSSI_SIZE];
-	int16_t    Cfo[API_CFO_SIZE];
+	uint32_t   NbRxByRate[API_RATE_NUM_ENTRIES];
+	uint16_t   Per[API_RATE_NUM_ENTRIES];
+	int16_t    Snr[API_RATE_NUM_ENTRIES];
+	int16_t    Rssi[API_RATE_NUM_ENTRIES];
+	int16_t    Cfo[API_RATE_NUM_ENTRIES];
 	uint32_t   Date;
 	uint32_t   PwrClkFreq;
 	uint8_t    IsExtPwrClk;
