@@ -319,7 +319,7 @@ static int wfx_bh_rx_helper(struct wfx_dev *wdev, u32 *ctrl_reg)
 	wsm = (struct wmsg *) data;
 	wsm_len = le16_to_cpu(wsm->len);
 	if (round_up(wsm_len, 2) != read_len - 2) {
-		dev_err(wdev->dev, "inconsistent message length: %zu != %zu\n",
+		dev_err(wdev->dev, "inconsistent message length: %d != %zu\n",
 			wsm_len, read_len - 2);
 		print_hex_dump(KERN_INFO, "wsm: ", DUMP_PREFIX_OFFSET, 16, 1,
 			       data, read_len, true);
