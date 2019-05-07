@@ -353,10 +353,6 @@ typedef struct WsmHiRxIndBody_s {
 	uint32_t   Frame[0];
 } __packed WsmHiRxIndBody_t;
 
-typedef enum WsmAckplcy_e {
-	WSM_ACKPLCY_NORMAL                         = 0x0,
-	WSM_ACKPLCY_TXNOACK                        = 0x1,
-} WsmAckplcy;
 
 typedef struct WsmHiEdcaQueueParamsReqBody_s {
 	uint8_t    QueueId;
