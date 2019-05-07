@@ -195,6 +195,7 @@ typedef struct WsmHiStartScanReqBody_s {
 	uint32_t   MinChannelTime;
 	uint32_t   MaxChannelTime;
 	int32_t   TxPowerLevel;
+	uint8_t    SsidAndChannelLists[0];
 
 } __packed WsmHiStartScanReqBody_t;
 
