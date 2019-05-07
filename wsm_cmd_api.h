@@ -91,7 +91,8 @@ typedef enum WsmStatus_e {
 	WSM_STATUS_RETRY_EXCEEDED                  = 0x13,
 	WSM_STATUS_TX_LIFETIME_EXCEEDED            = 0x14,
 	WSM_REQUEUE                                = 0x15,
-	WSM_STATUS_REFUSED                         = 0x16
+	WSM_STATUS_REFUSED                         = 0x16,
+	WSM_STATUS_BUSY                            = 0x17
 } WsmStatus;
 
 typedef struct WsmHiResetFlags_s {
