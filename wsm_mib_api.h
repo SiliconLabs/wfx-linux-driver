@@ -28,6 +28,7 @@ typedef enum WsmMibIds_e {
 	WSM_MIB_ID_GL_OPERATIONAL_POWER_MODE       = 0x2000,
 	WSM_MIB_ID_GL_BLOCK_ACK_INFO               = 0x2001,
 	WSM_MIB_ID_GL_SET_MULTI_MSG                = 0x2002,
+	WSM_MIB_ID_CCA_CONFIG                      = 0x2003,
 
 	WSM_MIB_ID_ETHERTYPE_DATAFRAME_CONDITION   = 0x2010,
 	WSM_MIB_ID_PORT_DATAFRAME_CONDITION        = 0x2011,
@@ -48,6 +49,8 @@ typedef enum WsmMibIds_e {
 	WSM_MIB_ID_TSF_COUNTER                     = 0x2031,
 	WSM_MIB_ID_STATISTICS_TABLE                = 0x2032,
 	WSM_MIB_ID_COUNTERS_TABLE                  = 0x2033,
+	WSM_MIB_ID_MAX_TX_POWER_LEVEL              = 0x2034,
+	WSM_MIB_ID_EXTENDED_COUNTERS_TABLE         = 0x2035,
 
 	WSM_MIB_ID_DOT11_MAC_ADDRESS               = 0x2040,
 	WSM_MIB_ID_DOT11_MAX_TRANSMIT_MSDU_LIFETIME = 0x2041,
@@ -71,6 +74,7 @@ typedef enum WsmMibIds_e {
 	WSM_MIB_ID_ARP_KEEP_ALIVE_PERIOD           = 0x2053,
 	WSM_MIB_ID_INACTIVITY_TIMER                = 0x2054,
 	WSM_MIB_ID_INTERFACE_PROTECTION            = 0x2055,
+	WSM_MIB_ID_BEACON_STATS                    = 0x2056,
 } WsmMibIds;
 
 #define WSM_OP_POWER_MODE_MASK                     0xf
@@ -80,6 +84,12 @@ typedef enum WsmOpPowerMode_e {
 	WSM_OP_POWER_MODE_QUIESCENT                = 0x2
 } WsmOpPowerMode;
 
+typedef struct WsmHiMibGlOperationalPowerMode_s {
+	uint8_t    PowerMode:4;
+	uint8_t    Reserved1:4;
+	uint8_t    Reserved2[3];
+} __packed WsmHiMibGlOperationalPowerMode_t;
+
 typedef struct WsmHiMibGlBlockAckInfo_s {
 	uint8_t    RxBufferSize;
 
@@ -87,6 +97,22 @@ typedef struct WsmHiMibGlBlockAckInfo_s {
 	uint8_t    TxBufferSize;
 	uint8_t    TxMaxNumAgreements;
 } __packed WsmHiMibGlBlockAckInfo_t;
+
+typedef struct WsmHiMibGlSetMultiMsg_s {
+	uint8_t    EnableMultiTxConf:1;
+	uint8_t    Reserved1:7;
+	uint8_t    Reserved2[3];
+} __packed WsmHiMibGlSetMultiMsg_t;
+
+typedef enum WsmCcaThrMode_e {
+	WSM_CCA_THR_MODE_RELATIVE = 0x0,
+	WSM_CCA_THR_MODE_ABSOLUTE = 0x1
+} WsmCcaThrMode;
+
+typedef struct WSM_HI_MIB_GL_CCA_CONFIG_E {
+	uint8_t  CcaThrMode;
+	uint8_t  Reserved[3];
+} __packed WSM_HI_MIB_GL_CCA_CONFIG;
 
 #define MAX_NUMBER_DATA_FILTERS             0xA
 
@@ -223,6 +249,17 @@ typedef struct WsmHiMibNsIpAddrTable_s {
 	uint8_t    Ipv6Address[WSM_API_IPV6_ADDRESS_SIZE];
 } __packed WsmHiMibNsIpAddrTable_t;
 
+typedef struct WsmHiMibRxFilter_s {
+	uint8_t    Reserved1:1;
+	uint8_t    BssidFilter:1;
+	uint8_t    Reserved2:1;
+	uint8_t    FwdProbeReq:1;
+
+	uint8_t    KeepAliveFilter:1;
+	uint8_t    Reserved3:3;
+	uint8_t    Reserved4[3];
+} __packed WsmHiMibRxFilter_t;
+
 #define WSM_API_OUI_SIZE                                3
 #define WSM_API_MATCH_DATA_SIZE                         3
 typedef struct WsmHiIeTableEntry_s {
@@ -296,15 +333,51 @@ typedef struct WsmHiMibCountTable_s {
 	uint32_t   CountRxBIPMICErrors;
 } __packed WsmHiMibCountTable_t;
 
+typedef struct WsmHiMibMaxTxPowerLevel_s {
+	int32_t       MaxTxPowerLevelRfPort1;
+	int32_t       MaxTxPowerLevelRfPort2;
+} __packed WsmHiMibMaxTxPowerLevel_t;
+
+typedef struct WsmHiMibBeaconStats_s {
+	int32_t     LatestTbttDiff;
+	uint32_t    Reserved[4];
+} __packed WsmHiMibBeaconStats_t;
+
 typedef struct WsmHiMibMacAddress_s {
 	uint8_t    MacAddr[WSM_API_MAC_ADDR_SIZE];
 	uint16_t   Reserved;
 } __packed WsmHiMibMacAddress_t;
 
+typedef struct WsmHiMibDot11MaxTransmitMsduLifetime_s {
+	uint32_t   MaxLifeTime;
+} __packed WsmHiMibDot11MaxTransmitMsduLifetime_t;
+
+typedef struct WsmHiMibDot11MaxReceiveLifetime_s {
+	uint32_t   MaxLifeTime;
+} __packed WsmHiMibDot11MaxReceiveLifetime_t;
+
 typedef struct WsmHiMibWepDefaultKeyId_s {
 	uint8_t    WepDefaultKeyId;
 	uint8_t    Reserved[3];
 } __packed WsmHiMibWepDefaultKeyId_t;
+
+typedef struct WsmHiMibDot11RtsThreshold_s {
+	uint32_t   Threshold;
+} __packed WsmHiMibDot11RtsThreshold_t;
+
+typedef struct WsmHiMibSlotTime_s {
+	uint32_t   SlotTime;
+} __packed WsmHiMibSlotTime_t;
+
+typedef struct WsmHiMibCurrentTxPowerLevel_s {
+	int32_t   PowerLevel;
+} __packed WsmHiMibCurrentTxPowerLevel_t;
+
+typedef struct WsmHiMibNonErpProtection_s {
+	uint8_t   useCtsToSelf:1;
+	uint8_t   Reserved1:7;
+	uint8_t   Reserved2[3];
+} __packed WsmHiMibNonErpProtection_t;
 
 typedef enum WsmTxMode_e {
 	WSM_TX_MODE_MIXED                        = 0x0,
@@ -428,6 +501,20 @@ typedef struct WsmHiMibSetTxRateRetryPolicy_s {
 	WsmHiMibTxRateRetryPolicy_t TxRateRetryPolicy[0];
 } __packed WsmHiMibSetTxRateRetryPolicy_t;
 
+typedef struct WsmHiMibProtectedMgmtPolicy_s {
+	uint8_t   PmfEnable:1;
+	uint8_t   UnpmfAllowed:1;
+	uint8_t   HostEncAuthFrames:1;
+	uint8_t   Reserved1:5;
+	uint8_t   Reserved2[3];
+} __packed WsmHiMibProtectedMgmtPolicy_t;
+
+typedef struct WsmHiMibSetHtProtection_s {
+	uint8_t   DualCtsProt:1;
+	uint8_t   Reserved1:7;
+	uint8_t   Reserved2[3];
+} __packed WsmHiMibSetHtProtection_t;
+
 typedef struct WsmHiMibKeepAlivePeriod_s {
 	uint16_t   KeepAlivePeriod;
 	uint8_t    Reserved[2];
@@ -446,6 +533,12 @@ typedef struct WsmHiMibInactivityTimer_s {
 	uint8_t    MaxActiveTime;
 	uint16_t   Reserved;
 } __packed WsmHiMibInactivityTimer_t;
+
+typedef struct WsmHiMibInterfaceProtection_s {
+	uint8_t   useCtsProt:1;
+	uint8_t   Reserved1:7;
+	uint8_t   Reserved2[3];
+} __packed WsmHiMibInterfaceProtection_t;
 
 
 #endif
