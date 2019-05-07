@@ -172,7 +172,7 @@ typedef struct WsmHiScanFlags_s {
 typedef struct WsmHiAutoScanParam_s {
 	uint16_t   Interval;
 	uint8_t    Reserved;
-	int8_t    RssiThr;
+	int8_t     RssiThr;
 } __packed WsmHiAutoScanParam_t;
 
 typedef struct WsmHiSsidDef_s {
@@ -194,10 +194,26 @@ typedef struct WsmHiStartScanReqBody_s {
 	uint8_t    NumOfChannels;
 	uint32_t   MinChannelTime;
 	uint32_t   MaxChannelTime;
-	int32_t   TxPowerLevel;
+	int32_t    TxPowerLevel;
 	uint8_t    SsidAndChannelLists[0];
-
 } __packed WsmHiStartScanReqBody_t;
+
+typedef struct WsmHiStartScanReqCstnbssidBody_s {
+	uint8_t    Band;
+	WsmHiScanType_t ScanType;
+	WsmHiScanFlags_t ScanFlags;
+	uint8_t    MaxTransmitRate;
+	WsmHiAutoScanParam_t AutoScanParam;
+	uint8_t    NumOfProbeRequests;
+	uint8_t    ProbeDelay;
+	uint8_t    NumOfSSIDs;
+	uint8_t    NumOfChannels;
+	uint32_t   MinChannelTime;
+	uint32_t   MaxChannelTime;
+	int32_t    TxPowerLevel;
+	WsmHiSsidDef_t SsidDef[WSM_API_MAX_NB_SSIDS];
+	uint8_t    ChannelList[0];
+} __packed WsmHiStartScanReqCstnbssidBody_t;
 
 typedef struct WsmHiStartScanCnfBody_s {
 	uint32_t   Status;
