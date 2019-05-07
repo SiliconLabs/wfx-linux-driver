@@ -22,6 +22,9 @@
 
 #define WSM_NUM_AC                             4
 
+#define WSM_API_SSID_SIZE                      32
+#define WSM_API_BSSID_SIZE                     ETH_ALEN
+
 typedef enum HiWsmRequestsIds_e {
 	WSM_HI_RESET_REQ_ID                             = 0x0a,
 	WSM_HI_READ_MIB_REQ_ID                          = 0x05,
@@ -90,8 +93,6 @@ typedef enum WsmStatus_e {
 	WSM_REQUEUE                                = 0x15,
 	WSM_STATUS_REFUSED                         = 0x16
 } WsmStatus;
-
-#define WSM_API_SSID_SIZE                               32
 
 typedef struct WsmHiResetFlags_s {
 	uint8_t    ResetStat:1;
@@ -390,8 +391,6 @@ typedef struct WsmHiJoinFlags_s {
 	uint8_t    Reserved2:4;
 
 } __packed WsmHiJoinFlags_t;
-
-#define WSM_API_BSSID_SIZE                              6
 
 typedef struct WsmHiJoinReqBody_s {
 	uint8_t    Mode;
