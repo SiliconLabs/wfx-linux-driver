@@ -81,9 +81,11 @@ typedef enum WsmOpPowerMode_e {
 } WsmOpPowerMode;
 
 typedef struct WsmHiMibGlBlockAckInfo_s {
-	uint8_t    BufferSize;
-	uint8_t    MaxNumAgreements;
-	uint8_t    Reserved[2];
+	uint8_t    RxBufferSize;
+
+	uint8_t    RxMaxNumAgreements;
+	uint8_t    TxBufferSize;
+	uint8_t    TxMaxNumAgreements;
 } __packed WsmHiMibGlBlockAckInfo_t;
 
 #define MAX_NUMBER_DATA_FILTERS             0xA

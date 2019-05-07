@@ -618,7 +618,7 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 	if (t->txpriv.rate_id == WFX_INVALID_RATE_ID)
 		return -EFAULT;
 
-	wsm->TxFlags.Txrate = t->txpriv.rate_id;
+	wsm->TxFlags.RetryPolicyIndex = t->txpriv.rate_id;
 
 	t->rate = wfx_get_tx_rate(wvif,
 		&t->tx_info->control.rates[0]),

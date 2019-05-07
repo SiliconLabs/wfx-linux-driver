@@ -252,7 +252,7 @@ typedef struct WsmHiDataFlags_s {
 typedef struct WsmHiTxFlags_s {
 	uint8_t    StartExp:1;
 	uint8_t    Reserved:3;
-	uint8_t    Txrate:4;
+	uint8_t    RetryPolicyIndex:4;
 } __packed WsmHiTxFlags_t;
 
 typedef struct WsmHiHtTxParameters_s {
@@ -522,7 +522,7 @@ typedef struct WsmHiSuspendResumeFlags_s {
 
 typedef struct WsmHiSuspendResumeTxIndBody_s {
 	WsmHiSuspendResumeFlags_t SuspendResumeFlags;
-	uint16_t   TxResumeFlagsPerIf;
+	uint16_t   PeerStaSet;
 } __packed WsmHiSuspendResumeTxIndBody_t;
 
 
@@ -666,8 +666,8 @@ typedef enum WsmPsModeError_e {
 
 typedef union WsmEventData_u {
 	uint8_t    RcpiRssi;
-	uint32_t   P_S_Mode_Error;
-	uint32_t   PeerStaId;
+	uint32_t   PsModeError;
+	uint32_t   PeerStaSet;
 } WsmEventData_t;
 
 typedef struct WsmHiEventIndBody_s {
