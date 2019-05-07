@@ -307,6 +307,35 @@ typedef struct WsmHiMibStatsTable_s {
 	int8_t     LatestRssi;
 } __packed WsmHiMibStatsTable_t;
 
+typedef struct WsmHiMibExtendedCountTable_s {
+	uint32_t   CountPlcpErrors;
+	uint32_t   CountFcsErrors;
+	uint32_t   CountTxPackets;
+	uint32_t   CountRxPackets;
+	uint32_t   CountRxPacketErrors;
+	uint32_t   CountRxDecryptionFailures;
+	uint32_t   CountRxMicFailures;
+	uint32_t   CountRxNoKeyFailures;
+	uint32_t   CountTxMulticastFrames;
+	uint32_t   CountTxFramesSuccess;
+	uint32_t   CountTxFrameFailures;
+	uint32_t   CountTxFramesRetried;
+	uint32_t   CountTxFramesMultiRetried;
+	uint32_t   CountRxFrameDuplicates;
+	uint32_t   CountRtsSuccess;
+	uint32_t   CountRtsFailures;
+	uint32_t   CountAckFailures;
+	uint32_t   CountRxMulticastFrames;
+	uint32_t   CountRxFramesSuccess;
+	uint32_t   CountRxCMACICVErrors;
+	uint32_t   CountRxCMACReplays;
+	uint32_t   CountRxMgmtCCMPReplays;
+	uint32_t   CountRxBIPMICErrors;
+	uint32_t   CountRxBeacon;
+	uint32_t   CountMissBeacon;
+	uint32_t   Reserved[15];
+} __packed WsmHiMibExtendedCountTable_t;
+
 typedef struct WsmHiMibCountTable_s {
 	uint32_t   CountPlcpErrors;
 	uint32_t   CountFcsErrors;
