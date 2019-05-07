@@ -329,8 +329,6 @@ typedef struct HiSlConfigureReqBody_s {
 	uint8_t    SkeyInvld;
 } __packed HiSlConfigureReqBody_t;
 
-#define API_NCP_ENCR_BMP_SIZE      32
-
 typedef struct HiSlConfigureCnfBody_s {
 	uint32_t Status;
 } __packed HiSlConfigureCnfBody_t;
