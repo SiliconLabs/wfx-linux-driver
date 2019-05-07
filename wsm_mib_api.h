@@ -334,8 +334,10 @@ typedef struct WsmHiMibTemplateFrame_s {
 
 typedef struct WsmHiMibBeaconWakeUpPeriod_s {
 	uint8_t    WakeupPeriodMin;
-	uint8_t    ReceiveDTIM;
-	uint16_t   WakeupPeriodMax;
+	uint8_t    ReceiveDTIM:1;
+	uint8_t    Reserved1:7;
+	uint8_t    WakeupPeriodMax;
+	uint8_t    Reserved2;
 } __packed WsmHiMibBeaconWakeUpPeriod_t;
 
 typedef struct WsmHiMibRcpiRssiThreshold_s {

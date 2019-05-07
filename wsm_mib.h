@@ -54,7 +54,9 @@ static inline int wsm_set_beacon_wakeup_period(struct wfx_dev *wdev,
 					       int Id)
 {
 	WsmHiMibBeaconWakeUpPeriod_t val = {
-		dtim_interval, 0, cpu_to_le16(listen_interval)
+		.WakeupPeriodMin = dtim_interval,
+		.ReceiveDTIM = 0,
+		.WakeupPeriodMax = cpu_to_le16(listen_interval) ,
 	};
 
 	if (dtim_interval > 0xFF || listen_interval > 0xFFFF)
