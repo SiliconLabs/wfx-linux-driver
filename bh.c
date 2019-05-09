@@ -202,6 +202,13 @@ void wfx_bh_request_rx(struct wfx_dev *wdev)
 {
 	u32 cur, prev;
 
+	// It is safe since:
+	//    1. device_wakeup is in progress
+	// or
+	//    2. wfx_bh will be scheduled and will call device_wakeup anyway
+	if (wdev->pdata.gpio_wakeup && !gpiod_get_value(wdev->pdata.gpio_wakeup))
+		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
+
 	control_reg_read(wdev, &cur);
 	prev = atomic_xchg(&wdev->hif.ctrl_reg, cur);
 	schedule_work(&wdev->hif.bh);
