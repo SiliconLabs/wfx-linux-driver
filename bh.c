@@ -17,17 +17,19 @@
 
 static void device_wakeup(struct wfx_dev *wdev)
 {
-	int ret;
-
 	if (!wdev->pdata.gpio_wakeup)
 		return;
 	if (gpiod_get_value(wdev->pdata.gpio_wakeup))
 		return;
 
 	gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
-	ret = wait_for_completion_timeout(&wdev->hif.wakeup_done, msecs_to_jiffies(2));
-	if (!ret && (wdev->wsm_caps.FirmwareMajor > 2 || wdev->wsm_caps.FirmwareMinor > 2))
-		dev_err(wdev->dev, "Timeout while wake up chip\n");
+	if (wdev->wsm_caps.FirmwareMajor == 2 && wdev->wsm_caps.FirmwareMinor <= 3) {
+		udelay(2000);
+	} else {
+		// TODO: measure latency for wakeup and add a trace
+		if (!wait_for_completion_timeout(&wdev->hif.wakeup_done, msecs_to_jiffies(2) + 1))
+			dev_err(wdev->dev, "timeout while wake up chip\n");
+	}
 }
 
 static void device_release(struct wfx_dev *wdev)
