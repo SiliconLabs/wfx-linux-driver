@@ -258,11 +258,6 @@ static int wfx_spi_probe(struct spi_device *func)
 		bus->need_swab = true;
 	spi_set_drvdata(func, bus);
 
-	ret = devm_request_irq(&func->dev, func->irq, wfx_spi_irq_handler,
-			       IRQF_TRIGGER_RISING, "wfx", bus);
-	if (ret)
-		return ret;
-
 	bus->gpio_reset = wfx_get_gpio(&func->dev, gpio_reset, "reset");
 	if (!bus->gpio_reset) {
 		dev_warn(&func->dev, "try to load firmware anyway");
@@ -272,6 +267,11 @@ static int wfx_spi_probe(struct spi_device *func)
 		gpiod_set_value(bus->gpio_reset, 1);
 		udelay(1000);
 	}
+
+	ret = devm_request_irq(&func->dev, func->irq, wfx_spi_irq_handler,
+			       IRQF_TRIGGER_RISING, "wfx", bus);
+	if (ret)
+		return ret;
 
 	bus->core = wfx_init_common(&func->dev, &wfx_spi_pdata,
 				    &wfx_spi_hwbus_ops, bus);
