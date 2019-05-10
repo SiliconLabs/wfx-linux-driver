@@ -317,9 +317,14 @@ int wfx_probe(struct wfx_dev *wdev)
 
 	WARN_ON(!queue_work(wdev->bh_workqueue, &wdev->bh_work));
 
-	if (wait_for_completion_interruptible_timeout(&wdev->firmware_ready, 10 * HZ) <= 0) {
-		dev_err(wdev->dev, "timeout while waiting for startup indication. IRQ configuration error?\n");
-		err = -ETIMEDOUT;
+	err = wait_for_completion_interruptible_timeout(&wdev->firmware_ready, 10 * HZ);
+	if (err <= 0) {
+		if (err == 0) {
+			dev_err(wdev->dev, "timeout while waiting for startup indication. IRQ configuration error?\n");
+			err = -ETIMEDOUT;
+		} else if (err == -ERESTARTSYS) {
+			dev_info(wdev->dev, "probe interrupted by user\n");
+		}
 		goto err2;
 	}
 
