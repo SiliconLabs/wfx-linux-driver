@@ -182,6 +182,7 @@ typedef struct WsmHiSsidDef_s {
 
 #define WSM_API_MAX_NB_SSIDS                           2
 #define WSM_API_MAX_NB_CHANNELS                       14
+
 typedef struct WsmHiStartScanReqBody_s {
 	uint8_t    Band;
 	WsmHiScanType_t ScanType;
@@ -403,7 +404,6 @@ typedef struct WsmHiJoinFlags_s {
 	uint8_t    ForceNoBeacon:1;
 	uint8_t    ForceWithInd:1;
 	uint8_t    Reserved2:4;
-
 } __packed WsmHiJoinFlags_t;
 
 typedef struct WsmHiJoinReqBody_s {

@@ -24,12 +24,10 @@
 #define WSM_API_IPV6_ADDRESS_SIZE                       16
 
 typedef enum WsmMibIds_e {
-
 	WSM_MIB_ID_GL_OPERATIONAL_POWER_MODE       = 0x2000,
 	WSM_MIB_ID_GL_BLOCK_ACK_INFO               = 0x2001,
 	WSM_MIB_ID_GL_SET_MULTI_MSG                = 0x2002,
 	WSM_MIB_ID_CCA_CONFIG                      = 0x2003,
-
 	WSM_MIB_ID_ETHERTYPE_DATAFRAME_CONDITION   = 0x2010,
 	WSM_MIB_ID_PORT_DATAFRAME_CONDITION        = 0x2011,
 	WSM_MIB_ID_MAGIC_DATAFRAME_CONDITION       = 0x2012,
@@ -44,14 +42,12 @@ typedef enum WsmMibIds_e {
 	WSM_MIB_ID_RX_FILTER                       = 0x201B,
 	WSM_MIB_ID_BEACON_FILTER_TABLE             = 0x201C,
 	WSM_MIB_ID_BEACON_FILTER_ENABLE            = 0x201D,
-
 	WSM_MIB_ID_GRP_SEQ_COUNTER                 = 0x2030,
 	WSM_MIB_ID_TSF_COUNTER                     = 0x2031,
 	WSM_MIB_ID_STATISTICS_TABLE                = 0x2032,
 	WSM_MIB_ID_COUNTERS_TABLE                  = 0x2033,
 	WSM_MIB_ID_MAX_TX_POWER_LEVEL              = 0x2034,
 	WSM_MIB_ID_EXTENDED_COUNTERS_TABLE         = 0x2035,
-
 	WSM_MIB_ID_DOT11_MAC_ADDRESS               = 0x2040,
 	WSM_MIB_ID_DOT11_MAX_TRANSMIT_MSDU_LIFETIME = 0x2041,
 	WSM_MIB_ID_DOT11_MAX_RECEIVE_LIFETIME      = 0x2042,
@@ -78,6 +74,7 @@ typedef enum WsmMibIds_e {
 } WsmMibIds;
 
 #define WSM_OP_POWER_MODE_MASK                     0xf
+
 typedef enum WsmOpPowerMode_e {
 	WSM_OP_POWER_MODE_ACTIVE                   = 0x0,
 	WSM_OP_POWER_MODE_DOZE                     = 0x1,
@@ -92,7 +89,6 @@ typedef struct WsmHiMibGlOperationalPowerMode_s {
 
 typedef struct WsmHiMibGlBlockAckInfo_s {
 	uint8_t    RxBufferSize;
-
 	uint8_t    RxMaxNumAgreements;
 	uint8_t    TxBufferSize;
 	uint8_t    TxMaxNumAgreements;
@@ -254,7 +250,6 @@ typedef struct WsmHiMibRxFilter_s {
 	uint8_t    BssidFilter:1;
 	uint8_t    Reserved2:1;
 	uint8_t    FwdProbeReq:1;
-
 	uint8_t    KeepAliveFilter:1;
 	uint8_t    Reserved3:3;
 	uint8_t    Reserved4[3];
@@ -524,6 +519,7 @@ typedef struct WsmHiMibTxRateRetryPolicy_s {
 } __packed WsmHiMibTxRateRetryPolicy_t;
 
 #define WSM_MIB_NUM_TX_RATE_RETRY_POLICIES             16
+
 typedef struct WsmHiMibSetTxRateRetryPolicy_s {
 	uint8_t    NumTxRatePolicies;
 	uint8_t    Reserved[3];

@@ -115,14 +115,12 @@ typedef enum HiStatus_e {
 	HI_INVALID_PARAMETER                          = 0x0002,
 	HI_STATUS_GPIO_WARNING                        = 0x0003,
 	HI_ERROR_UNSUPPORTED_MSG_ID                   = 0x0004,
-
 	SL_MAC_KEY_STATUS_SUCCESS                     = 0x005A,
 	SL_MAC_KEY_STATUS_FAILED_KEY_ALREADY_BURNED   = 0x006B,
 	SL_MAC_KEY_STATUS_FAILED_RAM_MODE_NOT_ALLOWED = 0x007C,
 	SL_MAC_KEY_STATUS_FAILED_UNKNOWN_MODE         = 0x008D,
 	SL_PUB_KEY_EXCHANGE_STATUS_SUCCESS            = 0x009E,
 	SL_PUB_KEY_EXCHANGE_STATUS_FAILED             = 0x00AF,
-
 	PREVENT_ROLLBACK_CNF_SUCCESS                  = 0x1234,
 	PREVENT_ROLLBACK_CNF_WRONG_MAGIC_WORD         = 0x1256
 } HiStatus;
@@ -257,7 +255,9 @@ typedef enum WsmHiDbg_e {
 	WSM_HI_DBG_ASSERT                          = 0x4
 } WsmHiDbg;
 
+
 #define HI_EXCEPTION_DATA_SIZE            80
+
 typedef struct HiExceptionIndBody_s {
 	uint8_t    Data[HI_EXCEPTION_DATA_SIZE];
 } __packed HiExceptionIndBody_t;
