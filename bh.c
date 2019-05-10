@@ -35,8 +35,8 @@ static void device_release(struct wfx_dev *wdev)
 	if (!wdev->pdata.gpio_wakeup)
 		return;
 
-	gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
 	reinit_completion(&wdev->hif.wakeup_done);
+	gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
 }
 
 static int rx_helper(struct wfx_dev *wdev, size_t read_len)
