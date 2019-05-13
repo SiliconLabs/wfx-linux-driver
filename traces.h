@@ -327,6 +327,33 @@ DEFINE_EVENT(io_data, io_read,
 #define _trace_io_ind_read(reg, addr, io_buf, len) trace_io_read(reg, addr, io_buf, len)
 #define _trace_io_read(reg, io_buf, len) trace_io_read(reg, -1, io_buf, len)
 
+TRACE_EVENT(bh_stats,
+	TP_PROTO(int ind, int req, int cnf, int busy, bool release),
+	TP_ARGS(ind, req, cnf, busy, release),
+	TP_STRUCT__entry(
+		__field(int, ind)
+		__field(int, req)
+		__field(int, cnf)
+		__field(int, busy)
+		__field(bool, release)
+	),
+	TP_fast_assign(
+		__entry->ind = ind;
+		__entry->req = req;
+		__entry->cnf = cnf;
+		__entry->busy = busy;
+		__entry->release = release;
+	),
+	TP_printk("IND/REQ/CNF:%3d/%3d/%3d, REQ in progress:%3d, WUP: %s",
+		__entry->ind,
+		__entry->req,
+		__entry->cnf,
+		__entry->busy,
+		__entry->release ? "release" : "keep"
+	)
+);
+#define _trace_bh_stats(ind, req, cnf, busy, release) trace_bh_stats(ind, req, cnf, busy, release)
+
 #endif
 
 /* This part must be outside protection */

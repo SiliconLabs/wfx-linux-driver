@@ -201,6 +201,7 @@ static void bh_work(struct work_struct *work)
 	} else {
 		release_chip = false;
 	}
+	_trace_bh_stats(stats_ind, stats_req, stats_cnf, wdev->hif.tx_buffers_used, release_chip);
 }
 
 void wfx_bh_request_rx(struct wfx_dev *wdev)
