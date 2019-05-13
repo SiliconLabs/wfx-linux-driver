@@ -58,7 +58,6 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len)
 	if (!skb)
 		return -ENOMEM;
 
-	// FIXME: wfx_data_read() should take a skb as parameter
 	if (wfx_data_read(wdev, skb->data, alloc_len))
 		goto err;
 
@@ -112,37 +111,33 @@ err:
 static int bh_work_rx(struct wfx_dev *wdev, int max_msg)
 {
 	size_t len;
-	int i = max_msg;
+	int i;
 	int ctrl_reg, piggyback;
 
-	ctrl_reg = atomic_xchg(&wdev->hif.ctrl_reg, 0);
-	while (ctrl_reg & CTRL_NEXT_LEN_MASK) {
+	piggyback = 0;
+	for (i = 0; i < max_msg; i++) {
+		// Not mandatory if piggyback != 0, but allows to detect errors early
+		ctrl_reg = atomic_xchg(&wdev->hif.ctrl_reg, 0);
+		if (piggyback & CTRL_NEXT_LEN_MASK && ctrl_reg)
+			dev_err(wdev->dev, "unexpected IRQ happened: %04x/%04x", ctrl_reg, piggyback);
+		if (piggyback & CTRL_NEXT_LEN_MASK)
+			ctrl_reg = piggyback;
+		if (!(ctrl_reg & CTRL_NEXT_LEN_MASK))
+			return i;
 		// ctrl_reg units are 16bits words
 		len = (ctrl_reg & CTRL_NEXT_LEN_MASK) * 2;
 		piggyback = rx_helper(wdev, len);
 		if (piggyback < 0)
-			break;
+			return i;
 		if (!(piggyback & CTRL_WLAN_READY))
-			dev_err(wdev->dev, "Corrupted piggyback value: %04x", piggyback);
-		if (i && piggyback & CTRL_NEXT_LEN_MASK) {
-			// Not mandatory, but try to detect errors early
-			ctrl_reg = atomic_xchg(&wdev->hif.ctrl_reg, 0);
-			if (ctrl_reg)
-				dev_err(wdev->dev, "Unexpected IRQ happened: %04x/%04x", ctrl_reg, piggyback);
-			ctrl_reg = piggyback;
-		} else if (i) {
-			ctrl_reg = atomic_xchg(&wdev->hif.ctrl_reg, 0);
-		} else if (piggyback & CTRL_NEXT_LEN_MASK) {
-			ctrl_reg = atomic_xchg(&wdev->hif.ctrl_reg, piggyback);
-			if (ctrl_reg)
-				dev_err(wdev->dev, "Unexpected IRQ happened: %04x/%04x", ctrl_reg, piggyback);
-			ctrl_reg = 0;
-		} else {
-			ctrl_reg = 0;
-		}
-		i--;
+			dev_err(wdev->dev, "unexpected piggyback value: ready bit not set: %04x", piggyback);
 	}
-	return max_msg - i;
+	if (piggyback & CTRL_NEXT_LEN_MASK) {
+		ctrl_reg = atomic_xchg(&wdev->hif.ctrl_reg, piggyback);
+		if (ctrl_reg)
+			dev_err(wdev->dev, "unexpected IRQ happened: %04x/%04x", ctrl_reg, piggyback);
+	}
+	return i;
 }
 
 static void tx_helper(struct wfx_dev *wdev, u8 *data, size_t len)
