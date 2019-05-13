@@ -170,19 +170,17 @@ static int bh_work_tx(struct wfx_dev *wdev, int max_msg)
 {
 	u8 *data;
 	size_t len;
-	int i = max_msg;
+	int i;
 
-	data = NULL;
-	if (wdev->hif.tx_buffers_used < wdev->wsm_caps.NumInpChBufs)
-		wsm_get_tx(wdev, &data, &len);
-	while (data) {
-		tx_helper(wdev, data, len);
+	for (i = 0; i < max_msg; i++) {
 		data = NULL;
-		if (wdev->hif.tx_buffers_used < wdev->wsm_caps.NumInpChBufs && i)
+		if (wdev->hif.tx_buffers_used < wdev->wsm_caps.NumInpChBufs)
 			wsm_get_tx(wdev, &data, &len);
-		i--;
+		if (!data)
+			return i;
+		tx_helper(wdev, data, len);
 	}
-	return max_msg - i;
+	return i;
 }
 
 static void bh_work(struct work_struct *work)
