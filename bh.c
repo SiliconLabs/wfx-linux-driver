@@ -259,7 +259,7 @@ static int wfx_check_pending_rx(struct wfx_dev *wdev, u32 *ctrl_reg_ptr)
 		if (*ctrl_reg_ptr & CTRL_WLAN_READY)
 			break;
 		dev_err(wdev->dev, "Chip is not ready! (ctrl: %08x) %d/4\n", *ctrl_reg_ptr, i + 1);
-		udelay(500);
+		udelay(1000);
 	}
 	if (!(*ctrl_reg_ptr & CTRL_WLAN_READY))
 		*ctrl_reg_ptr = 0;
