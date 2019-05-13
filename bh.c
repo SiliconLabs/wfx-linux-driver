@@ -41,7 +41,7 @@ static void device_release(struct wfx_dev *wdev)
 	gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
 }
 
-static int rx_helper(struct wfx_dev *wdev, size_t read_len)
+static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 {
 	struct sk_buff *skb;
 	struct wmsg *wsm;
@@ -84,6 +84,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len)
 	}
 
 	if (!(wsm->id & WMSG_ID_IS_INDICATION)) {
+		(*is_cnf)++;
 		if (wsm->id == WSM_HI_MULTI_TRANSMIT_CNF_ID)
 			release_count = le32_to_cpu(((WsmHiMultiTransmitCnfBody_t *) wsm->body)->NumTxConfs);
 		else
@@ -108,7 +109,7 @@ err:
 	return -EIO;
 }
 
-static int bh_work_rx(struct wfx_dev *wdev, int max_msg)
+static int bh_work_rx(struct wfx_dev *wdev, int max_msg, int *num_cnf)
 {
 	size_t len;
 	int i;
@@ -126,7 +127,7 @@ static int bh_work_rx(struct wfx_dev *wdev, int max_msg)
 			return i;
 		// ctrl_reg units are 16bits words
 		len = (ctrl_reg & CTRL_NEXT_LEN_MASK) * 2;
-		piggyback = rx_helper(wdev, len);
+		piggyback = rx_helper(wdev, len, num_cnf);
 		if (piggyback < 0)
 			return i;
 		if (!(piggyback & CTRL_WLAN_READY))
@@ -181,16 +182,25 @@ static int bh_work_tx(struct wfx_dev *wdev, int max_msg)
 static void bh_work(struct work_struct *work)
 {
 	struct wfx_dev *wdev = container_of(work, struct wfx_dev, hif.bh);
-	int retry;
+	int stats_req = 0, stats_cnf = 0, stats_ind = 0;
+	bool release_chip;
+	int num_tx, num_rx;
 
 	device_wakeup(wdev);
 	do {
-		retry = 0;
-		retry += bh_work_tx(wdev, 4);
-		retry += bh_work_rx(wdev, 4);
-	} while (retry);
-	if (!wdev->hif.tx_buffers_used && !work_pending(work) && !atomic_read(&wdev->scan_in_progress))
+		num_tx = bh_work_tx(wdev, 4);
+		stats_req += num_tx;
+		num_rx = bh_work_rx(wdev, 4, &stats_cnf);
+		stats_ind += num_rx;
+	} while (num_rx || num_tx);
+	stats_ind -= stats_cnf;
+
+	if (!wdev->hif.tx_buffers_used && !work_pending(work) && !atomic_read(&wdev->scan_in_progress)) {
 		device_release(wdev);
+		release_chip = true;
+	} else {
+		release_chip = false;
+	}
 }
 
 void wfx_bh_request_rx(struct wfx_dev *wdev)
