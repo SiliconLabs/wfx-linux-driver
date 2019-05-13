@@ -186,9 +186,9 @@ static void bh_work(struct work_struct *work)
 
 	device_wakeup(wdev);
 	do {
-		num_tx = bh_work_tx(wdev, 4);
+		num_tx = bh_work_tx(wdev, 32);
 		stats_req += num_tx;
-		num_rx = bh_work_rx(wdev, 4, &stats_cnf);
+		num_rx = bh_work_rx(wdev, 32, &stats_cnf);
 		stats_ind += num_rx;
 	} while (num_rx || num_tx);
 	stats_ind -= stats_cnf;
