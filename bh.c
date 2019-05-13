@@ -117,12 +117,10 @@ static int bh_work_rx(struct wfx_dev *wdev, int max_msg, int *num_cnf)
 
 	piggyback = 0;
 	for (i = 0; i < max_msg; i++) {
-		// Not mandatory if piggyback != 0, but allows to detect errors early
-		ctrl_reg = atomic_xchg(&wdev->hif.ctrl_reg, 0);
-		if (piggyback & CTRL_NEXT_LEN_MASK && ctrl_reg)
-			dev_err(wdev->dev, "unexpected IRQ happened: %04x/%04x", ctrl_reg, piggyback);
 		if (piggyback & CTRL_NEXT_LEN_MASK)
 			ctrl_reg = piggyback;
+		else
+			ctrl_reg = atomic_xchg(&wdev->hif.ctrl_reg, 0);
 		if (!(ctrl_reg & CTRL_NEXT_LEN_MASK))
 			return i;
 		// ctrl_reg units are 16bits words
