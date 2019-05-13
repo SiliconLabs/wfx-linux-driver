@@ -96,7 +96,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 			wake_up(&wdev->hif.tx_buffers_empty);
 	}
 
-	/* wfx_wsm_rx takes care on SKB livetime */
+	// wfx_wsm_rx takes care on SKB livetime
 	wsm_handle_rx(wdev, wsm, &skb);
 
 	if (skb)
