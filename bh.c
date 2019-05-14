@@ -206,20 +206,11 @@ void wfx_bh_request_rx(struct wfx_dev *wdev)
 {
 	u32 cur, prev;
 
-	// It is safe since:
-	//    1. device_wakeup is in progress
-	// or
-	//    2. wfx_bh will be scheduled and will call device_wakeup anyway
-	if (wdev->pdata.gpio_wakeup && !gpiod_get_value(wdev->pdata.gpio_wakeup))
-		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
-
 	control_reg_read(wdev, &cur);
 	prev = atomic_xchg(&wdev->hif.ctrl_reg, cur);
 	schedule_work(&wdev->hif.bh);
 	complete(&wdev->hif.wakeup_done);
 
-	if (!(cur & CTRL_WLAN_READY))
-		dev_err(wdev->dev, "unexpected control register value: ready bit not set: %04x", cur);
 	if (!(cur & CTRL_NEXT_LEN_MASK))
 		dev_err(wdev->dev, "unexpected control register value: length field is 0: %04x", cur);
 	if (prev != 0)
