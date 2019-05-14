@@ -967,8 +967,6 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 		}
 		wfx_queue_remove(queue, arg->PacketId);
 	}
-	/* XXX TODO:  Only wake if there are pending transmits.. */
-	wfx_bh_request_tx(wdev);
 }
 
 static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
