@@ -55,6 +55,7 @@ static int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply,
 
 	WARN(wdev->wsm_cmd.buf_recv && wdev->wsm_cmd.async, "API usage error");
 
+	// Do not wait for any reply if chip is frozen
 	if (wdev->chip_frozen)
 		return -ETIMEDOUT;
 

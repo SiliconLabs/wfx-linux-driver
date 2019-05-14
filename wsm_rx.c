@@ -330,6 +330,10 @@ void wsm_tx_flush(struct wfx_dev *wdev)
 
 	WARN(!atomic_read(&wdev->tx_lock), "tx_lock is not locked");
 
+	// Do not wait for any reply if chip is frozen
+	if (wdev->chip_frozen)
+		return;
+
 	mutex_lock(&wdev->wsm_cmd.lock);
 	ret = wait_event_timeout(wdev->hif.tx_buffers_empty,
 				 !wdev->hif.tx_buffers_used,
