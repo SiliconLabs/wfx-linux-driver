@@ -307,9 +307,7 @@ int wfx_probe(struct wfx_dev *wdev)
 	int err = -EINVAL;
 	const void *macaddr;
 
-	err = wfx_bh_register(wdev);
-	if (err)
-		goto err1;
+	wfx_bh_register(wdev);
 
 	err = wfx_init_device(wdev);
 	if (err)
@@ -389,7 +387,6 @@ err3:
 	ieee80211_unregister_hw(wdev->hw);
 err2:
 	wfx_bh_unregister(wdev);
-err1:
 	return err;
 }
 

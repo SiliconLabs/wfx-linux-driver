@@ -24,7 +24,7 @@ struct wfx_hif {
 	int tx_buffers_used;
 };
 
-int wfx_bh_register(struct wfx_dev *wdev);
+void wfx_bh_register(struct wfx_dev *wdev);
 void wfx_bh_unregister(struct wfx_dev *wdev);
 void wfx_bh_request_rx(struct wfx_dev *wdev);
 void wfx_bh_request_tx(struct wfx_dev *wdev);

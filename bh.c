@@ -222,15 +222,11 @@ void wfx_bh_request_tx(struct wfx_dev *wdev)
 	schedule_work(&wdev->hif.bh);
 }
 
-int wfx_bh_register(struct wfx_dev *wdev)
+void wfx_bh_register(struct wfx_dev *wdev)
 {
-	int ret = 0;
-
 	INIT_WORK(&wdev->hif.bh, bh_work);
 	init_completion(&wdev->hif.wakeup_done);
 	init_waitqueue_head(&wdev->hif.tx_buffers_empty);
-
-	return ret;
 }
 
 void wfx_bh_unregister(struct wfx_dev *wdev)
