@@ -273,7 +273,7 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 
 	for (i = 0; i < 4; ++i)
 		if (wfx_queue_init(&wdev->tx_queue[i], &wdev->tx_queue_stats,
-				   i, 16, wfx_ttl[i]))
+				   i, 32, wfx_ttl[i]))
 			goto err2;
 
 	return wdev;
