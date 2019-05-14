@@ -213,6 +213,13 @@ void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
 	struct wfx_queue_item *item;
 	struct wfx_dev *wdev = wvif->wdev;
 
+	if (wvif->wdev->chip_frozen) {
+		for (i = 0; i < 4; ++i)
+			wfx_queue_clear(&wdev->tx_queue[i]);
+		wsm_tx_lock_flush(wdev);
+		return;
+	}
+
 	do {
 		done = true;
 		wsm_tx_lock_flush(wdev);
