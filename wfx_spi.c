@@ -215,7 +215,7 @@ static irqreturn_t wfx_spi_irq_handler(int irq, void *priv)
 		WARN(!bus->core, "race condition in driver init/deinit");
 		return IRQ_NONE;
 	}
-	schedule_work(&bus->request_rx);
+	queue_work(system_highpri_wq, &bus->request_rx);
 	return IRQ_HANDLED;
 }
 
