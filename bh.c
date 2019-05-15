@@ -24,7 +24,8 @@ static void device_wakeup(struct wfx_dev *wdev)
 
 	gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
 	if (wdev->wsm_caps.FirmwareMajor == 2 && wdev->wsm_caps.FirmwareMinor <= 3) {
-		udelay(2000);
+		if (!try_wait_for_completion(&wdev->hif.wakeup_done))
+			udelay(2000);
 	} else {
 		// TODO: measure latency for wakeup and add a trace
 		if (!wait_for_completion_timeout(&wdev->hif.wakeup_done, msecs_to_jiffies(2) + 1))
