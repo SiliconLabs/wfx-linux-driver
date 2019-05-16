@@ -209,7 +209,7 @@ void wfx_bh_request_rx(struct wfx_dev *wdev)
 
 	control_reg_read(wdev, &cur);
 	prev = atomic_xchg(&wdev->hif.ctrl_reg, cur);
-	schedule_work(&wdev->hif.bh);
+	queue_work(system_highpri_wq, &wdev->hif.bh);
 	complete(&wdev->hif.wakeup_done);
 
 	if (!(cur & CTRL_NEXT_LEN_MASK))
@@ -220,7 +220,7 @@ void wfx_bh_request_rx(struct wfx_dev *wdev)
 
 void wfx_bh_request_tx(struct wfx_dev *wdev)
 {
-	schedule_work(&wdev->hif.bh);
+	queue_work(system_highpri_wq, &wdev->hif.bh);
 }
 
 void wfx_bh_register(struct wfx_dev *wdev)
