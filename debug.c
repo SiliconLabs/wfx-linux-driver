@@ -27,6 +27,7 @@ static const struct file_operations __name ## _fops = {			\
 
 #include "debug.h"
 #include "wfx.h"
+#include "wsm_tx.h"
 #include "sta.h"
 
 #define CREATE_TRACE_POINTS
@@ -459,6 +460,7 @@ static const struct file_operations wfx_send_pds_fops = {
 	.open = simple_open,
 	.write = wfx_send_pds_write,
 };
+
 
 int wfx_debug_init(struct wfx_dev *wdev)
 {

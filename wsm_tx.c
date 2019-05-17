@@ -45,7 +45,7 @@ static void *wfx_alloc_wsm(size_t body_len, struct wmsg **hdr)
 		return NULL;
 }
 
-static int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply, size_t reply_len, bool async)
+int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply, size_t reply_len, bool async)
 {
 	const char *mib_name = "";
 	const char *mib_sep = "";
