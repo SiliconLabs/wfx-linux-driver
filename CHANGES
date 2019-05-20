@@ -1,3 +1,43 @@
+Changes in 2.2
+--------------
+
+  * Increase internal queue size. This improves aggregation performances and so
+    Tx performances.
+  * Re-work IRQ handling and device wake up process (IPWHIFER-264, IPWHIFER-284):
+       - fix periodic (every 10sec) wake up of chip (IPWHIFER-349)
+       - fix race condition between control register and IRQ (IPWHIFER-420,
+         IPWHIFER-330)
+       - fix potential race condition between wake_up interrupt and data_ready
+         interrupt (IPWHIFER-433)
+       - use new wake-up notification mecanism introduced in API 1.4 (supported
+         by not-yet-released firmware 2.3)
+  * Check if access to control register from SPI is valid and recover error
+    if not (IPWHIFER-420).
+  * SPI bus is now configured to use MODE2 of Ineo chipset. Byte swapping
+    before/after SPI bus access is no more necessary (IPWHIFER-368,
+    IPWHIFER-416).
+  * Remove support for monitor mode since it has never worked (IPWHIFER-378).
+  * Remove support for /sys/kernel/debug/ieee80211/phy0/wfx/wsm_params. It was a
+    hack and was never really used.
+  * Start to clean up API and synchronize it with firmware (IPWHIFER-369).
+  * Improve tolerance to firmware freeze.
+  * Normal users are now allowed to access counters, rx_stats and status.
+    However, user have to access to debugfs itself. Administrators have to run:
+        chmod 755 /sys/kernel/debug
+  * Allow to trace piggyback values.
+  * Allow to trace BH stats.
+  * Allow to trace TX stats.
+  * Fix wrong error message if user interrupt device probing.
+  * Fix warning about register access issued during device unbind.
+  * Fix message payload displayed by tracepoints wsm_*
+  * If frames are stuck in firmware, driver is able to dump their IDs.
+  * In internal versions, add a way to send arbitrary HIF commands to chip
+    (IPWHIFER-447).
+  * Driver is now compatible with kernel >= 3.18 (it was >= 4.1 before)
+  * Use SPDX standard for licence headers.
+  * Support for secondary interface (aka "combo mode") is now proposed as
+    in-develoment preview.
+
 Changes in 2.1.2
 ----------------
 
@@ -34,7 +74,7 @@ Changes in 2.1
   * Fix race condition during chip identification on SPI
   * Scan now waits longer for AP response
   * Fix UAPSD that was broken since 2.0
-  * Fix listening mode (that created an unsolicited AP):
+  * Fix listening mode (that created an unsolicited AP)
   * Fix some errors pointed by checkpatch.pl
 
 Changes in 2.0.3
