@@ -412,3 +412,20 @@ int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame,
 	return ret;
 }
 
+int wsm_set_mac_key(struct wfx_dev *wdev, const uint8_t *sl_key, int destination)
+{
+	int ret;
+	struct wmsg *hdr;
+	HiSetSlMacKeyReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+
+	memcpy(body->KeyValue, sl_key, sizeof(body->KeyValue));
+	body->OtpOrRam = destination;
+	wfx_fill_header(hdr, -1, HI_SET_SL_MAC_KEY_REQ_ID, sizeof(*body));
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	kfree(hdr);
+	// Compatibility with legacy secure link
+	if (ret == SL_MAC_KEY_STATUS_SUCCESS)
+		ret = 0;
+	return ret;
+}
+

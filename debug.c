@@ -8,6 +8,7 @@
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 #include <linux/version.h>
+#include <linux/crc32.h>
 
 #if (KERNEL_VERSION(4, 17, 0) > LINUX_VERSION_CODE)
 #define DEFINE_SHOW_ATTRIBUTE(__name)					\
@@ -470,6 +471,60 @@ static const struct file_operations wfx_send_pds_fops = {
 	.write = wfx_send_pds_write,
 };
 
+static ssize_t wfx_burn_sec_link_key_write(struct file *file, const char __user *user_buf,
+			     size_t count, loff_t *ppos)
+{
+	struct wfx_dev *wdev = file->private_data;
+	char bin_buf[API_KEY_VALUE_SIZE + 4];
+	uint32_t *user_crc32 = (uint32_t *) (bin_buf + API_KEY_VALUE_SIZE);
+	char ascii_buf[(API_KEY_VALUE_SIZE + 4) * 2];
+	uint32_t crc32;
+	int ret;
+
+#ifndef CONFIG_WFX_SECURE_LINK
+	dev_info(wdev->dev, "this driver does not support secure link\n");
+	return -EINVAL;
+#endif
+	if (wdev->wsm_caps.Capabilities.LinkMode == SECURE_LINK_TRUSTED_ACTIVE_ENFORCED) {
+		dev_err(wdev->dev, "key was already burned on this device\n");
+		return -EINVAL;
+	}
+	if (wdev->wsm_caps.Capabilities.LinkMode != SECURE_LINK_TRUSTED_MODE) {
+		dev_err(wdev->dev, "this device does not support secure link\n");
+		return -EINVAL;
+	}
+	if (*ppos != 0) {
+		dev_dbg(wdev->dev, "secret data must be written in one transaction\n");
+		return -EBUSY;
+	}
+	*ppos = *ppos + count;
+
+	ret = copy_from_user(ascii_buf, user_buf, min(count, sizeof(ascii_buf)));
+	if (ret)
+		return ret;
+	ret = hex2bin(bin_buf, ascii_buf, sizeof(bin_buf));
+	if (ret) {
+		dev_info(wdev->dev, "ignoring malformatted key: %s\n", ascii_buf);
+		return -EINVAL;
+	}
+	crc32 = crc32(0xffffffff, bin_buf, API_KEY_VALUE_SIZE) ^ 0xffffffff;
+	if (crc32 != *user_crc32) {
+		dev_err(wdev->dev, "incorrect crc32: %08x != %08x\n", crc32, *user_crc32);
+		return -EINVAL;
+	}
+	ret = wsm_set_mac_key(wdev, bin_buf, SL_MAC_KEY_DEST_OTP);
+	if (ret) {
+		dev_err(wdev->dev, "chip returned error %d\n", ret);
+		return -EIO;
+	}
+	return count;
+}
+
+static const struct file_operations wfx_burn_sec_link_key_fops = {
+	.open = simple_open,
+	.write = wfx_burn_sec_link_key_write,
+};
+
 
 int wfx_debug_init(struct wfx_dev *wdev)
 {
@@ -484,6 +539,7 @@ int wfx_debug_init(struct wfx_dev *wdev)
 	debugfs_create_file("counters", 0444, d, wdev, &wfx_counters_fops);
 	debugfs_create_file("rx_stats", 0444, d, wdev, &wfx_rx_stats_fops);
 	debugfs_create_file("send_pds", 0200, d, wdev, &wfx_send_pds_fops);
+	debugfs_create_file("burn_sec_link_key", 0200, d, wdev, &wfx_burn_sec_link_key_fops);
 
 	return 0;
 }

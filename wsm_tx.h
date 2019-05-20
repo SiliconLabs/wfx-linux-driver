@@ -53,5 +53,6 @@ int wsm_beacon_transmit(struct wfx_dev *wdev, bool enable, int Id);
 int wsm_map_link(struct wfx_dev *wdev, u8 *mac_addr, int flags, int sta_id, int Id);
 int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame, const u8 *ies, size_t ies_len, int Id);
 int wsm_fwd_probe_req(struct wfx_vif *wvif, bool enable);
+int wsm_set_mac_key(struct wfx_dev *wdev, const uint8_t *sl_key, int destination);
 
 #endif /* WFX_WSM_TX_H */
