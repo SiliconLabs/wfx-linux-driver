@@ -23,7 +23,7 @@ static void device_wakeup(struct wfx_dev *wdev)
 		return;
 
 	gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
-	if (wdev->wsm_caps.FirmwareMajor == 2 && wdev->wsm_caps.FirmwareMinor <= 3) {
+	if (wfx_api_older_than(wdev, 1, 4)) {
 		if (!try_wait_for_completion(&wdev->hif.wakeup_done))
 			udelay(2000);
 	} else {
