@@ -198,6 +198,17 @@ struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *lab
 	return ret;
 }
 
+bool wfx_api_older_than(struct wfx_dev *wdev, int major, int minor)
+{
+	if (wdev->wsm_caps.ApiVersionMajor < major)
+		return true;
+	if (wdev->wsm_caps.ApiVersionMajor > major)
+		return false;
+	if (wdev->wsm_caps.ApiVersionMinor < minor)
+		return true;
+	return false;
+}
+
 struct wfx_dev *wfx_init_common(struct device *dev,
 				const struct wfx_platform_data *pdata,
 				const struct hwbus_ops *hwbus_ops,
