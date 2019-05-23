@@ -56,9 +56,8 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 
 	WARN_ON(read_len < 4);
 
-	// piggyback is not accounted
-	read_len += 2;
-	alloc_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, read_len);
+	// Add 2 to take into account piggyback size
+	alloc_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, read_len + 2);
 	skb = dev_alloc_skb(alloc_len);
 	if (!skb)
 		return -ENOMEM;
@@ -72,9 +71,9 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	wsm = (struct wmsg *) skb->data;
 	le16_to_cpus(wsm->len);
 	skb_put(skb, wsm->len);
-	if (round_up(wsm->len, 2) != read_len - 2) {
+	if (round_up(wsm->len, 2) != read_len) {
 		dev_err(wdev->dev, "inconsistent message length: %d != %zu\n",
-			wsm->len, read_len - 2);
+			wsm->len, read_len);
 		print_hex_dump(KERN_INFO, "wsm: ", DUMP_PREFIX_OFFSET, 16, 1,
 			       wsm, read_len, true);
 		goto err;
