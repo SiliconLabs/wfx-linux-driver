@@ -42,6 +42,10 @@ static int gpio_wakeup = -2;
 module_param(gpio_wakeup, int, 0644);
 MODULE_PARM_DESC(gpio_wakeup, "gpio number for wakeup. -1 for none.");
 
+static char *sl_key = NULL;
+module_param(sl_key, charp, 0600);
+MODULE_PARM_DESC(sl_key, "Secret key for secure link (expect 64 hexdecimal digits)");
+
 #define RATETAB_ENT(_rate, _rateid, _flags) { \
 	.bitrate	= (_rate),   \
 	.hw_value	= (_rateid), \
@@ -209,6 +213,28 @@ struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *lab
 	return ret;
 }
 
+static void wfx_fill_sl_key(struct device *dev, struct wfx_platform_data *pdata)
+{
+	const char *ascii_key = NULL;
+	int ret;
+
+	if (sl_key)
+		ascii_key = sl_key;
+	if (!ascii_key)
+		of_property_read_string(dev->of_node, "sl_key", &ascii_key);
+	if (!ascii_key)
+		return;
+#ifndef CONFIG_WFX_SECURE_LINK
+	dev_err(dev, "secret key was provided but this driver does not support secure link\n");
+	return;
+#endif
+	ret = hex2bin(pdata->sl_key, ascii_key, sizeof(pdata->sl_key));
+	if (ret) {
+		dev_err(dev, "ignoring malformatted key: %s\n", ascii_key);
+		memset(pdata->sl_key, 0, sizeof(pdata->sl_key));
+	}
+}
+
 struct wfx_dev *wfx_init_common(struct device *dev,
 				const struct wfx_platform_data *pdata,
 				const struct hwbus_ops *hwbus_ops,
@@ -271,6 +297,7 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	memcpy(&wdev->pdata, pdata, sizeof(*pdata));
 	of_property_read_string(dev->of_node, "config-file", &wdev->pdata.file_pds);
 	wdev->pdata.gpio_wakeup = wfx_get_gpio(dev, gpio_wakeup, "wakeup");
+	wfx_fill_sl_key(dev, &wdev->pdata);
 	// LDPC support was not yet tested
 	wdev->pdata.support_ldpc = false;
 
