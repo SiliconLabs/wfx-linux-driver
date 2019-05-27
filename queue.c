@@ -19,7 +19,7 @@
 	struct sk_buff		*skb;
 	u32			packet_id;
 	unsigned long		queue_timestamp;
-	unsigned long		xmit_timestamp;
+	ktime_t			xmit_timestamp;
 	struct wfx_txpriv	txpriv;
 	u8			generation;
 };
@@ -397,7 +397,7 @@ int wfx_queue_get(struct wfx_queue *queue,
 		list_move_tail(&item->head, &queue->pending);
 		++queue->num_pending;
 		--queue->link_map_cache[item->txpriv.link_id];
-		item->xmit_timestamp = jiffies;
+		item->xmit_timestamp = ktime_get();
 
 		spin_lock_bh(&stats->lock);
 		--stats->num_queued;
@@ -552,7 +552,7 @@ void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 {
 	struct wfx_queue *queue;
 	struct wfx_queue_item *item;
-	unsigned long tmp;
+	ktime_t now = ktime_get();
 	int i;
 
 	dev_info(wdev->dev, "Frames stuck in firmware since %dms or more:\n", limit_ms);
@@ -560,9 +560,10 @@ void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 		queue = &wdev->tx_queue[i];
 		spin_lock_bh(&queue->lock);
 		list_for_each_entry(item, &queue->pending, head) {
-			tmp = item->xmit_timestamp + msecs_to_jiffies(limit_ms);
-			if (time_is_before_jiffies(tmp))
-				dev_info(wdev->dev, "   id %08x sent %ums ago", item->packet_id, jiffies_to_msecs(jiffies - item->xmit_timestamp));
+			if (ktime_after(now, ktime_add_ms(item->xmit_timestamp, limit_ms)))
+				dev_info(wdev->dev, "   id %08x sent %ums ago",
+					 item->packet_id,
+					 (unsigned int) ktime_ms_delta(now, item->xmit_timestamp));
 		}
 		spin_unlock_bh(&queue->lock);
 	}
