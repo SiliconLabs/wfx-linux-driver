@@ -90,7 +90,6 @@ int wfx_queue_get(struct wfx_queue *queue,
 		     struct ieee80211_tx_info **tx_info,
 		     const struct wfx_txpriv **txpriv);
 int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id);
-int wfx_queue_requeue_all(struct wfx_queue *queue);
 int wfx_queue_remove(struct wfx_queue *queue,
 			u32 packet_id);
 int wfx_queue_get_skb(struct wfx_queue *queue, u32 packet_id,
