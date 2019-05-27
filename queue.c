@@ -568,27 +568,6 @@ void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 	}
 }
 
-bool wfx_queue_get_xmit_timestamp(struct wfx_queue *queue,
-				     unsigned long *timestamp,
-				     u32 pending_frame_id)
-{
-	struct wfx_queue_item *item;
-	bool ret;
-
-	spin_lock_bh(&queue->lock);
-	ret = !list_empty(&queue->pending);
-	if (ret) {
-		list_for_each_entry(item, &queue->pending, head) {
-			if (item->packet_id != pending_frame_id)
-				if (time_before(item->xmit_timestamp,
-						*timestamp))
-					*timestamp = item->xmit_timestamp;
-		}
-	}
-	spin_unlock_bh(&queue->lock);
-	return ret;
-}
-
 bool wfx_queue_stats_is_empty(struct wfx_queue_stats *stats,
 				 u32 link_id_map)
 {
