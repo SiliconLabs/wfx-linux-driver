@@ -930,7 +930,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 		mutex_unlock(&wvif->bss_loss_lock);
 
 		if (!arg->Status) {
-			_trace_tx_stats(arg);
+			_trace_tx_stats(arg, wfx_queue_get_pkt_us_delay(queue, arg->PacketId));
 			tx->flags |= IEEE80211_TX_STAT_ACK;
 			++tx_count;
 			wfx_debug_txed(wdev);
