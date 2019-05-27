@@ -97,6 +97,7 @@ int wfx_queue_get_skb(struct wfx_queue *queue, u32 packet_id,
 			 const struct wfx_txpriv **txpriv);
 void wfx_queue_lock(struct wfx_queue *queue);
 void wfx_queue_unlock(struct wfx_queue *queue);
+unsigned wfx_queue_get_pkt_us_delay(struct wfx_queue *queue, u32 pkt_id);
 
 bool wfx_queue_stats_is_empty(struct wfx_queue_stats *stats,
 				 u32 link_id_map);

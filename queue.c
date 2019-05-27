@@ -569,6 +569,14 @@ void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 	}
 }
 
+unsigned wfx_queue_get_pkt_us_delay(struct wfx_queue *queue, u32 pkt_id)
+{
+	ktime_t now = ktime_get();
+	ktime_t xmit_ts = queue->pool[pkt_id & 0xFF].xmit_timestamp;
+
+	return ktime_us_delta(now, xmit_ts);
+}
+
 bool wfx_queue_stats_is_empty(struct wfx_queue_stats *stats,
 				 u32 link_id_map)
 {
