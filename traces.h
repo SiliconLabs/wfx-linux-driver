@@ -327,6 +327,30 @@ DEFINE_EVENT(io_data, io_read,
 #define _trace_io_ind_read(reg, addr, io_buf, len) trace_io_read(reg, addr, io_buf, len)
 #define _trace_io_read(reg, io_buf, len) trace_io_read(reg, -1, io_buf, len)
 
+TRACE_EVENT(tx_stats,
+	TP_PROTO(WsmHiTxCnfBody_t *tx_cnf),
+	TP_ARGS(tx_cnf),
+	TP_STRUCT__entry(
+		__field(int, pkt_id)
+		__field(int, delay_media)
+		__field(int, delay_queue)
+		__field(int, ack_failures)
+	),
+	TP_fast_assign(
+		__entry->pkt_id = tx_cnf->PacketId;
+		__entry->delay_media = tx_cnf->MediaDelay;
+		__entry->delay_queue = tx_cnf->TxQueueDelay;
+		__entry->ack_failures = tx_cnf->AckFailures;
+	),
+	TP_printk("packet ID: %08x, FW delays media/queue: %4dus/%4dus, %d retries",
+		__entry->pkt_id,
+		__entry->delay_media,
+		__entry->delay_queue,
+		__entry->ack_failures
+	)
+);
+#define _trace_tx_stats(tx_cnf) trace_tx_stats(tx_cnf)
+
 TRACE_EVENT(bh_stats,
 	TP_PROTO(int ind, int req, int cnf, int busy, bool release),
 	TP_ARGS(ind, req, cnf, busy, release),

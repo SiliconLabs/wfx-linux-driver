@@ -13,6 +13,7 @@
 #include "bh.h"
 #include "sta.h"
 #include "debug.h"
+#include "traces.h"
 
 #define WFX_INVALID_RATE_ID (0xFF)
 
@@ -929,6 +930,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 		mutex_unlock(&wvif->bss_loss_lock);
 
 		if (!arg->Status) {
+			_trace_tx_stats(arg);
 			tx->flags |= IEEE80211_TX_STAT_ACK;
 			++tx_count;
 			wfx_debug_txed(wdev);
