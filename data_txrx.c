@@ -932,13 +932,8 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 			tx->flags |= IEEE80211_TX_STAT_ACK;
 			++tx_count;
 			wfx_debug_txed(wdev);
-			if (arg->TxResultFlags.Aggr) {
-				/* Do not report aggregation to mac80211:
-				 * it confuses minstrel a lot.
-				 */
-				/* tx->flags |= IEEE80211_TX_STAT_AMPDU; */
+			if (arg->TxResultFlags.Aggr)
 				wfx_debug_txed_agg(wdev);
-			}
 		} else {
 			if (tx_count)
 				++tx_count;
