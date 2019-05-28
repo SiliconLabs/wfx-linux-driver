@@ -175,7 +175,7 @@ DECLARE_EVENT_CLASS(wsm_data,
 	),
 	TP_fast_assign(
 		int header_len;
-		__entry->msg_len = wsm->len;
+		__entry->msg_len = wsm->len - sizeof(struct wmsg);
 		__entry->msg_id = wsm->id;
 		__entry->if_id = wsm->interface;
 		if (is_recv)
@@ -190,8 +190,8 @@ DECLARE_EVENT_CLASS(wsm_data,
 			__entry->mib = -1;
 			header_len = 0;
 		}
-		__entry->is_longer =  __entry->msg_len - header_len > 32 ? true : false;
-		__entry->buf_len = min(32, __entry->msg_len - header_len);
+		__entry->buf_len = min(__entry->msg_len - header_len, 32);
+		__entry->is_longer = __entry->msg_len - header_len > 32;
 		memcpy(__entry->buf, wsm->body + header_len, __entry->buf_len);
 	),
 	TP_printk("%d:%s_%s%s%s: %s%s (%d bytes)",
