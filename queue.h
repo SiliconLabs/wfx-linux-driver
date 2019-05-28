@@ -10,8 +10,6 @@
 
 #include "wsm_cmd_api.h"
 
-/* private */ struct wfx_queue_item;
-
 /* extern */ struct sk_buff;
 /* extern */ struct wfx_dev;
 /* extern */ struct wfx_vif;
@@ -23,6 +21,25 @@
 typedef void (*wfx_queue_skb_dtor_t)(struct wfx_dev *wdev,
 					struct sk_buff *skb,
 					const struct wfx_txpriv *txpriv);
+
+struct wfx_txpriv {
+	u8 link_id;
+	u8 raw_link_id;
+	u8 tid;
+	u8 rate_id;
+	u8 offset;
+	u8 vif_id;
+};
+
+struct wfx_queue_item {
+	struct list_head	head;
+	struct sk_buff		*skb;
+	u32			packet_id;
+	unsigned long		queue_timestamp;
+	ktime_t			xmit_timestamp;
+	struct wfx_txpriv	txpriv;
+	u8			generation;
+};
 
 struct wfx_queue {
 	struct wfx_queue_stats *stats;
@@ -52,15 +69,6 @@ struct wfx_queue_stats {
 	wait_queue_head_t	wait_link_id_empty;
 	wfx_queue_skb_dtor_t	skb_dtor;
 	struct wfx_dev		*wdev;
-};
-
-struct wfx_txpriv {
-	u8 link_id;
-	u8 raw_link_id;
-	u8 tid;
-	u8 rate_id;
-	u8 offset;
-	u8 vif_id;
 };
 
 int wfx_queue_stats_init(struct wfx_queue_stats *stats,

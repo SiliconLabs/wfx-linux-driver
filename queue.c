@@ -13,17 +13,6 @@
 #include "wsm_rx.h"
 #include "debug.h"
 
-/* private */ struct wfx_queue_item
-{
-	struct list_head	head;
-	struct sk_buff		*skb;
-	u32			packet_id;
-	unsigned long		queue_timestamp;
-	ktime_t			xmit_timestamp;
-	struct wfx_txpriv	txpriv;
-	u8			generation;
-};
-
 static inline void __wfx_queue_lock(struct wfx_queue *queue)
 {
 	struct wfx_queue_stats *stats = queue->stats;
