@@ -73,7 +73,8 @@ typedef enum WsmOpPowerMode_e {
 
 typedef struct WsmHiMibGlOperationalPowerMode_s {
 	uint8_t    PowerMode:4;
-	uint8_t    Reserved1:4;
+	uint8_t    Reserved1:3;
+	uint8_t    WupIndActivation:1;
 	uint8_t    Reserved2[3];
 } __packed WsmHiMibGlOperationalPowerMode_t;
 
