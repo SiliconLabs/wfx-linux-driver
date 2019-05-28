@@ -110,7 +110,9 @@ static inline int wsm_beacon_filter_control(struct wfx_dev *wdev, int enable,
 
 static inline int wsm_set_operational_mode(struct wfx_dev *wdev, enum WsmOpPowerMode_e mode)
 {
-	uint32_t val = mode;
+	WsmHiMibGlOperationalPowerMode_t val = {
+		.PowerMode = mode,
+	};
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_GL_OPERATIONAL_POWER_MODE,
 			     &val, sizeof(val), -1);
