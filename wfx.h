@@ -163,6 +163,7 @@ struct wfx_dev {
 
 	/* For debugfs 'rx_stats' file */
 	HiRxStats_t rx_stats;
+	struct mutex rx_stats_lock;
 };
 
 struct wfx_vif {

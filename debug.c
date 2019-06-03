@@ -421,6 +421,7 @@ static int wfx_rx_stats_show(struct seq_file *seq, void *v)
 	HiRxStats_t *st = &wdev->rx_stats;
 	int i;
 
+	mutex_lock(&wdev->rx_stats_lock);
 	seq_printf(seq, "Timestamp: %dus\n", st->Date);
 	seq_printf(seq, "Low power clock: frequency %uHz, external %s\n",
 		st->PwrClkFreq,
@@ -436,6 +437,7 @@ static int wfx_rx_stats_show(struct seq_file *seq, void *v)
 				   st->Per[i], st->Rssi[i] / 100,
 				   st->Snr[i] / 100, st->Cfo[i]);
 	}
+	mutex_unlock(&wdev->rx_stats_lock);
 
 	return 0;
 }

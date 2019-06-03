@@ -276,6 +276,7 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	init_completion(&wdev->firmware_ready);
 	init_wsm_cmd(&wdev->wsm_cmd);
 	mutex_init(&wdev->conf_mutex);
+	mutex_init(&wdev->rx_stats_lock);
 
 	if (wfx_queue_stats_init(&wdev->tx_queue_stats, WFX_LINK_ID_MAX,
 				 wfx_skb_dtor, wdev)) {
@@ -301,6 +302,7 @@ void wfx_free_common(struct wfx_dev *wdev)
 {
 	int i;
 
+	mutex_destroy(&wdev->rx_stats_lock);
 	mutex_destroy(&wdev->conf_mutex);
 	for (i = 0; i < 4; ++i)
 		wfx_queue_deinit(&wdev->tx_queue[i]);

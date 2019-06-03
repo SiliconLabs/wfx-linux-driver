@@ -247,7 +247,9 @@ static int wsm_generic_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 		dev_info(wdev->dev, "%s", (char *) body->IndicationData.RawData);
 		return 0;
 	case HI_GENERIC_INDICATION_TYPE_RX_STATS:
+		mutex_lock(&wdev->rx_stats_lock);
 		memcpy(&wdev->rx_stats, &body->IndicationData.RxStats, sizeof(wdev->rx_stats));
+		mutex_unlock(&wdev->rx_stats_lock);
 		return 0;
 	default:
 		dev_err(wdev->dev, "generic_indication: unknown indication type: %#.8x\n", body->IndicationType);
