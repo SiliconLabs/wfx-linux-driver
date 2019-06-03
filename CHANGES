@@ -16,6 +16,7 @@ Changes in 2.2
   * SPI bus is now configured to use MODE2 of Ineo chipset. Byte swapping
     before/after SPI bus access is no more necessary (IPWHIFER-368,
     IPWHIFER-416).
+  * Device now go to deep sleep mode when unbind (IPWHIFER-442)
   * Remove support for monitor mode since it has never worked (IPWHIFER-378).
   * Remove support for /sys/kernel/debug/ieee80211/phy0/wfx/wsm_params. It was a
     hack and was never really used.
@@ -27,7 +28,9 @@ Changes in 2.2
   * Allow to trace piggyback values.
   * Allow to trace BH stats.
   * Allow to trace TX stats.
-  * Fix wrong error message if user interrupt device probing.
+  * Fix values returned in /sys/kernel/debug/ieee80211/phy0/wfx/counters
+    (IPWHIFER-443)
+  * Fix wrong error message if user interrupts device probing.
   * Fix warning about register access issued during device unbind.
   * Fix message payload displayed by tracepoints wsm_*
   * If frames are stuck in firmware, driver is able to dump their IDs.
