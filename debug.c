@@ -349,8 +349,10 @@ static int wfx_counters_show(struct seq_file *seq, void *v)
 	WsmHiMibCountTable_t counters;
 
 	ret = wsm_get_counters_table(wdev, &counters);
-	if (ret)
+	if (ret < 0)
 		return ret;
+	if (ret > 0)
+		return -EIO;
 
 #define PUT_COUNTER(name) \
 	seq_printf(seq, "%24s %d\n", #name ":", le32_to_cpu(counters.Count##name))
