@@ -357,28 +357,33 @@ static int wfx_counters_show(struct seq_file *seq, void *v)
 #define PUT_COUNTER(name) \
 	seq_printf(seq, "%24s %d\n", #name ":", le32_to_cpu(counters.Count##name))
 
-	PUT_COUNTER(PlcpErrors);
-	PUT_COUNTER(FcsErrors);
 	PUT_COUNTER(TxPackets);
-	PUT_COUNTER(RxPackets);
-	PUT_COUNTER(RxPacketErrors);
-	PUT_COUNTER(RxDecryptionFailures);
-	PUT_COUNTER(RxMicFailures);
-	PUT_COUNTER(RxNoKeyFailures);
 	PUT_COUNTER(TxMulticastFrames);
 	PUT_COUNTER(TxFramesSuccess);
 	PUT_COUNTER(TxFrameFailures);
 	PUT_COUNTER(TxFramesRetried);
 	PUT_COUNTER(TxFramesMultiRetried);
-	PUT_COUNTER(RxFrameDuplicates);
+
 	PUT_COUNTER(RtsSuccess);
 	PUT_COUNTER(RtsFailures);
 	PUT_COUNTER(AckFailures);
-	PUT_COUNTER(RxMulticastFrames);
+
+	PUT_COUNTER(RxPackets);
 	PUT_COUNTER(RxFramesSuccess);
+	PUT_COUNTER(RxPacketErrors);
+	PUT_COUNTER(PlcpErrors);
+	PUT_COUNTER(FcsErrors);
+	PUT_COUNTER(RxDecryptionFailures);
+	PUT_COUNTER(RxMicFailures);
+	PUT_COUNTER(RxNoKeyFailures);
+	PUT_COUNTER(RxFrameDuplicates);
+	PUT_COUNTER(RxMulticastFrames);
 	PUT_COUNTER(RxCMACICVErrors);
 	PUT_COUNTER(RxCMACReplays);
 	PUT_COUNTER(RxMgmtCCMPReplays);
+
+	PUT_COUNTER(RxBeacon);
+	PUT_COUNTER(MissBeacon);
 
 #undef PUT_COUNTER
 
