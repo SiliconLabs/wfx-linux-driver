@@ -140,12 +140,13 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len)
 {
 	int ret;
 	struct wmsg *hdr;
+	int buf_len = sizeof(WsmHiReadMibCnfBody_t) + val_len;
 	WsmHiReadMibReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
-	WsmHiReadMibCnfBody_t *reply = kmalloc(sizeof(*reply) + val_len, GFP_KERNEL);
+	WsmHiReadMibCnfBody_t *reply = kmalloc(buf_len, GFP_KERNEL);
 
 	body->MibId = cpu_to_le16(id);
 	wfx_fill_header(hdr, -1, WSM_HI_READ_MIB_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, reply, sizeof(*reply), false);
+	ret = wfx_cmd_send(wdev, hdr, reply, buf_len, false);
 
 	if (!ret && id != reply->MibId) {
 		dev_warn(wdev->dev, "%s: confirmation mismatch request\n", __func__);
@@ -166,8 +167,8 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len)
 int wsm_write_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len, int Id)
 {
 	int ret;
-	int buf_len = sizeof(WsmHiWriteMibReqBody_t) + val_len;
 	struct wmsg *hdr;
+	int buf_len = sizeof(WsmHiWriteMibReqBody_t) + val_len;
 	WsmHiWriteMibReqBody_t *body = wfx_alloc_wsm(buf_len, &hdr);
 
 	body->MibId = cpu_to_le16(id);
