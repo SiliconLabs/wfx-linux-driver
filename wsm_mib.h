@@ -61,10 +61,17 @@ static inline int wsm_set_rcpi_rssi_threshold(struct wfx_dev *wdev,
 }
 
 static inline int wsm_get_counters_table(struct wfx_dev *wdev,
-					 WsmHiMibCountTable_t *arg)
+					 WsmHiMibExtendedCountTable_t *arg)
 {
-	return wsm_read_mib(wdev, WSM_MIB_ID_COUNTERS_TABLE,
-			    arg, sizeof(*arg));
+	if (wfx_api_older_than(wdev, 1, 3)) {
+		// WsmHiMibExtendedCountTable_t is wider than WsmHiMibCountTable_t
+		memset(arg, 0xFF, sizeof(*arg));
+		return wsm_read_mib(wdev, WSM_MIB_ID_COUNTERS_TABLE,
+				    arg, sizeof(WsmHiMibCountTable_t));
+	} else {
+		return wsm_read_mib(wdev, WSM_MIB_ID_EXTENDED_COUNTERS_TABLE,
+				    arg, sizeof(WsmHiMibExtendedCountTable_t));
+	}
 }
 
 static inline int wsm_set_macaddr(struct wfx_dev *wdev, u8 *mac, int Id)

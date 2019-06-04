@@ -346,7 +346,7 @@ static int wfx_counters_show(struct seq_file *seq, void *v)
 {
 	int ret;
 	struct wfx_dev *wdev = seq->private;
-	WsmHiMibCountTable_t counters;
+	WsmHiMibExtendedCountTable_t counters;
 
 	ret = wsm_get_counters_table(wdev, &counters);
 	if (ret < 0)
