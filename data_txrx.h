@@ -32,9 +32,8 @@ struct tx_policy_cache_entry {
 	struct list_head link;
 };
 
-#define TX_POLICY_CACHE_SIZE	(8)
 struct tx_policy_cache {
-	struct tx_policy_cache_entry cache[TX_POLICY_CACHE_SIZE];
+	struct tx_policy_cache_entry cache[WSM_MIB_NUM_TX_RATE_RETRY_POLICIES];
 	struct list_head used;
 	struct list_head free;
 	spinlock_t lock; /* Protect policy cache */

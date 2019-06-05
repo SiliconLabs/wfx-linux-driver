@@ -254,7 +254,7 @@ void tx_policy_clean(struct wfx_vif *wvif)
 	spin_lock_bh(&cache->lock);
 	locked = list_empty(&cache->free);
 
-	for (idx = 0; idx < TX_POLICY_CACHE_SIZE; idx++) {
+	for (idx = 0; idx < WSM_MIB_NUM_TX_RATE_RETRY_POLICIES; idx++) {
 		entry = &cache->cache[idx];
 		/* Policy usage count should be 0 at this time as all queues
 		   should be empty
@@ -286,7 +286,7 @@ void tx_policy_init(struct wfx_vif *wvif)
 	INIT_LIST_HEAD(&cache->used);
 	INIT_LIST_HEAD(&cache->free);
 
-	for (i = 0; i < TX_POLICY_CACHE_SIZE; ++i)
+	for (i = 0; i < WSM_MIB_NUM_TX_RATE_RETRY_POLICIES; ++i)
 		list_add(&cache->cache[i].link, &cache->free);
 }
 
@@ -353,12 +353,12 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
 
 	arg = kzalloc(sizeof(WsmHiMibSetTxRateRetryPolicy_t) +
-		      sizeof(WsmHiMibTxRateRetryPolicy_t) * TX_POLICY_CACHE_SIZE,
+		      sizeof(WsmHiMibTxRateRetryPolicy_t) * WSM_MIB_NUM_TX_RATE_RETRY_POLICIES,
 		      GFP_KERNEL);
 	spin_lock_bh(&cache->lock);
 
 	/* Upload only modified entries. */
-	for (i = 0; i < TX_POLICY_CACHE_SIZE; ++i) {
+	for (i = 0; i < WSM_MIB_NUM_TX_RATE_RETRY_POLICIES; ++i) {
 		struct tx_policy *src = &cache->cache[i].policy;
 
 		if (src->retry_count && !src->uploaded) {
