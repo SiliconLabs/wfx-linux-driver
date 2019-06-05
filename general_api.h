@@ -171,6 +171,9 @@ typedef struct HiStartupIndBody_s {
 	uint8_t    FirmwareLabel[API_FIRMWARE_LABEL_SIZE];
 } __packed HiStartupIndBody_t;
 
+typedef struct HiWakeupIndBody_s {
+} __packed HiWakeupIndBody_t;
+
 typedef struct HiConfigurationReqBody_s {
 	uint16_t   Length;
 	uint8_t    PdsData[0];
