@@ -19,7 +19,6 @@
 #define HI_API_VERSION_MINOR                0x00
 #define HI_API_VERSION_MAJOR                0x01
 
-#define API_VARIABLE_SIZE_ARRAY_DUMMY_SIZE  1
 #define API_MAC_ADDR_SIZE                   6
 
 #define GENERAL_INTERFACE_ID                2

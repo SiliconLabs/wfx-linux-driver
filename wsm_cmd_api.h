@@ -522,8 +522,6 @@ typedef struct WsmHiSuspendResumeFlags_s {
 	uint8_t    Reserved3;
 } __packed WsmHiSuspendResumeFlags_t;
 
-#define WSM_API_TX_RESUME_FLAGS_PER_IF_SIZE             3
-
 typedef struct WsmHiSuspendResumeTxIndBody_s {
 	WsmHiSuspendResumeFlags_t SuspendResumeFlags;
 	uint16_t   PeerStaSet;
