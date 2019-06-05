@@ -235,10 +235,9 @@ typedef struct HiRxStats_s {
 	int8_t     CurrentTemp;
 } __packed HiRxStats_t;
 
-#define MAX_GENERIC_INDICATION_DATA_SIZE              376
 typedef union HiIndicationData_u {
 	HiRxStats_t                                   RxStats;
-	uint8_t                                       RawData[MAX_GENERIC_INDICATION_DATA_SIZE];
+	uint8_t                                       RawData[1];
 } HiIndicationData_t;
 
 typedef struct HiGenericIndBody_s {
