@@ -96,10 +96,10 @@ typedef enum WsmCcaThrMode_e {
 	WSM_CCA_THR_MODE_ABSOLUTE = 0x1
 } WsmCcaThrMode;
 
-typedef struct WSM_HI_MIB_GL_CCA_CONFIG_E {
+typedef struct WsmHiMibGlCcaConfig_s {
 	uint8_t  CcaThrMode;
 	uint8_t  Reserved[3];
-} __packed WSM_HI_MIB_GL_CCA_CONFIG;
+} __packed WsmHiMibGlCcaConfig_t;
 
 #define MAX_NUMBER_DATA_FILTERS             0xA
 
