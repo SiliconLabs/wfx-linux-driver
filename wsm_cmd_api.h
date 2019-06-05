@@ -316,7 +316,7 @@ typedef struct WsmHiTxCnfBody_s {
 
 typedef struct WsmHiMultiTransmitCnfBody_s {
 	uint32_t   NumTxConfs;
-	WsmHiTxCnfBody_t   TxConfPayload[API_VARIABLE_SIZE_ARRAY_DUMMY_SIZE];
+	WsmHiTxCnfBody_t   TxConfPayload[0];
 } __packed WsmHiMultiTransmitCnfBody_t;
 
 typedef enum WsmRiFlagsEncrypt_e {
