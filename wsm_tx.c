@@ -136,7 +136,7 @@ int wsm_reset(struct wfx_dev *wdev, bool reset_stat, int Id)
 	return ret;
 }
 
-int wsm_read_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len)
+int wsm_read_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len, int Id)
 {
 	int ret;
 	struct wmsg *hdr;
@@ -145,7 +145,7 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len)
 	WsmHiReadMibCnfBody_t *reply = kmalloc(buf_len, GFP_KERNEL);
 
 	body->MibId = cpu_to_le16(id);
-	wfx_fill_header(hdr, -1, WSM_HI_READ_MIB_REQ_ID, sizeof(*body));
+	wfx_fill_header(hdr, Id, WSM_HI_READ_MIB_REQ_ID, sizeof(*body));
 	ret = wfx_cmd_send(wdev, hdr, reply, buf_len, false);
 
 	if (!ret && id != reply->MibId) {
