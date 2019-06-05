@@ -134,7 +134,7 @@ typedef struct WsmHiIeFlags_s {
 typedef struct WsmHiIeTlv_s {
 	uint8_t    Type;
 	uint8_t    Length;
-	uint8_t    Data[API_VARIABLE_SIZE_ARRAY_DUMMY_SIZE];
+	uint8_t    Data[0];
 } __packed WsmHiIeTlv_t;
 
 typedef struct WsmHiUpdateIeReqBody_s {
