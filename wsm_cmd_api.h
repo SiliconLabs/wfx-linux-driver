@@ -516,10 +516,10 @@ typedef struct WsmHiMapLinkCnfBody_s {
 
 typedef struct WsmHiSuspendResumeFlags_s {
 	uint8_t    Resume:1;
-	uint8_t    Ac:2;
+	uint8_t    Reserved1:2;
 	uint8_t    BcMcOnly:1;
-	uint8_t    Reserved1:4;
-	uint8_t    Reserved2;
+	uint8_t    Reserved2:4;
+	uint8_t    Reserved3;
 } __packed WsmHiSuspendResumeFlags_t;
 
 #define WSM_API_TX_RESUME_FLAGS_PER_IF_SIZE             3
