@@ -259,7 +259,8 @@ typedef enum WsmHiError_e {
 	WSM_HI_ERROR_OUTDATED_SESSION_KEY          = 0x2,
 	WSM_HI_ERROR_INVALID_SESSION_KEY           = 0x3,
 	WSM_HI_ERROR_OOR_VOLTAGE                   = 0x4,
-	WSM_HI_ERROR_PDS_VERSION                   = 0x5
+	WSM_HI_ERROR_PDS_VERSION                   = 0x5,
+	WSM_HI_ERROR_OOR_TEMPERATURE               = 0x6
 } WsmHiError;
 
 #define API_DATA_SIZE_124                               124
