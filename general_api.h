@@ -262,10 +262,9 @@ typedef enum WsmHiError_e {
 	WSM_HI_ERROR_OOR_TEMPERATURE               = 0x6
 } WsmHiError;
 
-#define API_DATA_SIZE_124                               124
 typedef struct HiErrorIndBody_s {
 	uint32_t   Type;
-	uint8_t    Data[API_DATA_SIZE_124];
+	uint8_t    Data[0];
 } __packed HiErrorIndBody_t;
 
 typedef enum SecureLinkState_e {
