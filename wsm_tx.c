@@ -108,6 +108,25 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply, size_t
 	return ret;
 }
 
+// This function is special. After HI_SHUT_DOWN_REQ_ID, chip go to deep sleep
+// and won't reply to any request anymore. We need to slightly hack struct
+// wsm_cmd for that job. Be carefull to only call this funcion during device
+// unregister.
+int wsm_shutdown(struct wfx_dev *wdev)
+{
+	int ret;
+	struct wmsg *hdr;
+
+	wfx_alloc_wsm(0, &hdr);
+	wfx_fill_header(hdr, -1, HI_SHUT_DOWN_REQ_ID, 0);
+	// After this command, chip go to deep sleep and won't reply
+	complete(&wdev->wsm_cmd.done);
+	wdev->wsm_cmd.ret = 0;
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	kfree(hdr);
+	return ret;
+}
+
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 {
 	int ret;

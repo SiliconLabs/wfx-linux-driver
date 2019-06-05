@@ -35,6 +35,7 @@ struct wsm_cmd {
 void init_wsm_cmd(struct wsm_cmd *wsm_cmd);
 int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply, size_t reply_len, bool async);
 
+int wsm_shutdown(struct wfx_dev *wdev);
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len);
 int wsm_reset(struct wfx_dev *wdev, bool reset_stat, int Id);
 int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *buf, size_t buf_size, int Id);

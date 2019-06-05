@@ -402,6 +402,7 @@ err2:
 void wfx_release(struct wfx_dev *wdev)
 {
 	ieee80211_unregister_hw(wdev->hw);
+	wsm_shutdown(wdev);
 	wfx_bh_unregister(wdev);
 }
 
