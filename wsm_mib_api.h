@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2018-2019, Silicon Laboratories Inc.
  */
+
 #ifndef _WSM_MIB_API_H_
 #define _WSM_MIB_API_H_
 
@@ -141,6 +142,7 @@ typedef struct WsmHiMibPortsDataFrameCondition_s {
 } __packed WsmHiMibPortsDataFrameCondition_t;
 
 #define WSM_API_MAGIC_PATTERN_SIZE                 32
+
 typedef struct WsmHiMibMagicDataFrameCondition_s {
 	uint8_t    ConditionIdx;
 	uint8_t    Offset;
@@ -191,9 +193,9 @@ typedef union WsmHiAddrType_u {
 } __packed WsmHiAddrType_t;
 
 typedef struct WsmHiMibUcMcBcDataFrameCondition_s {
-	uint8_t            ConditionIdx;
+	uint8_t    ConditionIdx;
 	WsmHiAddrType_t Param;
-	uint8_t            Reserved[2];
+	uint8_t    Reserved[2];
 } __packed WsmHiMibUcMcBcDataFrameCondition_t;
 
 typedef struct WsmHiMibConfigDataFilter_s {
@@ -248,6 +250,7 @@ typedef struct WsmHiMibRxFilter_s {
 
 #define WSM_API_OUI_SIZE                                3
 #define WSM_API_MATCH_DATA_SIZE                         3
+
 typedef struct WsmHiIeTableEntry_s {
 	uint8_t    IeId;
 	uint8_t    HasChanged:1;
@@ -509,7 +512,7 @@ typedef struct WsmHiMibTxRateRetryPolicy_s {
 	uint32_t   RateCountIndices2316;
 } __packed WsmHiMibTxRateRetryPolicy_t;
 
-#define WSM_MIB_NUM_TX_RATE_RETRY_POLICIES             16
+#define WSM_MIB_NUM_TX_RATE_RETRY_POLICIES    16
 
 typedef struct WsmHiMibSetTxRateRetryPolicy_s {
 	uint8_t    NumTxRatePolicies;

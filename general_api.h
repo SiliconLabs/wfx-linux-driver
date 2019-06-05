@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2018-2019, Silicon Laboratories Inc.
  */
+
 #ifndef _GENERAL_API_H_
 #define _GENERAL_API_H_
 
@@ -251,6 +252,7 @@ typedef struct HiGenericIndBody_s {
 typedef struct HiExceptionIndBody_s {
 	uint8_t    Data[HI_EXCEPTION_DATA_SIZE];
 } __packed HiExceptionIndBody_t;
+
 
 typedef enum WsmHiError_e {
 	WSM_HI_ERROR_FIRMWARE_ROLLBACK             = 0x0,

@@ -4,6 +4,7 @@
  *
  * Copyright (c) 2018-2019, Silicon Laboratories Inc.
  */
+
 #ifndef _WSM_CMD_API_H_
 #define _WSM_CMD_API_H_
 
@@ -138,8 +139,8 @@ typedef struct WsmHiIeTlv_s {
 
 typedef struct WsmHiUpdateIeReqBody_s {
 	WsmHiIeFlags_t IeFlags;
-	uint16_t          NumIEs;
-	WsmHiIeTlv_t   IE[0];
+	uint16_t   NumIEs;
+	WsmHiIeTlv_t IE[0];
 } __packed WsmHiUpdateIeReqBody_t;
 
 typedef struct WsmHiUpdateIeCnfBody_s {
@@ -371,7 +372,7 @@ typedef struct WsmHiEdcaQueueParamsReqBody_s {
 	uint16_t   CwMax;
 	uint16_t   TxOpLimit;
 	uint16_t   AllowedMediumTime;
-	uint32_t    Reserved3;
+	uint32_t   Reserved3;
 } __packed WsmHiEdcaQueueParamsReqBody_t;
 
 typedef struct WsmHiEdcaQueueParamsCnfBody_s {
