@@ -246,7 +246,7 @@ typedef struct HiGenericIndBody_s {
 } __packed HiGenericIndBody_t;
 
 
-#define HI_EXCEPTION_DATA_SIZE            80
+#define HI_EXCEPTION_DATA_SIZE            124
 
 typedef struct HiExceptionIndBody_s {
 	uint8_t    Data[HI_EXCEPTION_DATA_SIZE];
