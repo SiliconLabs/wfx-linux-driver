@@ -246,14 +246,6 @@ typedef struct HiGenericIndBody_s {
 	HiIndicationData_t IndicationData;
 } __packed HiGenericIndBody_t;
 
-typedef enum WsmHiDbg_e {
-	WSM_HI_DBG_UNDEF_INST                      = 0x0,
-	WSM_HI_DBG_PREFETCH_ABORT                  = 0x1,
-	WSM_HI_DBG_DATA_ABORT                      = 0x2,
-	WSM_HI_DBG_UNKNOWN_ERROR                   = 0x3,
-	WSM_HI_DBG_ASSERT                          = 0x4
-} WsmHiDbg;
-
 
 #define HI_EXCEPTION_DATA_SIZE            80
 
