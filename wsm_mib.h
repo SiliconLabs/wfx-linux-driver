@@ -101,8 +101,12 @@ static inline int wsm_set_beacon_filter_table(struct wfx_dev *wdev,
 					      WsmHiMibBcnFilterTable_t *ft,
 					      int Id)
 {
+	size_t buf_len = sizeof(WsmHiMibBcnFilterTable_t)
+		         + ft->NumOfInfoElmts * sizeof(WsmHiIeTableEntry_t);
+
+	cpu_to_le32s(&ft->NumOfInfoElmts);
 	return wsm_write_mib(wdev, WSM_MIB_ID_BEACON_FILTER_TABLE, ft,
-			     sizeof(*ft), Id);
+			     buf_len, Id);
 }
 
 static inline int wsm_beacon_filter_control(struct wfx_dev *wdev, int enable,

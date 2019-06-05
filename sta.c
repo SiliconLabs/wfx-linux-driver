@@ -648,25 +648,24 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	bool is_sta = wvif->vif && NL80211_IFTYPE_STATION == wvif->vif->type;
 	struct wsm_rx_filter l_rx_filter;
 	WsmHiMibBcnFilterEnable_t bf_ctrl;
-	WsmHiMibBcnFilterTable_t bf_tbl = {
-		.IeTable = {
-			{
-				.IeId        = WLAN_EID_VENDOR_SPECIFIC,
-				.HasChanged  = 1,
-				.NoLonger    = 1,
-				.HasAppeared = 1,
-				.Oui         = { 0x50, 0x6F, 0x9A},
-			}, {
-				.IeId        = WLAN_EID_HT_OPERATION,
-				.HasChanged  = 1,
-				.NoLonger    = 1,
-				.HasAppeared = 1,
-			}, {
-				.IeId        = WLAN_EID_ERP_INFO,
-				.HasChanged  = 1,
-				.NoLonger    = 1,
-				.HasAppeared = 1,
-			}
+	WsmHiMibBcnFilterTable_t *bf_tbl;
+	WsmHiIeTableEntry_t ie_tbl[] = {
+		{
+			.IeId        = WLAN_EID_VENDOR_SPECIFIC,
+			.HasChanged  = 1,
+			.NoLonger    = 1,
+			.HasAppeared = 1,
+			.Oui         = { 0x50, 0x6F, 0x9A},
+		}, {
+			.IeId        = WLAN_EID_HT_OPERATION,
+			.HasChanged  = 1,
+			.NoLonger    = 1,
+			.HasAppeared = 1,
+		}, {
+			.IeId        = WLAN_EID_ERP_INFO,
+			.HasChanged  = 1,
+			.NoLonger    = 1,
+			.HasAppeared = 1,
 		}
 	};
 
@@ -675,26 +674,28 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	if (wvif->state == WFX_STATE_PASSIVE)
 		return;
 
+	bf_tbl = kmalloc(sizeof(WsmHiMibBcnFilterTable_t) + sizeof(ie_tbl), GFP_KERNEL);
+	memcpy(bf_tbl->IeTable, ie_tbl, sizeof(ie_tbl));
 	if (wvif->disable_beacon_filter) {
 		bf_ctrl.Enable = 0;
 		bf_ctrl.BcnCount = 1;
-		bf_tbl.NumOfInfoElmts = cpu_to_le32(0);
+		bf_tbl->NumOfInfoElmts = 0;
 	} else if (is_p2p || !is_sta) {
 		bf_ctrl.Enable = WSM_BEACON_FILTER_ENABLE |
 			WSM_BEACON_FILTER_AUTO_ERP;
 		bf_ctrl.BcnCount = 0;
-		bf_tbl.NumOfInfoElmts = cpu_to_le32(2);
+		bf_tbl->NumOfInfoElmts = 2;
 	} else {
 		bf_ctrl.Enable = WSM_BEACON_FILTER_ENABLE;
 		bf_ctrl.BcnCount = 0;
-		bf_tbl.NumOfInfoElmts = cpu_to_le32(3);
+		bf_tbl->NumOfInfoElmts = 3;
 	}
 	if (is_p2p)
 		l_rx_filter.bssid = true;
 
 	ret = wsm_set_rx_filter(wvif->wdev, &l_rx_filter, wvif->Id);
 	if (!ret)
-		ret = wsm_set_beacon_filter_table(wvif->wdev, &bf_tbl, wvif->Id);
+		ret = wsm_set_beacon_filter_table(wvif->wdev, bf_tbl, wvif->Id);
 	if (!ret)
 		ret = wsm_beacon_filter_control(wvif->wdev, bf_ctrl.Enable, bf_ctrl.BcnCount, wvif->Id);
 	if (!ret)
@@ -702,6 +703,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	if (ret)
 		dev_err(wvif->wdev->dev,
 			  "Update filtering failed: %d.\n", ret);
+	kfree(bf_tbl);
 }
 
 void wfx_update_filtering_work(struct work_struct *work)
@@ -1193,6 +1195,9 @@ void wfx_event_handler_work(struct work_struct *work)
 #endif
 			break;
 		}
+		case WSM_EVENT_IND_PS_MODE_ERROR:
+			dev_warn(wvif->wdev->dev, "error while processing power save request\n");
+			break;
 		default:
 			dev_warn(wvif->wdev->dev, "Unhandled indication %.2x\n", event->evt.EventId);
 			break;

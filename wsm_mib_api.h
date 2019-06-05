@@ -262,10 +262,9 @@ typedef struct WsmHiIeTableEntry_s {
 	uint8_t    MatchData[WSM_API_MATCH_DATA_SIZE];
 } __packed WsmHiIeTableEntry_t;
 
-#define WSM_API_IE_TABLE_SIZE                           4
 typedef struct WsmHiMibBcnFilterTable_s {
 	uint32_t   NumOfInfoElmts;
-	WsmHiIeTableEntry_t IeTable[WSM_API_IE_TABLE_SIZE];
+	WsmHiIeTableEntry_t IeTable[0];
 } __packed WsmHiMibBcnFilterTable_t;
 
 typedef enum WsmBeaconFilter_e {
@@ -291,7 +290,7 @@ typedef struct WsmHiMibTsfCounter_s {
 } __packed WsmHiMibTsfCounter_t;
 
 typedef struct WsmHiMibStatsTable_s {
-	uint16_t   LatestSnr;
+	int16_t    LatestSnr;
 	uint8_t    LatestRcpi;
 	int8_t     LatestRssi;
 } __packed WsmHiMibStatsTable_t;
@@ -413,7 +412,7 @@ typedef enum WsmTmplt_e {
 	WSM_TMPLT_NA                               = 0x7
 } WsmTmplt;
 
-#define WSM_API_MAX_TEMPLATE_FRAME_SIZE                              1024
+#define WSM_API_MAX_TEMPLATE_FRAME_SIZE                              700
 
 typedef struct WsmHiMibTemplateFrame_s {
 	uint8_t    FrameType;
@@ -442,11 +441,13 @@ typedef struct WsmHiMibRcpiRssiThreshold_s {
 	uint8_t    RollingAverageCount;
 } __packed WsmHiMibRcpiRssiThreshold_t;
 
+#define DEFAULT_BA_MAX_RX_BUFFER_SIZE 16
+
 typedef struct WsmHiMibBlockAckPolicy_s {
 	uint8_t    BlockAckTxTidPolicy;
 	uint8_t    Reserved1;
 	uint8_t    BlockAckRxTidPolicy;
-	uint8_t    Reserved2;
+	uint8_t    BlockAckRxMaxBufferSize;
 } __packed WsmHiMibBlockAckPolicy_t;
 
 typedef struct WsmHiMibOverrideIntRate_s {
@@ -471,8 +472,7 @@ typedef struct WsmHiMibSetAssociationMode_s {
 	uint8_t    Mode:1;
 	uint8_t    Rateset:1;
 	uint8_t    Spacing:1;
-	uint8_t    Snoop:1;
-	uint8_t    Reserved:3;
+	uint8_t    Reserved:4;
 	uint8_t    PreambleType;
 	uint8_t    MixedOrGreenfieldType;
 	uint8_t    MpduStartSpacing;
@@ -484,9 +484,7 @@ typedef struct WsmHiMibSetUapsdInformation_s {
 	uint8_t    TrigBe:1;
 	uint8_t    TrigVideo:1;
 	uint8_t    TrigVoice:1;
-	uint8_t    PseudoUapsd:1;
-	uint8_t    NotAppendPspoll:1;
-	uint8_t    Reserved1:2;
+	uint8_t    Reserved1:4;
 	uint8_t    DelivBckgrnd:1;
 	uint8_t    DelivBe:1;
 	uint8_t    DelivVideo:1;
@@ -501,7 +499,7 @@ typedef struct WsmHiMibTxRateRetryPolicy_s {
 	uint8_t    PolicyIndex;
 	uint8_t    ShortRetryCount;
 	uint8_t    LongRetryCount;
-	uint8_t    IndexUse:2;
+	uint8_t    FirstRateSel:2;
 	uint8_t    Terminate:1;
 	uint8_t    CountInit:1;
 	uint8_t    Reserved1:4;
