@@ -315,6 +315,12 @@ int wfx_probe(struct wfx_dev *wdev)
 	int i;
 	int err = -EINVAL;
 	const void *macaddr;
+	struct gpio_desc *gpio_saved = wdev->pdata.gpio_wakeup;
+
+	// During first part of boot, gpio_wakeup cannot yet been used. So
+	// prevent bh() to touch it.
+	gpio_saved = wdev->pdata.gpio_wakeup;
+	wdev->pdata.gpio_wakeup = NULL;
 
 	wfx_bh_register(wdev);
 
@@ -353,6 +359,7 @@ int wfx_probe(struct wfx_dev *wdev)
 	if (err < 0)
 		goto err2;
 
+	wdev->pdata.gpio_wakeup = gpio_saved;
 	if (wdev->pdata.gpio_wakeup) {
 		dev_dbg(wdev->dev, "enable 'quiescent' power mode with gpio %d and PDS file %s\n",
 			desc_to_gpio(wdev->pdata.gpio_wakeup), wdev->pdata.file_pds);
