@@ -19,8 +19,6 @@
 #define HI_API_VERSION_MINOR                0x00
 #define HI_API_VERSION_MAJOR                0x01
 
-#define API_MAC_ADDR_SIZE                   6
-
 #define GENERAL_INTERFACE_ID                2
 
 #define HI_MSG_ID_MASK                      0x00FF
@@ -160,7 +158,7 @@ typedef struct HiStartupIndBody_s {
 	uint16_t   SizeInpChBuf;
 	uint8_t    NumLinksAP;
 	uint8_t    NumInterfaces;
-	uint8_t    MacAddr[2][API_MAC_ADDR_SIZE];
+	uint8_t    MacAddr[2][ETH_ALEN];
 	uint8_t    ApiVersionMinor;
 	uint8_t    ApiVersionMajor;
 	HiCapabilities_t Capabilities;

@@ -10,7 +10,6 @@
 
 #include "general_api.h"
 
-#define WSM_API_MAC_ADDR_SIZE                           API_MAC_ADDR_SIZE
 #define WSM_API_IPV4_ADDRESS_SIZE                       4
 #define WSM_API_IPV6_ADDRESS_SIZE                       16
 
@@ -160,7 +159,7 @@ typedef enum WsmMacAddrType_e {
 typedef struct WsmHiMibMacAddrDataFrameCondition_s {
 	uint8_t    ConditionIdx;
 	uint8_t    AddressType;
-	uint8_t    MacAddress[WSM_API_MAC_ADDR_SIZE];
+	uint8_t    MacAddress[ETH_ALEN];
 } __packed WsmHiMibMacAddrDataFrameCondition_t;
 
 typedef enum WsmIpAddrMode_e {
@@ -361,7 +360,7 @@ typedef struct WsmHiMibBeaconStats_s {
 } __packed WsmHiMibBeaconStats_t;
 
 typedef struct WsmHiMibMacAddress_s {
-	uint8_t    MacAddr[WSM_API_MAC_ADDR_SIZE];
+	uint8_t    MacAddr[ETH_ALEN];
 	uint16_t   Reserved;
 } __packed WsmHiMibMacAddress_t;
 

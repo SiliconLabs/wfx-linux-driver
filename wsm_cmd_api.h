@@ -14,7 +14,6 @@
 #define WSM_NUM_AC                             4
 
 #define WSM_API_SSID_SIZE                      32
-#define WSM_API_BSSID_SIZE                     ETH_ALEN
 
 typedef enum HiWsmRequestsIds_e {
 	WSM_HI_RESET_REQ_ID                             = 0x0a,
@@ -401,7 +400,7 @@ typedef struct WsmHiJoinReqBody_s {
 	uint8_t    Mode;
 	uint8_t    Band;
 	uint16_t   ChannelNumber;
-	uint8_t    BSSID[WSM_API_BSSID_SIZE];
+	uint8_t    BSSID[ETH_ALEN];
 	uint16_t   AtimWindow;
 	uint8_t    PreambleType;
 	uint8_t    ProbeForJoin;
@@ -505,7 +504,7 @@ typedef struct WsmHiMapLinkFlags_s {
 } __packed WsmHiMapLinkFlags_t;
 
 typedef struct WsmHiMapLinkReqBody_s {
-	uint8_t    MacAddr[WSM_API_MAC_ADDR_SIZE];
+	uint8_t    MacAddr[ETH_ALEN];
 	WsmHiMapLinkFlags_t MapLinkFlags;
 	uint8_t    PeerStaId;
 } __packed WsmHiMapLinkReqBody_t;
@@ -554,7 +553,7 @@ typedef enum WsmKeyType_e {
 } WsmKeyType;
 
 typedef struct WsmHiWepPairwiseKey_s {
-	uint8_t    PeerAddress[WSM_API_MAC_ADDR_SIZE];
+	uint8_t    PeerAddress[ETH_ALEN];
 	uint8_t    Reserved;
 	uint8_t    KeyLength;
 	uint8_t    KeyData[WSM_API_WEP_KEY_DATA_SIZE];
@@ -568,7 +567,7 @@ typedef struct WsmHiWepGroupKey_s {
 } __packed WsmHiWepGroupKey_t;
 
 typedef struct WsmHiTkipPairwiseKey_s {
-	uint8_t    PeerAddress[WSM_API_MAC_ADDR_SIZE];
+	uint8_t    PeerAddress[ETH_ALEN];
 	uint8_t    Reserved[2];
 	uint8_t    TkipKeyData[WSM_API_TKIP_KEY_DATA_SIZE];
 	uint8_t    RxMicKey[WSM_API_RX_MIC_KEY_SIZE];
@@ -584,7 +583,7 @@ typedef struct WsmHiTkipGroupKey_s {
 } __packed WsmHiTkipGroupKey_t;
 
 typedef struct WsmHiAesPairwiseKey_s {
-	uint8_t    PeerAddress[WSM_API_MAC_ADDR_SIZE];
+	uint8_t    PeerAddress[ETH_ALEN];
 	uint8_t    Reserved[2];
 	uint8_t    AesKeyData[WSM_API_AES_KEY_DATA_SIZE];
 } __packed WsmHiAesPairwiseKey_t;
@@ -597,7 +596,7 @@ typedef struct WsmHiAesGroupKey_s {
 } __packed WsmHiAesGroupKey_t;
 
 typedef struct WsmHiWapiPairwiseKey_s {
-	uint8_t    PeerAddress[WSM_API_MAC_ADDR_SIZE];
+	uint8_t    PeerAddress[ETH_ALEN];
 	uint8_t    KeyId;
 	uint8_t    Reserved;
 	uint8_t    WapiKeyData[WSM_API_WAPI_KEY_DATA_SIZE];
