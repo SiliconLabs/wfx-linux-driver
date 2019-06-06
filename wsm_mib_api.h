@@ -264,7 +264,7 @@ typedef struct WsmHiIeTableEntry_s {
 
 typedef struct WsmHiMibBcnFilterTable_s {
 	uint32_t   NumOfInfoElmts;
-	WsmHiIeTableEntry_t IeTable[0];
+	WsmHiIeTableEntry_t IeTable[];
 } __packed WsmHiMibBcnFilterTable_t;
 
 typedef enum WsmBeaconFilter_e {
@@ -515,7 +515,7 @@ typedef struct WsmHiMibTxRateRetryPolicy_s {
 typedef struct WsmHiMibSetTxRateRetryPolicy_s {
 	uint8_t    NumTxRatePolicies;
 	uint8_t    Reserved[3];
-	WsmHiMibTxRateRetryPolicy_t TxRateRetryPolicy[0];
+	WsmHiMibTxRateRetryPolicy_t TxRateRetryPolicy[];
 } __packed WsmHiMibSetTxRateRetryPolicy_t;
 
 typedef struct WsmHiMibProtectedMgmtPolicy_s {

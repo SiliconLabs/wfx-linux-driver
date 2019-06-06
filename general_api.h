@@ -180,7 +180,7 @@ typedef struct HiWakeupIndBody_s {
 
 typedef struct HiConfigurationReqBody_s {
 	uint16_t   Length;
-	uint8_t    PdsData[0];
+	uint8_t    PdsData[];
 } __packed HiConfigurationReqBody_t;
 
 typedef struct HiConfigurationCnfBody_s {
@@ -265,7 +265,7 @@ typedef enum WsmHiError_e {
 
 typedef struct HiErrorIndBody_s {
 	uint32_t   Type;
-	uint8_t    Data[0];
+	uint8_t    Data[];
 } __packed HiErrorIndBody_t;
 
 typedef enum SecureLinkState_e {

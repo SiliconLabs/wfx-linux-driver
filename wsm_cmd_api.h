@@ -110,13 +110,13 @@ typedef struct WsmHiReadMibCnfBody_s {
 	uint32_t   Status;
 	uint16_t   MibId;
 	uint16_t   Length;
-	uint8_t    MibData[0];
+	uint8_t    MibData[];
 } __packed WsmHiReadMibCnfBody_t;
 
 typedef struct WsmHiWriteMibReqBody_s {
 	uint16_t   MibId;
 	uint16_t   Length;
-	uint8_t    MibData[0];
+	uint8_t    MibData[];
 } __packed WsmHiWriteMibReqBody_t;
 
 typedef struct WsmHiWriteMibCnfBody_s {
@@ -134,13 +134,13 @@ typedef struct WsmHiIeFlags_s {
 typedef struct WsmHiIeTlv_s {
 	uint8_t    Type;
 	uint8_t    Length;
-	uint8_t    Data[0];
+	uint8_t    Data[];
 } __packed WsmHiIeTlv_t;
 
 typedef struct WsmHiUpdateIeReqBody_s {
 	WsmHiIeFlags_t IeFlags;
 	uint16_t   NumIEs;
-	WsmHiIeTlv_t IE[0];
+	WsmHiIeTlv_t IE[];
 } __packed WsmHiUpdateIeReqBody_t;
 
 typedef struct WsmHiUpdateIeCnfBody_s {
@@ -187,7 +187,7 @@ typedef struct WsmHiStartScanReqBody_s {
 	uint32_t   MinChannelTime;
 	uint32_t   MaxChannelTime;
 	int32_t    TxPowerLevel;
-	uint8_t    SsidAndChannelLists[0];
+	uint8_t    SsidAndChannelLists[];
 } __packed WsmHiStartScanReqBody_t;
 
 typedef struct WsmHiStartScanReqCstnbssidBody_s {
@@ -204,7 +204,7 @@ typedef struct WsmHiStartScanReqCstnbssidBody_s {
 	uint32_t   MaxChannelTime;
 	int32_t    TxPowerLevel;
 	WsmHiSsidDef_t SsidDef[WSM_API_MAX_NB_SSIDS];
-	uint8_t    ChannelList[0];
+	uint8_t    ChannelList[];
 } __packed WsmHiStartScanReqCstnbssidBody_t;
 
 typedef struct WsmHiStartScanCnfBody_s {
@@ -285,7 +285,7 @@ typedef struct WsmHiTxReqBody_s {
 	uint32_t   Reserved;
 	uint32_t   ExpireTime;
 	WsmHiHtTxParameters_t HtTxParameters;
-	uint32_t   Frame[0];
+	uint32_t   Frame[];
 } __packed WsmHiTxReqBody_t;
 
 typedef enum WsmQosAckplcy_e {
@@ -316,7 +316,7 @@ typedef struct WsmHiTxCnfBody_s {
 
 typedef struct WsmHiMultiTransmitCnfBody_s {
 	uint32_t   NumTxConfs;
-	WsmHiTxCnfBody_t   TxConfPayload[0];
+	WsmHiTxCnfBody_t   TxConfPayload[];
 } __packed WsmHiMultiTransmitCnfBody_t;
 
 typedef enum WsmRiFlagsEncrypt_e {
@@ -359,7 +359,7 @@ typedef struct WsmHiRxIndBody_s {
 	uint8_t    RxedRate;
 	uint8_t    RcpiRssi;
 	WsmHiRxFlags_t RxFlags;
-	uint32_t   Frame[0];
+	uint32_t   Frame[];
 } __packed WsmHiRxIndBody_t;
 
 
