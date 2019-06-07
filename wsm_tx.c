@@ -119,10 +119,12 @@ int wsm_shutdown(struct wfx_dev *wdev)
 
 	wfx_alloc_wsm(0, &hdr);
 	wfx_fill_header(hdr, -1, HI_SHUT_DOWN_REQ_ID, 0);
-	// After this command, chip go to deep sleep and won't reply
-	complete(&wdev->wsm_cmd.done);
-	wdev->wsm_cmd.ret = 0;
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, true);
+	// After this command, chip go to deep sleep and won't reply. Be sure
+	// to give enough time to bh to send buffer:
+	msleep(10);
+	wdev->wsm_cmd.buf_send = NULL;
+	mutex_unlock(&wdev->wsm_cmd.lock);
 	kfree(hdr);
 	return ret;
 }
