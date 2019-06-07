@@ -29,7 +29,7 @@ static void device_wakeup(struct wfx_dev *wdev)
 	} else {
 		// TODO: measure latency for wakeup and add a trace
 		if (!wait_for_completion_timeout(&wdev->hif.wakeup_done, msecs_to_jiffies(2) + 1))
-			dev_err(wdev->dev, "timeout while wake up chip\n");
+			dev_dbg(wdev->dev, "timeout while wake up chip\n");
 	}
 }
 
