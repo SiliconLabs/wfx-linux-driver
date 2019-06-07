@@ -336,15 +336,13 @@ int wfx_init_device(struct wfx_dev *wdev)
 		reg |= CFG_CLK_RISE_EDGE;
 	ret = config_reg_write(wdev, reg);
 	if (ret < 0) {
-		dev_err(wdev->dev, "%s bus returned error during first write access. Host configuration error?\n",
-			wdev->pdata.sdio ? "SDIO" : "SPI");
+		dev_err(wdev->dev, "bus returned an error during first write access. Host configuration error?\n");
 		return -EIO;
 	}
 
 	ret = config_reg_read(wdev, &reg);
 	if (ret < 0) {
-		dev_err(wdev->dev, "%s bus returned error during first read access. Bus configuration error?\n",
-				wdev->pdata.sdio ? "SDIO" : "SPI");
+		dev_err(wdev->dev, "bus returned an error during first read access. Bus configuration error?\n");
 		return -EIO;
 	}
 	if (reg == 0 || reg == ~0) {

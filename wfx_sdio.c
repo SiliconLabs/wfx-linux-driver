@@ -22,7 +22,6 @@ static const struct wfx_platform_data wfx_sdio_pdata = {
 	.file_fw = "wfm_wf200",
 	.file_pds = "wf200.pds",
 	.support_ldpc = true,
-	.sdio = true,
 };
 
 struct wfx_sdio_priv {

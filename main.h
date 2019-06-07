@@ -28,7 +28,6 @@ struct wfx_platform_data {
 	 * (intended to be used in 50Mhz SDIO)
 	 */
 	bool use_rising_clk;
-	bool sdio;
 };
 
 struct wfx_dev *wfx_init_common(struct device *dev,
