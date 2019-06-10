@@ -9,7 +9,7 @@ Changes in 2.2
          IPWHIFER-330)
        - fix potential race condition between wake_up interrupt and data_ready
          interrupt (IPWHIFER-433)
-       - use new wake-up notification mecanism introduced in API 1.4 (supported
+       - use new wake-up notification mechanism introduced in API 1.4 (supported
          by not-yet-released firmware 2.3)
   * Check if access to control register from SPI is valid and recover error
     if not (IPWHIFER-420).
@@ -39,7 +39,7 @@ Changes in 2.2
   * Driver is now compatible with kernel >= 3.18 (it was >= 4.1 before)
   * Use SPDX standard for licence headers.
   * Support for secondary interface (aka "combo mode") is now proposed as
-    in-develoment preview.
+    in-development preview.
 
 Changes in 2.1.2
 ----------------
