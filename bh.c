@@ -77,7 +77,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	}
 	_trace_wsm_recv(wsm);
 
-	if (wsm->id != HI_EXCEPTION_IND_ID) {
+	if (wsm->id != HI_EXCEPTION_IND_ID && wsm->id != HI_ERROR_IND_ID) {
 		if (wsm->seqnum != wdev->hif.rx_seqnum)
 			dev_warn(wdev->dev, "wrong message sequence: %d != %d\n",
 				 wsm->seqnum, wdev->hif.rx_seqnum);

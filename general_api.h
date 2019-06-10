@@ -84,6 +84,7 @@ typedef enum HiGeneralConfirmationsIds_e {
 	HI_SL_EXCHANGE_PUB_KEYS_CNF_ID                  = 0x28,
 	HI_SL_CONFIGURE_CNF_ID                          = 0x29,
 	HI_PREVENT_ROLLBACK_CNF_ID                      = 0xe7,
+	HI_SHUT_DOWN_CNF_ID                             = 0x32,
 } HiGeneralConfirmationsIds;
 
 typedef enum HiGeneralIndicationsIds_e {

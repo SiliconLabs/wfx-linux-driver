@@ -87,9 +87,11 @@
 	low_msg_cnf_name(SET_SL_MAC_KEY)       \
 	low_msg_cnf_name(SL_CONFIGURE)         \
 	low_msg_cnf_name(SL_EXCHANGE_PUB_KEYS) \
+	low_msg_cnf_name(SHUT_DOWN)            \
 	low_msg_ind_name(ERROR)                \
 	low_msg_ind_name(EXCEPTION)            \
 	low_msg_ind_name(GENERIC)              \
+	low_msg_ind_name(WAKEUP)               \
 	low_msg_ind_name(STARTUP)
 
 #define wsm_msg_list_enum _wsm_msg_list
