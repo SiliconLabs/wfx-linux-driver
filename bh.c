@@ -185,6 +185,21 @@ static int bh_work_tx(struct wfx_dev *wdev, int max_msg)
 	return i;
 }
 
+/* In SDIO mode, it is necessary to make an access to a register to acknowledge
+ * last received message. It could be possible to restrict this acknowledge to
+ * SDIO mode and only if last operation was rx.
+ */
+static void ack_sdio_data(struct wfx_dev *wdev)
+{
+	uint32_t cfg_reg;
+
+	config_reg_read(wdev, &cfg_reg);
+	if (cfg_reg & 0xFF) {
+		dev_warn(wdev->dev, "chip reports errors: %02x\n", cfg_reg & 0xFF);
+		config_reg_write_bits(wdev, 0xFF, 0x00);
+	}
+}
+
 static void bh_work(struct work_struct *work)
 {
 	struct wfx_dev *wdev = container_of(work, struct wfx_dev, hif.bh);
@@ -202,6 +217,7 @@ static void bh_work(struct work_struct *work)
 	stats_ind -= stats_cnf;
 
 	if (!wdev->hif.tx_buffers_used && !work_pending(work) && !atomic_read(&wdev->scan_in_progress)) {
+		ack_sdio_data(wdev);
 		device_release(wdev);
 		release_chip = true;
 	} else {
