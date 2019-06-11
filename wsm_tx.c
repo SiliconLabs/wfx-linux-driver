@@ -49,6 +49,7 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply, size_t
 {
 	const char *mib_name = "";
 	const char *mib_sep = "";
+	int frozen = 0;
 	int cmd = request->id;
 	int vif = request->interface;
 	int ret;
@@ -82,7 +83,7 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply, size_t
 	}
 	if (!ret) {
 		dev_err(wdev->dev, "chip did not answer");
-		wdev->chip_frozen = 1;
+		frozen = 1;
 		reinit_completion(&wdev->wsm_cmd.done);
 		ret = -ETIMEDOUT;
 	} else {
@@ -104,6 +105,10 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply, size_t
 		dev_warn(wdev->dev,
 			 "WSM request %s%s%s (%#.2x) on vif %d returned status %d\n",
 			 get_wsm_name(cmd), mib_sep, mib_name, cmd, vif, ret);
+
+	if (frozen) {
+		wdev->chip_frozen = 1;
+	}
 
 	return ret;
 }
