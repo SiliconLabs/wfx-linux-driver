@@ -24,11 +24,16 @@ static void device_wakeup(struct wfx_dev *wdev)
 
 	gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
 	if (wfx_api_older_than(wdev, 1, 4)) {
-		if (!try_wait_for_completion(&wdev->hif.wakeup_done))
+		if (!completion_done(&wdev->hif.ctrl_ready))
 			udelay(2000);
 	} else {
-		// TODO: measure latency for wakeup and add a trace
-		if (!wait_for_completion_timeout(&wdev->hif.wakeup_done, msecs_to_jiffies(2) + 1))
+		// completion.h does not provide any function to wait
+		// completion without consume it (a kind of
+		// wait_for_completion_done_timeout()). So we have to emulate
+		// it.
+		if (wait_for_completion_timeout(&wdev->hif.ctrl_ready, msecs_to_jiffies(2) + 1))
+			complete(&wdev->hif.ctrl_ready);
+		else
 			dev_dbg(wdev->dev, "timeout while wake up chip\n");
 	}
 }
@@ -38,7 +43,6 @@ static void device_release(struct wfx_dev *wdev)
 	if (!wdev->pdata.gpio_wakeup)
 		return;
 
-	reinit_completion(&wdev->hif.wakeup_done);
 	gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
 }
 
@@ -120,8 +124,10 @@ static int bh_work_rx(struct wfx_dev *wdev, int max_msg, int *num_cnf)
 	for (i = 0; i < max_msg; i++) {
 		if (piggyback & CTRL_NEXT_LEN_MASK)
 			ctrl_reg = piggyback;
-		else
+		else if (try_wait_for_completion(&wdev->hif.ctrl_ready))
 			ctrl_reg = atomic_xchg(&wdev->hif.ctrl_reg, 0);
+		else
+			ctrl_reg = 0;
 		if (!(ctrl_reg & CTRL_NEXT_LEN_MASK))
 			return i;
 		// ctrl_reg units are 16bits words
@@ -134,6 +140,7 @@ static int bh_work_rx(struct wfx_dev *wdev, int max_msg, int *num_cnf)
 	}
 	if (piggyback & CTRL_NEXT_LEN_MASK) {
 		ctrl_reg = atomic_xchg(&wdev->hif.ctrl_reg, piggyback);
+		complete(&wdev->hif.ctrl_ready);
 		if (ctrl_reg)
 			dev_err(wdev->dev, "unexpected IRQ happened: %04x/%04x", ctrl_reg, piggyback);
 	}
@@ -203,14 +210,17 @@ static void bh_work(struct work_struct *work)
 	_trace_bh_stats(stats_ind, stats_req, stats_cnf, wdev->hif.tx_buffers_used, release_chip);
 }
 
+/*
+ * An IRQ from chip did occur
+ */
 void wfx_bh_request_rx(struct wfx_dev *wdev)
 {
 	u32 cur, prev;
 
 	control_reg_read(wdev, &cur);
 	prev = atomic_xchg(&wdev->hif.ctrl_reg, cur);
+	complete(&wdev->hif.ctrl_ready);
 	queue_work(system_highpri_wq, &wdev->hif.bh);
-	complete(&wdev->hif.wakeup_done);
 
 	if (!(cur & CTRL_NEXT_LEN_MASK))
 		dev_err(wdev->dev, "unexpected control register value: length field is 0: %04x", cur);
@@ -218,6 +228,9 @@ void wfx_bh_request_rx(struct wfx_dev *wdev)
 		dev_err(wdev->dev, "received IRQ but previous data was not (yet) read: %04x/%04x", prev, cur);
 }
 
+/*
+ * Driver want to send data
+ */
 void wfx_bh_request_tx(struct wfx_dev *wdev)
 {
 	queue_work(system_highpri_wq, &wdev->hif.bh);
@@ -226,7 +239,7 @@ void wfx_bh_request_tx(struct wfx_dev *wdev)
 void wfx_bh_register(struct wfx_dev *wdev)
 {
 	INIT_WORK(&wdev->hif.bh, bh_work);
-	init_completion(&wdev->hif.wakeup_done);
+	init_completion(&wdev->hif.ctrl_ready);
 	init_waitqueue_head(&wdev->hif.tx_buffers_empty);
 }
 
