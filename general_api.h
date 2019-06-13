@@ -229,6 +229,7 @@ typedef struct HiRxStats_s {
 	uint32_t   Date;
 	uint32_t   PwrClkFreq;
 	uint8_t    IsExtPwrClk;
+	int8_t     CurrentTemp;
 } __packed HiRxStats_t;
 
 #define MAX_GENERIC_INDICATION_DATA_SIZE              376
