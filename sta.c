@@ -651,8 +651,8 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	bool is_p2p = wvif->vif && wvif->vif->p2p;
 	bool is_sta = wvif->vif && NL80211_IFTYPE_STATION == wvif->vif->type;
 	struct wsm_rx_filter l_rx_filter;
-	static WsmHiMibBcnFilterEnable_t bf_ctrl;
-	static WsmHiMibBcnFilterTable_t bf_tbl = {
+	WsmHiMibBcnFilterEnable_t bf_ctrl;
+	WsmHiMibBcnFilterTable_t bf_tbl = {
 		.IeTable = {
 			{
 				.IeId        = WLAN_EID_VENDOR_SPECIFIC,
