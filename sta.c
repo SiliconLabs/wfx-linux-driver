@@ -1203,7 +1203,7 @@ void wfx_event_handler_work(struct work_struct *work)
 			dev_warn(wvif->wdev->dev, "error while processing power save request\n");
 			break;
 		default:
-			dev_warn(wvif->wdev->dev, "Unhandled indication %.2x\n", event->evt.EventId);
+			dev_warn(wvif->wdev->dev, "Unhandled event indication: %.2x\n", event->evt.EventId);
 			break;
 		}
 	}
