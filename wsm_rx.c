@@ -248,6 +248,9 @@ static int wsm_generic_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 		return 0;
 	case HI_GENERIC_INDICATION_TYPE_RX_STATS:
 		mutex_lock(&wdev->rx_stats_lock);
+		// Older firmware send a generic indication beside RxStats
+		if (!wfx_api_older_than(wdev, 1, 4))
+			dev_info(wdev->dev, "RX test ongoing\n");
 		memcpy(&wdev->rx_stats, &body->IndicationData.RxStats, sizeof(wdev->rx_stats));
 		mutex_unlock(&wdev->rx_stats_lock);
 		return 0;
