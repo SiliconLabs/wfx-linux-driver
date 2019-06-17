@@ -255,8 +255,32 @@ static int wsm_suspend_resume_indication(struct wfx_dev *wdev, struct wmsg *hdr,
 static int wsm_error_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	HiErrorIndBody_t *body = buf;
+	u8 *pRollback = (u8 *) body->Data;
+	u32 *pStatus = (u32 *) body->Data;
 
-	dev_err(wdev->dev, "asynchronous error: %d\n", body->Type);
+	switch (body->Type) {
+	case  WSM_HI_ERROR_FIRMWARE_ROLLBACK:
+		dev_err(wdev->dev, "asynchronous error: firmware rollback error %d\n", *pRollback);
+		break;
+	case  WSM_HI_ERROR_FIRMWARE_DEBUG_ENABLED:
+		dev_err(wdev->dev, "asynchronous error: firmware debug feature enabled\n");
+		break;
+	case  WSM_HI_ERROR_OUTDATED_SESSION_KEY:
+		dev_err(wdev->dev, "asynchronous error: secure link outdated key: %#.8x\n", *pStatus);
+		break;
+	case WSM_HI_ERROR_INVALID_SESSION_KEY:
+		dev_err(wdev->dev, "asynchronous error: invalid session key\n");
+		break;
+	case  WSM_HI_ERROR_OOR_VOLTAGE:
+		dev_err(wdev->dev, "asynchronous error: out-of-range overvoltage: %#.8x\n", *pStatus);
+		break;
+	case  WSM_HI_ERROR_PDS_VERSION:
+		dev_err(wdev->dev, "asynchronous error: wrong PDS payload or version: %#.8x\n", *pStatus);
+		break;
+	default:
+		dev_err(wdev->dev, "asynchronous error: unknown\n");
+		break;
+	}
 	return 0;
 }
 
