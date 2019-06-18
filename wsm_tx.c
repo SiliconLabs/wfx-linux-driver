@@ -285,7 +285,7 @@ int wsm_set_bss_params(struct wfx_dev *wdev, const WsmHiSetBssParamsReqBody_t *a
 	return ret;
 }
 
-int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg, int Id)
+int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg)
 {
 	int ret;
 	struct wmsg *hdr;
@@ -294,20 +294,25 @@ int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg, int Id)
 
 	// FIXME: swap bytes as necessary in body
 	memcpy(body, arg, sizeof(*body));
-	wfx_fill_header(hdr, Id, WSM_HI_ADD_KEY_REQ_ID, sizeof(*body));
+	if (wfx_api_older_than(wdev, 1, 5))
+		// Legacy firmwares expect that add_key to be sent on right
+		// interface.
+		wfx_fill_header(hdr, arg->IntId, WSM_HI_ADD_KEY_REQ_ID, sizeof(*body));
+	else
+		wfx_fill_header(hdr, -1, WSM_HI_ADD_KEY_REQ_ID, sizeof(*body));
 	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
 
-int wsm_remove_key(struct wfx_dev *wdev, int idx, int Id)
+int wsm_remove_key(struct wfx_dev *wdev, int idx)
 {
 	int ret;
 	struct wmsg *hdr;
 	WsmHiRemoveKeyReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	body->EntryIndex = idx;
-	wfx_fill_header(hdr, Id, WSM_HI_REMOVE_KEY_REQ_ID, sizeof(*body));
+	wfx_fill_header(hdr, -1, WSM_HI_REMOVE_KEY_REQ_ID, sizeof(*body));
 	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;

@@ -634,7 +634,9 @@ typedef union WsmPrivacyKeyData_u {
 typedef struct WsmHiAddKeyReqBody_s {
 	uint8_t    Type;
 	uint8_t    EntryIndex;
-	uint16_t   Reserved;
+	uint8_t    IntId:2;
+	uint8_t    Reserved1:6;
+	uint8_t    Reserved2;
 	WsmPrivacyKeyData_t Key;
 } __packed WsmHiAddKeyReqBody_t;
 

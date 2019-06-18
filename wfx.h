@@ -148,6 +148,10 @@ struct wfx_dev {
 	 */
 	atomic_t			scan_in_progress;
 
+	/* Keys are global to chip */
+	u32			key_map;
+	WsmHiAddKeyReqBody_t		keys[WSM_KEY_MAX_INDEX + 1];
+
 	/* WSM */
 	struct wsm_cmd			wsm_cmd;
 	struct completion		firmware_ready;
@@ -186,7 +190,6 @@ struct wfx_vif {
 	u32			pspoll_mask;
 	u32			erp_info;
 	u32			bss_loss_confirm_id;
-	u32			key_map;
 
 	bool			enable_beacon;
 	bool			setbssparams_done;
@@ -232,7 +235,6 @@ struct wfx_vif {
 	WsmHiSetBssParamsReqBody_t	bss_params;
 	WsmHiMibSetUapsdInformation_t	uapsd_info;
 	WsmHiMibSetAssociationMode_t	association_mode;
-	WsmHiAddKeyReqBody_t		keys[WSM_KEY_MAX_INDEX + 1];
 
 	/* spinlock/mutex */
 	struct mutex		bss_loss_lock;

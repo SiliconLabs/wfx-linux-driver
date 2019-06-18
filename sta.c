@@ -58,37 +58,40 @@ static void wfx_mcast_timeout(unsigned long arg);
 static void wfx_mcast_timeout(struct timer_list *t);
 #endif
 
-static int wfx_alloc_key(struct wfx_vif *wvif)
+static int wfx_alloc_key(struct wfx_dev *wdev)
 {
 	int idx;
 
-	idx = ffs(~wvif->key_map) - 1;
+	idx = ffs(~wdev->key_map) - 1;
 	if (idx < 0 || idx > WSM_KEY_MAX_INDEX)
 		return -1;
 
-	wvif->key_map |= BIT(idx);
-	wvif->keys[idx].EntryIndex = idx;
+	wdev->key_map |= BIT(idx);
+	wdev->keys[idx].EntryIndex = idx;
 	return idx;
 }
 
-static void wfx_free_key(struct wfx_vif *wvif, int idx)
+static void wfx_free_key(struct wfx_dev *wdev, int idx)
 {
-	BUG_ON(!(wvif->key_map & BIT(idx)));
-	memset(&wvif->keys[idx], 0, sizeof(wvif->keys[idx]));
-	wvif->key_map &= ~BIT(idx);
+	BUG_ON(!(wdev->key_map & BIT(idx)));
+	memset(&wdev->keys[idx], 0, sizeof(wdev->keys[idx]));
+	wdev->key_map &= ~BIT(idx);
 }
 
 static int wfx_upload_keys(struct wfx_vif *wvif)
 {
-	int idx, ret = 0;
+	int i;
+	WsmHiAddKeyReqBody_t *key;
+	struct wfx_dev *wdev = wvif->wdev;
 
-	for (idx = 0; idx <= WSM_KEY_MAX_INDEX; ++idx)
-		if (wvif->key_map & BIT(idx)) {
-			ret = wsm_add_key(wvif->wdev, &wvif->keys[idx], wvif->Id);
-			if (ret < 0)
-				break;
+	for (i = 0; i < WSM_KEY_MAX_INDEX; i++) {
+		if (wdev->key_map & BIT(i)) {
+			key = &wdev->keys[i];
+			if (key->IntId == wvif->Id)
+				wsm_add_key(wdev, key);
 		}
-	return ret;
+	}
+	return 0;
 }
 
 static inline void __wfx_free_event_queue(struct list_head *list)
@@ -435,8 +438,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 		break;
 	}
 	wvif->mode = NL80211_IFTYPE_MONITOR;
-	wvif->key_map = 0;
-	memset(&wvif->keys, 0, sizeof(wvif->keys));
 
 	wvif->state = WFX_STATE_PASSIVE;
 	wfx_queue_wait_empty_vif(wvif);
@@ -860,14 +861,15 @@ int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 		u8 *peer_addr = NULL;
 		int pairwise = (key->flags & IEEE80211_KEY_FLAG_PAIRWISE) ?
 			1 : 0;
-		int idx = wfx_alloc_key(wvif);
-		WsmHiAddKeyReqBody_t *wsm_key = &wvif->keys[idx];
+		int idx = wfx_alloc_key(wdev);
+		WsmHiAddKeyReqBody_t *wsm_key = &wdev->keys[idx];
 
 		if (idx < 0) {
 			ret = -EINVAL;
 			goto finally;
 		}
 
+		wsm_key->IntId = wvif->Id;
 		if (sta)
 			peer_addr = sta->addr;
 
@@ -882,7 +884,7 @@ int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 		case WLAN_CIPHER_SUITE_WEP40:
 		case WLAN_CIPHER_SUITE_WEP104:
 			if (key->keylen > 16) {
-				wfx_free_key(wvif, idx);
+				wfx_free_key(wdev, idx);
 				ret = -EINVAL;
 				goto finally;
 			}
@@ -1019,11 +1021,11 @@ int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 			break;
 		default:
 			dev_warn(wdev->dev, "unsupported key type %d\n", key->cipher);
-			wfx_free_key(wvif, idx);
+			wfx_free_key(wdev, idx);
 			ret = -EOPNOTSUPP;
 			goto finally;
 		}
-		ret = wsm_add_key(wdev, wsm_key, wvif->Id);
+		ret = wsm_add_key(wdev, wsm_key);
 		if (!ret) {
 			key->hw_key_idx = idx;
 		} else {
@@ -1036,7 +1038,7 @@ int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 				dev_warn(wdev->dev, "your kernel is not patched to protect against KRACK attack\n");
 			}
 #endif
-			wfx_free_key(wvif, idx);
+			wfx_free_key(wdev, idx);
 		}
 	} else if (cmd == DISABLE_KEY) {
 		if (key->hw_key_idx > WSM_KEY_MAX_INDEX) {
@@ -1044,8 +1046,8 @@ int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
 			goto finally;
 		}
 
-		wfx_free_key(wvif, key->hw_key_idx);
-		ret = wsm_remove_key(wdev, key->hw_key_idx, wvif->Id);
+		wfx_free_key(wdev, key->hw_key_idx);
+		ret = wsm_remove_key(wdev, key->hw_key_idx);
 	} else {
 		dev_warn(wdev->dev, "unsupported key command %d\n", cmd);
 	}

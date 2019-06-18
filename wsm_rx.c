@@ -126,7 +126,10 @@ static int wsm_receive_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 	__le16 fctl;
 	int sta_id;
 
-	WARN_ON(!wvif);
+	if (!wvif) {
+		dev_warn(wdev->dev, "ignore rx data for non existant vif %d\n", hdr->interface);
+		return 0;
+	}
 	skb_pull(*skb_p, sizeof(struct wmsg) + sizeof(WsmHiRxIndBody_t));
 
 	frame = (struct ieee80211_hdr *)(*skb_p)->data;
