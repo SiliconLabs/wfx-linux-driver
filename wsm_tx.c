@@ -124,6 +124,8 @@ int wsm_shutdown(struct wfx_dev *wdev)
 	// to give enough time to bh to send buffer:
 	msleep(100);
 	wdev->wsm_cmd.buf_send = NULL;
+	if (wdev->pdata.gpio_wakeup)
+		gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
 	mutex_unlock(&wdev->wsm_cmd.lock);
 	kfree(hdr);
 	return ret;
