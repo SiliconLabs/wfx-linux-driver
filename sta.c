@@ -379,10 +379,16 @@ int wfx_add_interface(struct ieee80211_hw *hw,
 		wsm_set_edca_queue_params(wdev, &wvif->edca.params[i], wvif->Id);
 	wfx_set_uapsd_param(wvif, &wvif->edca);
 	tx_policy_init(wvif);
-	// Combo mode does not support Block Acks
 	wvif = NULL;
-	while ((wvif = wvif_iterate(wdev, wvif)) != NULL)
-		wsm_set_block_ack_policy(wvif->wdev, 0, 0, wvif->Id);
+	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
+		// Combo mode does not support Block Acks. We can re-enable them
+		if (wvif_count(wdev) == 1)
+			wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
+		else
+			wsm_set_block_ack_policy(wvif->wdev, 0x00, 0x00, wvif->Id);
+		// Combo force powersave mode. We can re-enable it now
+		wfx_set_pm(wvif, &wvif->powersave_mode);
+	}
 	return 0;
 }
 
@@ -453,12 +459,16 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	wvif->vif = NULL;
 
 	mutex_unlock(&wdev->conf_mutex);
-	// Combo mode does not support Block Acks but, we can re-enable them
-	// now
-	WARN_ON(wvif_count(wdev) > 1);
 	wvif = NULL;
-	while ((wvif = wvif_iterate(wdev, wvif)) != NULL)
-		wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
+	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
+		// Combo mode does not support Block Acks. We can re-enable them
+		if (wvif_count(wdev) == 1)
+			wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
+		else
+			wsm_set_block_ack_policy(wvif->wdev, 0x00, 0x00, wvif->Id);
+		// Combo force powersave mode. We can re-enable it now
+		wfx_set_pm(wvif, &wvif->powersave_mode);
+	}
 }
 
 int wfx_change_interface(struct ieee80211_hw *hw,
@@ -809,6 +819,9 @@ int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 	WsmHiSetPmModeReqBody_t pm = *arg;
 	u16 uapsd_flags;
 	int ret;
+
+	if (wvif->state != WFX_STATE_STA || !wvif->bss_params.AID)
+		return 0;
 
 	memcpy(&uapsd_flags, &wvif->uapsd_info, sizeof(uapsd_flags));
 
