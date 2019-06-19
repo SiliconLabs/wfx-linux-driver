@@ -268,7 +268,7 @@ static int wsm_generic_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 	case  HI_GENERIC_INDICATION_TYPE_RAW:
 		return 0;
 	case HI_GENERIC_INDICATION_TYPE_STRING:
-		dev_info(wdev->dev, "%s", (char *) body->IndicationData.RawData);
+		dev_info(wdev->dev, "firmware says: %s", (char *) body->IndicationData.RawData);
 		return 0;
 	case HI_GENERIC_INDICATION_TYPE_RX_STATS:
 		mutex_lock(&wdev->rx_stats_lock);
