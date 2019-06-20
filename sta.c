@@ -514,6 +514,7 @@ int wfx_assign_vif_chanctx(struct ieee80211_hw *hw,
 
 	WARN(wvif->channel, "Channel overwrite");
 	wvif->channel = ch;
+	wvif->ht_info.channel_type = cfg80211_get_chandef_type(&conf->def);
 
 	return 0;
 }
@@ -1952,9 +1953,6 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 					wvif->ht_info.ht_cap = sta->ht_cap;
 					wvif->bss_params.OperationalRateSet =
 						wfx_rate_mask_to_wsm(wdev, sta->supp_rates[wvif->channel->band]);
-					wvif->ht_info.channel_type =
-						cfg80211_get_chandef_type(
-							&hw->conf.chandef);
 					wvif->ht_info.operation_mode =
 						info->ht_operation_mode;
 				} else {
