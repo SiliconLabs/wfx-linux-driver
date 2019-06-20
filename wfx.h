@@ -138,7 +138,6 @@ struct wfx_dev {
 	/* BBP/MAC state */
 	const struct ieee80211_rate	*rates;
 	const struct ieee80211_rate	*mcs_rates;
-	struct wfx_ht_info		ht_info;
 	u8				long_frame_max_tx_count;
 	u8				short_frame_max_tx_count;
 
@@ -204,6 +203,7 @@ struct wfx_vif {
 	enum wfx_state	state;
 
 	struct wfx_scan		scan;
+	struct wfx_ht_info	ht_info;
 	struct wsm_rx_filter	rx_filter;
 	struct wsm_edca_params	edca;
 	struct wfx_link_entry	link_id_db[WFX_MAX_STA_IN_AP_MODE];

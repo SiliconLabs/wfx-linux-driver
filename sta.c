@@ -1342,7 +1342,7 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 	       sizeof(wvif->association_mode));
 	memset(&wvif->bss_params, 0, sizeof(wvif->bss_params));
 	wvif->setbssparams_done = false;
-	memset(&wvif->wdev->ht_info, 0, sizeof(wvif->wdev->ht_info));
+	memset(&wvif->ht_info, 0, sizeof(wvif->ht_info));
 
 	pr_debug("[STA] Unjoin completed.\n");
 
@@ -1949,34 +1949,34 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 					sta = ieee80211_find_sta(vif,
 								 info->bssid);
 				if (sta) {
-					wdev->ht_info.ht_cap = sta->ht_cap;
+					wvif->ht_info.ht_cap = sta->ht_cap;
 					wvif->bss_params.OperationalRateSet =
 						wfx_rate_mask_to_wsm(wdev, sta->supp_rates[wvif->channel->band]);
-					wdev->ht_info.channel_type =
+					wvif->ht_info.channel_type =
 						cfg80211_get_chandef_type(
 							&hw->conf.chandef);
-					wdev->ht_info.operation_mode =
+					wvif->ht_info.operation_mode =
 						info->ht_operation_mode;
 				} else {
-					memset(&wdev->ht_info, 0,
-					       sizeof(wdev->ht_info));
+					memset(&wvif->ht_info, 0,
+					       sizeof(wvif->ht_info));
 					wvif->bss_params.OperationalRateSet =
 						-1;
 				}
 				rcu_read_unlock();
 
 				/* Non Greenfield stations present */
-				if (wdev->ht_info.operation_mode &
+				if (wvif->ht_info.operation_mode &
 				    IEEE80211_HT_OP_MODE_NON_GF_STA_PRSNT)
 					htprot |= WSM_NON_GREENFIELD_STA_PRESENT;
 
 				/* Set HT protection method */
-				htprot |= (wdev->ht_info.operation_mode &
+				htprot |= (wvif->ht_info.operation_mode &
 					IEEE80211_HT_OP_MODE_PROTECTION) << 2;
 				wsm_ht_protection(wdev, htprot, wvif->Id);
 
 				wvif->association_mode.MixedOrGreenfieldType =
-					wfx_ht_greenfield(&wdev->ht_info);
+					wfx_ht_greenfield(&wvif->ht_info);
 				wvif->association_mode.PreambtypeUse = 1;
 				wvif->association_mode.Mode = 1;
 				wvif->association_mode.Rateset = 1;
@@ -1989,7 +1989,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 					cpu_to_le32(wfx_rate_mask_to_wsm(wdev,
 							info->basic_rates));
 				wvif->association_mode.MpduStartSpacing =
-					wfx_ht_ampdu_density(&wdev->ht_info);
+					wfx_ht_ampdu_density(&wvif->ht_info);
 
 				wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
 				cancel_work_sync(&wvif->unjoin_work);

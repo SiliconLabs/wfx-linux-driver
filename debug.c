@@ -252,17 +252,17 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 	}
 
 	seq_printf(seq, "HT:         %s\n",
-		   wfx_is_ht(&wdev->ht_info) ? "on" : "off");
+		   wfx_is_ht(&wvif->ht_info) ? "on" : "off");
 
-	if (wfx_is_ht(&wdev->ht_info)) {
+	if (wfx_is_ht(&wvif->ht_info)) {
 		seq_printf(seq, "Greenfield: %s\n",
-			   wfx_ht_greenfield(&wdev->ht_info) ? "yes" : "no");
+			   wfx_ht_greenfield(&wvif->ht_info) ? "yes" : "no");
 		seq_printf(seq, "LDPC: %s\n",
-			   wfx_ht_fecCoding(&wdev->ht_info) ? "yes" : "no");
+			   wfx_ht_fecCoding(&wvif->ht_info) ? "yes" : "no");
 		seq_printf(seq, "SGI: %s\n",
-			   wfx_ht_shortGi(&wdev->ht_info) ? "yes" : "no");
+			   wfx_ht_shortGi(&wvif->ht_info) ? "yes" : "no");
 		seq_printf(seq, "AMPDU dens: %d\n",
-			   wfx_ht_ampdu_density(&wdev->ht_info));
+			   wfx_ht_ampdu_density(&wvif->ht_info));
 	}
 
 	seq_printf(seq, "RSSI thold: %d\n",

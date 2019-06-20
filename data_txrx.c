@@ -656,7 +656,7 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 	 *
 	 * Bit 5: 0 (lgi), 1 (sgi)
 	 */
-	if (t->rate->flags & IEEE80211_TX_RC_SHORT_GI || wfx_ht_shortGi(&wvif->wdev->ht_info))
+	if (t->rate->flags & IEEE80211_TX_RC_SHORT_GI || wfx_ht_shortGi(&wvif->ht_info))
 		wsm->HtTxParameters.ShortGi = 1;
 
 	/* LDPC (Low-Density Parity-Check code)
@@ -667,7 +667,7 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 	 *
 	 * Bit 4: 0 (BCC), 1(LDPC)
 	 */
-	if (t->tx_info->flags & IEEE80211_TX_CTL_LDPC || wfx_ht_fecCoding(&wvif->wdev->ht_info))
+	if (t->tx_info->flags & IEEE80211_TX_CTL_LDPC || wfx_ht_fecCoding(&wvif->ht_info))
 		if (wvif->wdev->pdata.support_ldpc)
 			wsm->HtTxParameters.FecCoding = 1;
 
@@ -907,13 +907,13 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 		u8 ht_flags = 0;
 		int i;
 
-		if (wfx_ht_greenfield(&wdev->ht_info))
+		if (wfx_ht_greenfield(&wvif->ht_info))
 			ht_flags |= IEEE80211_TX_RC_GREEN_FIELD;
 
-		if (wfx_ht_fecCoding(&wdev->ht_info))
+		if (wfx_ht_fecCoding(&wvif->ht_info))
 			ht_flags |= IEEE80211_TX_CTL_LDPC;
 
-		if (wfx_ht_shortGi(&wdev->ht_info))
+		if (wfx_ht_shortGi(&wvif->ht_info))
 			ht_flags |= IEEE80211_TX_RC_SHORT_GI;
 
 		mutex_lock(&wvif->bss_loss_lock);
