@@ -24,6 +24,8 @@ deb-pkg:
 
 else
 
+CONFIG_WFX_SECURE_LINK ?= y
+
 
 
 CFLAGS_debug.o = -I$(src)
@@ -43,6 +45,27 @@ wfx-y := \
 		debug.o
 wfx-$(CONFIG_SPI) += wfx_spi.o
 wfx-$(subst m,y,$(CONFIG_MMC)) += wfx_sdio.o
+wfx-$(CONFIG_WFX_SECURE_LINK) += \
+	secure_link.o \
+	mbedtls/library/aes.o \
+	mbedtls/library/bignum.o \
+	mbedtls/library/ccm.o \
+	mbedtls/library/cipher.o \
+	mbedtls/library/cipher_wrap.o \
+	mbedtls/library/ctr_drbg.o \
+	mbedtls/library/ecdh.o \
+	mbedtls/library/ecp_curves.o \
+	mbedtls/library/ecp.o \
+	mbedtls/library/entropy.o \
+	mbedtls/library/error.o \
+	mbedtls/library/md.o \
+	mbedtls/library/md_wrap.o \
+	mbedtls/library/platform_util.o \
+	mbedtls/library/sha256.o \
+	mbedtls/library/sha512.o
+
+ccflags-$(CONFIG_WFX_SECURE_LINK) += \
+	-I$(src)/mbedtls/include -DCONFIG_WFX_SECURE_LINK=y
 
 obj-m += wfx.o
 
