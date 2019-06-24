@@ -375,6 +375,14 @@ solution is to defer probing, setup traces and finally request probe manually:
 
 (see also [this patch][8])
 
+An alternative (less intrusive?) that does not imply driver reload is:
+
+    $ echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/unbind
+    $ echo 1 | tee /sys/kernel/debug/tracing/events/wfx/wsm_*/enable
+    $ cat /sys/kernel/debug/tracing/trace_pipe &
+    $ echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/bind
+
+
 Also note that `perf` command provides an alternative way to access to
 tracepoints:
 
