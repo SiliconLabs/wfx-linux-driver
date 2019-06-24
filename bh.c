@@ -136,7 +136,7 @@ static int bh_work_rx(struct wfx_dev *wdev, int max_msg, int *num_cnf)
 		if (piggyback < 0)
 			return i;
 		if (!(piggyback & CTRL_WLAN_READY))
-			dev_dbg(wdev->dev, "unexpected piggyback value: ready bit not set: %04x", piggyback);
+			dev_err(wdev->dev, "unexpected piggyback value: ready bit not set: %04x", piggyback);
 	}
 	if (piggyback & CTRL_NEXT_LEN_MASK) {
 		ctrl_reg = atomic_xchg(&wdev->hif.ctrl_reg, piggyback);
