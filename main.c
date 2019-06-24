@@ -171,6 +171,17 @@ static const struct ieee80211_ops wfx_ops = {
 	.unassign_vif_chanctx	= wfx_unassign_vif_chanctx,
 };
 
+bool wfx_api_older_than(struct wfx_dev *wdev, int major, int minor)
+{
+	if (wdev->wsm_caps.ApiVersionMajor < major)
+		return true;
+	if (wdev->wsm_caps.ApiVersionMajor > major)
+		return false;
+	if (wdev->wsm_caps.ApiVersionMinor < minor)
+		return true;
+	return false;
+}
+
 struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *label)
 {
 	struct gpio_desc *ret;
@@ -196,17 +207,6 @@ struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *lab
 		dev_dbg(dev, "using gpio %d for %s", desc_to_gpio(ret), label);
 	}
 	return ret;
-}
-
-bool wfx_api_older_than(struct wfx_dev *wdev, int major, int minor)
-{
-	if (wdev->wsm_caps.ApiVersionMajor < major)
-		return true;
-	if (wdev->wsm_caps.ApiVersionMajor > major)
-		return false;
-	if (wdev->wsm_caps.ApiVersionMinor < minor)
-		return true;
-	return false;
 }
 
 struct wfx_dev *wfx_init_common(struct device *dev,
