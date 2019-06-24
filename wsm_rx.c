@@ -25,6 +25,11 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf
 
 	WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
 
+	if (!wdev->wsm_cmd.buf_send) {
+		dev_warn(wdev->dev, "Unexpected confirmation: 0x%.2X\n", cmd);
+		return -EINVAL;
+	}
+
 	if (cmd != wdev->wsm_cmd.buf_send->id) {
 		dev_warn(wdev->dev, "Chip response mismatch request: 0x%.2X vs 0x%.2X\n",
 			 cmd, wdev->wsm_cmd.buf_send->id);
