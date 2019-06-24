@@ -92,7 +92,8 @@ typedef enum HiGeneralIndicationsIds_e {
 	HI_STARTUP_IND_ID                               = 0xe1,
 	HI_WAKEUP_IND_ID                                = 0xe2,
 	HI_GENERIC_IND_ID                               = 0xe3,
-	HI_ERROR_IND_ID                                 = 0xe4
+	HI_ERROR_IND_ID                                 = 0xe4,
+	HI_SL_EXCHANGE_PUB_KEYS_IND_ID                  = 0xe5
 } HiGeneralIndicationsIds;
 
 typedef union HiGeneralCommandsIds_u {
@@ -304,29 +305,27 @@ typedef struct HiSlExchangePubKeysReqBody_s {
 	uint8_t    HostPubKeyMac[API_HOST_PUB_KEY_MAC_SIZE];
 } __packed HiSlExchangePubKeysReqBody_t;
 
+typedef struct HiSlExchangePubKeysCnfBody_s {
+	uint32_t   Status;
+} __packed HiSlExchangePubKeysCnfBody_t;
+
 #define API_NCP_PUB_KEY_SIZE                            32
 #define API_NCP_PUB_KEY_MAC_SIZE                        64
 
-typedef struct HiSlExchangePubKeysCnfBody_s {
+typedef struct HiSlExchangePubKeysIndBody_s {
 	uint32_t   Status;
 	uint8_t    NcpPubKey[API_NCP_PUB_KEY_SIZE];
 	uint8_t    NcpPubKeyMac[API_NCP_PUB_KEY_MAC_SIZE];
-} __packed HiSlExchangePubKeysCnfBody_t;
-
-typedef enum SlConfigureSkeyInvld_e {
-	SL_CONFIGURE_SKEY_INVLD_INVALIDATE         = 0x87,
-	SL_CONFIGURE_SKEY_INVLD_NOP                = 0x00
-} SlConfigureSkeyInvld;
+} __packed HiSlExchangePubKeysIndBody_t;
 
 #define API_ENCR_BMP_SIZE        32
 
 typedef struct HiSlConfigureReqBody_s {
 	uint8_t    EncrBmp[API_ENCR_BMP_SIZE];
-	uint8_t    SkeyInvld;
 } __packed HiSlConfigureReqBody_t;
 
 typedef struct HiSlConfigureCnfBody_s {
-	uint32_t Status;
+	uint32_t   Status;
 } __packed HiSlConfigureCnfBody_t;
 
 typedef struct HiPreventRollbackReqBody_s {
@@ -334,7 +333,7 @@ typedef struct HiPreventRollbackReqBody_s {
 } __packed HiPreventRollbackReqBody_t;
 
 typedef struct HiPreventRollbackCnfBody_s {
-	uint32_t    Status;
+	uint32_t   Status;
 } __packed HiPreventRollbackCnfBody_t;
 
 #endif
