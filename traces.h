@@ -191,7 +191,7 @@ DECLARE_EVENT_CLASS(wsm_data,
 			__entry->mib = -1;
 			header_len = 0;
 		}
-		__entry->buf_len = min(__entry->msg_len, 32) - sizeof(struct wmsg) - header_len;
+		__entry->buf_len = min_t(int, __entry->msg_len, sizeof(__entry->buf)) - sizeof(struct wmsg) - header_len;
 		memcpy(__entry->buf, wsm->body + header_len, __entry->buf_len);
 	),
 	TP_printk("%d:%s_%s%s%s: %s%s (%d bytes)",
@@ -201,7 +201,7 @@ DECLARE_EVENT_CLASS(wsm_data,
 		__entry->mib != -1 ? "/" : "",
 		__entry->mib != -1 ? __print_symbolic(__entry->mib, wsm_mib_list) : "",
 		__print_hex(__entry->buf, __entry->buf_len),
-		__entry->msg_len > 32 ? " ..." : "",
+		__entry->msg_len > sizeof(__entry->buf) ? " ..." : "",
 		__entry->msg_len
 	)
 );
@@ -301,7 +301,7 @@ DECLARE_EVENT_CLASS(io_data,
 		__entry->reg = reg;
 		__entry->addr = addr;
 		__entry->msg_len = len;
-		__entry->buf_len = min(32, __entry->msg_len);
+		__entry->buf_len = min_t(int, sizeof(__entry->buf), __entry->msg_len);
 		memcpy(__entry->buf, io_buf, __entry->buf_len);
 		if (addr >= 0)
 			snprintf(__entry->addr_str, 10, "/%08x", addr);
@@ -312,7 +312,7 @@ DECLARE_EVENT_CLASS(io_data,
 		__print_symbolic(__entry->reg, wfx_reg_list),
 		__entry->addr_str,
 		__print_hex(__entry->buf, __entry->buf_len),
-		__entry->buf_len != __entry->msg_len ? " ..." : "",
+		__entry->msg_len > sizeof(__entry->buf) ? " ..." : "",
 		__entry->msg_len
 	)
 );
