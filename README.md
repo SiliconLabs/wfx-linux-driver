@@ -298,7 +298,7 @@ Thus, you can trace all bus transfers with:
     kworker/2:0H-23    [002] .... 429125.079749: io_write32: CONFIG: 01070000
     <Ctrl+C>
 
-Note, the `tee` command can replace a serie of `echo X > file`:
+Note, the `tee` command can replace a series of `echo X > file`:
 
     $ echo 1 | tee /sys/kernel/debug/tracing/events/wfx/io_*/enable
 
@@ -317,7 +317,8 @@ It can be more convenient to follow higher level HIF messages:
     kworker/2:0H-23    [002] .... 429125.080412: wsm_send: 56:START_SCAN_REQ: 00 00 02 00 00 00 00 00 02...
     <Ctrl+C>
 
-It is possible to filter events. For exemple, to remove Tx request, Tx
+It is possible to filter events (see section 4 and 5 of
+[`Documentation/trace/events.txt`][7]). For example, to remove Tx request, Tx
 confirmation and Rx indication from results, you can do:
 
     $ echo 'msg_id != 4 && msg_id != 0x84' | tee /sys/kernel/debug/tracing/events/wfx/wsm_*/filter
@@ -334,7 +335,7 @@ trace all IRQs and add a filter to only show IRQs related to WFx:
           <idle>-0     [000] d.h. 429585.859621: irq_handler_entry: irq=167 name=wfx
     kworker/2:0H-23    [002] .... 429585.859942: wsm_recv: 20:RX_IND: 00 00 00 00 01 00 00 6c 80 00 04 00...
 
-Another exemple would be to also trace wake-up gpio:
+Another example would be to also trace wake-up gpio:
 
     $ echo 1 > /sys/kernel/debug/tracing/events/gpio/gpio_value/enable
     $ echo 'gpio == 12' > /sys/kernel/debug/tracing/events/gpio/gpio_value/filter
