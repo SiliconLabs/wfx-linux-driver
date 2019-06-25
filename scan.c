@@ -81,7 +81,6 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 
 	/* will be unlocked in wfx_scan_work() */
 	mutex_lock(&wdev->conf_mutex);
-	down(&wvif->scan.lock);
 
 	p = (WsmHiMibTemplateFrame_t *)skb_push(skb, 4);
 	p->FrameType = WSM_TMPLT_PRBREQ;
@@ -94,7 +93,6 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 		ret = wsm_fwd_probe_req(wvif, true);
 	if (ret) {
 		mutex_unlock(&wdev->conf_mutex);
-		up(&wvif->scan.lock);
 		dev_kfree_skb(skb);
 		return ret;
 	}
@@ -151,6 +149,7 @@ void wfx_scan_work(struct work_struct *work)
 	int i;
 
 	mutex_lock(&wvif->wdev->conf_mutex);
+	down(&wvif->scan.lock);
 
 	if (first_run) {
 		if (wvif->state == WFX_STATE_STA &&
@@ -273,13 +272,13 @@ static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
 
 static void wfx_scan_complete(struct wfx_vif *wvif)
 {
+	up(&wvif->scan.lock);
 	atomic_set(&wvif->wdev->scan_in_progress, 0);
 
 	if (wvif->scan.direct_probe) {
 		dev_dbg(wvif->wdev->dev, "[SCAN] Direct probe complete.\n");
 		wfx_scan_restart_delayed(wvif);
 		wvif->scan.direct_probe = 0;
-		up(&wvif->scan.lock);
 		wsm_tx_unlock(wvif->wdev);
 	} else {
 		wfx_scan_work(&wvif->scan.work);
