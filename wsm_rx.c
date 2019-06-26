@@ -301,6 +301,9 @@ static const struct {
 	{ WSM_HI_SET_PM_MODE_CNF_ID,     wsm_generic_confirm },
 	{ WSM_HI_UPDATE_IE_CNF_ID,       wsm_generic_confirm },
 	{ HI_CONFIGURATION_CNF_ID,       wsm_generic_confirm },
+	{ HI_SET_SL_MAC_KEY_CNF_ID,      wsm_generic_confirm },
+	{ HI_SL_EXCHANGE_PUB_KEYS_CNF_ID, wsm_generic_confirm },
+	{ HI_SL_CONFIGURE_CNF_ID,        wsm_generic_confirm },
 	/* Indications */
 	{ WSM_HI_EVENT_IND_ID,           wsm_event_indication },
 	{ WSM_HI_SET_PM_MODE_CMPL_IND_ID, wsm_pm_mode_complete_indication },
@@ -312,6 +315,7 @@ static const struct {
 	{ HI_WAKEUP_IND_ID,              wsm_wakeup_indication },
 	{ HI_GENERIC_IND_ID,             wsm_generic_indication },
 	{ HI_EXCEPTION_IND_ID,           wsm_exception_indication },
+	{ HI_SL_EXCHANGE_PUB_KEYS_IND_ID, NULL },
 	// FIXME: allocate skb_p from wsm_receive_indication and make it generic
 	//{ WSM_HI_RX_IND_ID,            wsm_receive_indication },
 };
