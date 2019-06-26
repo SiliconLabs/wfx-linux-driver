@@ -172,7 +172,7 @@ DECLARE_EVENT_CLASS(wsm_data,
 		__field(int, buf_len)
 		__field(int, if_id)
 		__field(int, mib)
-		__array(u8, buf, 32)
+		__array(u8, buf, 128)
 	),
 	TP_fast_assign(
 		int header_len;
