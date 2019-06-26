@@ -203,20 +203,25 @@ static void bh_work(struct work_struct *work)
 {
 	struct wfx_dev *wdev = container_of(work, struct wfx_dev, hif.bh);
 	int stats_req = 0, stats_cnf = 0, stats_ind = 0;
-	bool release_chip;
+	bool release_chip, last_op_is_rx = false;
 	int num_tx, num_rx;
 
 	device_wakeup(wdev);
 	do {
 		num_tx = bh_work_tx(wdev, 32);
 		stats_req += num_tx;
+		if (num_tx)
+			last_op_is_rx = false;
 		num_rx = bh_work_rx(wdev, 32, &stats_cnf);
 		stats_ind += num_rx;
+		if (num_rx)
+			last_op_is_rx = true;
 	} while (num_rx || num_tx);
 	stats_ind -= stats_cnf;
 
-	if (!wdev->hif.tx_buffers_used && !work_pending(work) && !atomic_read(&wdev->scan_in_progress)) {
+	if (last_op_is_rx)
 		ack_sdio_data(wdev);
+	if (!wdev->hif.tx_buffers_used && !work_pending(work) && !atomic_read(&wdev->scan_in_progress)) {
 		device_release(wdev);
 		release_chip = true;
 	} else {
