@@ -1,3 +1,18 @@
+Changes in 2.2.1
+----------------
+
+  * Fix keys handling with multiple interfaces (aka "combo mode")
+    (IPWHIFER-439)
+  * Fix power save handling with multiple interfaces (IPWHIFER-450)
+  * High Throughput (HT) channels was not correctly detected since release 2.1
+    (IPWHIFER-461)
+  * Fix potential mishandling of wake-up gpio when entering deep sleep
+    (aka "SHUTDOWN_REQ")
+  * Fix packet size displayed in wsm tracepoints. It is now full packet size
+    including header.
+  * Increase size of displayed payload in tracepoints wsm_*. Traces for TX_REQ
+    and RX_IND now include TCP headers.
+
 Changes in 2.2
 --------------
 
