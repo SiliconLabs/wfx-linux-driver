@@ -28,6 +28,7 @@
 #include "sta.h"
 #include "debug.h"
 #include "wsm_mib.h"
+#include "secure_link.h"
 
 MODULE_DESCRIPTION("Silicon Labs 802.11 Wireless LAN driver for WFx");
 MODULE_AUTHOR("Jérôme Pouiller <jerome.pouiller@silabs.com>");
@@ -382,6 +383,10 @@ int wfx_probe(struct wfx_dev *wdev)
 
 	msleep(100);
 
+	err = wfx_sl_init(wdev);
+	if (err)
+		goto err2;
+
 	dev_dbg(wdev->dev, "sending configuration file %s", wdev->pdata.file_pds);
 	err = wfx_send_pdata_pds(wdev);
 	if (err < 0)
@@ -398,7 +403,9 @@ int wfx_probe(struct wfx_dev *wdev)
 		wsm_set_operational_mode(wdev, WSM_OP_POWER_MODE_DOZE);
 	}
 
-	wsm_use_multi_tx_conf(wdev, true);
+	// Secure link does not support multi-tx confirmation
+	if (!memzcmp(wdev->session_key, sizeof(wdev->session_key)))
+		wsm_use_multi_tx_conf(wdev, true);
 
 	for (i = 0; i < ARRAY_SIZE(wdev->addresses); i++) {
 		eth_zero_addr(wdev->addresses[i].addr);
@@ -439,6 +446,7 @@ void wfx_release(struct wfx_dev *wdev)
 	ieee80211_unregister_hw(wdev->hw);
 	wsm_shutdown(wdev);
 	wfx_bh_unregister(wdev);
+	wfx_sl_deinit(wdev);
 }
 
 extern struct sdio_driver wfx_sdio_driver;

@@ -412,6 +412,23 @@ int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame,
 	return ret;
 }
 
+int wsm_send_pub_keys(struct wfx_dev *wdev, const uint8_t *pubkey, const uint8_t *pubkey_hmac)
+{
+	int ret;
+	struct wmsg *hdr;
+	HiSlExchangePubKeysReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+
+	memcpy(body->HostPubKey, pubkey, sizeof(body->HostPubKey));
+	memcpy(body->HostPubKeyMac, pubkey_hmac, sizeof(body->HostPubKeyMac));
+	wfx_fill_header(hdr, -1, HI_SL_EXCHANGE_PUB_KEYS_REQ_ID, sizeof(*body));
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	kfree(hdr);
+	// Compatibility with legacy secure link
+	if (ret == SL_PUB_KEY_EXCHANGE_STATUS_SUCCESS)
+		ret = 0;
+	return ret;
+}
+
 int wsm_set_mac_key(struct wfx_dev *wdev, const uint8_t *sl_key, int destination)
 {
 	int ret;

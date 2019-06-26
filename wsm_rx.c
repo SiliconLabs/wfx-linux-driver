@@ -14,6 +14,7 @@
 #include "wfx.h"
 #include "bh.h"
 #include "debug.h"
+#include "secure_link.h"
 #include "sta.h"
 
 static int wsm_generic_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
@@ -120,6 +121,21 @@ static int wsm_wakeup_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *b
 		dev_warn(wdev->dev, "unexpected wake-up indication\n");
 		return -EIO;
 	}
+	return 0;
+}
+
+static int wsm_keys_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+{
+	HiSlExchangePubKeysIndBody_t *body = buf;
+
+	// Compatibility with legacy secure link
+	if (body->Status == SL_PUB_KEY_EXCHANGE_STATUS_SUCCESS)
+		body->Status = 0;
+	if (!body->Status)
+		wfx_sl_check_ncp_keys(wdev, body->NcpPubKey, body->NcpPubKeyMac);
+	else
+		dev_warn(wdev->dev, "secure link negociation error\n");
+	complete(&wdev->sl_key_renew_done);
 	return 0;
 }
 
@@ -315,7 +331,7 @@ static const struct {
 	{ HI_WAKEUP_IND_ID,              wsm_wakeup_indication },
 	{ HI_GENERIC_IND_ID,             wsm_generic_indication },
 	{ HI_EXCEPTION_IND_ID,           wsm_exception_indication },
-	{ HI_SL_EXCHANGE_PUB_KEYS_IND_ID, NULL },
+	{ HI_SL_EXCHANGE_PUB_KEYS_IND_ID, wsm_keys_indication },
 	// FIXME: allocate skb_p from wsm_receive_indication and make it generic
 	//{ WSM_HI_RX_IND_ID,            wsm_receive_indication },
 };

@@ -15,6 +15,8 @@
 #include <linux/version.h>
 #include <net/mac80211.h>
 
+#include <mbedtls/ecdh.h>
+
 #include "wsm_cmd_api.h"
 #include "main.h"
 #include "queue.h"
@@ -163,6 +165,10 @@ struct wfx_dev {
 
 	u32			pending_frame_id;
 
+	/* Secure Link related */
+	mbedtls_ecdh_context	edch_ctxt;
+	u8			session_key[16];
+	struct completion	sl_key_renew_done;
 
 	/* For debugfs 'rx_stats' file */
 	HiRxStats_t rx_stats;
@@ -335,6 +341,15 @@ static inline int wfx_ht_ampdu_density(const struct wfx_ht_info *ht_info)
 	if (!wfx_is_ht(ht_info))
 		return 0;
 	return ht_info->ht_cap.ampdu_density;
+}
+
+static inline int memzcmp(void *src, unsigned int size)
+{
+	if (!size)
+		return 0;
+	if (*(unsigned char *) src)
+		return 1;
+	return memcmp(src, src + 1, size - 1);
 }
 
 #endif /* WFX_H */
