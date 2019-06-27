@@ -364,8 +364,7 @@ void wsm_tx_flush(struct wfx_dev *wdev)
 				 msecs_to_jiffies(3000));
 	if (!ret) {
 		dev_warn(wdev->dev, "cannot flush tx buffers (%d still busy)\n", wdev->hif.tx_buffers_used);
-		if (!mutex_is_locked(&wdev->wsm_cmd.lock) || wdev->hif.tx_buffers_used > 1)
-			wfx_queue_dump_old_frames(wdev, 3000);
+		wfx_queue_dump_old_frames(wdev, 3000);
 	}
 	mutex_unlock(&wdev->wsm_cmd.lock);
 }
