@@ -50,6 +50,8 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf
 	} else {
 		wdev->wsm_cmd.buf_send = NULL;
 		mutex_unlock(&wdev->wsm_cmd.lock);
+		if (cmd != HI_SL_EXCHANGE_PUB_KEYS_REQ_ID)
+			mutex_unlock(&wdev->wsm_cmd.key_renew_lock);
 	}
 	return status;
 }

@@ -20,6 +20,7 @@ void init_wsm_cmd(struct wsm_cmd *wsm_cmd)
 	init_completion(&wsm_cmd->ready);
 	init_completion(&wsm_cmd->done);
 	mutex_init(&wsm_cmd->lock);
+	mutex_init(&wsm_cmd->key_renew_lock);
 }
 
 static void wfx_fill_header(struct wmsg *hdr, int if_id, unsigned cmd, size_t size)
@@ -58,6 +59,9 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply, size_t
 	// Do not wait for any reply if chip is frozen
 	if (wdev->chip_frozen)
 		return -ETIMEDOUT;
+
+	if (cmd != HI_SL_EXCHANGE_PUB_KEYS_REQ_ID)
+		mutex_lock(&wdev->wsm_cmd.key_renew_lock);
 
 	mutex_lock(&wdev->wsm_cmd.lock);
 	WARN(wdev->wsm_cmd.buf_send, "Data locking error");
@@ -107,6 +111,8 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply, size_t
 			 "WSM request %s%s%s (%#.2x) on vif %d returned status %d\n",
 			 get_wsm_name(cmd), mib_sep, mib_name, cmd, vif, ret);
 
+	if (cmd != HI_SL_EXCHANGE_PUB_KEYS_REQ_ID)
+		mutex_unlock(&wdev->wsm_cmd.key_renew_lock);
 	return ret;
 }
 

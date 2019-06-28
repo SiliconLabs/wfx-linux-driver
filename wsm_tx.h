@@ -23,6 +23,7 @@ struct wsm_scan {
 
 struct wsm_cmd {
 	struct mutex      lock;
+	struct mutex      key_renew_lock;
 	struct completion ready;
 	struct completion done;
 	bool              async;

@@ -6,6 +6,7 @@
 #define SECURE_LINK_H
 
 #define SECURE_LINK_CCM_TAG_LENGTH              16
+#define SECURE_LINK_NONCE_COUNTER_MAX           0x3FFFFFFFUL
 
 struct sl_wmsg {
 	uint32_t    seqnum:30;

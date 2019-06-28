@@ -12,6 +12,7 @@
 #include <mbedtls/sha512.h>
 
 #include "wfx.h"
+#include "wsm_rx.h"
 #include "secure_link.h"
 
 /*
@@ -71,6 +72,8 @@ static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 	uint8_t host_pubmac[SHA512_DIGEST_SIZE];
 	uint8_t host_pubkey[API_HOST_PUB_KEY_SIZE + 2];
 
+	wdev->sl_rx_seqnum = 0;
+	wdev->sl_tx_seqnum = 0;
 	ret = mbedtls_ecdh_setup(&wdev->edch_ctxt, MBEDTLS_ECP_DP_CURVE25519);
 	if (ret)
 		return -EIO;
@@ -97,10 +100,22 @@ static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 	return 0;
 }
 
+static void renew_key(struct work_struct *work)
+{
+	struct wfx_dev *wdev = container_of(work, struct wfx_dev, sl_key_renew_work);
+
+	wsm_tx_lock_flush(wdev);
+	mutex_lock(&wdev->wsm_cmd.key_renew_lock);
+	wfx_sl_key_exchange(wdev);
+	mutex_unlock(&wdev->wsm_cmd.key_renew_lock);
+	wsm_tx_unlock(wdev);
+}
+
 int wfx_sl_init(struct wfx_dev *wdev)
 {
 	int link_mode = wdev->wsm_caps.Capabilities.LinkMode;
 
+	INIT_WORK(&wdev->sl_key_renew_work, renew_key);
 	init_completion(&wdev->sl_key_renew_done);
 	if (!memzcmp(wdev->pdata.sl_key, sizeof(wdev->pdata.sl_key)))
 		goto err;
@@ -199,6 +214,8 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m, size_t *m_len)
 		dev_warn(wdev->dev, "wrong encrypted message sequence: %d != %d\n",
 				m->seqnum, wdev->sl_rx_seqnum);
 	wdev->sl_rx_seqnum = m->seqnum + 1;
+	if (wdev->sl_rx_seqnum == SECURE_LINK_NONCE_COUNTER_MAX)
+		  schedule_work(&wdev->sl_key_renew_work);
 
 	// TODO: check if mbedtls could decrypt in-place
 	output = kmalloc(*m_len, GFP_KERNEL);
@@ -235,6 +252,8 @@ int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *outp
 	// Other bytes of nonce are 0
 	nonce[2] = wdev->sl_tx_seqnum;
 	wdev->sl_tx_seqnum++;
+	if (wdev->sl_tx_seqnum == SECURE_LINK_NONCE_COUNTER_MAX)
+		  schedule_work(&wdev->sl_key_renew_work);
 
 	// FIXME: do init only one time during sl_init() and drop session_key.
 	mbedtls_ccm_init(&ccm_context);
