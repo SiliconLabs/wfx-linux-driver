@@ -52,11 +52,9 @@ wfx-$(CONFIG_WFX_SECURE_LINK) += \
 	mbedtls/library/ccm.o \
 	mbedtls/library/cipher.o \
 	mbedtls/library/cipher_wrap.o \
-	mbedtls/library/ctr_drbg.o \
 	mbedtls/library/ecdh.o \
 	mbedtls/library/ecp_curves.o \
 	mbedtls/library/ecp.o \
-	mbedtls/library/entropy.o \
 	mbedtls/library/error.o \
 	mbedtls/library/md.o \
 	mbedtls/library/md_wrap.o \
