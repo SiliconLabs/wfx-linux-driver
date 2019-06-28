@@ -105,8 +105,10 @@ int wfx_sl_init(struct wfx_dev *wdev)
 	if (!memzcmp(wdev->pdata.sl_key, sizeof(wdev->pdata.sl_key)))
 		goto err;
 	if (link_mode == SECURE_LINK_TRUSTED_ACTIVE_ENFORCED) {
-		dev_err(wdev->dev, "TRUSTED_ACTIVE_ENFORCED is not yet supported\n");
-		goto err;
+		bitmap_set(wdev->sl_commands, HI_SL_CONFIGURE_REQ_ID, 1);
+		if (wfx_sl_key_exchange(wdev))
+			goto err;
+		wfx_sl_init_cfg(wdev);
 	} else if (link_mode == SECURE_LINK_TRUSTED_MODE) {
 		if (wsm_set_mac_key(wdev, wdev->pdata.sl_key, SL_MAC_KEY_DEST_RAM))
 			goto err;
