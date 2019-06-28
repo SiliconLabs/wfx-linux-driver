@@ -171,6 +171,7 @@ struct wfx_dev {
 	unsigned int		sl_rx_seqnum;
 	unsigned int		sl_tx_seqnum;
 	struct completion	sl_key_renew_done;
+	DECLARE_BITMAP(sl_commands, 256);
 
 	/* For debugfs 'rx_stats' file */
 	HiRxStats_t rx_stats;
