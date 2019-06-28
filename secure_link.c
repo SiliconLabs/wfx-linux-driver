@@ -7,6 +7,7 @@
 #include <crypto/sha.h>
 #include <mbedtls/md.h>
 #include <mbedtls/ecdh.h>
+#include <mbedtls/ccm.h>
 #include <mbedtls/sha256.h>
 #include <mbedtls/sha512.h>
 
@@ -158,4 +159,73 @@ end:
 	return 0;
 }
 
+int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m, size_t *m_len)
+{
+	size_t payload_len = *m_len - sizeof(struct sl_wmsg) - SECURE_LINK_CCM_TAG_LENGTH;
+	uint8_t *tag = m->payload + payload_len;
+	mbedtls_ccm_context ccm_context;
+	uint32_t nonce[3] = { };
+	uint8_t *output = NULL;
+	int ret;
+
+	WARN(m->encrypted != 0x02, "packet is not encrypted");
+	*m_len = payload_len + sizeof(m->len);
+
+	// Other bytes of nonce are 0
+	nonce[1] = m->seqnum;
+	if (wdev->sl_rx_seqnum != m->seqnum)
+		dev_warn(wdev->dev, "wrong encrypted message sequence: %d != %d\n",
+				m->seqnum, wdev->sl_rx_seqnum);
+	wdev->sl_rx_seqnum = m->seqnum + 1;
+
+	// TODO: check if mbedtls could decrypt in-place
+	output = kmalloc(*m_len, GFP_KERNEL);
+	if (!output)
+		return -ENOMEM;
+	memcpy(output, &m->len, sizeof(m->len));
+	mbedtls_ccm_init(&ccm_context);
+	mbedtls_ccm_setkey(&ccm_context, MBEDTLS_CIPHER_ID_AES,
+			wdev->session_key, sizeof(wdev->session_key) * 8);
+	ret = mbedtls_ccm_auth_decrypt(&ccm_context, payload_len,
+			(uint8_t *) nonce, sizeof(nonce), NULL, 0,
+			m->payload, output + sizeof(m->len),
+			tag, SECURE_LINK_CCM_TAG_LENGTH);
+	mbedtls_ccm_free(&ccm_context);
+	if (!ret)
+		memcpy(m, output, *m_len);
+	else
+		dev_err(wdev->dev, "mbedtls error: %08x\n", ret);
+	kfree(output);
+	return 0;
+}
+
+int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *output)
+{
+	int payload_len = round_up(input->len - sizeof(input->len), 16);
+	uint8_t *tag = output->payload + payload_len;
+	mbedtls_ccm_context ccm_context;
+	uint32_t nonce[3] = { };
+	int ret;
+
+	output->encrypted = 0x1;
+	output->len = input->len;
+	output->seqnum = wdev->sl_tx_seqnum;
+	// Other bytes of nonce are 0
+	nonce[2] = wdev->sl_tx_seqnum;
+	wdev->sl_tx_seqnum++;
+
+	// FIXME: do init only one time during sl_init() and drop session_key.
+	mbedtls_ccm_init(&ccm_context);
+	mbedtls_ccm_setkey(&ccm_context, MBEDTLS_CIPHER_ID_AES,
+			wdev->session_key, sizeof(wdev->session_key) * 8);
+	ret = mbedtls_ccm_encrypt_and_tag(&ccm_context, payload_len,
+			(uint8_t *) nonce, sizeof(nonce), NULL, 0,
+			(uint8_t *) input + sizeof(input->len), output->payload,
+			tag, SECURE_LINK_CCM_TAG_LENGTH);
+	mbedtls_ccm_free(&ccm_context);
+	if (ret)
+		dev_err(wdev->dev, "mbedtls error: %08x\n", ret);
+
+	return 0;
+}
 

@@ -5,8 +5,19 @@
 #ifndef SECURE_LINK_H
 #define SECURE_LINK_H
 
+#define SECURE_LINK_CCM_TAG_LENGTH              16
+
+struct sl_wmsg {
+	uint32_t    seqnum:30;
+	uint32_t    encrypted:2;
+	uint16_t    len;
+	uint8_t     payload[];
+} __packed;
+
 int wfx_sl_init(struct wfx_dev *wdev);
 void wfx_sl_deinit(struct wfx_dev *wdev);
 int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac);
+int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m, size_t *m_len);
+int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *output);
 
 #endif /* SECURE_LINK_H */
