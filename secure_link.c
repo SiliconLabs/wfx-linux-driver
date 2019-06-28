@@ -50,6 +50,20 @@ int wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id)
 	return test_bit(cmd_id, wdev->sl_commands);
 }
 
+static void wfx_sl_init_cfg(struct wfx_dev *wdev)
+{
+	DECLARE_BITMAP(sl_commands, 256);
+
+	bitmap_fill(sl_commands, 256);
+	clear_bit(HI_SET_SL_MAC_KEY_REQ_ID, sl_commands);
+	clear_bit(HI_SL_EXCHANGE_PUB_KEYS_REQ_ID, sl_commands);
+	clear_bit(HI_SL_EXCHANGE_PUB_KEYS_IND_ID, sl_commands);
+	clear_bit(HI_EXCEPTION_IND_ID, sl_commands);
+	clear_bit(HI_ERROR_IND_ID, sl_commands);
+	wsm_sl_config(wdev, sl_commands);
+	bitmap_copy(wdev->sl_commands, sl_commands, 256);
+}
+
 static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 {
 	int ret;
@@ -98,6 +112,7 @@ int wfx_sl_init(struct wfx_dev *wdev)
 			goto err;
 		if (wfx_sl_key_exchange(wdev))
 			goto err;
+		wfx_sl_init_cfg(wdev);
 	} else {
 		dev_info(wdev->dev, "ignoring provided secure link key since chip does not support it\n");
 	}

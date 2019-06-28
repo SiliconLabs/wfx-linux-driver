@@ -429,6 +429,19 @@ int wsm_send_pub_keys(struct wfx_dev *wdev, const uint8_t *pubkey, const uint8_t
 	return ret;
 }
 
+int wsm_sl_config(struct wfx_dev *wdev, const unsigned long *bitmap)
+{
+	int ret;
+	struct wmsg *hdr;
+	HiSlConfigureReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+
+	memcpy(body->EncrBmp, bitmap, sizeof(body->EncrBmp));
+	wfx_fill_header(hdr, -1, HI_SL_CONFIGURE_REQ_ID, sizeof(*body));
+	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	kfree(hdr);
+	return ret;
+}
+
 int wsm_set_mac_key(struct wfx_dev *wdev, const uint8_t *sl_key, int destination)
 {
 	int ret;
