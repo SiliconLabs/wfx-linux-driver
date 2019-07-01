@@ -278,7 +278,7 @@ static int wsm_error_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *bu
 		dev_err(wdev->dev, "asynchronous error: wrong PDS payload or version: %#.8x\n", *pStatus);
 		break;
 	default:
-		dev_err(wdev->dev, "asynchronous error: unknown\n");
+		dev_err(wdev->dev, "asynchronous error: unknown (%d)\n", body->Type);
 		break;
 	}
 	return 0;
