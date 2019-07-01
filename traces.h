@@ -88,6 +88,7 @@
 	low_msg_cnf_name(SL_CONFIGURE)         \
 	low_msg_cnf_name(SL_EXCHANGE_PUB_KEYS) \
 	low_msg_cnf_name(SHUT_DOWN)            \
+	low_msg_ind_name(SL_EXCHANGE_PUB_KEYS) \
 	low_msg_ind_name(ERROR)                \
 	low_msg_ind_name(EXCEPTION)            \
 	low_msg_ind_name(GENERIC)              \
