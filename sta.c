@@ -1823,7 +1823,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 		wfx_upload_beacon(wvif);
 	}
 
-	if (changed & BSS_CHANGED_BEACON_ENABLED) {
+	if (changed & BSS_CHANGED_BEACON_ENABLED && wvif->state != WFX_STATE_IBSS) {
 		if (wvif->enable_beacon != info->enable_beacon) {
 			wsm_beacon_transmit(wvif->wdev, info->enable_beacon, wvif->Id);
 			wvif->enable_beacon = info->enable_beacon;

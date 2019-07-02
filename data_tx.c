@@ -592,7 +592,6 @@ static WsmHiTxReqBody_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t
 static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiTxReqBody_t *wsm)
 {
 	bool tx_policy_renew = false;
-	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 
 	WARN_ON(!wvif);
 	t->txpriv.rate_id = tx_policy_get(wvif,
@@ -606,9 +605,6 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 	t->rate = wfx_get_tx_rate(wvif,
 		&t->tx_info->control.rates[0]),
 	wsm->MaxTxRate = t->rate->hw_value;
-	// correct the max TX rate if needed when using the IBSS mode
-	if (conf->ibss_joined && wsm->MaxTxRate == 0)
-		wsm->MaxTxRate = API_RATE_INDEX_G_24MBPS;
 
 	/* HT rate
 	 * mac80211_rate_control_flags: IEEE80211_TX_RC_MCS
