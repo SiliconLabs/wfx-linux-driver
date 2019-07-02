@@ -219,8 +219,10 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m)
 			(uint8_t *) nonce, sizeof(nonce), NULL, 0,
 			m->payload, output + sizeof(m->len),
 			tag, SECURE_LINK_CCM_TAG_LENGTH);
-	if (ret)
+	if (ret) {
 		dev_err(wdev->dev, "mbedtls error: %08x\n", ret);
+		return -EIO;
+	}
 	if (memzcmp(output + clear_len, payload_len + sizeof(m->len) - clear_len))
 		dev_warn(wdev->dev, "padding is not 0\n");
 	return 0;
@@ -246,9 +248,10 @@ int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *outp
 			(uint8_t *) nonce, sizeof(nonce), NULL, 0,
 			(uint8_t *) input + sizeof(input->len), output->payload,
 			tag, SECURE_LINK_CCM_TAG_LENGTH);
-	if (ret)
+	if (ret) {
 		dev_err(wdev->dev, "mbedtls error: %08x\n", ret);
-
+		return -EIO;
+	}
 	return 0;
 }
 
