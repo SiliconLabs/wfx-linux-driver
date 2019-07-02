@@ -54,6 +54,15 @@ static void wfx_sl_init_cfg(struct wfx_dev *wdev)
 	bitmap_copy(wdev->sl_commands, sl_commands, 256);
 }
 
+static int wfx_sl_get_pubkey_mac(struct wfx_dev *wdev, uint8_t *pubkey, uint8_t *mac)
+{
+	return mbedtls_md_hmac(
+			mbedtls_md_info_from_type(MBEDTLS_MD_SHA512),
+			wdev->pdata.sl_key, sizeof(wdev->pdata.sl_key),
+			pubkey, API_HOST_PUB_KEY_SIZE,
+			mac);
+}
+
 static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 {
 	int ret;
@@ -72,11 +81,7 @@ static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 	if (ret || olen != sizeof(host_pubkey))
 		return -EIO;
 	reverse_bytes(host_pubkey + 2, sizeof(host_pubkey) - 2);
-	ret = mbedtls_md_hmac(
-			mbedtls_md_info_from_type(MBEDTLS_MD_SHA512),
-			wdev->pdata.sl_key, sizeof(wdev->pdata.sl_key),
-			host_pubkey + 2, sizeof(host_pubkey) - 2,
-			host_pubmac);
+	ret = wfx_sl_get_pubkey_mac(wdev, host_pubkey + 2, host_pubmac);
 	if (ret)
 		return -EIO;
 	ret = wsm_send_pub_keys(wdev, host_pubkey + 2, host_pubmac);
@@ -145,11 +150,7 @@ int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *nc
 	uint8_t shared_secret_digest[SHA256_DIGEST_SIZE];
 	uint8_t ncp_pubmac_computed[SHA512_DIGEST_SIZE];
 
-	ret = mbedtls_md_hmac(
-			mbedtls_md_info_from_type(MBEDTLS_MD_SHA512),
-			wdev->pdata.sl_key, sizeof(wdev->pdata.sl_key),
-			ncp_pubkey, API_NCP_PUB_KEY_SIZE,
-			ncp_pubmac_computed);
+	ret = wfx_sl_get_pubkey_mac(wdev, ncp_pubkey, ncp_pubmac_computed);
 	if (ret)
 		goto end;
 	ret = memcmp(ncp_pubmac_computed, ncp_pubmac, sizeof(ncp_pubmac_computed));
