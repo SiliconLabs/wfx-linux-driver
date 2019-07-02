@@ -18,7 +18,7 @@ struct sl_wmsg {
 int wfx_sl_init(struct wfx_dev *wdev);
 void wfx_sl_deinit(struct wfx_dev *wdev);
 int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac);
-int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m, size_t *m_len);
+int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m);
 int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *output);
 int wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id);
 

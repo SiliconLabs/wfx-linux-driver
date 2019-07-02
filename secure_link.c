@@ -194,16 +194,16 @@ end:
 	return 0;
 }
 
-int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m, size_t *m_len)
+int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m)
 {
-	size_t payload_len = *m_len - sizeof(struct sl_wmsg) - SECURE_LINK_CCM_TAG_LENGTH;
-	uint8_t *tag = m->payload + payload_len;
-	uint32_t nonce[3] = { };
-	uint8_t *output = NULL;
 	int ret;
+	size_t clear_len = le16_to_cpu(m->len);
+	size_t payload_len = round_up(clear_len - sizeof(m->len), 16);
+	uint8_t *tag = m->payload + payload_len;
+	uint8_t *output = NULL;
+	uint32_t nonce[3] = { };
 
 	WARN(m->encrypted != 0x02, "packet is not encrypted");
-	*m_len = payload_len + sizeof(m->len);
 
 	// Other bytes of nonce are 0
 	nonce[1] = m->seqnum;
@@ -215,7 +215,7 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m, size_t *m_len)
 		  schedule_work(&wdev->sl_key_renew_work);
 
 	// TODO: check if mbedtls could decrypt in-place
-	output = kmalloc(*m_len, GFP_KERNEL);
+	output = kmalloc(clear_len, GFP_KERNEL);
 	if (!output)
 		return -ENOMEM;
 	memcpy(output, &m->len, sizeof(m->len));
@@ -223,8 +223,10 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m, size_t *m_len)
 			(uint8_t *) nonce, sizeof(nonce), NULL, 0,
 			m->payload, output + sizeof(m->len),
 			tag, SECURE_LINK_CCM_TAG_LENGTH);
+	if (memzcmp(output + clear_len, payload_len + sizeof(m->len) - clear_len))
+		dev_err(wdev->dev, "padding is not 0\n");
 	if (!ret)
-		memcpy(m, output, *m_len);
+		memcpy(m, output, clear_len);
 	else
 		dev_err(wdev->dev, "mbedtls error: %08x\n", ret);
 	kfree(output);

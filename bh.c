@@ -52,8 +52,8 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	struct sk_buff *skb;
 	struct wmsg *wsm;
 	size_t alloc_len;
+	size_t computed_len;
 	int release_count;
-	int computed_len;
 	int piggyback = 0;
 
 	WARN_ON(read_len < 4);
@@ -73,19 +73,19 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	wsm = (struct wmsg *) skb->data;
 	WARN(wsm->encrypted & 0x1, "unsupported encryption type");
 	if (wsm->encrypted == 0x2) {
-		if (wfx_sl_decode(wdev, (void *) skb->data, &read_len))
+		if (wfx_sl_decode(wdev, (void *) wsm))
 			goto err;
 		le16_to_cpus(wsm->len);
-		if (memzcmp(skb->data + wsm->len, read_len - wsm->len))
-			dev_err(wdev->dev, "padding is not 0\n");
-		computed_len = round_up(wsm->len - sizeof(wsm->len), 16) + sizeof(wsm->len);
+		computed_len = round_up(wsm->len - sizeof(wsm->len), 16)
+			       + sizeof(struct sl_wmsg)
+			       + SECURE_LINK_CCM_TAG_LENGTH;
 	} else {
-		computed_len = round_up(wsm->len, 2);
 		le16_to_cpus(wsm->len);
+		computed_len = round_up(wsm->len, 2);
 	}
 	if (computed_len != read_len) {
-		dev_err(wdev->dev, "inconsistent message length: %d != %zu\n",
-			wsm->len, read_len);
+		dev_err(wdev->dev, "inconsistent message length: %zu != %zu\n",
+			computed_len, read_len);
 		print_hex_dump(KERN_INFO, "wsm: ", DUMP_PREFIX_OFFSET, 16, 1,
 			       wsm, read_len, true);
 		goto err;
