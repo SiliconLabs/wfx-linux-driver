@@ -72,26 +72,32 @@ static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 
 	wdev->sl_rx_seqnum = 0;
 	wdev->sl_tx_seqnum = 0;
+	mbedtls_ecdh_init(&wdev->edch_ctxt);
 	ret = mbedtls_ecdh_setup(&wdev->edch_ctxt, MBEDTLS_ECP_DP_CURVE25519);
 	if (ret)
-		return -EIO;
+		goto err;
 	wdev->edch_ctxt.point_format = MBEDTLS_ECP_PF_COMPRESSED;
 	ret = mbedtls_ecdh_make_public(&wdev->edch_ctxt, &olen, host_pubkey,
 			sizeof(host_pubkey), mbedtls_get_random_bytes, NULL);
 	if (ret || olen != sizeof(host_pubkey))
-		return -EIO;
+		goto err;
 	reverse_bytes(host_pubkey + 2, sizeof(host_pubkey) - 2);
 	ret = wfx_sl_get_pubkey_mac(wdev, host_pubkey + 2, host_pubmac);
 	if (ret)
-		return -EIO;
+		goto err;
 	ret = wsm_send_pub_keys(wdev, host_pubkey + 2, host_pubmac);
 	if (ret)
-		return -EIO;
+		goto err;
 	if (!wait_for_completion_timeout(&wdev->sl_key_renew_done, msecs_to_jiffies(500)))
-		return -EIO;
+		goto err;
 	if (!memzcmp(wdev->session_key, sizeof(wdev->session_key)))
-		return -EIO;
+		goto err;
+
+	mbedtls_ecdh_free(&wdev->edch_ctxt);
 	return 0;
+err:
+	mbedtls_ecdh_free(&wdev->edch_ctxt);
+	return -EIO;
 }
 
 static void renew_key(struct work_struct *work)
@@ -139,7 +145,6 @@ err:
 
 void wfx_sl_deinit(struct wfx_dev *wdev)
 {
-	mbedtls_ecdh_free(&wdev->edch_ctxt);
 }
 
 int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac)
