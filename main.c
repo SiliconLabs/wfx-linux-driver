@@ -403,8 +403,7 @@ int wfx_probe(struct wfx_dev *wdev)
 		wsm_set_operational_mode(wdev, WSM_OP_POWER_MODE_DOZE);
 	}
 
-	// Secure link does not support multi-tx confirmation
-	if (!memzcmp(wdev->session_key, sizeof(wdev->session_key)))
+	if (!wdev->sl_enabled)
 		wsm_use_multi_tx_conf(wdev, true);
 
 	for (i = 0; i < ARRAY_SIZE(wdev->addresses); i++) {

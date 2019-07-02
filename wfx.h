@@ -168,6 +168,7 @@ struct wfx_dev {
 	/* Secure Link related */
 	mbedtls_ecdh_context	edch_ctxt;
 	u8			session_key[16];
+	bool			sl_enabled;
 	unsigned int		sl_rx_seqnum;
 	unsigned int		sl_tx_seqnum;
 	struct completion	sl_key_renew_done;

@@ -90,13 +90,14 @@ static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 		goto err;
 	if (!wait_for_completion_timeout(&wdev->sl_key_renew_done, msecs_to_jiffies(500)))
 		goto err;
-	if (!memzcmp(wdev->session_key, sizeof(wdev->session_key)))
+	if (!wdev->sl_enabled)
 		goto err;
 
 	mbedtls_ecdh_free(&wdev->edch_ctxt);
 	return 0;
 err:
 	mbedtls_ecdh_free(&wdev->edch_ctxt);
+	dev_err(wdev->dev, "key negociation error\n");
 	return -EIO;
 }
 
@@ -186,8 +187,8 @@ int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *nc
 	memcpy(wdev->session_key, shared_secret_digest, sizeof(wdev->session_key));
 
 end:
-	if (ret)
-		dev_err(wdev->dev, "cannot get session_key\n");
+	if (!ret)
+		wdev->sl_enabled = true;
 	return 0;
 }
 
