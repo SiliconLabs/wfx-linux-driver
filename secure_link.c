@@ -200,7 +200,7 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m)
 	size_t clear_len = le16_to_cpu(m->len);
 	size_t payload_len = round_up(clear_len - sizeof(m->len), 16);
 	uint8_t *tag = m->payload + payload_len;
-	uint8_t *output = NULL;
+	uint8_t *output = (uint8_t *) m;
 	uint32_t nonce[3] = { };
 
 	WARN(m->encrypted != 0x02, "packet is not encrypted");
@@ -214,22 +214,15 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m)
 	if (wdev->sl_rx_seqnum == SECURE_LINK_NONCE_COUNTER_MAX)
 		  schedule_work(&wdev->sl_key_renew_work);
 
-	// TODO: check if mbedtls could decrypt in-place
-	output = kmalloc(clear_len, GFP_KERNEL);
-	if (!output)
-		return -ENOMEM;
 	memcpy(output, &m->len, sizeof(m->len));
 	ret = mbedtls_ccm_auth_decrypt(&wdev->ccm_ctxt, payload_len,
 			(uint8_t *) nonce, sizeof(nonce), NULL, 0,
 			m->payload, output + sizeof(m->len),
 			tag, SECURE_LINK_CCM_TAG_LENGTH);
-	if (memzcmp(output + clear_len, payload_len + sizeof(m->len) - clear_len))
-		dev_err(wdev->dev, "padding is not 0\n");
-	if (!ret)
-		memcpy(m, output, clear_len);
-	else
+	if (ret)
 		dev_err(wdev->dev, "mbedtls error: %08x\n", ret);
-	kfree(output);
+	if (memzcmp(output + clear_len, payload_len + sizeof(m->len) - clear_len))
+		dev_warn(wdev->dev, "padding is not 0\n");
 	return 0;
 }
 
