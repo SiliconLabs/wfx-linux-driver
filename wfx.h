@@ -16,6 +16,7 @@
 #include <net/mac80211.h>
 
 #include <mbedtls/ecdh.h>
+#include <mbedtls/ccm.h>
 
 #include "wsm_cmd_api.h"
 #include "main.h"
@@ -167,7 +168,7 @@ struct wfx_dev {
 
 	/* Secure Link related */
 	mbedtls_ecdh_context	edch_ctxt;
-	u8			session_key[16];
+	mbedtls_ccm_context	ccm_ctxt;
 	bool			sl_enabled;
 	unsigned int		sl_rx_seqnum;
 	unsigned int		sl_tx_seqnum;

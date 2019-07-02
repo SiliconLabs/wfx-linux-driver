@@ -146,6 +146,7 @@ err:
 
 void wfx_sl_deinit(struct wfx_dev *wdev)
 {
+	mbedtls_ccm_free(&wdev->ccm_ctxt);
 }
 
 int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac)
@@ -183,8 +184,9 @@ int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *nc
 	if (ret)
 		goto end;
 
-	// Use the lower 16 bytes of the sha256
-	memcpy(wdev->session_key, shared_secret_digest, sizeof(wdev->session_key));
+	// Use the lower 16 bytes of the sha256 for session key
+	ret = mbedtls_ccm_setkey(&wdev->ccm_ctxt, MBEDTLS_CIPHER_ID_AES,
+			shared_secret_digest, 16 * BITS_PER_BYTE);
 
 end:
 	if (!ret)
@@ -196,7 +198,6 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m, size_t *m_len)
 {
 	size_t payload_len = *m_len - sizeof(struct sl_wmsg) - SECURE_LINK_CCM_TAG_LENGTH;
 	uint8_t *tag = m->payload + payload_len;
-	mbedtls_ccm_context ccm_context;
 	uint32_t nonce[3] = { };
 	uint8_t *output = NULL;
 	int ret;
@@ -218,14 +219,10 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m, size_t *m_len)
 	if (!output)
 		return -ENOMEM;
 	memcpy(output, &m->len, sizeof(m->len));
-	mbedtls_ccm_init(&ccm_context);
-	mbedtls_ccm_setkey(&ccm_context, MBEDTLS_CIPHER_ID_AES,
-			wdev->session_key, sizeof(wdev->session_key) * 8);
-	ret = mbedtls_ccm_auth_decrypt(&ccm_context, payload_len,
+	ret = mbedtls_ccm_auth_decrypt(&wdev->ccm_ctxt, payload_len,
 			(uint8_t *) nonce, sizeof(nonce), NULL, 0,
 			m->payload, output + sizeof(m->len),
 			tag, SECURE_LINK_CCM_TAG_LENGTH);
-	mbedtls_ccm_free(&ccm_context);
 	if (!ret)
 		memcpy(m, output, *m_len);
 	else
@@ -238,7 +235,6 @@ int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *outp
 {
 	int payload_len = round_up(input->len - sizeof(input->len), 16);
 	uint8_t *tag = output->payload + payload_len;
-	mbedtls_ccm_context ccm_context;
 	uint32_t nonce[3] = { };
 	int ret;
 
@@ -251,15 +247,10 @@ int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *outp
 	if (wdev->sl_tx_seqnum == SECURE_LINK_NONCE_COUNTER_MAX)
 		  schedule_work(&wdev->sl_key_renew_work);
 
-	// FIXME: do init only one time during sl_init() and drop session_key.
-	mbedtls_ccm_init(&ccm_context);
-	mbedtls_ccm_setkey(&ccm_context, MBEDTLS_CIPHER_ID_AES,
-			wdev->session_key, sizeof(wdev->session_key) * 8);
-	ret = mbedtls_ccm_encrypt_and_tag(&ccm_context, payload_len,
+	ret = mbedtls_ccm_encrypt_and_tag(&wdev->ccm_ctxt, payload_len,
 			(uint8_t *) nonce, sizeof(nonce), NULL, 0,
 			(uint8_t *) input + sizeof(input->len), output->payload,
 			tag, SECURE_LINK_CCM_TAG_LENGTH);
-	mbedtls_ccm_free(&ccm_context);
 	if (ret)
 		dev_err(wdev->dev, "mbedtls error: %08x\n", ret);
 
