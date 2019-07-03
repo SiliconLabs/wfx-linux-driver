@@ -10,7 +10,9 @@
 #ifdef __KERNEL__
 #include <linux/types.h>
 #else
+#include <net/ethernet.h>
 #include <stdint.h>
+#define __packed __attribute__((__packed__))
 #endif
 
 #define HI_API_VERSION_MINOR                0x00
