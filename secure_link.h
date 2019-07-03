@@ -5,8 +5,11 @@
 #ifndef SECURE_LINK_H
 #define SECURE_LINK_H
 
+#include "general_api.h"
+
 #define SECURE_LINK_CCM_TAG_LENGTH              16
-#define SECURE_LINK_NONCE_COUNTER_MAX           0x3FFFFFFFUL
+
+struct wfx_dev;
 
 struct sl_wmsg {
 	uint32_t    seqnum:30;
@@ -15,11 +18,68 @@ struct sl_wmsg {
 	uint8_t     payload[];
 } __packed;
 
+#ifdef CONFIG_WFX_SECURE_LINK
+
+#include <linux/bitmap.h>
+#include <mbedtls/ecdh.h>
+#include <mbedtls/ccm.h>
+
+#define SECURE_LINK_NONCE_COUNTER_MAX           0x3FFFFFFFUL
+
+struct sl_context {
+	bool                 enabled;
+	unsigned int         rx_seqnum;
+	unsigned int         tx_seqnum;
+	struct completion    key_renew_done;
+	struct work_struct   key_renew_work;
+	DECLARE_BITMAP(commands, 256);
+	mbedtls_ecdh_context edch_ctxt; // Only valid druing key negociation
+	mbedtls_ccm_context  ccm_ctxt;
+};
+
 int wfx_sl_init(struct wfx_dev *wdev);
 void wfx_sl_deinit(struct wfx_dev *wdev);
 int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac);
 int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m);
 int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *output);
 int wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id);
+
+#else /* CONFIG_WFX_SECURE_LINK */
+
+struct sl_context {
+	bool enabled;
+};
+
+static inline int wfx_sl_init(struct wfx_dev *wdev)
+{
+	return -EIO;
+}
+
+static inline void wfx_sl_deinit(struct wfx_dev *wdev)
+{
+	return;
+}
+
+static inline int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac)
+{
+	return -EIO;
+}
+
+static inline int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m)
+{
+	return -EIO;
+}
+
+static inline int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *output)
+{
+	return -EIO;
+}
+
+static inline bool wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id)
+{
+	return false;
+}
+
+#endif /* CONFIG_WFX_SECURE_LINK */
 
 #endif /* SECURE_LINK_H */

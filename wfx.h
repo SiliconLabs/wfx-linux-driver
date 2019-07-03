@@ -15,9 +15,6 @@
 #include <linux/version.h>
 #include <net/mac80211.h>
 
-#include <mbedtls/ecdh.h>
-#include <mbedtls/ccm.h>
-
 #include "wsm_cmd_api.h"
 #include "main.h"
 #include "queue.h"
@@ -25,6 +22,7 @@
 #include "sta.h"
 #include "scan.h"
 #include "bh.h"
+#include "secure_link.h"
 #include "data_txrx.h"
 
 #if (KERNEL_VERSION(4, 7, 0) > LINUX_VERSION_CODE)
@@ -125,6 +123,7 @@ struct wfx_dev {
 	const struct hwbus_ops		*hwbus_ops;
 	void				*hwbus_priv;
 	struct wfx_hif			hif;
+	struct sl_context		sl;
 
 	struct wfx_debug_priv	*debug;
 
@@ -166,15 +165,6 @@ struct wfx_dev {
 
 	u32			pending_frame_id;
 
-	/* Secure Link related */
-	mbedtls_ecdh_context	edch_ctxt;
-	mbedtls_ccm_context	ccm_ctxt;
-	bool			sl_enabled;
-	unsigned int		sl_rx_seqnum;
-	unsigned int		sl_tx_seqnum;
-	struct completion	sl_key_renew_done;
-	struct work_struct	sl_key_renew_work;
-	DECLARE_BITMAP(sl_commands, 256);
 
 	/* For debugfs 'rx_stats' file */
 	HiRxStats_t rx_stats;

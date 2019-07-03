@@ -37,7 +37,7 @@ static void reverse_bytes(uint8_t *src, uint8_t length)
 
 int wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id)
 {
-	return test_bit(cmd_id, wdev->sl_commands);
+	return test_bit(cmd_id, wdev->sl.commands);
 }
 
 static void wfx_sl_init_cfg(struct wfx_dev *wdev)
@@ -51,7 +51,7 @@ static void wfx_sl_init_cfg(struct wfx_dev *wdev)
 	clear_bit(HI_EXCEPTION_IND_ID, sl_commands);
 	clear_bit(HI_ERROR_IND_ID, sl_commands);
 	wsm_sl_config(wdev, sl_commands);
-	bitmap_copy(wdev->sl_commands, sl_commands, 256);
+	bitmap_copy(wdev->sl.commands, sl_commands, 256);
 }
 
 static int wfx_sl_get_pubkey_mac(struct wfx_dev *wdev, uint8_t *pubkey, uint8_t *mac)
@@ -70,14 +70,14 @@ static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 	uint8_t host_pubmac[SHA512_DIGEST_SIZE];
 	uint8_t host_pubkey[API_HOST_PUB_KEY_SIZE + 2];
 
-	wdev->sl_rx_seqnum = 0;
-	wdev->sl_tx_seqnum = 0;
-	mbedtls_ecdh_init(&wdev->edch_ctxt);
-	ret = mbedtls_ecdh_setup(&wdev->edch_ctxt, MBEDTLS_ECP_DP_CURVE25519);
+	wdev->sl.rx_seqnum = 0;
+	wdev->sl.tx_seqnum = 0;
+	mbedtls_ecdh_init(&wdev->sl.edch_ctxt);
+	ret = mbedtls_ecdh_setup(&wdev->sl.edch_ctxt, MBEDTLS_ECP_DP_CURVE25519);
 	if (ret)
 		goto err;
-	wdev->edch_ctxt.point_format = MBEDTLS_ECP_PF_COMPRESSED;
-	ret = mbedtls_ecdh_make_public(&wdev->edch_ctxt, &olen, host_pubkey,
+	wdev->sl.edch_ctxt.point_format = MBEDTLS_ECP_PF_COMPRESSED;
+	ret = mbedtls_ecdh_make_public(&wdev->sl.edch_ctxt, &olen, host_pubkey,
 			sizeof(host_pubkey), mbedtls_get_random_bytes, NULL);
 	if (ret || olen != sizeof(host_pubkey))
 		goto err;
@@ -88,22 +88,22 @@ static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 	ret = wsm_send_pub_keys(wdev, host_pubkey + 2, host_pubmac);
 	if (ret)
 		goto err;
-	if (!wait_for_completion_timeout(&wdev->sl_key_renew_done, msecs_to_jiffies(500)))
+	if (!wait_for_completion_timeout(&wdev->sl.key_renew_done, msecs_to_jiffies(500)))
 		goto err;
-	if (!wdev->sl_enabled)
+	if (!wdev->sl.enabled)
 		goto err;
 
-	mbedtls_ecdh_free(&wdev->edch_ctxt);
+	mbedtls_ecdh_free(&wdev->sl.edch_ctxt);
 	return 0;
 err:
-	mbedtls_ecdh_free(&wdev->edch_ctxt);
+	mbedtls_ecdh_free(&wdev->sl.edch_ctxt);
 	dev_err(wdev->dev, "key negociation error\n");
 	return -EIO;
 }
 
 static void renew_key(struct work_struct *work)
 {
-	struct wfx_dev *wdev = container_of(work, struct wfx_dev, sl_key_renew_work);
+	struct wfx_dev *wdev = container_of(work, struct wfx_dev, sl.key_renew_work);
 
 	wsm_tx_lock_flush(wdev);
 	mutex_lock(&wdev->wsm_cmd.key_renew_lock);
@@ -116,12 +116,12 @@ int wfx_sl_init(struct wfx_dev *wdev)
 {
 	int link_mode = wdev->wsm_caps.Capabilities.LinkMode;
 
-	INIT_WORK(&wdev->sl_key_renew_work, renew_key);
-	init_completion(&wdev->sl_key_renew_done);
+	INIT_WORK(&wdev->sl.key_renew_work, renew_key);
+	init_completion(&wdev->sl.key_renew_done);
 	if (!memzcmp(wdev->pdata.sl_key, sizeof(wdev->pdata.sl_key)))
 		return -EIO;
 	if (link_mode == SECURE_LINK_TRUSTED_ACTIVE_ENFORCED) {
-		bitmap_set(wdev->sl_commands, HI_SL_CONFIGURE_REQ_ID, 1);
+		bitmap_set(wdev->sl.commands, HI_SL_CONFIGURE_REQ_ID, 1);
 		if (wfx_sl_key_exchange(wdev))
 			return -EIO;
 		wfx_sl_init_cfg(wdev);
@@ -139,7 +139,7 @@ int wfx_sl_init(struct wfx_dev *wdev)
 
 void wfx_sl_deinit(struct wfx_dev *wdev)
 {
-	mbedtls_ccm_free(&wdev->ccm_ctxt);
+	mbedtls_ccm_free(&wdev->sl.ccm_ctxt);
 }
 
 int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac)
@@ -159,14 +159,14 @@ int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *nc
 
 	// FIXME: save Y or (reset it), concat it with ncp_public_key and use mbedtls_ecdh_read_public.
 	reverse_bytes(ncp_pubkey, API_NCP_PUB_KEY_SIZE);
-	ret = mbedtls_mpi_read_binary(&wdev->edch_ctxt.Qp.X, ncp_pubkey, API_NCP_PUB_KEY_SIZE);
+	ret = mbedtls_mpi_read_binary(&wdev->sl.edch_ctxt.Qp.X, ncp_pubkey, API_NCP_PUB_KEY_SIZE);
 	if (ret)
 		goto end;
-	ret = mbedtls_mpi_lset(&wdev->edch_ctxt.Qp.Z, 1);
+	ret = mbedtls_mpi_lset(&wdev->sl.edch_ctxt.Qp.Z, 1);
 	if (ret)
 		goto end;
 
-	ret = mbedtls_ecdh_calc_secret(&wdev->edch_ctxt, &olen,
+	ret = mbedtls_ecdh_calc_secret(&wdev->sl.edch_ctxt, &olen,
 			shared_secret, sizeof(shared_secret),
 			mbedtls_get_random_bytes, NULL);
 	if (ret)
@@ -178,13 +178,13 @@ int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *nc
 		goto end;
 
 	// Use the lower 16 bytes of the sha256 for session key
-	ret = mbedtls_ccm_setkey(&wdev->ccm_ctxt, MBEDTLS_CIPHER_ID_AES,
+	ret = mbedtls_ccm_setkey(&wdev->sl.ccm_ctxt, MBEDTLS_CIPHER_ID_AES,
 			shared_secret_digest, 16 * BITS_PER_BYTE);
 
 end:
 	if (!ret)
-		wdev->sl_enabled = true;
-	complete(&wdev->sl_key_renew_done);
+		wdev->sl.enabled = true;
+	complete(&wdev->sl.key_renew_done);
 	return 0;
 }
 
@@ -201,15 +201,15 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m)
 
 	// Other bytes of nonce are 0
 	nonce[1] = m->seqnum;
-	if (wdev->sl_rx_seqnum != m->seqnum)
+	if (wdev->sl.rx_seqnum != m->seqnum)
 		dev_warn(wdev->dev, "wrong encrypted message sequence: %d != %d\n",
-				m->seqnum, wdev->sl_rx_seqnum);
-	wdev->sl_rx_seqnum = m->seqnum + 1;
-	if (wdev->sl_rx_seqnum == SECURE_LINK_NONCE_COUNTER_MAX)
-		  schedule_work(&wdev->sl_key_renew_work);
+				m->seqnum, wdev->sl.rx_seqnum);
+	wdev->sl.rx_seqnum = m->seqnum + 1;
+	if (wdev->sl.rx_seqnum == SECURE_LINK_NONCE_COUNTER_MAX)
+		  schedule_work(&wdev->sl.key_renew_work);
 
 	memcpy(output, &m->len, sizeof(m->len));
-	ret = mbedtls_ccm_auth_decrypt(&wdev->ccm_ctxt, payload_len,
+	ret = mbedtls_ccm_auth_decrypt(&wdev->sl.ccm_ctxt, payload_len,
 			(uint8_t *) nonce, sizeof(nonce), NULL, 0,
 			m->payload, output + sizeof(m->len),
 			tag, SECURE_LINK_CCM_TAG_LENGTH);
@@ -231,14 +231,14 @@ int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *outp
 
 	output->encrypted = 0x1;
 	output->len = input->len;
-	output->seqnum = wdev->sl_tx_seqnum;
+	output->seqnum = wdev->sl.tx_seqnum;
 	// Other bytes of nonce are 0
-	nonce[2] = wdev->sl_tx_seqnum;
-	wdev->sl_tx_seqnum++;
-	if (wdev->sl_tx_seqnum == SECURE_LINK_NONCE_COUNTER_MAX)
-		  schedule_work(&wdev->sl_key_renew_work);
+	nonce[2] = wdev->sl.tx_seqnum;
+	wdev->sl.tx_seqnum++;
+	if (wdev->sl.tx_seqnum == SECURE_LINK_NONCE_COUNTER_MAX)
+		  schedule_work(&wdev->sl.key_renew_work);
 
-	ret = mbedtls_ccm_encrypt_and_tag(&wdev->ccm_ctxt, payload_len,
+	ret = mbedtls_ccm_encrypt_and_tag(&wdev->sl.ccm_ctxt, payload_len,
 			(uint8_t *) nonce, sizeof(nonce), NULL, 0,
 			(uint8_t *) input + sizeof(input->len), output->payload,
 			tag, SECURE_LINK_CCM_TAG_LENGTH);

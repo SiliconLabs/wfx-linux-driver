@@ -404,7 +404,7 @@ int wfx_probe(struct wfx_dev *wdev)
 		wsm_set_operational_mode(wdev, WSM_OP_POWER_MODE_DOZE);
 	}
 
-	if (!wdev->sl_enabled)
+	if (!wdev->sl.enabled)
 		wsm_use_multi_tx_conf(wdev, true);
 
 	for (i = 0; i < ARRAY_SIZE(wdev->addresses); i++) {
