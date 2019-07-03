@@ -6,8 +6,7 @@ Changes in 2.2.1
   * Fix power save handling with multiple interfaces (IPWHIFER-450)
   * High Throughput (HT) channels was not correctly detected since release 2.1
     (IPWHIFER-461)
-  * Fix potential mishandling of wake-up gpio when entering deep sleep
-    (aka "SHUTDOWN_REQ")
+  * Fix potential mishandling of wake-up gpio during shut down request.
   * Fix packet size displayed in wsm tracepoints. It is now full packet size
     including header.
   * Increase size of displayed payload in tracepoints wsm_*. Traces for TX_REQ
@@ -31,7 +30,7 @@ Changes in 2.2
   * SPI bus is now configured to use MODE2 of Ineo chipset. Byte swapping
     before/after SPI bus access is no more necessary (IPWHIFER-368,
     IPWHIFER-416).
-  * Device now go to deep sleep mode when unbind (IPWHIFER-442)
+  * Device now shut down when unbinded (IPWHIFER-442)
   * Remove support for monitor mode since it has never worked (IPWHIFER-378).
   * Remove support for /sys/kernel/debug/ieee80211/phy0/wfx/wsm_params. It was a
     hack and was never really used.
