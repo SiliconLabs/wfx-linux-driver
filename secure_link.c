@@ -237,12 +237,12 @@ int wfx_sl_init(struct wfx_dev *wdev)
 	init_completion(&wdev->sl.key_renew_done);
 	if (!memzcmp(wdev->pdata.sec_link_key, sizeof(wdev->pdata.sec_link_key)))
 		return -EIO;
-	if (link_mode == SECURE_LINK_TRUSTED_ACTIVE_ENFORCED) {
+	if (link_mode == SEC_LINK_ENFORCED) {
 		bitmap_set(wdev->sl.commands, HI_SL_CONFIGURE_REQ_ID, 1);
 		if (wfx_sl_key_exchange(wdev))
 			return -EIO;
 		wfx_sl_init_cfg(wdev);
-	} else if (link_mode == SECURE_LINK_TRUSTED_MODE) {
+	} else if (link_mode == SEC_LINK_EVAL) {
 		if (wsm_set_mac_key(wdev, wdev->pdata.sec_link_key, SL_MAC_KEY_DEST_RAM))
 			return -EIO;
 		if (wfx_sl_key_exchange(wdev))

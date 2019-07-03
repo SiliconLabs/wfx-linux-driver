@@ -485,11 +485,11 @@ static ssize_t wfx_burn_sec_link_key_write(struct file *file, const char __user 
 	dev_info(wdev->dev, "this driver does not support secure link\n");
 	return -EINVAL;
 #endif
-	if (wdev->wsm_caps.Capabilities.LinkMode == SECURE_LINK_TRUSTED_ACTIVE_ENFORCED) {
+	if (wdev->wsm_caps.Capabilities.LinkMode == SEC_LINK_ENFORCED) {
 		dev_err(wdev->dev, "key was already burned on this device\n");
 		return -EINVAL;
 	}
-	if (wdev->wsm_caps.Capabilities.LinkMode != SECURE_LINK_TRUSTED_MODE) {
+	if (wdev->wsm_caps.Capabilities.LinkMode != SEC_LINK_EVAL) {
 		dev_err(wdev->dev, "this device does not support secure link\n");
 		return -EINVAL;
 	}

@@ -275,10 +275,10 @@ typedef struct HiErrorIndBody_s {
 } __packed HiErrorIndBody_t;
 
 typedef enum SecureLinkState_e {
-	SECURE_LINK_NA_MODE                        = 0x0,
-	SECURE_LINK_UNTRUSTED_MODE                 = 0x1,
-	SECURE_LINK_TRUSTED_MODE                   = 0x2,
-	SECURE_LINK_TRUSTED_ACTIVE_ENFORCED        = 0x3
+	SEC_LINK_UNAVAILABLE                       = 0x0,
+	SEC_LINK_RESERVED                          = 0x1,
+	SEC_LINK_EVAL                              = 0x2,
+	SEC_LINK_ENFORCED                          = 0x3
 } SecureLinkState;
 
 typedef enum SlMacKeyDest_e {
