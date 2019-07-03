@@ -133,11 +133,9 @@ static int wsm_keys_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf
 	// Compatibility with legacy secure link
 	if (body->Status == SL_PUB_KEY_EXCHANGE_STATUS_SUCCESS)
 		body->Status = 0;
-	if (!body->Status)
-		wfx_sl_check_ncp_keys(wdev, body->NcpPubKey, body->NcpPubKeyMac);
-	else
+	if (body->Status)
 		dev_warn(wdev->dev, "secure link negociation error\n");
-	complete(&wdev->sl_key_renew_done);
+	wfx_sl_check_ncp_keys(wdev, body->NcpPubKey, body->NcpPubKeyMac);
 	return 0;
 }
 

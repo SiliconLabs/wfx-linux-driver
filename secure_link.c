@@ -191,6 +191,7 @@ int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *nc
 end:
 	if (!ret)
 		wdev->sl_enabled = true;
+	complete(&wdev->sl_key_renew_done);
 	return 0;
 }
 
