@@ -135,7 +135,7 @@ static int wsm_keys_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf
 		body->Status = 0;
 	if (body->Status)
 		dev_warn(wdev->dev, "secure link negociation error\n");
-	wfx_sl_check_ncp_keys(wdev, body->NcpPubKey, body->NcpPubKeyMac);
+	wfx_sl_check_pubkey(wdev, body->NcpPubKey, body->NcpPubKeyMac);
 	return 0;
 }
 

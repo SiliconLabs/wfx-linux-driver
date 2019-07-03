@@ -43,9 +43,9 @@ static int gpio_wakeup = -2;
 module_param(gpio_wakeup, int, 0644);
 MODULE_PARM_DESC(gpio_wakeup, "gpio number for wakeup. -1 for none.");
 
-static char *sl_key = NULL;
-module_param(sl_key, charp, 0600);
-MODULE_PARM_DESC(sl_key, "Secret key for secure link (expect 64 hexdecimal digits)");
+static char *sec_link_key = NULL;
+module_param(sec_link_key, charp, 0600);
+MODULE_PARM_DESC(sec_link_key, "Secret key for secure link (expect 64 hexdecimal digits)");
 
 #define RATETAB_ENT(_rate, _rateid, _flags) { \
 	.bitrate	= (_rate),   \
@@ -219,16 +219,16 @@ static void wfx_fill_sl_key(struct device *dev, struct wfx_platform_data *pdata)
 	const char *ascii_key = NULL;
 	int ret;
 
-	if (sl_key)
-		ascii_key = sl_key;
+	if (sec_link_key)
+		ascii_key = sec_link_key;
 	if (!ascii_key)
-		of_property_read_string(dev->of_node, "sl_key", &ascii_key);
+		of_property_read_string(dev->of_node, "sec_link_key", &ascii_key);
 	if (!ascii_key)
 		return;
-	ret = hex2bin(pdata->sl_key, ascii_key, sizeof(pdata->sl_key));
+	ret = hex2bin(pdata->sec_link_key, ascii_key, sizeof(pdata->sec_link_key));
 	if (ret) {
 		dev_err(dev, "ignoring malformatted key: %s\n", ascii_key);
-		memset(pdata->sl_key, 0, sizeof(pdata->sl_key));
+		memset(pdata->sec_link_key, 0, sizeof(pdata->sec_link_key));
 	}
 #ifndef CONFIG_WFX_SECURE_LINK
 	dev_err(dev, "secret key was provided but this driver does not support secure link\n");
