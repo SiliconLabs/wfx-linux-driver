@@ -119,27 +119,20 @@ int wfx_sl_init(struct wfx_dev *wdev)
 	INIT_WORK(&wdev->sl_key_renew_work, renew_key);
 	init_completion(&wdev->sl_key_renew_done);
 	if (!memzcmp(wdev->pdata.sl_key, sizeof(wdev->pdata.sl_key)))
-		goto err;
+		return -EIO;
 	if (link_mode == SECURE_LINK_TRUSTED_ACTIVE_ENFORCED) {
 		bitmap_set(wdev->sl_commands, HI_SL_CONFIGURE_REQ_ID, 1);
 		if (wfx_sl_key_exchange(wdev))
-			goto err;
+			return -EIO;
 		wfx_sl_init_cfg(wdev);
 	} else if (link_mode == SECURE_LINK_TRUSTED_MODE) {
 		if (wsm_set_mac_key(wdev, wdev->pdata.sl_key, SL_MAC_KEY_DEST_RAM))
-			goto err;
+			return -EIO;
 		if (wfx_sl_key_exchange(wdev))
-			goto err;
+			return -EIO;
 		wfx_sl_init_cfg(wdev);
 	} else {
 		dev_info(wdev->dev, "ignoring provided secure link key since chip does not support it\n");
-	}
-	return 0;
-
-err:
-	if (link_mode == SECURE_LINK_TRUSTED_ACTIVE_ENFORCED) {
-		dev_err(wdev->dev, "chip require secure_link, but can't negociate it\n");
-		return -EIO;
 	}
 	return 0;
 }

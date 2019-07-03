@@ -225,15 +225,14 @@ static void wfx_fill_sl_key(struct device *dev, struct wfx_platform_data *pdata)
 		of_property_read_string(dev->of_node, "sl_key", &ascii_key);
 	if (!ascii_key)
 		return;
-#ifndef CONFIG_WFX_SECURE_LINK
-	dev_err(dev, "secret key was provided but this driver does not support secure link\n");
-	return;
-#endif
 	ret = hex2bin(pdata->sl_key, ascii_key, sizeof(pdata->sl_key));
 	if (ret) {
 		dev_err(dev, "ignoring malformatted key: %s\n", ascii_key);
 		memset(pdata->sl_key, 0, sizeof(pdata->sl_key));
 	}
+#ifndef CONFIG_WFX_SECURE_LINK
+	dev_err(dev, "secret key was provided but this driver does not support secure link\n");
+#endif
 }
 
 struct wfx_dev *wfx_init_common(struct device *dev,
@@ -384,8 +383,10 @@ int wfx_probe(struct wfx_dev *wdev)
 	msleep(100);
 
 	err = wfx_sl_init(wdev);
-	if (err)
+	if (err && wdev->wsm_caps.Capabilities.LinkMode == SECURE_LINK_TRUSTED_ACTIVE_ENFORCED) {
+		dev_err(wdev->dev, "chip require secure_link, but can't negociate it\n");
 		goto err2;
+	}
 
 	dev_dbg(wdev->dev, "sending configuration file %s", wdev->pdata.file_pds);
 	err = wfx_send_pdata_pds(wdev);
