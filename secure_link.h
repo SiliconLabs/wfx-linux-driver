@@ -37,12 +37,12 @@ struct sl_context {
 	mbedtls_ccm_context  ccm_ctxt;
 };
 
-int wfx_sl_init(struct wfx_dev *wdev);
-void wfx_sl_deinit(struct wfx_dev *wdev);
-int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac);
+int wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id);
 int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m);
 int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *output);
-int wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id);
+int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac);
+int wfx_sl_init(struct wfx_dev *wdev);
+void wfx_sl_deinit(struct wfx_dev *wdev);
 
 #else /* CONFIG_WFX_SECURE_LINK */
 
@@ -50,19 +50,9 @@ struct sl_context {
 	bool enabled;
 };
 
-static inline int wfx_sl_init(struct wfx_dev *wdev)
+static inline bool wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id)
 {
-	return -EIO;
-}
-
-static inline void wfx_sl_deinit(struct wfx_dev *wdev)
-{
-	return;
-}
-
-static inline int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac)
-{
-	return -EIO;
+	return false;
 }
 
 static inline int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m)
@@ -75,9 +65,19 @@ static inline int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct
 	return -EIO;
 }
 
-static inline bool wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id)
+static inline int wfx_sl_check_ncp_keys(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac)
 {
-	return false;
+	return -EIO;
+}
+
+static inline int wfx_sl_init(struct wfx_dev *wdev)
+{
+	return -EIO;
+}
+
+static inline void wfx_sl_deinit(struct wfx_dev *wdev)
+{
+	return;
 }
 
 #endif /* CONFIG_WFX_SECURE_LINK */

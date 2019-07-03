@@ -339,13 +339,4 @@ static inline int wfx_ht_ampdu_density(const struct wfx_ht_info *ht_info)
 	return ht_info->ht_cap.ampdu_density;
 }
 
-static inline int memzcmp(void *src, unsigned int size)
-{
-	if (!size)
-		return 0;
-	if (*(unsigned char *) src)
-		return 1;
-	return memcmp(src, src + 1, size - 1);
-}
-
 #endif /* WFX_H */
