@@ -45,6 +45,11 @@ static void reverse_bytes(uint8_t *src, uint8_t length)
 	}
 }
 
+int wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id)
+{
+	return test_bit(cmd_id, wdev->sl_commands);
+}
+
 static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 {
 	int ret;

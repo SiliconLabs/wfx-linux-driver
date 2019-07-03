@@ -172,7 +172,7 @@ static void tx_helper(struct wfx_dev *wdev, u8 *data, size_t len)
 	wsm->seqnum = wdev->hif.tx_seqnum;
 	wdev->hif.tx_seqnum = (wdev->hif.tx_seqnum + 1) % (WMSG_COUNTER_MAX + 1);
 
-	if (test_bit(wsm->id, wdev->sl_commands)) {
+	if (wfx_is_secure_command(wdev, wsm->id)) {
 		len = round_up(len - sizeof(wsm->len), 16) + sizeof(wsm->len) + 4 + SECURE_LINK_CCM_TAG_LENGTH;
 		// FIXME: It may be possible to encrypt wsm in-place (AES
 		// support in-place encryption). However, it is also necessary
