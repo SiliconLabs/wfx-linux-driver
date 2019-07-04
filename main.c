@@ -342,6 +342,7 @@ int wfx_probe(struct wfx_dev *wdev)
 {
 	int i;
 	int err;
+	bool sl_enabled;
 	const void *macaddr;
 	struct gpio_desc *gpio_saved = wdev->pdata.gpio_wakeup;
 
@@ -387,6 +388,7 @@ int wfx_probe(struct wfx_dev *wdev)
 		dev_err(wdev->dev, "chip require secure_link, but can't negociate it\n");
 		goto err2;
 	}
+	sl_enabled = err ? false : true;
 
 	dev_dbg(wdev->dev, "sending configuration file %s", wdev->pdata.file_pds);
 	err = wfx_send_pdata_pds(wdev);
@@ -404,7 +406,7 @@ int wfx_probe(struct wfx_dev *wdev)
 		wsm_set_operational_mode(wdev, WSM_OP_POWER_MODE_DOZE);
 	}
 
-	if (!wdev->sl.enabled)
+	if (!sl_enabled)
 		wsm_use_multi_tx_conf(wdev, true);
 
 	for (i = 0; i < ARRAY_SIZE(wdev->addresses); i++) {

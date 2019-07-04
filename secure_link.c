@@ -159,8 +159,6 @@ int wfx_sl_check_pubkey(struct wfx_dev *wdev, uint8_t *pubkey, uint8_t *mac)
 			secret_digest, 16 * BITS_PER_BYTE);
 
 end:
-	if (!ret)
-		wdev->sl.enabled = true;
 	complete(&wdev->sl.key_renew_done);
 	return 0;
 }
@@ -174,6 +172,8 @@ static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 
 	wdev->sl.rx_seqnum = 0;
 	wdev->sl.tx_seqnum = 0;
+	mbedtls_ccm_free(&wdev->sl.ccm_ctxt);
+
 	mbedtls_ecdh_init(&wdev->sl.edch_ctxt);
 	ret = mbedtls_ecdh_setup(&wdev->sl.edch_ctxt, MBEDTLS_ECP_DP_CURVE25519);
 	if (ret)
@@ -193,7 +193,7 @@ static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 		goto err;
 	if (!wait_for_completion_timeout(&wdev->sl.key_renew_done, msecs_to_jiffies(500)))
 		goto err;
-	if (!wdev->sl.enabled)
+	if (!memzcmp(&wdev->sl.ccm_ctxt, sizeof(wdev->sl.ccm_ctxt)))
 		goto err;
 
 	mbedtls_ecdh_free(&wdev->sl.edch_ctxt);

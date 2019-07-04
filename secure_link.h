@@ -29,7 +29,6 @@ struct sl_wmsg {
 #define SECURE_LINK_NONCE_COUNTER_MAX           0x3FFFFFFFUL
 
 struct sl_context {
-	bool                 enabled;
 	unsigned int         rx_seqnum;
 	unsigned int         tx_seqnum;
 	struct completion    key_renew_done;
@@ -49,7 +48,6 @@ void wfx_sl_deinit(struct wfx_dev *wdev);
 #else /* CONFIG_WFX_SECURE_LINK */
 
 struct sl_context {
-	bool enabled;
 };
 
 static inline bool wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id)
