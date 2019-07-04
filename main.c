@@ -341,7 +341,7 @@ void wfx_free_common(struct wfx_dev *wdev)
 int wfx_probe(struct wfx_dev *wdev)
 {
 	int i;
-	int err = -EINVAL;
+	int err;
 	const void *macaddr;
 	struct gpio_desc *gpio_saved = wdev->pdata.gpio_wakeup;
 
@@ -432,7 +432,7 @@ int wfx_probe(struct wfx_dev *wdev)
 	if (err)
 		goto err3;
 
-	return err;
+	return 0;
 
 err3:
 	ieee80211_unregister_hw(wdev->hw);
