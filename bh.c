@@ -173,7 +173,7 @@ static void tx_helper(struct wfx_dev *wdev, u8 *data, size_t len)
 	wdev->hif.tx_seqnum = (wdev->hif.tx_seqnum + 1) % (WMSG_COUNTER_MAX + 1);
 
 	if (wfx_is_secure_command(wdev, wsm->id)) {
-		len = round_up(len - sizeof(wsm->len), 16) + sizeof(wsm->len) + 4 + sizeof(struct sl_tag);
+		len = round_up(len - sizeof(wsm->len), 16) + sizeof(wsm->len) + sizeof(struct sl_hdr) + sizeof(struct sl_tag);
 		// FIXME: It may be possible to encrypt wsm in-place (AES
 		// support in-place encryption). However, it is also necessary
 		// to shift buffer to add secure link header. In add, do we

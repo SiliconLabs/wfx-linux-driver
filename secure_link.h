@@ -13,11 +13,15 @@ struct sl_tag {
 	uint8_t tag[16];
 };
 
-struct sl_wmsg {
+struct sl_hdr {
 	uint32_t    seqnum:30;
 	uint32_t    encrypted:2;
-	uint16_t    len;
-	uint8_t     payload[];
+} __packed;
+
+struct sl_wmsg {
+	struct sl_hdr hdr;
+	uint16_t      len;
+	uint8_t       payload[];
 } __packed;
 
 #ifdef CONFIG_WFX_SECURE_LINK

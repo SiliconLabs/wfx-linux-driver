@@ -58,14 +58,14 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m)
 	uint8_t *output = (uint8_t *) m;
 	uint32_t nonce[3] = { };
 
-	WARN(m->encrypted != 0x02, "packet is not encrypted");
+	WARN(m->hdr.encrypted != 0x02, "packet is not encrypted");
 
 	// Other bytes of nonce are 0
-	nonce[1] = m->seqnum;
-	if (wdev->sl.rx_seqnum != m->seqnum)
+	nonce[1] = m->hdr.seqnum;
+	if (wdev->sl.rx_seqnum != m->hdr.seqnum)
 		dev_warn(wdev->dev, "wrong encrypted message sequence: %d != %d\n",
-				m->seqnum, wdev->sl.rx_seqnum);
-	wdev->sl.rx_seqnum = m->seqnum + 1;
+				m->hdr.seqnum, wdev->sl.rx_seqnum);
+	wdev->sl.rx_seqnum = m->hdr.seqnum + 1;
 	if (wdev->sl.rx_seqnum == BIT(30) / 2)
 		  schedule_work(&wdev->sl.key_renew_work);
 
@@ -90,9 +90,9 @@ int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *outp
 	uint32_t nonce[3] = { };
 	int ret;
 
-	output->encrypted = 0x1;
+	output->hdr.encrypted = 0x1;
 	output->len = input->len;
-	output->seqnum = wdev->sl.tx_seqnum;
+	output->hdr.seqnum = wdev->sl.tx_seqnum;
 	// Other bytes of nonce are 0
 	nonce[2] = wdev->sl.tx_seqnum;
 	wdev->sl.tx_seqnum++;
