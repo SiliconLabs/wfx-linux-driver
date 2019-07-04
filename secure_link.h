@@ -26,8 +26,6 @@ struct sl_wmsg {
 #include <mbedtls/ecdh.h>
 #include <mbedtls/ccm.h>
 
-#define SECURE_LINK_NONCE_COUNTER_MAX           0x3FFFFFFFUL
-
 struct sl_context {
 	unsigned int         rx_seqnum;
 	unsigned int         tx_seqnum;
