@@ -73,7 +73,7 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m)
 	ret = mbedtls_ccm_auth_decrypt(&wdev->sl.ccm_ctxt, payload_len,
 			(uint8_t *) nonce, sizeof(nonce), NULL, 0,
 			m->payload, output + sizeof(m->len),
-			tag, SECURE_LINK_CCM_TAG_LENGTH);
+			tag, sizeof(struct sl_tag));
 	if (ret) {
 		dev_err(wdev->dev, "mbedtls error: %08x\n", ret);
 		return -EIO;
@@ -102,7 +102,7 @@ int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *outp
 	ret = mbedtls_ccm_encrypt_and_tag(&wdev->sl.ccm_ctxt, payload_len,
 			(uint8_t *) nonce, sizeof(nonce), NULL, 0,
 			(uint8_t *) input + sizeof(input->len), output->payload,
-			tag, SECURE_LINK_CCM_TAG_LENGTH);
+			tag, sizeof(struct sl_tag));
 	if (ret) {
 		dev_err(wdev->dev, "mbedtls error: %08x\n", ret);
 		return -EIO;

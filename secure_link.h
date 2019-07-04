@@ -7,9 +7,11 @@
 
 #include "general_api.h"
 
-#define SECURE_LINK_CCM_TAG_LENGTH              16
-
 struct wfx_dev;
+
+struct sl_tag {
+	uint8_t tag[16];
+};
 
 struct sl_wmsg {
 	uint32_t    seqnum:30;
