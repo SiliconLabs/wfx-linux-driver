@@ -50,7 +50,7 @@ Changes in 2.2
   * If frames are stuck in firmware, driver is able to dump their IDs.
   * In internal versions, add a way to send arbitrary HIF commands to chip
     (IPWHIFER-447).
-  * Driver is now compatible with kernel >= 3.18 (it was >= 4.1 before)
+  * Driver is now compatible with kernel >= 3.18 (it was >= 4.4 before)
   * Use SPDX standard for licence headers.
   * Support for secondary interface (aka "combo mode") is now proposed as
     in-development preview.
