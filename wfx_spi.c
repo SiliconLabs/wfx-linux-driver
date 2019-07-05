@@ -15,6 +15,7 @@
 
 #include "wfx.h"
 #include "hwbus.h"
+#include "hwio.h"
 #include "main.h"
 #include "bh.h"
 
@@ -54,6 +55,7 @@ static int wfx_spi_read_ctrl_reg(struct wfx_spi_priv *bus, u16 *dst)
 	int ret, i;
 	u16 tx_buf[4] = { };
 	u16 rx_buf[4] = { };
+	u16 tmp[2] = { };
 	struct spi_message m;
 	struct spi_transfer t = {
 		.rx_buf = rx_buf,
@@ -69,10 +71,14 @@ static int wfx_spi_read_ctrl_reg(struct wfx_spi_priv *bus, u16 *dst)
 	tx_buf[0] = tx_buf[2] = regaddr;
 	spi_message_init(&m);
 	spi_message_add_tail(&t, &m);
-	for (i = 0, rx_buf[1] = rx_buf[3] + 1; rx_buf[1] != rx_buf[3] && i < 3; i++)
+	for (i = 0, tmp[0] = tmp[1] + 1; tmp[0] != tmp[1] && i < 3; i++) {
 		ret = spi_sync(bus->func, &m);
-
-	if (rx_buf[1] != rx_buf[3])
+		// Changes of gpio-wakeup can occur during control register
+		// access. In this case, CTRL_WLAN_READY may differs.
+		tmp[0] = rx_buf[1] & cpu_to_le16(~CTRL_WLAN_READY);
+		tmp[1] = rx_buf[3] & cpu_to_le16(~CTRL_WLAN_READY);
+	}
+	if (tmp[0] != tmp[1])
 		ret = -ETIMEDOUT;
 	else if (i > 1)
 		dev_info(bus->core->dev, "success read after %d failures\n", i - 1);
