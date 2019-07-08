@@ -381,8 +381,6 @@ int wfx_probe(struct wfx_dev *wdev)
 		goto err2;
 	}
 
-	msleep(100);
-
 	err = wfx_sl_init(wdev);
 	if (err && wdev->wsm_caps.Capabilities.LinkMode == SEC_LINK_ENFORCED) {
 		dev_err(wdev->dev, "chip require secure_link, but can't negociate it\n");
