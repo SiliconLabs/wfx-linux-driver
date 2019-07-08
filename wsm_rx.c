@@ -588,8 +588,7 @@ found:
  *   that are allowed to be sent in the same TxOp than the current reported message.
  *   But it does not guaranty that we have the time to send them all in the duration of the TxOp.
  */
-int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
-	       size_t *tx_len)
+int wsm_get_tx(struct wfx_dev *wdev, u8 **data)
 {
 	struct wmsg *hdr = NULL;
 	WsmHiTxReqBody_t *wsm = NULL;
@@ -609,7 +608,6 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 	if (try_wait_for_completion(&wdev->wsm_cmd.ready)) {
 		WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
 		*data = (u8 *) wdev->wsm_cmd.buf_send;
-		*tx_len = le16_to_cpu(wdev->wsm_cmd.buf_send->len);
 		return 1;
 	}
 	for (;;) {
@@ -670,7 +668,6 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 		wvif->pspoll_mask &= ~BIT(txpriv->raw_link_id);
 
 		*data = (u8 *) hdr;
-		*tx_len = le16_to_cpu(hdr->len);
 
 		/* allow bursting if txop is set */
 		if (wvif->edca.params[queue_num].TxOpLimit)
