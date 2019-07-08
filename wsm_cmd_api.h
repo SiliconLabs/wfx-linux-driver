@@ -284,7 +284,7 @@ typedef struct WsmHiTxReqBody_s {
 	uint32_t   Reserved;
 	uint32_t   ExpireTime;
 	WsmHiHtTxParameters_t HtTxParameters;
-	uint32_t   Frame[];
+	uint8_t   Frame[];
 } __packed WsmHiTxReqBody_t;
 
 typedef enum WsmQosAckplcy_e {
@@ -358,7 +358,7 @@ typedef struct WsmHiRxIndBody_s {
 	uint8_t    RxedRate;
 	uint8_t    RcpiRssi;
 	WsmHiRxFlags_t RxFlags;
-	uint32_t   Frame[];
+	uint8_t   Frame[];
 } __packed WsmHiRxIndBody_t;
 
 
