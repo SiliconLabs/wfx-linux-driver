@@ -410,10 +410,8 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif,
 			       struct wfx_queue *queue)
 {
 	bool handled = false;
-	u8 *buf8 = (u8 *) wsm;
-	const struct ieee80211_hdr *frame =
-		(struct ieee80211_hdr *) (buf8 + txpriv->offset - sizeof(struct wmsg));
-	__le16 fctl = frame->frame_control;
+	uint8_t *frame = wsm->Frame + wsm->DataFlags.FcOffset;
+	__le16 fctl = ((struct ieee80211_hdr *) frame)->frame_control;
 
 	enum {
 		do_probe,
@@ -686,10 +684,11 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 		else
 			wdev->tx_burst_idx = -1;
 
-		hdr80211 = (struct ieee80211_hdr *) (*data + txpriv->offset);
 
-		if (more)
+		if (more) {
+			hdr80211 = (struct ieee80211_hdr *) (wsm->Frame + wsm->DataFlags.FcOffset);
 			hdr80211->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
+		}
 		return 1;
 	}
 }
