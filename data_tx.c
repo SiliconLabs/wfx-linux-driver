@@ -406,7 +406,6 @@ struct wfx_txinfo {
 	struct ieee80211_tx_info *tx_info;
 	const struct ieee80211_rate *rate;
 	struct ieee80211_hdr *hdr;
-	size_t hdrlen;
 	const u8 *da;
 	struct wfx_sta_priv *sta_priv;
 	struct ieee80211_sta *sta;
@@ -520,7 +519,6 @@ static int wfx_tx_h_crypt(struct wfx_vif *wvif, struct wfx_txinfo *t)
 	    !ieee80211_has_protected(t->hdr->frame_control))
 		return 0;
 
-	t->hdrlen += t->tx_info->control.hw_key->iv_len;
 	skb_put(t->skb, t->tx_info->control.hw_key->icv_len);
 
 	if (t->tx_info->control.hw_key->cipher == WLAN_CIPHER_SUITE_TKIP)
@@ -546,7 +544,6 @@ static int wfx_tx_h_align(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiDataF
 		return -ENOMEM;
 	}
 	skb_push(t->skb, offset);
-	t->hdrlen += offset;
 	t->txpriv.offset += offset;
 	flags->FcOffset = offset;
 	wfx_debug_tx_align(wvif->wdev);
@@ -739,7 +736,6 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 
 	WARN_ON(!wvif);
 	t.txpriv.vif_id = wvif->Id;
-	t.hdrlen = ieee80211_hdrlen(t.hdr->frame_control);
 	t.da = ieee80211_get_DA(t.hdr);
 	if (control) {
 		t.sta = control->sta;
