@@ -686,7 +686,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 		else
 			wdev->tx_burst_idx = -1;
 
-		hdr80211 = (struct ieee80211_hdr *) (data + txpriv->offset);
+		hdr80211 = (struct ieee80211_hdr *) (*data + txpriv->offset);
 
 		if (more)
 			hdr80211->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
