@@ -588,7 +588,7 @@ found:
  *   that are allowed to be sent in the same TxOp than the current reported message.
  *   But it does not guaranty that we have the time to send them all in the duration of the TxOp.
  */
-int wsm_get_tx(struct wfx_dev *wdev, u8 **data)
+struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 {
 	struct wmsg *hdr = NULL;
 	WsmHiTxReqBody_t *wsm = NULL;
@@ -607,8 +607,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data)
 
 	if (try_wait_for_completion(&wdev->wsm_cmd.ready)) {
 		WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
-		*data = (u8 *) wdev->wsm_cmd.buf_send;
-		return 1;
+		return wdev->wsm_cmd.buf_send;
 	}
 	for (;;) {
 		int ret = -ENOENT;
@@ -616,7 +615,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data)
 		struct ieee80211_hdr *hdr80211;
 
 		if (atomic_read(&wdev->tx_lock))
-			return 0;
+			return NULL;
 
 		wvif = NULL;
 		while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
@@ -667,8 +666,6 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data)
 
 		wvif->pspoll_mask &= ~BIT(txpriv->raw_link_id);
 
-		*data = (u8 *) hdr;
-
 		/* allow bursting if txop is set */
 		if (wvif->edca.params[queue_num].TxOpLimit)
 			burst = (int)wfx_queue_get_num_queued(queue, tx_allowed_mask) + 1;
@@ -686,7 +683,7 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data)
 			hdr80211 = (struct ieee80211_hdr *) (wsm->Frame + wsm->DataFlags.FcOffset);
 			hdr80211->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
 		}
-		return 1;
+		return hdr;
 	}
 }
 

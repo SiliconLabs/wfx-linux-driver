@@ -206,16 +206,16 @@ end:
 
 static int bh_work_tx(struct wfx_dev *wdev, int max_msg)
 {
-	u8 *data;
+	struct wmsg *wsm;
 	int i;
 
 	for (i = 0; i < max_msg; i++) {
-		data = NULL;
+		wsm = NULL;
 		if (wdev->hif.tx_buffers_used < wdev->wsm_caps.NumInpChBufs)
-			wsm_get_tx(wdev, &data);
-		if (!data)
+			wsm = wsm_get_tx(wdev);
+		if (!wsm)
 			return i;
-		tx_helper(wdev, (struct wmsg *) data);
+		tx_helper(wdev, wsm);
 	}
 	return i;
 }
