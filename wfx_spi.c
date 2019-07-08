@@ -52,7 +52,7 @@ static const struct wfx_platform_data wfx_spi_pdata = {
  */
 static int wfx_spi_read_ctrl_reg(struct wfx_spi_priv *bus, u16 *dst)
 {
-	int ret, i;
+	int i, ret = 0;
 	u16 tx_buf[4] = { };
 	u16 rx_buf[4] = { };
 	u16 tmp[2] = { };
