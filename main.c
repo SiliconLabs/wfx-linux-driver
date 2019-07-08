@@ -217,21 +217,25 @@ struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *lab
 static void wfx_fill_sl_key(struct device *dev, struct wfx_platform_data *pdata)
 {
 	const char *ascii_key = NULL;
-	int ret;
+	int ret = 0;
 
 	if (sec_link_key)
 		ascii_key = sec_link_key;
 	if (!ascii_key)
-		of_property_read_string(dev->of_node, "sec_link_key", &ascii_key);
+		ret = of_property_read_string(dev->of_node, "sec_link_key", &ascii_key);
+	if (ret == -EILSEQ || ret == -ENODATA)
+		dev_err(dev, "ignoring malformatted key from DT\n");
 	if (!ascii_key)
 		return;
+
 	ret = hex2bin(pdata->sec_link_key, ascii_key, sizeof(pdata->sec_link_key));
 	if (ret) {
 		dev_err(dev, "ignoring malformatted key: %s\n", ascii_key);
 		memset(pdata->sec_link_key, 0, sizeof(pdata->sec_link_key));
+		return;
 	}
 #ifndef CONFIG_WFX_SECURE_LINK
-	dev_err(dev, "secret key was provided but this driver does not support secure link\n");
+	dev_err(dev, "secure link is not supported by this driver, ignoring provided key\n");
 #endif
 }
 
