@@ -167,8 +167,6 @@ static int wsm_receive_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 		body->RcpiRssi = body->RcpiRssi / 2 - 110;
 
 	fctl = frame->frame_control;
-	pr_debug("[WSM] \t\t rx_flags=0x%.8X, frame_ctrl=0x%.4X\n",
-		 *((u32 *)&body->RxFlags), le16_to_cpu(fctl));
 
 	sta_id = body->RxFlags.PeerStaId;
 
@@ -691,9 +689,6 @@ int wsm_get_tx(struct wfx_dev *wdev, u8 **data,
 
 		if (more)
 			hdr80211->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
-		pr_debug("[WSM] Tx sta_id=%d >>> frame_ctrl=0x%.4x  tx_len=%zu, %p %c\n",
-			txpriv->link_id, hdr80211->frame_control, *tx_len, *data,
-			wsm->DataFlags.More ? 'M' : ' ');
 		return 1;
 	}
 }
