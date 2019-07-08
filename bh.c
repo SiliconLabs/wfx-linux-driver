@@ -161,15 +161,14 @@ static int bh_work_rx(struct wfx_dev *wdev, int max_msg, int *num_cnf)
 	return i;
 }
 
-static void tx_helper(struct wfx_dev *wdev, u8 *data, size_t len)
+static void tx_helper(struct wfx_dev *wdev, struct wmsg *wsm)
 {
 	int ret;
-	struct wmsg *wsm;
+	void *data;
 	bool is_encrypted = false;
+	size_t len = le16_to_cpu(wsm->len);
 
-	wsm = (struct wmsg *) data;
 	BUG_ON(len < sizeof(*wsm));
-	BUG_ON(wsm->len != len);
 
 	wsm->seqnum = wdev->hif.tx_seqnum;
 	wdev->hif.tx_seqnum = (wdev->hif.tx_seqnum + 1) % (WMSG_COUNTER_MAX + 1);
@@ -184,9 +183,11 @@ static void tx_helper(struct wfx_dev *wdev, u8 *data, size_t len)
 		if (!data)
 			goto end;
 		is_encrypted = true;
-		ret = wfx_sl_encode(wdev, wsm, (void *) data);
+		ret = wfx_sl_encode(wdev, wsm, data);
 		if (ret)
 			goto end;
+	} else {
+		data = wsm;
 	}
 	WARN(len > wdev->wsm_caps.SizeInpChBuf,
 	     "%s: request exceed WFx capability: %zu > %d", __func__,
@@ -214,7 +215,7 @@ static int bh_work_tx(struct wfx_dev *wdev, int max_msg)
 			wsm_get_tx(wdev, &data);
 		if (!data)
 			return i;
-		tx_helper(wdev, data, le16_to_cpu(((struct wmsg *) data)->len));
+		tx_helper(wdev, (struct wmsg *) data);
 	}
 	return i;
 }
