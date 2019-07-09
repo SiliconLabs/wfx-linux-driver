@@ -57,6 +57,8 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	int piggyback = 0;
 
 	WARN_ON(read_len < 4);
+	WARN(read_len > round_down(0xFFF, 2) * sizeof(u16),
+	     "%s: request exceed WFx capability", __func__);
 
 	// Add 2 to take into account piggyback size
 	alloc_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, read_len + 2);
@@ -185,6 +187,9 @@ static void tx_helper(struct wfx_dev *wdev, u8 *data, size_t len)
 		if (ret)
 			goto end;
 	}
+	WARN(len > wdev->wsm_caps.SizeInpChBuf,
+	     "%s: request exceed WFx capability: %zu > %d", __func__,
+	     len, wdev->wsm_caps.SizeInpChBuf);
 	len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, len);
 	ret = wfx_data_write(wdev, data, len);
 	if (ret)
