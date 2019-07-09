@@ -319,7 +319,6 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	/* About scan */
 	sema_init(&wvif->scan.lock, 1);
 	INIT_WORK(&wvif->scan.work, wfx_scan_work);
-	INIT_DELAYED_WORK(&wvif->scan.probe_work, wfx_probe_work);
 	INIT_DELAYED_WORK(&wvif->scan.timeout, wfx_scan_timeout);
 	init_completion(&wvif->set_pm_mode_complete);
 	complete(&wvif->set_pm_mode_complete);
@@ -446,7 +445,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	wsm_set_macaddr(wdev, NULL, wvif->Id);
 	tx_policy_clean(wvif);
 
-	cancel_delayed_work_sync(&wvif->scan.probe_work);
 	cancel_delayed_work_sync(&wvif->scan.timeout);
 
 	wfx_cqm_bssloss_sm(wvif, 0, 0, 0);

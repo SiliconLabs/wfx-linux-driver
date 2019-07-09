@@ -462,8 +462,6 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif,
 				wsm->QueueId.QueueId = WSM_QUEUE_ID_VOICE;
 			}
 			mutex_unlock(&wvif->bss_loss_lock);
-		} else if (ieee80211_is_probe_req(fctl)) {
-			action = do_probe;
 		} else if (ieee80211_has_protected(fctl) &&
 			   tx_info->control.hw_key &&
 			   tx_info->control.hw_key->keyidx != wvif->wep_default_key_id &&
@@ -474,14 +472,6 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif,
 	}
 
 	switch (action) {
-	case do_probe:
-		pr_debug("[WSM] Convert probe request to scan.\n");
-		wsm_tx_lock(wvif->wdev);
-		wvif->wdev->pending_frame_id = wsm->PacketId;
-		if (!schedule_work(&wvif->scan.probe_work.work))
-			wsm_tx_unlock(wvif->wdev);
-		handled = true;
-		break;
 	case do_drop:
 		pr_debug("[WSM] Drop frame (0x%.4X).\n", fctl);
 		BUG_ON(wfx_queue_remove(queue, wsm->PacketId));
