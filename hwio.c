@@ -237,7 +237,9 @@ int wfx_data_write(struct wfx_dev *wdev, const void *buf, size_t len)
 	int ret;
 
 	WARN((long) buf & 3, "%s: unaligned buffer", __func__);
-	WARN(len > wdev->wsm_caps.SizeInpChBuf, "%s: request exceed WFx capability", __func__);
+	WARN(len > wdev->wsm_caps.SizeInpChBuf,
+	     "%s: request exceed WFx capability: %d > %d",
+	     __func__, len, wdev->wsm_caps.SizeInpChBuf);
 	wdev->hwbus_ops->lock(wdev->hwbus_priv);
 	ret = wdev->hwbus_ops->copy_to_io(wdev->hwbus_priv, WFX_REG_IN_OUT_QUEUE, buf, len);
 	_trace_io_write(WFX_REG_IN_OUT_QUEUE, buf, len);
