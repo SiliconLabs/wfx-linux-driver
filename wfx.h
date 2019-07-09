@@ -15,15 +15,16 @@
 #include <linux/version.h>
 #include <net/mac80211.h>
 
-#include "wsm_cmd_api.h"
+#include "bh.h"
+#include "data_tx.h"
 #include "main.h"
 #include "queue.h"
-#include "wsm_mib.h"
-#include "sta.h"
 #include "scan.h"
-#include "bh.h"
 #include "secure_link.h"
-#include "data_tx.h"
+#include "sta.h"
+#include "wsm_cmd_api.h"
+#include "wsm_mib.h"
+#include "wsm_tx.h"
 
 #if (KERNEL_VERSION(4, 7, 0) > LINUX_VERSION_CODE)
 #define nl80211_band ieee80211_band
