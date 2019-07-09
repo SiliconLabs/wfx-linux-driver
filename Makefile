@@ -35,7 +35,8 @@ wfx-y := \
 		hwio.o \
 		bh.o \
 		fwio.o \
-		data_txrx.o \
+		data_rx.o \
+		data_tx.o \
 		main.o \
 		queue.o \
 		wsm_tx.o \

@@ -23,7 +23,7 @@
 #include "scan.h"
 #include "bh.h"
 #include "secure_link.h"
-#include "data_txrx.h"
+#include "data_tx.h"
 
 #if (KERNEL_VERSION(4, 7, 0) > LINUX_VERSION_CODE)
 #define nl80211_band ieee80211_band

@@ -5,8 +5,8 @@
  * Copyright (c) 2017-2019, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
-#ifndef WFX_DATA_TXRX_H
-#define WFX_DATA_TXRX_H
+#ifndef WFX_DATA_TX_H
+#define WFX_DATA_TX_H
 
 #include <linux/list.h>
 
@@ -73,10 +73,6 @@ void wfx_skb_dtor(struct wfx_dev *wdev,
 
 void wfx_tx_confirm_cb(struct wfx_dev *wdev,
 			  WsmHiTxCnfBody_t *arg);
-void wfx_rx_cb(struct wfx_vif *wvif,
-		  WsmHiRxIndBody_t *arg,
-		  int link_id,
-		  struct sk_buff **skb_p);
 
 /* ******************************************************************** */
 /* Workaround for WFD test case 6.1.10					*/
@@ -129,4 +125,4 @@ static inline int wfx_ht_ampdu_density(const struct wfx_ht_info *ht_info)
 	return ht_info->ht_cap.ampdu_density;
 }
 
-#endif /* WFX_DATA_TXRX_H */
+#endif /* WFX_DATA_TX_H */

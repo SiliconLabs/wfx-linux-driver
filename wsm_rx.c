@@ -13,6 +13,7 @@
 #include "wfx_version.h"
 #include "wfx.h"
 #include "bh.h"
+#include "data_rx.h"
 #include "debug.h"
 #include "secure_link.h"
 #include "sta.h"
