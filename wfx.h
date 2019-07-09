@@ -93,12 +93,6 @@ enum wfx_link_status {
 struct hwbus_ops;
 struct wfx_debug_priv;
 
-struct wfx_ht_info {
-	struct ieee80211_sta_ht_cap	ht_cap;
-	enum nl80211_channel_type	channel_type;
-	u16				operation_mode;
-};
-
 struct wfx_link_entry {
 	unsigned long			timestamp;
 	enum wfx_link_status		status;
@@ -297,46 +291,5 @@ struct wfx_sta_priv {
 	int link_id;
 	int vif_id;
 };
-
-static inline int wfx_is_ht(const struct wfx_ht_info *ht_info)
-{
-	return ht_info->channel_type != NL80211_CHAN_NO_HT;
-}
-
-/* 802.11n HT capability: IEEE80211_HT_CAP_GRN_FLD.
- * Device supports Greenfield preamble.
- */
-static inline int wfx_ht_greenfield(const struct wfx_ht_info *ht_info)
-{
-	return wfx_is_ht(ht_info) &&
-		(ht_info->ht_cap.cap & IEEE80211_HT_CAP_GRN_FLD) &&
-		!(ht_info->operation_mode &
-		  IEEE80211_HT_OP_MODE_NON_GF_STA_PRSNT);
-}
-
-/* 802.11n HT capability: IEEE80211_HT_CAP_LDPC_CODING.
- * Device supports LDPC coding.
- */
-static inline int wfx_ht_fecCoding(const struct wfx_ht_info *ht_info)
-{
-	return wfx_is_ht(ht_info) &&
-	       (ht_info->ht_cap.cap & IEEE80211_HT_CAP_LDPC_CODING);
-}
-
-/* 802.11n HT capability: IEEE80211_HT_CAP_SGI_20.
- * Device supports Short Guard Interval on 20MHz channels.
- */
-static inline int wfx_ht_shortGi(const struct wfx_ht_info *ht_info)
-{
-	return wfx_is_ht(ht_info) &&
-	       (ht_info->ht_cap.cap & IEEE80211_HT_CAP_SGI_20);
-}
-
-static inline int wfx_ht_ampdu_density(const struct wfx_ht_info *ht_info)
-{
-	if (!wfx_is_ht(ht_info))
-		return 0;
-	return ht_info->ht_cap.ampdu_density;
-}
 
 #endif /* WFX_H */
