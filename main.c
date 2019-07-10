@@ -26,6 +26,7 @@
 #include "hwio.h"
 #include "bh.h"
 #include "sta.h"
+#include "key.h"
 #include "debug.h"
 #include "wsm_mib.h"
 #include "secure_link.h"

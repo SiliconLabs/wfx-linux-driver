@@ -41,6 +41,7 @@ wfx-y := \
 		queue.o \
 		wsm_tx.o \
 		wsm_rx.o \
+		key.o \
 		sta.o \
 		scan.o \
 		debug.o
