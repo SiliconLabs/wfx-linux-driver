@@ -19,12 +19,6 @@ struct wsm_rx_filter {
 	bool	probeResponder;
 };
 
-struct wsm_protected_mgmt_policy {
-	bool	protectedMgmtEnable;
-	bool	unprotectedMgmtFramesAllowed;
-	bool	encryptionForAuthFrame;
-};
-
 static inline int wsm_set_output_power(struct wfx_dev *wdev,
 				       int power_level,
 				       int Id)
@@ -139,18 +133,17 @@ static inline int wsm_set_template_frame(struct wfx_dev *wdev,
 			     sizeof(*arg), Id);
 }
 
-static inline int wsm_set_protected_mgmt_policy(struct wfx_dev *wdev,
-						struct wsm_protected_mgmt_policy *arg,
-						int Id)
+static inline int wsm_set_mfp(struct wfx_dev *wdev, bool capable, bool required,
+			      int Id)
 {
-	__le32 val = 0;
+	int val = 0;
 
-	if (arg->protectedMgmtEnable)
-		val |= cpu_to_le32(BIT(0));
-	if (arg->unprotectedMgmtFramesAllowed)
-		val |= cpu_to_le32(BIT(1));
-	if (arg->encryptionForAuthFrame)
-		val |= cpu_to_le32(BIT(2));
+	WARN_ON(required && !capable);
+	if (capable)
+		val = BIT(0) | BIT(2);
+	if (!required)
+		val |= BIT(1);
+	cpu_to_le32s(&val);
 	return wsm_write_mib(wdev, WSM_MIB_ID_PROTECTED_MGMT_POLICY, &val,
 			     sizeof(val), Id);
 }

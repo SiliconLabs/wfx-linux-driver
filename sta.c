@@ -19,20 +19,6 @@
 
 #define WFX_PDS_MAX_SIZE 1500
 
-#define WFX_JOIN_TIMEOUT          (1 * HZ)
-#define WFX_AUTH_TIMEOUT          (5 * HZ)
-
-#define PAIRWISE_CIPHER_SUITE_COUNT_OFFSET 8u
-#define PAIRWISE_CIPHER_SUITE_SIZE 4u
-#define AKM_SUITE_COUNT_OFFSET(__pairwiseCount) (2 + \
-						 PAIRWISE_CIPHER_SUITE_SIZE * \
-						 (__pairwiseCount))
-#define AKM_SUITE_SIZE 4u
-#define RSN_CAPA_OFFSET(__akmCount) (2 + AKM_SUITE_SIZE * (__akmCount))
-
-#define RSN_CAPA_MFPR_BIT BIT(6)
-#define RSN_CAPA_MFPC_BIT BIT(7)
-
 #define TXOP_UNIT			32
 
 static int __wfx_flush(struct wfx_dev *wdev, bool drop);
@@ -1336,20 +1322,41 @@ done:
 	mutex_unlock(&wvif->wdev->conf_mutex);
 }
 
+static void wfx_set_mfp(struct wfx_vif *wvif, struct cfg80211_bss *bss)
+{
+	const int pairwise_cipher_suite_count_offset = 8 / sizeof(uint16_t);
+	const int pairwise_cipher_suite_size = 4 / sizeof(uint16_t);
+	const int akm_suite_size = 4 / sizeof(uint16_t);
+	const uint16_t *ptr = NULL;
+	bool mfpc = false;
+	bool mfpr = false;
+
+	/* 802.11w protected mgmt frames */
+
+	/* retrieve MFPC and MFPR flags from beacon or PBRSP */
+
+	rcu_read_lock();
+	if (bss)
+		ptr = (const uint16_t *) ieee80211_bss_get_ie(bss, WLAN_EID_RSN);
+
+	if (ptr) {
+		ptr += pairwise_cipher_suite_count_offset;
+		ptr += 1 + pairwise_cipher_suite_size * *ptr;
+		ptr += 1 + akm_suite_size * *ptr;
+		mfpc = *ptr & BIT(6);
+		mfpr = *ptr & BIT(7);
+	}
+	rcu_read_unlock();
+
+	wsm_set_mfp(wvif->wdev, mfpc, mfpr, wvif->Id);
+}
 
 /* MUST be called with tx_lock held!  It will be unlocked for us. */
 static void wfx_do_join(struct wfx_vif *wvif)
 {
 	const u8 *bssid;
-	const u8 *rsnie = NULL;
-	u16 *pairwiseCount;
-	u16 *akmCount;
-	u16 rsnCapabilities;
-	u8 mfpc = 0;
-	u8 mfpr = 0;
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 	struct cfg80211_bss *bss = NULL;
-	struct wsm_protected_mgmt_policy mgmt_policy;
 	WsmHiJoinReqBody_t join = {
 		.Mode		= conf->ibss_joined ? WSM_MODE_IBSS : WSM_MODE_BSS,
 		.PreambleType	= WSM_PREAMBLE_LONG,
@@ -1420,62 +1427,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	if (wvif_count(wvif->wdev) <= 1)
 		wsm_set_block_ack_policy(wvif->wdev, 0xFF, 0xFF, wvif->Id);
 
-	/* 802.11w protected mgmt frames */
-
-	/* retrieve MFPC and MFPR flags from beacon or PBRSP */
-
-	/* 1. Get the RSN IE */
-	rcu_read_lock();
-	if (bss)
-		rsnie = ieee80211_bss_get_ie(bss, WLAN_EID_RSN);
-
-	if (rsnie) {
-		/* 2. Retrieve Pairwise Cipher Count */
-		pairwiseCount =
-			(u16 *)(rsnie + PAIRWISE_CIPHER_SUITE_COUNT_OFFSET);
-
-		/* 3. Retrieve AKM Suite Count */
-		akmCount =
-			(u16 *)(((u8 *)pairwiseCount) +
-				AKM_SUITE_COUNT_OFFSET(*pairwiseCount));
-
-		/* 4. Retrieve RSN Capabilities */
-		rsnCapabilities =
-			*(u16 *)(((u8 *)akmCount) + RSN_CAPA_OFFSET(*akmCount));
-
-		/* 5. Read MFPC and MFPR bits */
-		mfpc = ((rsnCapabilities & RSN_CAPA_MFPC_BIT) != 0);
-		mfpr = ((rsnCapabilities & RSN_CAPA_MFPR_BIT) != 0);
-
-		pr_debug(
-			"PW count = %d, AKM count = %d, rsnCapa = 0x%04x, mfpc = %d; mfpr = %d\n",
-			*pairwiseCount,
-			*akmCount,
-			rsnCapabilities,
-			mfpc,
-			mfpr);
-	}
-	rcu_read_unlock();
-
-	/* 6. Set firmware accordingly */
-	if (mfpc == 0) {
-		/* No PMF */
-		mgmt_policy.protectedMgmtEnable = 0;
-		mgmt_policy.unprotectedMgmtFramesAllowed = 1;   /* Should be ignored by FW */
-		mgmt_policy.encryptionForAuthFrame = 1;         /* Should be ignored by FW */
-	} else if (mfpr == 0) {
-		/* PMF capable but not required */
-		mgmt_policy.protectedMgmtEnable = 1;
-		mgmt_policy.unprotectedMgmtFramesAllowed = 1;
-		mgmt_policy.encryptionForAuthFrame = 1;
-	} else {
-		/* PMF required */
-		mgmt_policy.protectedMgmtEnable = 1;
-		mgmt_policy.unprotectedMgmtFramesAllowed = 0;
-		mgmt_policy.encryptionForAuthFrame = 1;
-	}
-
-	wsm_set_protected_mgmt_policy(wvif->wdev, &mgmt_policy, wvif->Id);
+	wfx_set_mfp(wvif, bss);
 
 	/* Perform actual join */
 	wvif->wdev->tx_burst_idx = -1;
