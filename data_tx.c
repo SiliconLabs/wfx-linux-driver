@@ -410,23 +410,69 @@ void tx_policy_upload_work(struct work_struct *work)
 	wfx_tx_queues_unlock(wvif->wdev);
 }
 
-/* ******************************************************************** */
-/* wfx TX implementation						*/
+/* Link ID related functions */
 
-struct wfx_txinfo {
-	struct sk_buff *skb;
-	unsigned queue;
-	struct ieee80211_tx_info *tx_info;
-	const struct ieee80211_rate *rate;
-	struct ieee80211_hdr *hdr;
-	const u8 *da;
-	struct wfx_sta_priv *sta_priv;
-	struct ieee80211_sta *sta;
-	struct wfx_txpriv txpriv;
-};
+static int wfx_alloc_link_id(struct wfx_vif *wvif, const u8 *mac)
+{
+	int i, ret = 0;
+	unsigned long max_inactivity = 0;
+	unsigned long now = jiffies;
 
-/* Send map request message to firmware and save peer MAC address */
-int wfx_map_link(struct wfx_vif *wvif, struct wfx_link_entry *link_entry, int sta_id)
+	spin_lock_bh(&wvif->ps_state_lock);
+	for (i = 0; i < WFX_MAX_STA_IN_AP_MODE; ++i) {
+		if (!wvif->link_id_db[i].status) {
+			ret = i + 1;
+			break;
+		} else if (wvif->link_id_db[i].status != WFX_LINK_HARD &&
+			   !wvif->wdev->tx_queue_stats.link_map_cache[i + 1]) {
+			unsigned long inactivity =
+				now - wvif->link_id_db[i].timestamp;
+
+			if (inactivity < max_inactivity)
+				continue;
+			max_inactivity = inactivity;
+			ret = i + 1;
+		}
+	}
+
+	if (ret) {
+		struct wfx_link_entry *entry = &wvif->link_id_db[ret - 1];
+
+		pr_debug("[AP] STA added, link_id: %d\n", ret);
+		entry->status = WFX_LINK_RESERVE;
+		ether_addr_copy(entry->mac, mac);
+		memset(&entry->buffered, 0, WFX_MAX_TID);
+		skb_queue_head_init(&entry->rx_queue);
+		wsm_tx_lock(wvif->wdev);
+
+		if (!schedule_work(&wvif->link_id_work))
+			wsm_tx_unlock(wvif->wdev);
+	} else {
+		dev_info(wvif->wdev->dev,
+			   "[AP] Early: no more link IDs available.\n");
+	}
+	spin_unlock_bh(&wvif->ps_state_lock);
+	return ret;
+}
+
+int wfx_find_link_id(struct wfx_vif *wvif, const u8 *mac)
+{
+	int i, ret = 0;
+
+	spin_lock_bh(&wvif->ps_state_lock);
+	for (i = 0; i < WFX_MAX_STA_IN_AP_MODE; ++i) {
+		if (ether_addr_equal(mac, wvif->link_id_db[i].mac) &&
+		    wvif->link_id_db[i].status) {
+			wvif->link_id_db[i].timestamp = jiffies;
+			ret = i + 1;
+			break;
+		}
+	}
+	spin_unlock_bh(&wvif->ps_state_lock);
+	return ret;
+}
+
+static int wfx_map_link(struct wfx_vif *wvif, struct wfx_link_entry *link_entry, int sta_id)
 {
 	int ret;
 
@@ -440,6 +486,152 @@ int wfx_map_link(struct wfx_vif *wvif, struct wfx_link_entry *link_entry, int st
 
 	return ret;
 }
+
+void wfx_link_id_reset_work(struct work_struct *work)
+{
+	struct wfx_vif *wvif =
+		container_of(work, struct wfx_vif, link_id_reset_work);
+	int temp_link_id;
+
+	if (!wvif->action_link_id) {
+		/* In GO mode we can receive ACTION frames without a linkID */
+		temp_link_id = wfx_alloc_link_id(wvif,
+						&wvif->action_frame_sa[0]);
+		WARN_ON(!temp_link_id);
+		if (temp_link_id) {
+			/* Make sure we execute the WQ */
+			flush_work(&wvif->link_id_work);
+			/* Release the link ID */
+			spin_lock_bh(&wvif->ps_state_lock);
+			wvif->link_id_db[temp_link_id - 1].prev_status =
+				wvif->link_id_db[temp_link_id - 1].status;
+			wvif->link_id_db[temp_link_id - 1].status =
+				WFX_LINK_RESET;
+			spin_unlock_bh(&wvif->ps_state_lock);
+			wsm_tx_lock(wvif->wdev);
+			if (!schedule_work(&wvif->link_id_work))
+				wsm_tx_unlock(wvif->wdev);
+		}
+	} else {
+		spin_lock_bh(&wvif->ps_state_lock);
+		wvif->link_id_db[wvif->action_link_id - 1].prev_status =
+			wvif->link_id_db[wvif->action_link_id - 1].status;
+		wvif->link_id_db[wvif->action_link_id - 1].status =
+			WFX_LINK_RESET_REMAP;
+		spin_unlock_bh(&wvif->ps_state_lock);
+		wsm_tx_lock(wvif->wdev);
+		if (!schedule_work(&wvif->link_id_work))
+			wsm_tx_unlock(wvif->wdev);
+		flush_work(&wvif->link_id_work);
+	}
+}
+
+void wfx_link_id_gc_work(struct work_struct *work)
+{
+	struct wfx_vif *wvif =
+		container_of(work, struct wfx_vif, link_id_gc_work.work);
+	unsigned long now = jiffies;
+	unsigned long next_gc = -1;
+	long ttl;
+	u32 mask;
+	int i;
+
+	if (wvif->state != WFX_STATE_AP)
+		return;
+
+	wsm_tx_lock_flush(wvif->wdev);
+	spin_lock_bh(&wvif->ps_state_lock);
+	for (i = 0; i < WFX_MAX_STA_IN_AP_MODE; ++i) {
+		bool need_reset;
+		need_reset = false;
+		mask = BIT(i + 1);
+		if (wvif->link_id_db[i].status == WFX_LINK_RESERVE ||
+		    (wvif->link_id_db[i].status == WFX_LINK_HARD &&
+		     !(wvif->link_id_map & mask))) {
+			if (wvif->link_id_map & mask) {
+				wvif->sta_asleep_mask &= ~mask;
+				wvif->pspoll_mask &= ~mask;
+				need_reset = true;
+			}
+			wvif->link_id_map |= mask;
+			if (wvif->link_id_db[i].status != WFX_LINK_HARD)
+				wvif->link_id_db[i].status = WFX_LINK_SOFT;
+
+			spin_unlock_bh(&wvif->ps_state_lock);
+			if (need_reset)
+				wfx_unmap_link(wvif, i + 1);
+			wfx_map_link(wvif, &wvif->link_id_db[i], i + 1);
+			next_gc = min(next_gc, WFX_LINK_ID_GC_TIMEOUT);
+			spin_lock_bh(&wvif->ps_state_lock);
+		} else if (wvif->link_id_db[i].status == WFX_LINK_SOFT) {
+			ttl = wvif->link_id_db[i].timestamp - now +
+					WFX_LINK_ID_GC_TIMEOUT;
+			if (ttl <= 0) {
+				need_reset = true;
+				wvif->link_id_db[i].status = WFX_LINK_OFF;
+				wvif->link_id_map &= ~mask;
+				wvif->sta_asleep_mask &= ~mask;
+				wvif->pspoll_mask &= ~mask;
+				spin_unlock_bh(&wvif->ps_state_lock);
+				wfx_unmap_link(wvif, i + 1);
+				spin_lock_bh(&wvif->ps_state_lock);
+			} else {
+				next_gc = min_t(unsigned long, next_gc, ttl);
+			}
+		} else if (wvif->link_id_db[i].status == WFX_LINK_RESET ||
+			   wvif->link_id_db[i].status == WFX_LINK_RESET_REMAP) {
+			int status = wvif->link_id_db[i].status;
+			wvif->link_id_db[i].status =
+				wvif->link_id_db[i].prev_status;
+			wvif->link_id_db[i].timestamp = now;
+			spin_unlock_bh(&wvif->ps_state_lock);
+			wfx_unmap_link(wvif, i + 1);
+			if (status == WFX_LINK_RESET_REMAP) {
+				wfx_map_link(wvif, &wvif->link_id_db[i], i + 1);
+				next_gc = min(next_gc,
+						WFX_LINK_ID_GC_TIMEOUT);
+			} else {
+				need_reset = true;
+				wvif->link_id_db[i].status = WFX_LINK_OFF;
+			}
+			spin_lock_bh(&wvif->ps_state_lock);
+		}
+		if (need_reset) {
+			skb_queue_purge(&wvif->link_id_db[i].rx_queue);
+			pr_debug("[AP] STA removed, link_id: %d\n",
+				 0); /* 0 instead of reset.link_id */
+		}
+	}
+	spin_unlock_bh(&wvif->ps_state_lock);
+	if (next_gc != -1)
+		schedule_delayed_work(&wvif->link_id_gc_work, next_gc);
+	wsm_tx_unlock(wvif->wdev);
+}
+
+void wfx_link_id_work(struct work_struct *work)
+{
+	struct wfx_vif *wvif =
+		container_of(work, struct wfx_vif, link_id_work);
+
+	wsm_tx_flush(wvif->wdev);
+	wfx_link_id_gc_work(&wvif->link_id_gc_work.work);
+	wsm_tx_unlock(wvif->wdev);
+}
+
+/* Tx implementation */
+
+struct wfx_txinfo {
+	struct sk_buff *skb;
+	unsigned queue;
+	struct ieee80211_tx_info *tx_info;
+	const struct ieee80211_rate *rate;
+	struct ieee80211_hdr *hdr;
+	const u8 *da;
+	struct wfx_sta_priv *sta_priv;
+	struct ieee80211_sta *sta;
+	struct wfx_txpriv txpriv;
+};
+
 
 static int wfx_tx_h_calc_link_ids(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
@@ -884,194 +1076,4 @@ void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb,
 	ieee80211_tx_status(wdev->hw, skb);
 }
 
-/* Workaround for WFD test case 6.1.10 */
-void wfx_link_id_reset_work(struct work_struct *work)
-{
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, link_id_reset_work);
-	int temp_link_id;
 
-	if (!wvif->action_link_id) {
-		/* In GO mode we can receive ACTION frames without a linkID */
-		temp_link_id = wfx_alloc_link_id(wvif,
-						&wvif->action_frame_sa[0]);
-		WARN_ON(!temp_link_id);
-		if (temp_link_id) {
-			/* Make sure we execute the WQ */
-			flush_work(&wvif->link_id_work);
-			/* Release the link ID */
-			spin_lock_bh(&wvif->ps_state_lock);
-			wvif->link_id_db[temp_link_id - 1].prev_status =
-				wvif->link_id_db[temp_link_id - 1].status;
-			wvif->link_id_db[temp_link_id - 1].status =
-				WFX_LINK_RESET;
-			spin_unlock_bh(&wvif->ps_state_lock);
-			wsm_tx_lock(wvif->wdev);
-			if (!schedule_work(&wvif->link_id_work))
-				wsm_tx_unlock(wvif->wdev);
-		}
-	} else {
-		spin_lock_bh(&wvif->ps_state_lock);
-		wvif->link_id_db[wvif->action_link_id - 1].prev_status =
-			wvif->link_id_db[wvif->action_link_id - 1].status;
-		wvif->link_id_db[wvif->action_link_id - 1].status =
-			WFX_LINK_RESET_REMAP;
-		spin_unlock_bh(&wvif->ps_state_lock);
-		wsm_tx_lock(wvif->wdev);
-		if (!schedule_work(&wvif->link_id_work))
-			wsm_tx_unlock(wvif->wdev);
-		flush_work(&wvif->link_id_work);
-	}
-}
-
-int wfx_find_link_id(struct wfx_vif *wvif, const u8 *mac)
-{
-	int i, ret = 0;
-
-	spin_lock_bh(&wvif->ps_state_lock);
-	for (i = 0; i < WFX_MAX_STA_IN_AP_MODE; ++i) {
-		if (ether_addr_equal(mac, wvif->link_id_db[i].mac) &&
-		    wvif->link_id_db[i].status) {
-			wvif->link_id_db[i].timestamp = jiffies;
-			ret = i + 1;
-			break;
-		}
-	}
-	spin_unlock_bh(&wvif->ps_state_lock);
-	return ret;
-}
-
-int wfx_alloc_link_id(struct wfx_vif *wvif, const u8 *mac)
-{
-	int i, ret = 0;
-	unsigned long max_inactivity = 0;
-	unsigned long now = jiffies;
-
-	spin_lock_bh(&wvif->ps_state_lock);
-	for (i = 0; i < WFX_MAX_STA_IN_AP_MODE; ++i) {
-		if (!wvif->link_id_db[i].status) {
-			ret = i + 1;
-			break;
-		} else if (wvif->link_id_db[i].status != WFX_LINK_HARD &&
-			   !wvif->wdev->tx_queue_stats.link_map_cache[i + 1]) {
-			unsigned long inactivity =
-				now - wvif->link_id_db[i].timestamp;
-
-			if (inactivity < max_inactivity)
-				continue;
-			max_inactivity = inactivity;
-			ret = i + 1;
-		}
-	}
-
-	if (ret) {
-		struct wfx_link_entry *entry = &wvif->link_id_db[ret - 1];
-
-		pr_debug("[AP] STA added, link_id: %d\n", ret);
-		entry->status = WFX_LINK_RESERVE;
-		ether_addr_copy(entry->mac, mac);
-		memset(&entry->buffered, 0, WFX_MAX_TID);
-		skb_queue_head_init(&entry->rx_queue);
-		wsm_tx_lock(wvif->wdev);
-
-		if (!schedule_work(&wvif->link_id_work))
-			wsm_tx_unlock(wvif->wdev);
-	} else {
-		dev_info(wvif->wdev->dev,
-			   "[AP] Early: no more link IDs available.\n");
-	}
-	spin_unlock_bh(&wvif->ps_state_lock);
-	return ret;
-}
-
-void wfx_link_id_work(struct work_struct *work)
-{
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, link_id_work);
-
-	wsm_tx_flush(wvif->wdev);
-	wfx_link_id_gc_work(&wvif->link_id_gc_work.work);
-	wsm_tx_unlock(wvif->wdev);
-}
-
-void wfx_link_id_gc_work(struct work_struct *work)
-{
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, link_id_gc_work.work);
-	unsigned long now = jiffies;
-	unsigned long next_gc = -1;
-	long ttl;
-	u32 mask;
-	int i;
-
-	if (wvif->state != WFX_STATE_AP)
-		return;
-
-	wsm_tx_lock_flush(wvif->wdev);
-	spin_lock_bh(&wvif->ps_state_lock);
-	for (i = 0; i < WFX_MAX_STA_IN_AP_MODE; ++i) {
-		bool need_reset;
-		need_reset = false;
-		mask = BIT(i + 1);
-		if (wvif->link_id_db[i].status == WFX_LINK_RESERVE ||
-		    (wvif->link_id_db[i].status == WFX_LINK_HARD &&
-		     !(wvif->link_id_map & mask))) {
-			if (wvif->link_id_map & mask) {
-				wvif->sta_asleep_mask &= ~mask;
-				wvif->pspoll_mask &= ~mask;
-				need_reset = true;
-			}
-			wvif->link_id_map |= mask;
-			if (wvif->link_id_db[i].status != WFX_LINK_HARD)
-				wvif->link_id_db[i].status = WFX_LINK_SOFT;
-
-			spin_unlock_bh(&wvif->ps_state_lock);
-			if (need_reset)
-				wfx_unmap_link(wvif, i + 1);
-			wfx_map_link(wvif, &wvif->link_id_db[i], i + 1);
-			next_gc = min(next_gc, WFX_LINK_ID_GC_TIMEOUT);
-			spin_lock_bh(&wvif->ps_state_lock);
-		} else if (wvif->link_id_db[i].status == WFX_LINK_SOFT) {
-			ttl = wvif->link_id_db[i].timestamp - now +
-					WFX_LINK_ID_GC_TIMEOUT;
-			if (ttl <= 0) {
-				need_reset = true;
-				wvif->link_id_db[i].status = WFX_LINK_OFF;
-				wvif->link_id_map &= ~mask;
-				wvif->sta_asleep_mask &= ~mask;
-				wvif->pspoll_mask &= ~mask;
-				spin_unlock_bh(&wvif->ps_state_lock);
-				wfx_unmap_link(wvif, i + 1);
-				spin_lock_bh(&wvif->ps_state_lock);
-			} else {
-				next_gc = min_t(unsigned long, next_gc, ttl);
-			}
-		} else if (wvif->link_id_db[i].status == WFX_LINK_RESET ||
-			   wvif->link_id_db[i].status == WFX_LINK_RESET_REMAP) {
-			int status = wvif->link_id_db[i].status;
-			wvif->link_id_db[i].status =
-				wvif->link_id_db[i].prev_status;
-			wvif->link_id_db[i].timestamp = now;
-			spin_unlock_bh(&wvif->ps_state_lock);
-			wfx_unmap_link(wvif, i + 1);
-			if (status == WFX_LINK_RESET_REMAP) {
-				wfx_map_link(wvif, &wvif->link_id_db[i], i + 1);
-				next_gc = min(next_gc,
-						WFX_LINK_ID_GC_TIMEOUT);
-			} else {
-				need_reset = true;
-				wvif->link_id_db[i].status = WFX_LINK_OFF;
-			}
-			spin_lock_bh(&wvif->ps_state_lock);
-		}
-		if (need_reset) {
-			skb_queue_purge(&wvif->link_id_db[i].rx_queue);
-			pr_debug("[AP] STA removed, link_id: %d\n",
-				 0); /* 0 instead of reset.link_id */
-		}
-	}
-	spin_unlock_bh(&wvif->ps_state_lock);
-	if (next_gc != -1)
-		schedule_delayed_work(&wvif->link_id_gc_work, next_gc);
-	wsm_tx_unlock(wvif->wdev);
-}

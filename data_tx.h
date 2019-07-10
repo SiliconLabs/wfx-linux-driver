@@ -79,8 +79,6 @@ void wfx_link_id_work(struct work_struct *work);
 void wfx_link_id_gc_work(struct work_struct *work);
 void wfx_link_id_reset_work(struct work_struct *work);
 int wfx_find_link_id(struct wfx_vif *wvif, const u8 *mac);
-int wfx_alloc_link_id(struct wfx_vif *wvif, const u8 *mac);
-
 
 static inline int wfx_is_ht(const struct wfx_ht_info *ht_info)
 {
