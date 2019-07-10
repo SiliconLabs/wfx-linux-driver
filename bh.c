@@ -79,14 +79,6 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 			       wsm, read_len, true);
 		goto err;
 	}
-	_trace_wsm_recv(wsm);
-
-	if (wsm->id != HI_EXCEPTION_IND_ID && wsm->id != HI_ERROR_IND_ID) {
-		if (wsm->seqnum != wdev->hif.rx_seqnum)
-			dev_warn(wdev->dev, "wrong message sequence: %d != %d\n",
-				 wsm->seqnum, wdev->hif.rx_seqnum);
-		wdev->hif.rx_seqnum = (wsm->seqnum + 1) % (WMSG_COUNTER_MAX + 1);
-	}
 
 	if (!(wsm->id & WMSG_ID_IS_INDICATION)) {
 		(*is_cnf)++;
@@ -98,6 +90,14 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 		wdev->hif.tx_buffers_used -= release_count;
 		if (!wdev->hif.tx_buffers_used)
 			wake_up(&wdev->hif.tx_buffers_empty);
+	}
+	_trace_wsm_recv(wsm, wdev->hif.tx_buffers_used);
+
+	if (wsm->id != HI_EXCEPTION_IND_ID && wsm->id != HI_ERROR_IND_ID) {
+		if (wsm->seqnum != wdev->hif.rx_seqnum)
+			dev_warn(wdev->dev, "wrong message sequence: %d != %d\n",
+				 wsm->seqnum, wdev->hif.rx_seqnum);
+		wdev->hif.rx_seqnum = (wsm->seqnum + 1) % (WMSG_COUNTER_MAX + 1);
 	}
 
 	// wfx_wsm_rx takes care on SKB livetime
@@ -164,8 +164,8 @@ static void tx_helper(struct wfx_dev *wdev, u8 *data, size_t len)
 	if (ret)
 		return;
 
-	_trace_wsm_send(wsm);
 	wdev->hif.tx_buffers_used++;
+	_trace_wsm_send(wsm, wdev->hif.tx_buffers_used);
 }
 
 static int bh_work_tx(struct wfx_dev *wdev, int max_msg)

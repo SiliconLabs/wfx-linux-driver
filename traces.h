@@ -163,9 +163,10 @@ wsm_mib_list_enum
 #define wsm_mib_list wsm_mib_list_enum { -1, NULL }
 
 DECLARE_EVENT_CLASS(wsm_data,
-	TP_PROTO(struct wmsg *wsm, bool is_recv),
-	TP_ARGS(wsm, is_recv),
+	TP_PROTO(struct wmsg *wsm, int tx_fill_level, bool is_recv),
+	TP_ARGS(wsm, tx_fill_level, is_recv),
 	TP_STRUCT__entry(
+		__field(int, tx_fill_level)
 		__field(int, msg_id)
 		__field(const char *, msg_type)
 		__field(int, msg_len)
@@ -176,6 +177,7 @@ DECLARE_EVENT_CLASS(wsm_data,
 	),
 	TP_fast_assign(
 		int header_len;
+		__entry->tx_fill_level = tx_fill_level;
 		__entry->msg_len = wsm->len;
 		__entry->msg_id = wsm->id;
 		__entry->if_id = wsm->interface;
@@ -194,7 +196,8 @@ DECLARE_EVENT_CLASS(wsm_data,
 		__entry->buf_len = min_t(int, __entry->msg_len, sizeof(__entry->buf)) - sizeof(struct wmsg) - header_len;
 		memcpy(__entry->buf, wsm->body + header_len, __entry->buf_len);
 	),
-	TP_printk("%d:%s_%s%s%s: %s%s (%d bytes)",
+	TP_printk("%d:%d:%s_%s%s%s: %s%s (%d bytes)",
+		__entry->tx_fill_level,
 		__entry->if_id,
 		__print_symbolic(__entry->msg_id, wsm_msg_list),
 		__entry->msg_type,
@@ -206,13 +209,13 @@ DECLARE_EVENT_CLASS(wsm_data,
 	)
 );
 DEFINE_EVENT(wsm_data, wsm_send,
-	TP_PROTO(struct wmsg *wsm, bool is_recv),
-	TP_ARGS(wsm, is_recv));
-#define _trace_wsm_send(wsm) trace_wsm_send(wsm, false)
+	TP_PROTO(struct wmsg *wsm, int tx_fill_level, bool is_recv),
+	TP_ARGS(wsm, tx_fill_level, is_recv));
+#define _trace_wsm_send(wsm, tx_fill_level) trace_wsm_send(wsm, tx_fill_level, false)
 DEFINE_EVENT(wsm_data, wsm_recv,
-	TP_PROTO(struct wmsg *wsm, bool is_recv),
-	TP_ARGS(wsm, is_recv));
-#define _trace_wsm_recv(wsm) trace_wsm_recv(wsm, true)
+	TP_PROTO(struct wmsg *wsm, int tx_fill_level, bool is_recv),
+	TP_ARGS(wsm, tx_fill_level, is_recv));
+#define _trace_wsm_recv(wsm, tx_fill_level) trace_wsm_recv(wsm, tx_fill_level, true)
 
 #undef wfx_reg_name
 #define wfx_reg_name(sym, name) TRACE_DEFINE_ENUM(sym);
