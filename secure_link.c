@@ -31,19 +31,6 @@ static int memzcmp(void *src, unsigned int size)
 	return memcmp(src, src + 1, size - 1);
 }
 
-static void memreverse(uint8_t *src, uint8_t length)
-{
-	uint8_t *lo = src;
-	uint8_t *hi = src + length - 1;
-	uint8_t swap;
-
-	while (lo < hi) {
-		swap = *lo;
-		*lo++ = *hi;
-		*hi-- = swap;
-	}
-}
-
 int wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id)
 {
 	return test_bit(cmd_id, wdev->sl.commands);

@@ -293,4 +293,17 @@ struct wfx_sta_priv {
 	int vif_id;
 };
 
+static inline void memreverse(uint8_t *src, uint8_t length)
+{
+	uint8_t *lo = src;
+	uint8_t *hi = src + length - 1;
+	uint8_t swap;
+
+	while (lo < hi) {
+		swap = *lo;
+		*lo++ = *hi;
+		*hi-- = swap;
+	}
+}
+
 #endif /* WFX_H */
