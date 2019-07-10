@@ -22,10 +22,6 @@
 #define WFX_JOIN_TIMEOUT          (1 * HZ)
 #define WFX_AUTH_TIMEOUT          (5 * HZ)
 
-#ifndef ERP_INFO_BYTE_OFFSET
-#define ERP_INFO_BYTE_OFFSET 2
-#endif
-
 #define PAIRWISE_CIPHER_SUITE_COUNT_OFFSET 8u
 #define PAIRWISE_CIPHER_SUITE_SIZE 4u
 #define AKM_SUITE_COUNT_OFFSET(__pairwiseCount) (2 + \
