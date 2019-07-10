@@ -5,7 +5,7 @@
 #ifndef MBED_STDLIB_H
 #define MBED_STDLIB_H
 
-#include <linux/vmalloc.h>
+#include <linux/slab.h>
 #include <linux/random.h>
 
 static inline int rand(void)
@@ -15,12 +15,12 @@ static inline int rand(void)
 
 static inline void *calloc(size_t n, size_t size)
 {
-	return vzalloc(n * size);
+	return kcalloc(n, size, GFP_KERNEL);
 }
 
 static inline void free(void *ptr)
 {
-	vfree(ptr);
+	kfree(ptr);
 }
 
 #endif
