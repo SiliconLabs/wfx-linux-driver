@@ -13,7 +13,7 @@
 #include "wsm_rx.h"
 #include "debug.h"
 
-static inline void __wfx_queue_lock(struct wfx_queue *queue)
+static void __wfx_queue_lock(struct wfx_queue *queue)
 {
 	struct wfx_queue_stats *stats = queue->stats;
 	if (queue->tx_locked_cnt++ == 0) {
@@ -23,7 +23,7 @@ static inline void __wfx_queue_lock(struct wfx_queue *queue)
 	}
 }
 
-static inline void __wfx_queue_unlock(struct wfx_queue *queue)
+static void __wfx_queue_unlock(struct wfx_queue *queue)
 {
 	struct wfx_queue_stats *stats = queue->stats;
 	BUG_ON(!queue->tx_locked_cnt);
@@ -34,7 +34,7 @@ static inline void __wfx_queue_unlock(struct wfx_queue *queue)
 	}
 }
 
-static inline void wfx_queue_parse_id(u32 packet_id, u8 *queue_generation,
+static void wfx_queue_parse_id(u32 packet_id, u8 *queue_generation,
 					 u8 *queue_id, u8 *item_generation,
 					 u8 *item_id)
 {
@@ -44,7 +44,7 @@ static inline void wfx_queue_parse_id(u32 packet_id, u8 *queue_generation,
 	*queue_generation	= (packet_id >> 24) & 0xFF;
 }
 
-static inline u32 wfx_queue_mk_packet_id(u8 queue_generation, u8 queue_id,
+static u32 wfx_queue_mk_packet_id(u8 queue_generation, u8 queue_id,
 					    u8 item_generation, u8 item_id)
 {
 	return ((u32)item_id << 0) |

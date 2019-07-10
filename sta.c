@@ -40,7 +40,7 @@ static void wfx_mcast_timeout(unsigned long arg);
 static void wfx_mcast_timeout(struct timer_list *t);
 #endif
 
-static inline void __wfx_free_event_queue(struct list_head *list)
+static void __wfx_free_event_queue(struct list_head *list)
 {
 	struct wfx_wsm_event *event, *tmp;
 
@@ -540,7 +540,7 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 	return ret;
 }
 
-static inline int wfx_set_multicast_filter(struct wfx_dev *wdev,
+static int wfx_set_multicast_filter(struct wfx_dev *wdev,
 					   struct wfx_grp_addr_table *fp,
 					   int Id)
 {

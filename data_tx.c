@@ -23,14 +23,14 @@ static const struct ieee80211_rate *wfx_get_tx_rate(struct wfx_vif *wvif,
 /* ******************************************************************** */
 /* TX queue lock / unlock						*/
 
-static inline void wfx_tx_queues_lock(struct wfx_dev *wdev)
+static void wfx_tx_queues_lock(struct wfx_dev *wdev)
 {
 	int i;
 	for (i = 0; i < 4; ++i)
 		wfx_queue_lock(&wdev->tx_queue[i]);
 }
 
-static inline void wfx_tx_queues_unlock(struct wfx_dev *wdev)
+static void wfx_tx_queues_unlock(struct wfx_dev *wdev)
 {
 	int i;
 	for (i = 0; i < 4; ++i)
@@ -189,7 +189,7 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 		 rates[3].idx, rates[3].count);
 }
 
-static inline bool tx_policy_is_equal(const struct tx_policy *wanted,
+static bool tx_policy_is_equal(const struct tx_policy *wanted,
 				      const struct tx_policy *cached)
 {
 	size_t count = wanted->defined >> 1;
@@ -227,14 +227,14 @@ static int tx_policy_find(struct tx_policy_cache *cache,
 	return -1;
 }
 
-static inline void tx_policy_use(struct tx_policy_cache *cache,
+static void tx_policy_use(struct tx_policy_cache *cache,
 				 struct tx_policy_cache_entry *entry)
 {
 	++entry->policy.usage_count;
 	list_move(&entry->link, &cache->used);
 }
 
-static inline int tx_policy_release(struct tx_policy_cache *cache,
+static int tx_policy_release(struct tx_policy_cache *cache,
 				    struct tx_policy_cache_entry *entry)
 {
 	int ret = --entry->policy.usage_count;
