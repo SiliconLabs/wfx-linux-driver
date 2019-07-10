@@ -12,20 +12,39 @@
 #include "sta.h"
 #include "wsm_rx.h"
 
-static void wfx_scan_restart_delayed(struct wfx_vif *wvif);
+static void __ieee80211_scan_completed_compat(struct ieee80211_hw *hw, bool aborted)
+{
+#if (KERNEL_VERSION(4, 8, 0) > LINUX_VERSION_CODE)
+	ieee80211_scan_completed(hw, aborted);
+#else
+	struct cfg80211_scan_info info = {
+		.aborted = aborted ? 1 : 0,
+	};
+
+	ieee80211_scan_completed(hw, &info);
+#endif
+}
+
+static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
+{
+	if (wvif->delayed_unjoin) {
+		wvif->delayed_unjoin = false;
+		if (!schedule_work(&wvif->unjoin_work))
+			wsm_tx_unlock(wvif->wdev);
+	} else if (wvif->delayed_link_loss) {
+		dev_dbg(wvif->wdev->dev, "[CQM] Requeue BSS loss.\n");
+		wvif->delayed_link_loss = 0;
+		wfx_cqm_bssloss_sm(wvif, 1, 0, 0);
+	}
+}
 
 static int wfx_scan_start(struct wfx_vif *wvif, struct wsm_scan *scan)
 {
 	int ret;
-
 	int tmo = 500;
 
-	switch (wvif->state) {
-	case WFX_STATE_PRE_STA:
+	if (wvif->state == WFX_STATE_PRE_STA)
 		return -EBUSY;
-	default:
-		break;
-	}
 
 	tmo += scan->scan_req.NumOfChannels *
 	       ((20 * (scan->scan_req.MaxChannelTime)) + 10);
@@ -124,25 +143,12 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	return 0;
 }
 
-static void __ieee80211_scan_completed_compat(struct ieee80211_hw *hw, bool aborted)
-{
-#if (KERNEL_VERSION(4, 8, 0) > LINUX_VERSION_CODE)
-	ieee80211_scan_completed(hw, aborted);
-#else
-	struct cfg80211_scan_info info = {
-		.aborted = aborted ? 1 : 0,
-	};
-
-	ieee80211_scan_completed(hw, &info);
-#endif
-}
-
 void wfx_scan_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif = container_of(work, struct wfx_vif, scan.work);
 	struct ieee80211_channel **it;
 	struct wsm_scan scan = {
-		.scan_req.ScanType.Type		= 0,    /* WSM_SCAN_TYPE_FG, */
+		.scan_req.ScanType.Type = 0,    /* WSM_SCAN_TYPE_FG, */
 	};
 	bool first_run = (wvif->scan.begin == wvif->scan.curr &&
 			  wvif->scan.begin != wvif->scan.end);
@@ -218,9 +224,7 @@ void wfx_scan_work(struct work_struct *work)
 			scan.scan_req.ScanFlags.Fbg = 1;        /* WSM_SCAN_FLAG_FORCE_BACKGROUND */
 		}
 
-		scan.ch = kcalloc(scan.scan_req.NumOfChannels,
-				sizeof(u8),
-			GFP_KERNEL);
+		scan.ch = kcalloc(scan.scan_req.NumOfChannels, sizeof(u8), GFP_KERNEL);
 
 		if (!scan.ch) {
 			wvif->scan.status = -ENOMEM;
@@ -257,19 +261,6 @@ fail:
 	schedule_work(&wvif->scan.work);
 }
 
-static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
-{
-	if (wvif->delayed_unjoin) {
-		wvif->delayed_unjoin = false;
-		if (!schedule_work(&wvif->unjoin_work))
-			wsm_tx_unlock(wvif->wdev);
-	} else if (wvif->delayed_link_loss) {
-		dev_dbg(wvif->wdev->dev, "[CQM] Requeue BSS loss.\n");
-		wvif->delayed_link_loss = 0;
-		wfx_cqm_bssloss_sm(wvif, 1, 0, 0);
-	}
-}
-
 static void wfx_scan_complete(struct wfx_vif *wvif)
 {
 	up(&wvif->scan.lock);
@@ -286,8 +277,7 @@ void wfx_scan_failed_cb(struct wfx_vif *wvif)
 	}
 }
 
-void wfx_scan_complete_cb(struct wfx_vif		*wvif,
-			  WsmHiScanCmplIndBody_t	*arg)
+void wfx_scan_complete_cb(struct wfx_vif *wvif, WsmHiScanCmplIndBody_t *arg)
 {
 	if (cancel_delayed_work_sync(&wvif->scan.timeout) > 0) {
 		wvif->scan.status = 1;
