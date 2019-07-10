@@ -16,9 +16,9 @@
 #include "traces.h"
 
 #define WFX_INVALID_RATE_ID (0xFF)
+#define WFX_LINK_ID_GC_TIMEOUT ((unsigned long)(10 * HZ))
 
-/* ******************************************************************** */
-/* TX queue lock / unlock						*/
+/* TX queue lock / unlock */
 
 static void wfx_tx_queues_lock(struct wfx_dev *wdev)
 {
@@ -34,8 +34,7 @@ static void wfx_tx_queues_unlock(struct wfx_dev *wdev)
 		wfx_queue_unlock(&wdev->tx_queue[i]);
 }
 
-/* ******************************************************************** */
-/* TX policy cache implementation					*/
+/* TX policy cache implementation */
 
 static const struct ieee80211_rate *wfx_get_tx_rate(struct wfx_vif *wvif,
 						    const struct ieee80211_tx_rate *rate)
@@ -283,9 +282,6 @@ void tx_policy_clean(struct wfx_vif *wvif)
 	wfx_tx_queues_unlock(wvif->wdev);
 	spin_unlock_bh(&cache->lock);
 }
-
-/* ******************************************************************** */
-/* External TX policy cache API						*/
 
 void tx_policy_init(struct wfx_vif *wvif)
 {
@@ -738,7 +734,6 @@ static int wfx_tx_h_action(struct wfx_vif *wvif, struct wfx_txinfo *t)
 		return 0;
 }
 
-/* Add WSM header */
 static WsmHiTxReqBody_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
 	struct wmsg *hdr;
@@ -828,8 +823,6 @@ static bool wfx_tx_h_pm_state(struct wfx_vif *wvif, struct wfx_txinfo *t)
 	return !was_buffered;
 }
 
-/* ******************************************************************** */
-
 void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	    struct sk_buff *skb)
 {
@@ -918,8 +911,6 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 drop:
 	wfx_skb_dtor(wdev, skb, &t.txpriv);
 }
-
-/* ******************************************************************** */
 
 void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 {
