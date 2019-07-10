@@ -59,8 +59,6 @@ void tx_policy_upload_work(struct work_struct *work);
 /* ******************************************************************** */
 /* TX implementation							*/
 
-u32 wfx_rate_mask_to_wsm(struct wfx_dev *wdev,
-			       u32 rates);
 void wfx_tx(struct ieee80211_hw *hw,
 	       struct ieee80211_tx_control *control,
 	       struct sk_buff *skb);

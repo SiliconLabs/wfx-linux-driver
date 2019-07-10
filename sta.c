@@ -40,6 +40,18 @@ static void wfx_mcast_timeout(unsigned long arg);
 static void wfx_mcast_timeout(struct timer_list *t);
 #endif
 
+static u32 wfx_rate_mask_to_wsm(struct wfx_dev *wdev, u32 rates)
+{
+	u32 ret = 0;
+	int i;
+
+	for (i = 0; i < 32; ++i) {
+		if (rates & BIT(i))
+			ret |= BIT(wdev->rates[i].hw_value);
+	}
+	return ret;
+}
+
 static void __wfx_free_event_queue(struct list_head *list)
 {
 	struct wfx_wsm_event *event, *tmp;

@@ -428,18 +428,6 @@ int wfx_map_link(struct wfx_vif *wvif, struct wfx_link_entry *link_entry, int st
 	return ret;
 }
 
-u32 wfx_rate_mask_to_wsm(struct wfx_dev *wdev, u32 rates)
-{
-	u32 ret = 0;
-	int i;
-
-	for (i = 0; i < 32; ++i) {
-		if (rates & BIT(i))
-			ret |= BIT(wdev->rates[i].hw_value);
-	}
-	return ret;
-}
-
 static const struct ieee80211_rate *wfx_get_tx_rate(struct wfx_vif *wvif,
 						    const struct ieee80211_tx_rate *rate)
 {
