@@ -17,9 +17,6 @@
 
 #define WFX_INVALID_RATE_ID (0xFF)
 
-static const struct ieee80211_rate *wfx_get_tx_rate(struct wfx_vif *wvif,
-						    const struct ieee80211_tx_rate *rate);
-
 /* ******************************************************************** */
 /* TX queue lock / unlock						*/
 
@@ -39,6 +36,22 @@ static void wfx_tx_queues_unlock(struct wfx_dev *wdev)
 
 /* ******************************************************************** */
 /* TX policy cache implementation					*/
+
+static const struct ieee80211_rate *wfx_get_tx_rate(struct wfx_vif *wvif,
+						    const struct ieee80211_tx_rate *rate)
+{
+	struct wfx_dev *wdev = wvif->wdev;
+	int band = NL80211_BAND_2GHZ;
+
+	// In some circumstances, channel is unassigned before all data was sent.
+	if (wvif->channel)
+		band = wvif->channel->band;
+	if (rate->idx < 0)
+		return NULL;
+	if (rate->flags & IEEE80211_TX_RC_MCS)
+		return &wdev->mcs_rates[rate->idx];
+	return &wdev->hw->wiphy->bands[band]->bitrates[rate->idx];
+}
 
 static void tx_policy_dump(struct tx_policy *policy)
 {
@@ -426,22 +439,6 @@ int wfx_map_link(struct wfx_vif *wvif, struct wfx_link_entry *link_entry, int st
 		ether_addr_copy(link_entry->old_mac, link_entry->mac);
 
 	return ret;
-}
-
-static const struct ieee80211_rate *wfx_get_tx_rate(struct wfx_vif *wvif,
-						    const struct ieee80211_tx_rate *rate)
-{
-	struct wfx_dev *wdev = wvif->wdev;
-	int band = NL80211_BAND_2GHZ;
-
-	// In some circumstances, channel is unassigned before all data was sent.
-	if (wvif->channel)
-		band = wvif->channel->band;
-	if (rate->idx < 0)
-		return NULL;
-	if (rate->flags & IEEE80211_TX_RC_MCS)
-		return &wdev->mcs_rates[rate->idx];
-	return &wdev->hw->wiphy->bands[band]->bitrates[rate->idx];
 }
 
 static int wfx_tx_h_calc_link_ids(struct wfx_vif *wvif, struct wfx_txinfo *t)
