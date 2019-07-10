@@ -606,27 +606,6 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 		&t->tx_info->control.rates[0]),
 	wsm->MaxTxRate = t->rate->hw_value;
 
-	/* HT rate
-	 * mac80211_rate_control_flags: IEEE80211_TX_RC_MCS
-	 */
-#if 0
-	/* IEEE80211_TX_RC_MCS flag is controlled by mac80211
-	 * rate index is an HT MCS instead of an index
-	 */
-	if (t->rate->flags & IEEE80211_TX_RC_MCS) {
-		if (wfx_ht_greenfield(&wvif->ht_info))
-			wsm->ht_tx_parameters |=
-				cpu_to_le32(WSM_FRAME_FORMAT_GF_HT_11N);
-		else
-			wsm->ht_tx_parameters |=
-				cpu_to_le32(WSM_FRAME_FORMAT_MIXED_FORMAT_HT);
-	}
-#else
-	/* IEEE80211_TX_RC_GREEN_FIELD flag is controlled by mac80211
-	 * Indicates whether this rate should be used in Greenfield mode.
-	 *
-	 * Bit 3 to 0: 0(no-HT), 1(Mixed format), 2 (Greenfield format), other
-	 */
 	if (t->rate->flags & IEEE80211_TX_RC_GREEN_FIELD)
 		wsm->HtTxParameters.FrameFormat =
 			WSM_FRAME_FORMAT_GF_HT_11N;
@@ -634,40 +613,11 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 		/*HT mixed is used*/
 		wsm->HtTxParameters.FrameFormat =
 			WSM_FRAME_FORMAT_MIXED_FORMAT_HT;
-
-#endif
-
-	/* Short GI
-	 * mac80211_rate_control_flags: IEEE80211_TX_RC_SHORT_GI
-	 *
-	 *
-	 * IEEE80211_TX_RC_SHORT_GI flag is controlled by mac80211,
-	 * Short Guard interval should be used for this rate.
-	 * or set from userland CLI configuration utility.
-	 *
-	 * Bit 5: 0 (lgi), 1 (sgi)
-	 */
 	if (t->rate->flags & IEEE80211_TX_RC_SHORT_GI || wfx_ht_shortGi(&wvif->ht_info))
 		wsm->HtTxParameters.ShortGi = 1;
-
-	/* LDPC (Low-Density Parity-Check code)
-	 * mac80211_tx_info_flags : IEEE80211_TX_CTL_LDPC
-	 *
-	 * IEEE80211_TX_CTL_LDPC flag is controlled by mac80211
-	 * tells the driver to use LDPC for this frame
-	 *
-	 * Bit 4: 0 (BCC), 1(LDPC)
-	 */
 	if (t->tx_info->flags & IEEE80211_TX_CTL_LDPC || wfx_ht_fecCoding(&wvif->ht_info))
 		if (wvif->wdev->pdata.support_ldpc)
 			wsm->HtTxParameters.FecCoding = 1;
-
-	/* Transmit STBC (Space-Time Block Coding)
-	 *
-	 * WFx driver supports only STBC Rx.
-	 * IEEE80211_TX_CTL_STBC should not be set
-	 */
-
 	if (tx_policy_renew) {
 		pr_debug("[TX] TX policy renew.\n");
 		/* It's not so optimal to stop TX queues every now and then.
