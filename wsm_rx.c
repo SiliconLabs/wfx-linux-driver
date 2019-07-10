@@ -342,11 +342,11 @@ int wsm_handle_rx(struct wfx_dev *wdev, struct wmsg *wsm, struct sk_buff **skb_p
 	int wsm_id = wsm->id;
 
 	if (wsm_id == WSM_HI_RX_IND_ID)
-		return wsm_receive_indication(wdev, &wsm[0], &wsm[1], skb_p);
+		return wsm_receive_indication(wdev, wsm, wsm->body, skb_p);
 	for (i = 0; i < ARRAY_SIZE(wsm_handlers); i++)
 		if (wsm_handlers[i].msg_id == wsm_id) {
 			if (wsm_handlers[i].handler)
-				return wsm_handlers[i].handler(wdev, &wsm[0], &wsm[1]);
+				return wsm_handlers[i].handler(wdev, wsm, wsm->body);
 			else
 				return 0;
 		}
