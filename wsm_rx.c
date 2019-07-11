@@ -579,6 +579,7 @@ found:
  */
 struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 {
+	struct sk_buff *skb;
 	struct wmsg *hdr = NULL;
 	WsmHiTxReqBody_t *wsm = NULL;
 	struct ieee80211_tx_info *tx_info;
@@ -639,9 +640,12 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 
 		queue_num = queue - wdev->tx_queue;
 
-		if (wfx_queue_get(queue, tx_allowed_mask, &hdr, &tx_info))
+		skb = wfx_queue_pop(queue, tx_allowed_mask);
+		if (!skb)
 			continue;
-		txpriv = (const struct wfx_txpriv *) tx_info->status.status_driver_data;
+		txpriv = wfx_skb_txpriv(skb);
+		tx_info = IEEE80211_SKB_CB(skb);
+		hdr = (struct wmsg *) skb->data;
 		wsm = (WsmHiTxReqBody_t *) hdr->body;
 		// Note: txpriv->vif_id is reundant with hdr->interface
 		wvif = wdev_to_wvif(wdev, hdr->interface);

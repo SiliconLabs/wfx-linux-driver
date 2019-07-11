@@ -79,10 +79,7 @@ size_t wfx_queue_get_num_queued(struct wfx_queue *queue,
 				   u32 link_id_map);
 int wfx_queue_put(struct wfx_queue *queue,
 		     struct sk_buff *skb);
-int wfx_queue_get(struct wfx_queue *queue,
-		     u32 link_id_map,
-		     struct wmsg **tx,
-		     struct ieee80211_tx_info **tx_info);
+struct sk_buff *wfx_queue_pop(struct wfx_queue *queue, u32 link_id_map);
 int wfx_queue_get_skb(struct wfx_queue *queue, u32 packet_id,
 			 struct sk_buff **skb);
 int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id);
