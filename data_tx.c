@@ -900,17 +900,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 	} else {
 		struct ieee80211_tx_info *tx = IEEE80211_SKB_CB(skb);
 		int tx_count;
-		u8 ht_flags = 0;
 		int i;
-
-		if (wfx_ht_greenfield(&wvif->ht_info))
-			ht_flags |= IEEE80211_TX_RC_GREEN_FIELD;
-
-		if (wfx_ht_fecCoding(&wvif->ht_info))
-			ht_flags |= IEEE80211_TX_CTL_LDPC;
-
-		if (wfx_ht_shortGi(&wvif->ht_info))
-			ht_flags |= IEEE80211_TX_RC_SHORT_GI;
 
 		mutex_lock(&wvif->bss_loss_lock);
 		if (wvif->bss_loss_state &&
@@ -957,8 +947,6 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 				tx->status.rates[i].count = tx_count;
 				tx_count = 0;
 			}
-			if (tx->status.rates[i].flags & IEEE80211_TX_RC_MCS)
-				tx->status.rates[i].flags |= ht_flags;
 		}
 
 		wfx_queue_remove(queue, arg->PacketId);
