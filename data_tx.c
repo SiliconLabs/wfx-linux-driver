@@ -937,6 +937,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 		if (!arg->Status) {
 			_trace_tx_stats(arg, wfx_queue_get_pkt_us_delay(queue, arg->PacketId));
 			tx->flags |= IEEE80211_TX_STAT_ACK;
+			tx->status.tx_time = arg->MediaDelay - arg->TxQueueDelay;
 		}
 		if (arg->Status && !arg->AckFailures)
 			tx_count = 0;
