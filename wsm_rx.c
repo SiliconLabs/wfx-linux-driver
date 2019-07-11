@@ -462,10 +462,10 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif,
 			}
 			mutex_unlock(&wvif->bss_loss_lock);
 		} else if (ieee80211_has_protected(fctl) &&
-			   tx_info->control.hw_key &&
-			   tx_info->control.hw_key->keyidx != wvif->wep_default_key_id &&
-			   (tx_info->control.hw_key->cipher == WLAN_CIPHER_SUITE_WEP40 ||
-			    tx_info->control.hw_key->cipher == WLAN_CIPHER_SUITE_WEP104)) {
+			   txpriv->hw_key &&
+			   txpriv->hw_key->keyidx != wvif->wep_default_key_id &&
+			   (txpriv->hw_key->cipher == WLAN_CIPHER_SUITE_WEP40 ||
+			    txpriv->hw_key->cipher == WLAN_CIPHER_SUITE_WEP104)) {
 			action = do_wep;
 		}
 	}
@@ -479,7 +479,7 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif,
 	case do_wep:
 		pr_debug("[WSM] Issue set_default_wep_key.\n");
 		wsm_tx_lock(wvif->wdev);
-		wvif->wep_default_key_id = tx_info->control.hw_key->keyidx;
+		wvif->wep_default_key_id = txpriv->hw_key->keyidx;
 		wvif->wdev->pending_frame_id = wsm->PacketId;
 		if (!schedule_work(&wvif->wep_key_work))
 			wsm_tx_unlock(wvif->wdev);

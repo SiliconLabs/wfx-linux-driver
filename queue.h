@@ -29,6 +29,7 @@ struct wfx_txpriv {
 	u8 rate_id;
 	u8 offset;
 	u8 vif_id;
+	struct ieee80211_key_conf *hw_key;
 };
 
 struct wfx_queue_item {

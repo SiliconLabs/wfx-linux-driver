@@ -636,13 +636,13 @@ static void wfx_tx_h_calc_tid(struct wfx_vif *wvif, struct wfx_txinfo *t)
 
 static int wfx_tx_h_crypt(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
-	if (!t->tx_info->control.hw_key ||
+	if (!t->txpriv.hw_key ||
 	    !ieee80211_has_protected(t->hdr->frame_control))
 		return 0;
 
-	skb_put(t->skb, t->tx_info->control.hw_key->icv_len);
+	skb_put(t->skb, t->txpriv.hw_key->icv_len);
 
-	if (t->tx_info->control.hw_key->cipher == WLAN_CIPHER_SUITE_TKIP)
+	if (t->txpriv.hw_key->cipher == WLAN_CIPHER_SUITE_TKIP)
 		skb_put(t->skb, 8); /* MIC space */
 
 	return 0;
@@ -783,6 +783,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		.hdr = (struct ieee80211_hdr *)skb->data,
 		.txpriv.tid = WFX_MAX_TID,
 		.txpriv.rate_id = WFX_INVALID_RATE_ID,
+		.txpriv.hw_key = IEEE80211_SKB_CB(skb)->control.hw_key,
 	};
 	struct ieee80211_sta *sta;
 	WsmHiTxReqBody_t *wsm;
@@ -915,9 +916,9 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 		}
 		mutex_unlock(&wvif->bss_loss_lock);
 		/* Pull off any crypto trailers that we added on */
-		if (tx->control.hw_key) {
-			skb_trim(skb, skb->len - tx->control.hw_key->icv_len);
-			if (tx->control.hw_key->cipher == WLAN_CIPHER_SUITE_TKIP)
+		if (txpriv->hw_key) {
+			skb_trim(skb, skb->len - txpriv->hw_key->icv_len);
+			if (txpriv->hw_key->cipher == WLAN_CIPHER_SUITE_TKIP)
 				skb_trim(skb, skb->len - 8); /* MIC space */
 		}
 
