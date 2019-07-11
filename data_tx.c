@@ -790,6 +790,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	bool tid_update = 0;
 	WsmHiDataFlags_t flags = { };
 	int ret;
+	compiletime_assert(sizeof(struct wfx_txpriv) <= FIELD_SIZEOF(struct ieee80211_tx_info, status.status_driver_data), "struct txpriv is too large");
 
 	// control.vif can be NULL for injected frames
 	if (IEEE80211_SKB_CB(skb)->control.vif)
@@ -840,6 +841,8 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 
 	spin_lock_bh(&wvif->ps_state_lock);
 	tid_update = wfx_tx_h_pm_state(wvif, &t);
+
+	memcpy(t.tx_info->status.status_driver_data, &t.txpriv, sizeof(t.txpriv));
 	ret = wfx_queue_put(&wdev->tx_queue[t.queue], t.skb, &t.txpriv);
 	spin_unlock_bh(&wvif->ps_state_lock);
 	BUG_ON(ret);
@@ -854,6 +857,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	return;
 
 drop:
+	memcpy(t.tx_info->status.status_driver_data, &t.txpriv, sizeof(t.txpriv));
 	wfx_skb_dtor(wdev, skb, &t.txpriv);
 }
 
@@ -871,6 +875,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 		dev_warn(wdev->dev, "Received unknown packet_id (%#.8x) from chip\n", arg->PacketId);
 		return;
 	}
+	txpriv = (const struct wfx_txpriv *) IEEE80211_SKB_CB(skb)->status.status_driver_data;
 
 	wvif = wdev_to_wvif(wdev, txpriv->vif_id);
 	WARN_ON(!wvif);
@@ -922,9 +927,16 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 				skb_trim(skb, skb->len - 8); /* MIC space */
 		}
 
-		// Keep tx->control.rates
-		memset(tx->rate_driver_data, 0, sizeof(tx->rate_driver_data));
-		memset(tx->pad, 0, sizeof(tx->pad));
+		// FIXME: use ieee80211_tx_info_clear_status()
+		// Clear all tx->status but status_driver_data
+		tx->status.ack_signal = 0;
+		tx->status.ampdu_ack_len = 0;
+		tx->status.ampdu_len = 0;
+		tx->status.antenna = 0;
+		tx->status.tx_time = 0;
+#if (KERNEL_VERSION(4, 15, 0) <= LINUX_VERSION_CODE)
+		tx->status.is_valid_ack_signal = false;
+#endif
 		if (!arg->Status) {
 			_trace_tx_stats(arg, wfx_queue_get_pkt_us_delay(queue, arg->PacketId));
 			tx->flags |= IEEE80211_TX_STAT_ACK;
@@ -987,8 +999,10 @@ static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
 void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb,
 		  const struct wfx_txpriv *txpriv)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, txpriv->vif_id);
+	struct wfx_vif *wvif;
 
+	txpriv = (const struct wfx_txpriv *) IEEE80211_SKB_CB(skb)->status.status_driver_data;
+	wvif = wdev_to_wvif(wdev, txpriv->vif_id);
 	WARN_ON(!wvif);
 	skb_pull(skb, txpriv->offset);
 	if (txpriv->rate_id != WFX_INVALID_RATE_ID) {

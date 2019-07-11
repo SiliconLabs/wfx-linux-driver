@@ -81,15 +81,17 @@ static void __wfx_queue_gc(struct wfx_queue *queue,
 	struct wfx_queue_stats *stats = queue->stats;
 	struct wfx_queue_item *item = NULL, *tmp;
 	bool wakeup_stats = false;
+	struct wfx_txpriv *txpriv;
 
 	list_for_each_entry_safe(item, tmp, &queue->queue, head) {
 		if (jiffies - item->queue_timestamp < queue->ttl)
 			break;
+		txpriv = (struct wfx_txpriv *) IEEE80211_SKB_CB(item->skb)->status.status_driver_data;
 		--queue->num_queued;
-		--queue->link_map_cache[item->txpriv.link_id];
+		--queue->link_map_cache[txpriv->link_id];
 		spin_lock_bh(&stats->lock);
 		--stats->num_queued;
-		if (!--stats->link_map_cache[item->txpriv.link_id])
+		if (!--stats->link_map_cache[txpriv->link_id])
 			wakeup_stats = true;
 		spin_unlock_bh(&stats->lock);
 		wfx_debug_tx_ttl(stats->wdev);
@@ -201,6 +203,7 @@ void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
 	struct wfx_queue *queue;
 	struct wfx_queue_item *item;
 	struct wfx_dev *wdev = wvif->wdev;
+	struct wfx_txpriv *txpriv;
 
 	if (wvif->wdev->chip_frozen) {
 		for (i = 0; i < 4; ++i)
@@ -215,9 +218,11 @@ void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
 		for (i = 0; i < 4 && done; ++i) {
 			queue = &wdev->tx_queue[i];
 			spin_lock_bh(&queue->lock);
-			list_for_each_entry(item, &queue->queue, head)
-				if (item->txpriv.vif_id == wvif->Id)
+			list_for_each_entry(item, &queue->queue, head) {
+				txpriv = (struct wfx_txpriv *) IEEE80211_SKB_CB(item->skb)->status.status_driver_data;
+				if (txpriv->vif_id == wvif->Id)
 					done = false;
+			}
 			spin_unlock_bh(&queue->lock);
 		}
 		if (!done) {
@@ -307,11 +312,12 @@ size_t wfx_queue_get_num_queued(struct wfx_queue *queue,
 
 int wfx_queue_put(struct wfx_queue *queue,
 		     struct sk_buff *skb,
-		     struct wfx_txpriv *txpriv)
+		     struct wfx_txpriv *unused)
 {
 	int ret = 0;
 	LIST_HEAD(gc_list);
 	struct wfx_queue_stats *stats = queue->stats;
+	struct wfx_txpriv *txpriv = (struct wfx_txpriv *) IEEE80211_SKB_CB(skb)->status.status_driver_data;
 
 	if (txpriv->link_id >= queue->stats->map_capacity)
 		return -EINVAL;
@@ -360,18 +366,19 @@ int wfx_queue_put(struct wfx_queue *queue,
 int wfx_queue_get(struct wfx_queue *queue,
 		     u32 link_id_map,
 		     struct wmsg **tx,
-		     struct ieee80211_tx_info **tx_info,
-		     const struct wfx_txpriv **txpriv)
+		     struct ieee80211_tx_info **tx_info)
 {
 	int ret = -ENOENT;
 	struct wfx_queue_item *item;
 	struct wfx_queue_stats *stats = queue->stats;
+	const struct wfx_txpriv *txpriv;
 	bool wakeup_stats = false;
 	WsmHiTxReqBody_t *wsm;
 
 	spin_lock_bh(&queue->lock);
 	list_for_each_entry(item, &queue->queue, head) {
-		if (link_id_map & BIT(item->txpriv.link_id)) {
+		txpriv = (const struct wfx_txpriv *) IEEE80211_SKB_CB(item->skb)->status.status_driver_data;
+		if (link_id_map & BIT(txpriv->link_id)) {
 			ret = 0;
 			break;
 		}
@@ -380,17 +387,17 @@ int wfx_queue_get(struct wfx_queue *queue,
 	if (!WARN_ON(ret)) {
 		*tx = (struct wmsg *) item->skb->data;
 		*tx_info = IEEE80211_SKB_CB(item->skb);
-		*txpriv = &item->txpriv;
+		txpriv = (const struct wfx_txpriv *) IEEE80211_SKB_CB(item->skb)->status.status_driver_data;
 		wsm = (WsmHiTxReqBody_t *) (*tx)->body;
 		wsm->PacketId = item->packet_id;
 		list_move_tail(&item->head, &queue->pending);
 		++queue->num_pending;
-		--queue->link_map_cache[item->txpriv.link_id];
+		--queue->link_map_cache[txpriv->link_id];
 		item->xmit_timestamp = ktime_get();
 
 		spin_lock_bh(&stats->lock);
 		--stats->num_queued;
-		if (!--stats->link_map_cache[item->txpriv.link_id])
+		if (!--stats->link_map_cache[txpriv->link_id])
 			wakeup_stats = true;
 		spin_unlock_bh(&stats->lock);
 	}
@@ -406,12 +413,13 @@ int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id)
 	u8 queue_generation, queue_id, item_generation, item_id;
 	struct wfx_queue_item *item;
 	struct wfx_queue_stats *stats = queue->stats;
+	const struct wfx_txpriv *txpriv;
 
 	wfx_queue_parse_id(packet_id, &queue_generation, &queue_id,
 			      &item_generation, &item_id);
 
 	item = &queue->pool[item_id];
-
+	txpriv = (const struct wfx_txpriv *) IEEE80211_SKB_CB(item->skb)->status.status_driver_data;
 	spin_lock_bh(&queue->lock);
 	BUG_ON(queue_id != queue->queue_id);
 	if (queue_generation != queue->generation) {
@@ -424,11 +432,11 @@ int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id)
 		ret = -ENOENT;
 	} else {
 		--queue->num_pending;
-		++queue->link_map_cache[item->txpriv.link_id];
+		++queue->link_map_cache[txpriv->link_id];
 
 		spin_lock_bh(&stats->lock);
 		++stats->num_queued;
-		++stats->link_map_cache[item->txpriv.link_id];
+		++stats->link_map_cache[txpriv->link_id];
 		spin_unlock_bh(&stats->lock);
 
 		item->generation = ++item_generation;

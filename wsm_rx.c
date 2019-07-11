@@ -639,8 +639,9 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 
 		queue_num = queue - wdev->tx_queue;
 
-		if (wfx_queue_get(queue, tx_allowed_mask, &hdr, &tx_info, &txpriv))
+		if (wfx_queue_get(queue, tx_allowed_mask, &hdr, &tx_info))
 			continue;
+		txpriv = (const struct wfx_txpriv *) tx_info->status.status_driver_data;
 		wsm = (WsmHiTxReqBody_t *) hdr->body;
 		// Note: txpriv->vif_id is reundant with hdr->interface
 		wvif = wdev_to_wvif(wdev, hdr->interface);

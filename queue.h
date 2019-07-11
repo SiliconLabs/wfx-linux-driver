@@ -23,14 +23,14 @@ typedef void (*wfx_queue_skb_dtor_t)(struct wfx_dev *wdev,
 					const struct wfx_txpriv *txpriv);
 
 struct wfx_txpriv {
+	struct ieee80211_key_conf *hw_key;
 	u8 link_id;
 	u8 raw_link_id;
 	u8 tid;
 	u8 rate_id;
 	u8 offset;
 	u8 vif_id;
-	struct ieee80211_key_conf *hw_key;
-};
+} __packed;
 
 struct wfx_queue_item {
 	struct list_head	head;
@@ -95,8 +95,7 @@ int wfx_queue_put(struct wfx_queue *queue,
 int wfx_queue_get(struct wfx_queue *queue,
 		     u32 link_id_map,
 		     struct wmsg **tx,
-		     struct ieee80211_tx_info **tx_info,
-		     const struct wfx_txpriv **txpriv);
+		     struct ieee80211_tx_info **tx_info);
 int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id);
 int wfx_queue_remove(struct wfx_queue *queue,
 			u32 packet_id);
