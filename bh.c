@@ -174,10 +174,9 @@ static void tx_helper(struct wfx_dev *wdev, u8 *data, size_t len)
 
 	if (wfx_is_secure_command(wdev, wsm->id)) {
 		len = round_up(len - sizeof(wsm->len), 16) + sizeof(wsm->len) + sizeof(struct sl_hdr) + sizeof(struct sl_tag);
-		// FIXME: It may be possible to encrypt wsm in-place (AES
-		// support in-place encryption). However, it is also necessary
-		// to shift buffer to add secure link header. In add, do we
-		// garantee that data are no more necessary after sent?
+		// AES support encryption in-place. However, mac80211 access to
+		// 802.11 header after frame was sent (to get MAC addresses).
+		// So, keep origin buffer clear.
 		data = kmalloc(len, GFP_KERNEL);
 		if (!data)
 			goto end;
