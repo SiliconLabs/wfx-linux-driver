@@ -899,7 +899,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 		}
 	} else {
 		struct ieee80211_tx_info *tx = IEEE80211_SKB_CB(skb);
-		int tx_count = arg->AckFailures;
+		int tx_count;
 		u8 ht_flags = 0;
 		int i;
 
@@ -924,44 +924,47 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 			}
 		}
 		mutex_unlock(&wvif->bss_loss_lock);
-
-		if (!arg->Status) {
-			_trace_tx_stats(arg, wfx_queue_get_pkt_us_delay(queue, arg->PacketId));
-			tx->flags |= IEEE80211_TX_STAT_ACK;
-			++tx_count;
-			wfx_debug_txed(wdev);
-			if (arg->TxResultFlags.Aggr)
-				wfx_debug_txed_agg(wdev);
-		} else {
-			if (tx_count)
-				++tx_count;
-		}
-
-		for (i = 0; i < IEEE80211_TX_MAX_RATES; ++i) {
-			if (tx->status.rates[i].count >= tx_count) {
-				tx->status.rates[i].count = tx_count;
-				break;
-			}
-			tx_count -= tx->status.rates[i].count;
-			if (tx->status.rates[i].flags & IEEE80211_TX_RC_MCS)
-				tx->status.rates[i].flags |= ht_flags;
-		}
-
-		if (arg->TxedRate != wfx_get_tx_rate(wvif, &tx->status.rates[i])->hw_value)
-			dev_warn(wvif->wdev->dev, "inconsistent tx_info rates: %d != %d\n",
-					arg->TxedRate, wfx_get_tx_rate(wvif, &tx->status.rates[i])->hw_value);
-
-		for (++i; i < IEEE80211_TX_MAX_RATES; ++i) {
-			tx->status.rates[i].count = 0;
-			tx->status.rates[i].idx = -1;
-		}
-
 		/* Pull off any crypto trailers that we added on */
 		if (tx->control.hw_key) {
 			skb_trim(skb, skb->len - tx->control.hw_key->icv_len);
 			if (tx->control.hw_key->cipher == WLAN_CIPHER_SUITE_TKIP)
 				skb_trim(skb, skb->len - 8); /* MIC space */
 		}
+
+		// Keep tx->control.rates
+		memset(tx->rate_driver_data, 0, sizeof(tx->rate_driver_data));
+		memset(tx->pad, 0, sizeof(tx->pad));
+		if (arg->Status) {
+			tx->flags &= ~IEEE80211_TX_STAT_ACK;
+			tx->flags &= ~IEEE80211_TX_STAT_NOACK_TRANSMITTED;
+		} else {
+			_trace_tx_stats(arg, wfx_queue_get_pkt_us_delay(queue, arg->PacketId));
+			if (tx->flags & IEEE80211_TX_CTL_NO_ACK)
+				tx->flags |= IEEE80211_TX_STAT_NOACK_TRANSMITTED;
+			else
+				tx->flags |= IEEE80211_TX_STAT_ACK;
+		}
+		if (arg->Status && !arg->AckFailures)
+			tx_count = 0;
+		else
+			tx_count = arg->AckFailures + 1;
+
+		for (i = 0; i < IEEE80211_TX_MAX_RATES; i++) {
+			if (!tx_count) {
+				tx->status.rates[i].count = 0;
+			} else if (tx_count > tx->status.rates[i].count) {
+				tx_count -= tx->status.rates[i].count;
+			} else {
+				if (arg->TxedRate != wfx_get_tx_rate(wvif, &tx->status.rates[i])->hw_value)
+					dev_warn(wvif->wdev->dev, "inconsistent tx_info rates: %d != %d\n",
+						 arg->TxedRate, wfx_get_tx_rate(wvif, &tx->status.rates[i])->hw_value);
+				tx->status.rates[i].count = tx_count;
+				tx_count = 0;
+			}
+			if (tx->status.rates[i].flags & IEEE80211_TX_RC_MCS)
+				tx->status.rates[i].flags |= ht_flags;
+		}
+
 		wfx_queue_remove(queue, arg->PacketId);
 	}
 }
