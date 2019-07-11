@@ -493,32 +493,28 @@ int wfx_queue_remove(struct wfx_queue *queue, u32 packet_id)
 	return ret;
 }
 
-int wfx_queue_get_skb(struct wfx_queue *queue, u32 packet_id,
-			 struct sk_buff **skb)
+struct sk_buff *wfx_queue_get_id(struct wfx_queue *queue, u32 packet_id)
 {
-	int ret = 0;
+	struct sk_buff *skb = NULL;
 	u8 queue_generation, queue_id, item_generation, item_id;
 	struct wfx_queue_item *item;
+
 	wfx_queue_parse_id(packet_id, &queue_generation, &queue_id,
 			      &item_generation, &item_id);
-
 	item = &queue->pool[item_id];
-
 	spin_lock_bh(&queue->lock);
 	BUG_ON(queue_id != queue->queue_id);
 	if (queue_generation != queue->generation) {
-		ret = -ENOENT;
+		/* empty */
 	} else if (item_id >= (unsigned) queue->capacity) {
 		WARN_ON(1);
-		ret = -EINVAL;
 	} else if (item->generation != item_generation) {
 		WARN_ON(1);
-		ret = -ENOENT;
 	} else {
-		*skb = item->skb;
+		skb = item->skb;
 	}
 	spin_unlock_bh(&queue->lock);
-	return ret;
+	return skb;
 }
 
 void wfx_queue_lock(struct wfx_queue *queue)

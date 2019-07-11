@@ -868,10 +868,9 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 	struct wfx_queue *queue = &wdev->tx_queue[queue_id];
 	struct sk_buff *skb;
 	const struct wfx_txpriv *txpriv;
-	int ret;
 
-	ret = wfx_queue_get_skb(queue, arg->PacketId, &skb);
-	if (ret) {
+	skb = wfx_queue_get_id(queue, arg->PacketId);
+	if (!skb) {
 		dev_warn(wdev->dev, "Received unknown packet_id (%#.8x) from chip\n", arg->PacketId);
 		return;
 	}
