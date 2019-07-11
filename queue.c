@@ -60,7 +60,7 @@ static void wfx_queue_post_gc(struct wfx_queue_stats *stats,
 
 	list_for_each_entry_safe(item, tmp, gc_list, head) {
 		list_del(&item->head);
-		stats->skb_dtor(stats->wdev, item->skb, &item->txpriv);
+		stats->skb_dtor(stats->wdev, item->skb);
 		kfree(item);
 	}
 }
@@ -311,8 +311,7 @@ size_t wfx_queue_get_num_queued(struct wfx_queue *queue,
 }
 
 int wfx_queue_put(struct wfx_queue *queue,
-		     struct sk_buff *skb,
-		     struct wfx_txpriv *unused)
+		     struct sk_buff *skb)
 {
 	int ret = 0;
 	LIST_HEAD(gc_list);
@@ -330,7 +329,6 @@ int wfx_queue_put(struct wfx_queue *queue,
 
 		list_move_tail(&item->head, &queue->queue);
 		item->skb = skb;
-		item->txpriv = *txpriv;
 		item->generation = 0;
 		item->packet_id = wfx_queue_mk_packet_id(queue->generation,
 							    queue->queue_id,
@@ -457,7 +455,6 @@ int wfx_queue_remove(struct wfx_queue *queue, u32 packet_id)
 	struct wfx_queue_item *item;
 	struct wfx_queue_stats *stats = queue->stats;
 	struct sk_buff *gc_skb = NULL;
-	struct wfx_txpriv gc_txpriv;
 
 	wfx_queue_parse_id(packet_id, &queue_generation, &queue_id,
 			      &item_generation, &item_id);
@@ -475,7 +472,6 @@ int wfx_queue_remove(struct wfx_queue *queue, u32 packet_id)
 		WARN_ON(1);
 		ret = -ENOENT;
 	} else {
-		gc_txpriv = item->txpriv;
 		gc_skb = item->skb;
 		item->skb = NULL;
 		--queue->num_pending;
@@ -495,14 +491,13 @@ int wfx_queue_remove(struct wfx_queue *queue, u32 packet_id)
 	spin_unlock_bh(&queue->lock);
 
 	if (gc_skb)
-		stats->skb_dtor(stats->wdev, gc_skb, &gc_txpriv);
+		stats->skb_dtor(stats->wdev, gc_skb);
 
 	return ret;
 }
 
 int wfx_queue_get_skb(struct wfx_queue *queue, u32 packet_id,
-			 struct sk_buff **skb,
-			 const struct wfx_txpriv **txpriv)
+			 struct sk_buff **skb)
 {
 	int ret = 0;
 	u8 queue_generation, queue_id, item_generation, item_id;
@@ -524,7 +519,6 @@ int wfx_queue_get_skb(struct wfx_queue *queue, u32 packet_id,
 		ret = -ENOENT;
 	} else {
 		*skb = item->skb;
-		*txpriv = &item->txpriv;
 	}
 	spin_unlock_bh(&queue->lock);
 	return ret;

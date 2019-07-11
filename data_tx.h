@@ -16,6 +16,16 @@ struct wfx_txpriv;
 struct wfx_dev;
 struct wfx_vif;
 
+struct wfx_txpriv {
+	struct ieee80211_key_conf *hw_key;
+	u8 link_id;
+	u8 raw_link_id;
+	u8 tid;
+	u8 rate_id;
+	u8 offset;
+	u8 vif_id;
+} __packed;
+
 struct tx_policy {
 	union {
 		__le32 tbl[3];
@@ -51,8 +61,7 @@ void tx_policy_upload_work(struct work_struct *work);
 void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	    struct sk_buff *skb);
 void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg);
-void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb,
-		  const struct wfx_txpriv *txpriv);
+void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb);
 
 void wfx_link_id_work(struct work_struct *work);
 void wfx_link_id_gc_work(struct work_struct *work);

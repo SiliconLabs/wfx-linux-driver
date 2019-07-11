@@ -19,18 +19,7 @@
 /* forward */ struct wfx_queue_stats;
 
 typedef void (*wfx_queue_skb_dtor_t)(struct wfx_dev *wdev,
-					struct sk_buff *skb,
-					const struct wfx_txpriv *txpriv);
-
-struct wfx_txpriv {
-	struct ieee80211_key_conf *hw_key;
-	u8 link_id;
-	u8 raw_link_id;
-	u8 tid;
-	u8 rate_id;
-	u8 offset;
-	u8 vif_id;
-} __packed;
+					struct sk_buff *skb);
 
 struct wfx_queue_item {
 	struct list_head	head;
@@ -38,7 +27,6 @@ struct wfx_queue_item {
 	u32			packet_id;
 	unsigned long		queue_timestamp;
 	ktime_t			xmit_timestamp;
-	struct wfx_txpriv	txpriv;
 	u8			generation;
 };
 
@@ -90,18 +78,16 @@ void wfx_queue_deinit(struct wfx_queue *queue);
 size_t wfx_queue_get_num_queued(struct wfx_queue *queue,
 				   u32 link_id_map);
 int wfx_queue_put(struct wfx_queue *queue,
-		     struct sk_buff *skb,
-		     struct wfx_txpriv *txpriv);
+		     struct sk_buff *skb);
 int wfx_queue_get(struct wfx_queue *queue,
 		     u32 link_id_map,
 		     struct wmsg **tx,
 		     struct ieee80211_tx_info **tx_info);
-int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id);
-int wfx_queue_remove(struct wfx_queue *queue,
-			u32 packet_id);
 int wfx_queue_get_skb(struct wfx_queue *queue, u32 packet_id,
-			 struct sk_buff **skb,
-			 const struct wfx_txpriv **txpriv);
+			 struct sk_buff **skb);
+int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id);
+int wfx_queue_remove(struct wfx_queue *queue, u32 packet_id);
+
 void wfx_queue_lock(struct wfx_queue *queue);
 void wfx_queue_unlock(struct wfx_queue *queue);
 unsigned wfx_queue_get_pkt_us_delay(struct wfx_queue *queue, u32 pkt_id);

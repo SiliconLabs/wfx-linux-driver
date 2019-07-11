@@ -843,7 +843,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	tid_update = wfx_tx_h_pm_state(wvif, &t);
 
 	memcpy(t.tx_info->status.status_driver_data, &t.txpriv, sizeof(t.txpriv));
-	ret = wfx_queue_put(&wdev->tx_queue[t.queue], t.skb, &t.txpriv);
+	ret = wfx_queue_put(&wdev->tx_queue[t.queue], t.skb);
 	spin_unlock_bh(&wvif->ps_state_lock);
 	BUG_ON(ret);
 
@@ -858,7 +858,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 
 drop:
 	memcpy(t.tx_info->status.status_driver_data, &t.txpriv, sizeof(t.txpriv));
-	wfx_skb_dtor(wdev, skb, &t.txpriv);
+	wfx_skb_dtor(wdev, skb);
 }
 
 void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
@@ -870,7 +870,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 	const struct wfx_txpriv *txpriv;
 	int ret;
 
-	ret = wfx_queue_get_skb(queue, arg->PacketId, &skb, &txpriv);
+	ret = wfx_queue_get_skb(queue, arg->PacketId, &skb);
 	if (ret) {
 		dev_warn(wdev->dev, "Received unknown packet_id (%#.8x) from chip\n", arg->PacketId);
 		return;
@@ -996,10 +996,10 @@ static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
 	}
 }
 
-void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb,
-		  const struct wfx_txpriv *txpriv)
+void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	struct wfx_vif *wvif;
+	const struct wfx_txpriv *txpriv;
 
 	txpriv = (const struct wfx_txpriv *) IEEE80211_SKB_CB(skb)->status.status_driver_data;
 	wvif = wdev_to_wvif(wdev, txpriv->vif_id);
