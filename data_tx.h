@@ -68,6 +68,16 @@ void wfx_link_id_gc_work(struct work_struct *work);
 void wfx_link_id_reset_work(struct work_struct *work);
 int wfx_find_link_id(struct wfx_vif *wvif, const u8 *mac);
 
+static inline struct wfx_txpriv *wfx_skb_txpriv(struct sk_buff *skb)
+{
+	struct ieee80211_tx_info *tx_info;
+
+	if (!skb)
+		return NULL;
+	tx_info = IEEE80211_SKB_CB(skb);
+	return (struct wfx_txpriv *) tx_info->status.status_driver_data;
+}
+
 static inline int wfx_is_ht(const struct wfx_ht_info *ht_info)
 {
 	return ht_info->channel_type != NL80211_CHAN_NO_HT;

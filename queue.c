@@ -86,7 +86,7 @@ static void __wfx_queue_gc(struct wfx_queue *queue,
 	list_for_each_entry_safe(item, tmp, &queue->queue, head) {
 		if (jiffies - item->queue_timestamp < queue->ttl)
 			break;
-		txpriv = (struct wfx_txpriv *) IEEE80211_SKB_CB(item->skb)->status.status_driver_data;
+		txpriv = wfx_skb_txpriv(item->skb);
 		--queue->num_queued;
 		--queue->link_map_cache[txpriv->link_id];
 		spin_lock_bh(&stats->lock);
@@ -219,7 +219,7 @@ void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
 			queue = &wdev->tx_queue[i];
 			spin_lock_bh(&queue->lock);
 			list_for_each_entry(item, &queue->queue, head) {
-				txpriv = (struct wfx_txpriv *) IEEE80211_SKB_CB(item->skb)->status.status_driver_data;
+				txpriv = wfx_skb_txpriv(item->skb);
 				if (txpriv->vif_id == wvif->Id)
 					done = false;
 			}
@@ -316,7 +316,7 @@ int wfx_queue_put(struct wfx_queue *queue,
 	int ret = 0;
 	LIST_HEAD(gc_list);
 	struct wfx_queue_stats *stats = queue->stats;
-	struct wfx_txpriv *txpriv = (struct wfx_txpriv *) IEEE80211_SKB_CB(skb)->status.status_driver_data;
+	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
 
 	if (txpriv->link_id >= queue->stats->map_capacity)
 		return -EINVAL;
@@ -375,7 +375,7 @@ int wfx_queue_get(struct wfx_queue *queue,
 
 	spin_lock_bh(&queue->lock);
 	list_for_each_entry(item, &queue->queue, head) {
-		txpriv = (const struct wfx_txpriv *) IEEE80211_SKB_CB(item->skb)->status.status_driver_data;
+		txpriv = wfx_skb_txpriv(item->skb);
 		if (link_id_map & BIT(txpriv->link_id)) {
 			ret = 0;
 			break;
@@ -385,7 +385,7 @@ int wfx_queue_get(struct wfx_queue *queue,
 	if (!WARN_ON(ret)) {
 		*tx = (struct wmsg *) item->skb->data;
 		*tx_info = IEEE80211_SKB_CB(item->skb);
-		txpriv = (const struct wfx_txpriv *) IEEE80211_SKB_CB(item->skb)->status.status_driver_data;
+		txpriv = wfx_skb_txpriv(item->skb);
 		wsm = (WsmHiTxReqBody_t *) (*tx)->body;
 		wsm->PacketId = item->packet_id;
 		list_move_tail(&item->head, &queue->pending);
@@ -411,13 +411,13 @@ int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id)
 	u8 queue_generation, queue_id, item_generation, item_id;
 	struct wfx_queue_item *item;
 	struct wfx_queue_stats *stats = queue->stats;
-	const struct wfx_txpriv *txpriv;
+	struct wfx_txpriv *txpriv;
 
 	wfx_queue_parse_id(packet_id, &queue_generation, &queue_id,
 			      &item_generation, &item_id);
 
 	item = &queue->pool[item_id];
-	txpriv = (const struct wfx_txpriv *) IEEE80211_SKB_CB(item->skb)->status.status_driver_data;
+	txpriv = wfx_skb_txpriv(item->skb);
 	spin_lock_bh(&queue->lock);
 	BUG_ON(queue_id != queue->queue_id);
 	if (queue_generation != queue->generation) {
