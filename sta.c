@@ -249,7 +249,7 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	int i;
 	// FIXME: parameters are set by kernel juste after interface_add.
 	// Keep WsmHiEdcaQueueParamsReqBody_t blank?
-	static const WsmHiEdcaQueueParamsReqBody_t default_edca_params[] = {
+	WsmHiEdcaQueueParamsReqBody_t default_edca_params[] = {
 		[IEEE80211_AC_VO] = {
 			.QueueId = WSM_QUEUE_ID_VOICE,
 			.AIFSN = 2,
@@ -265,14 +265,14 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 			.TxOpLimit = TXOP_UNIT * 94,
 		},
 		[IEEE80211_AC_BE] = {
-			.QueueId = WSM_QUEUE_ID_BACKGROUND,
+			.QueueId = WSM_QUEUE_ID_BESTEFFORT,
 			.AIFSN = 3,
 			.CwMin = 15,
 			.CwMax = 1023,
 			.TxOpLimit = TXOP_UNIT * 0,
 		},
 		[IEEE80211_AC_BK] = {
-			.QueueId = WSM_QUEUE_ID_BESTEFFORT,
+			.QueueId = WSM_QUEUE_ID_BACKGROUND,
 			.AIFSN = 7,
 			.CwMin = 15,
 			.CwMax = 1023,
@@ -280,6 +280,10 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 		},
 	};
 
+	if (wfx_api_older_than(wvif->wdev, 2, 0)) {
+		default_edca_params[IEEE80211_AC_BE].QueueId = WSM_QUEUE_ID_BACKGROUND;
+		default_edca_params[IEEE80211_AC_BK].QueueId = WSM_QUEUE_ID_BESTEFFORT;
+	}
 	/* Spin lock */
 	spin_lock_init(&wvif->ps_state_lock);
 	spin_lock_init(&wvif->event_queue_lock);
