@@ -74,64 +74,6 @@ static void wfx_queue_register_post_gc(struct list_head *gc_list,
 	list_add_tail(&gc_item->head, gc_list);
 }
 
-static void __wfx_queue_gc(struct wfx_queue *queue,
-			      struct list_head *head,
-			      bool unlock)
-{
-	struct wfx_queue_stats *stats = queue->stats;
-	struct wfx_queue_item *item = NULL, *tmp;
-	bool wakeup_stats = false;
-	struct wfx_txpriv *txpriv;
-
-	list_for_each_entry_safe(item, tmp, &queue->queue, head) {
-		if (jiffies - item->queue_timestamp < queue->ttl)
-			break;
-		txpriv = wfx_skb_txpriv(item->skb);
-		--queue->num_queued;
-		--queue->link_map_cache[txpriv->link_id];
-		spin_lock_bh(&stats->lock);
-		--stats->num_queued;
-		if (!--stats->link_map_cache[txpriv->link_id])
-			wakeup_stats = true;
-		spin_unlock_bh(&stats->lock);
-		wfx_debug_tx_ttl(stats->wdev);
-		wfx_queue_register_post_gc(head, item);
-		item->skb = NULL;
-		list_move_tail(&item->head, &queue->free_pool);
-	}
-
-	if (wakeup_stats)
-		wake_up(&stats->wait_link_id_empty);
-
-	if (queue->overfull) {
-		if (queue->num_queued <= (queue->capacity >> 1)) {
-			queue->overfull = false;
-			if (unlock)
-				__wfx_queue_unlock(queue);
-		} else if (item) {
-			unsigned long tmo = item->queue_timestamp + queue->ttl;
-			mod_timer(&queue->gc, tmo);
-		}
-	}
-}
-
-#if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
-static void wfx_queue_gc(unsigned long arg)
-{
-	struct wfx_queue *queue = (struct wfx_queue *) arg;
-#else
-static void wfx_queue_gc(struct timer_list *t)
-{
-	struct wfx_queue *queue = from_timer(queue, t, gc);
-#endif
-	LIST_HEAD(list);
-
-	spin_lock_bh(&queue->lock);
-	__wfx_queue_gc(queue, &list, true);
-	spin_unlock_bh(&queue->lock);
-	wfx_queue_post_gc(queue->stats, &list);
-}
-
 int wfx_queue_stats_init(struct wfx_queue_stats *stats,
 			    size_t map_capacity,
 			    wfx_queue_skb_dtor_t skb_dtor,
@@ -155,8 +97,7 @@ int wfx_queue_stats_init(struct wfx_queue_stats *stats,
 int wfx_queue_init(struct wfx_queue *queue,
 		      struct wfx_queue_stats *stats,
 		      u8 queue_id,
-		      size_t capacity,
-		      unsigned long ttl)
+		      size_t capacity)
 {
 	size_t i;
 
@@ -164,17 +105,10 @@ int wfx_queue_init(struct wfx_queue *queue,
 	queue->stats = stats;
 	queue->capacity = capacity;
 	queue->queue_id = queue_id;
-	queue->ttl = ttl;
 	INIT_LIST_HEAD(&queue->queue);
 	INIT_LIST_HEAD(&queue->pending);
 	INIT_LIST_HEAD(&queue->free_pool);
 	spin_lock_init(&queue->lock);
-
-#if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
-	setup_timer(&queue->gc, wfx_queue_gc, (unsigned long) queue);
-#else
-	timer_setup(&queue->gc, wfx_queue_gc, 0);
-#endif
 
 	queue->pool = kcalloc(capacity, sizeof(struct wfx_queue_item),
 			GFP_KERNEL);
@@ -277,7 +211,6 @@ void wfx_queue_stats_deinit(struct wfx_queue_stats *stats)
 void wfx_queue_deinit(struct wfx_queue *queue)
 {
 	wfx_queue_clear(queue);
-	del_timer_sync(&queue->gc);
 	INIT_LIST_HEAD(&queue->free_pool);
 	kfree(queue->pool);
 	kfree(queue->link_map_cache);
@@ -334,7 +267,6 @@ int wfx_queue_put(struct wfx_queue *queue,
 							    queue->queue_id,
 							    item->generation,
 							    item - queue->pool);
-		item->queue_timestamp = jiffies;
 
 		++queue->num_queued;
 		++queue->link_map_cache[txpriv->link_id];
@@ -352,7 +284,6 @@ int wfx_queue_put(struct wfx_queue *queue,
 		    (queue->capacity - (num_present_cpus() - 1))) {
 			queue->overfull = true;
 			__wfx_queue_lock(queue);
-			mod_timer(&queue->gc, jiffies);
 		}
 	} else {
 		ret = -ENOENT;

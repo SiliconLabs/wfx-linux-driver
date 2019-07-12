@@ -24,7 +24,6 @@ struct wfx_debug_priv {
 	int tx_multi_frames;
 	int tx_cache_miss;
 	int tx_align;
-	int tx_ttl;
 	int tx_burst;
 	int ba_cnt;
 	int ba_acc;
@@ -76,11 +75,6 @@ static inline void wfx_debug_tx_cache_miss(struct wfx_dev *wdev)
 static inline void wfx_debug_tx_align(struct wfx_dev *wdev)
 {
 	++wdev->debug->tx_align;
-}
-
-static inline void wfx_debug_tx_ttl(struct wfx_dev *wdev)
-{
-	++wdev->debug->tx_ttl;
 }
 
 static inline void wfx_debug_tx_burst(struct wfx_dev *wdev)

@@ -25,7 +25,6 @@ struct wfx_queue_item {
 	struct list_head	head;
 	struct sk_buff		*skb;
 	u32			packet_id;
-	unsigned long		queue_timestamp;
 	ktime_t			xmit_timestamp;
 	u8			generation;
 };
@@ -45,8 +44,6 @@ struct wfx_queue {
 	spinlock_t		lock; /* Protect queue entry */
 	u8			queue_id;
 	u8			generation;
-	struct timer_list	gc;
-	unsigned long		ttl;
 };
 
 struct wfx_queue_stats {
@@ -66,8 +63,7 @@ int wfx_queue_stats_init(struct wfx_queue_stats *stats,
 int wfx_queue_init(struct wfx_queue *queue,
 		      struct wfx_queue_stats *stats,
 		      u8 queue_id,
-		      size_t capacity,
-		      unsigned long ttl);
+		      size_t capacity);
 
 void wfx_queue_wait_empty_vif(struct wfx_vif *wvif);
 

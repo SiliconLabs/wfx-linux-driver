@@ -307,8 +307,6 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 		   d->tx_align);
 	seq_printf(seq, "TX burst:   %d\n",
 		   d->tx_burst);
-	seq_printf(seq, "TX TTL:     %d\n",
-		   d->tx_ttl);
 	seq_printf(seq, "Scan:       %s\n",
 		   atomic_read(&wvif->scan.in_progress) ? "active" : "idle");
 

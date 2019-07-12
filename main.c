@@ -144,13 +144,6 @@ static const struct ieee80211_iface_combination wfx_iface_combinations[] = {
 	}
 };
 
-static const unsigned long wfx_ttl[] = {
-	1 * HZ,	/* VO */
-	2 * HZ,	/* VI */
-	5 * HZ, /* BE */
-	10 * HZ	/* BK */
-};
-
 static const struct ieee80211_ops wfx_ops = {
 	.start			= wfx_start,
 	.stop			= wfx_stop,
@@ -385,7 +378,7 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 
 	for (i = 0; i < 4; ++i)
 		if (wfx_queue_init(&wdev->tx_queue[i], &wdev->tx_queue_stats,
-				   i, 48, wfx_ttl[i]))
+				   i, 48))
 			goto err2;
 
 	return wdev;
