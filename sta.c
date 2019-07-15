@@ -5,7 +5,6 @@
  * Copyright (c) 2017-2019, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
-#include <linux/firmware.h>
 #include <net/mac80211.h>
 
 #include "sta.h"
@@ -17,8 +16,6 @@
 #include "wsm_rx.h"
 #include "wsm_tx.h"
 #include "wsm_mib.h"
-
-#define WFX_PDS_MAX_SIZE 1500
 
 #define TXOP_UNIT			32
 
@@ -967,69 +964,6 @@ void wfx_bss_params_work(struct work_struct *work)
 	wvif->bss_params.BssFlags.LostCountOnly = 0;
 
 	mutex_unlock(&wvif->wdev->conf_mutex);
-}
-
-/* NOTE: wfx_send_pds() destroy buf */
-int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len)
-{
-	int ret;
-	int start, brace_level, i;
-
-	start = 0;
-	brace_level = 0;
-	if (buf[0] != '{') {
-		dev_err(wdev->dev, "Valid PDS start with '{'. Did you forget to compress it?");
-		return -EINVAL;
-	}
-	for (i = 1; i < len - 1; i++) {
-		if (buf[i] == '{')
-			brace_level++;
-		if (buf[i] == '}')
-			brace_level--;
-		if (buf[i] == '}' && !brace_level) {
-			i++;
-			if (i - start + 1 > WFX_PDS_MAX_SIZE)
-				return -EFBIG;
-			buf[start] = '{';
-			buf[i] = 0;
-			dev_dbg(wdev->dev, "Send PDS '%s}'", buf + start);
-			buf[i] = '}';
-			ret = wsm_configuration(wdev, buf + start, i - start + 1);
-			if (ret == INVALID_PDS_CONFIG_FILE) {
-				dev_err(wdev->dev, "PDS bytes %d to %d: invalid data (unsupported options?)\n", start, i);
-				return -EINVAL;
-			}
-			if (ret == -ETIMEDOUT) {
-				dev_err(wdev->dev, "PDS bytes %d to %d: chip didn't reply (corrupted file?)\n", start, i);
-				return ret;
-			}
-			if (ret) {
-				dev_err(wdev->dev, "PDS bytes %d to %d: chip returned an unknown error\n", start, i);
-				return -EIO;
-			}
-			buf[i] = ',';
-			start = i;
-		}
-	}
-	return 0;
-}
-
-int wfx_send_pdata_pds(struct wfx_dev *wdev)
-{
-	int ret = 0;
-	const struct firmware *pds;
-	unsigned char *tmp_buf;
-
-	ret = request_firmware(&pds, wdev->pdata.file_pds, wdev->dev);
-	if (ret) {
-		dev_err(wdev->dev, "Can't load PDS file %s", wdev->pdata.file_pds);
-		return ret;
-	}
-	tmp_buf = kmemdup(pds->data, pds->size, GFP_KERNEL);
-	ret = wfx_send_pds(wdev, tmp_buf, pds->size);
-	kfree(tmp_buf);
-	release_firmware(pds);
-	return ret;
 }
 
 void wfx_set_beacon_wakeup_period_work(struct work_struct *work)

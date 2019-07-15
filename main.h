@@ -45,4 +45,6 @@ bool wfx_api_older_than(struct wfx_dev *wdev, int major, int minor);
 struct gpio_desc *wfx_get_gpio(struct device *dev, int override,
 			       const char *label);
 
+int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len);
+
 #endif /* MAIN_H */
