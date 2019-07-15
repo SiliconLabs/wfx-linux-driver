@@ -285,22 +285,6 @@ static const struct {
 	/* Confirmations */
 	{ WSM_HI_TX_CNF_ID,              wsm_tx_confirm },
 	{ WSM_HI_MULTI_TRANSMIT_CNF_ID,  wsm_multi_tx_confirm },
-	{ WSM_HI_ADD_KEY_CNF_ID,         wsm_generic_confirm },
-	{ WSM_HI_REMOVE_KEY_CNF_ID,      wsm_generic_confirm },
-	{ WSM_HI_RESET_CNF_ID,           wsm_generic_confirm },
-	{ WSM_HI_START_CNF_ID,           wsm_generic_confirm },
-	{ WSM_HI_START_SCAN_CNF_ID,      wsm_generic_confirm },
-	{ WSM_HI_STOP_SCAN_CNF_ID,       wsm_generic_confirm },
-	{ WSM_HI_JOIN_CNF_ID,            wsm_generic_confirm },
-	{ WSM_HI_READ_MIB_CNF_ID,        wsm_generic_confirm },
-	{ WSM_HI_WRITE_MIB_CNF_ID,       wsm_generic_confirm },
-	{ WSM_HI_MAP_LINK_CNF_ID,        wsm_generic_confirm },
-	{ WSM_HI_EDCA_QUEUE_PARAMS_CNF_ID, wsm_generic_confirm },
-	{ WSM_HI_BEACON_TRANSMIT_CNF_ID, wsm_generic_confirm },
-	{ WSM_HI_SET_BSS_PARAMS_CNF_ID,  wsm_generic_confirm },
-	{ WSM_HI_SET_PM_MODE_CNF_ID,     wsm_generic_confirm },
-	{ WSM_HI_UPDATE_IE_CNF_ID,       wsm_generic_confirm },
-	{ HI_CONFIGURATION_CNF_ID,       wsm_generic_confirm },
 	/* Indications */
 	{ WSM_HI_EVENT_IND_ID,           wsm_event_indication },
 	{ WSM_HI_SET_PM_MODE_CMPL_IND_ID, wsm_pm_mode_complete_indication },
@@ -323,6 +307,9 @@ int wsm_handle_rx(struct wfx_dev *wdev, struct wmsg *wsm, struct sk_buff **skb_p
 
 	if (wsm_id == WSM_HI_RX_IND_ID)
 		return wsm_receive_indication(wdev, &wsm[0], &wsm[1], skb_p);
+	// Note: mutex_is_lock cause an implicit memry barrier that protect buf_send
+	if (mutex_is_locked(&wdev->wsm_cmd.lock) && wdev->wsm_cmd.buf_send && wdev->wsm_cmd.buf_send->id == wsm_id)
+		return wsm_generic_confirm(wdev, wsm, wsm->body);
 	for (i = 0; i < ARRAY_SIZE(wsm_handlers); i++)
 		if (wsm_handlers[i].msg_id == wsm_id) {
 			if (wsm_handlers[i].handler)
