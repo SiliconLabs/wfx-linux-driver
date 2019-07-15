@@ -373,8 +373,7 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 			 */
 			dst->Terminate = 1;
 			dst->CountInit = 1;
-			memcpy(&dst->RateCountIndices0700, src->tbl,
-			       sizeof(src->tbl));
+			memcpy(&dst->Rates, src->tbl, sizeof(src->tbl));
 			src->uploaded = 1;
 			arg->NumTxRatePolicies++;
 		}

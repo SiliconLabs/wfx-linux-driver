@@ -504,9 +504,7 @@ typedef struct WsmHiMibTxRateRetryPolicy_s {
 	uint8_t    Reserved1:4;
 	uint8_t    RateRecoveryCount;
 	uint8_t    Reserved2[3];
-	uint32_t   RateCountIndices0700;
-	uint32_t   RateCountIndices1508;
-	uint32_t   RateCountIndices2316;
+	uint8_t    Rates[12];
 } __packed WsmHiMibTxRateRetryPolicy_t;
 
 #define WSM_MIB_NUM_TX_RATE_RETRY_POLICIES    16
