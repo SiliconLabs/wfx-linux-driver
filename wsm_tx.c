@@ -66,6 +66,8 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply, size_t
 	mutex_lock(&wdev->wsm_cmd.lock);
 	WARN(wdev->wsm_cmd.buf_send, "Data locking error");
 
+	// Note: call to complete() below has an implicit memory barrier that
+	// hopefully protect buf_send
 	wdev->wsm_cmd.buf_send = request;
 	wdev->wsm_cmd.buf_recv = reply;
 	wdev->wsm_cmd.len_recv = reply_len;
