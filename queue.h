@@ -45,6 +45,7 @@ struct wfx_queue {
 	int			link_map_cache[WFX_LINK_ID_MAX];
 	spinlock_t		lock; /* Protect queue entry */
 	u8			queue_id;
+	u8			counter;
 	u8			generation;
 };
 

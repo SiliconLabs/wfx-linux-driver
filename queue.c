@@ -238,7 +238,7 @@ int wfx_queue_put(struct wfx_queue *queue,
 		item->skb = skb;
 		wsm->PacketId = wfx_queue_mk_packet_id(queue->generation,
 							    queue->queue_id,
-							    item - queue->pool);
+							    queue->counter++);
 
 		++queue->num_queued;
 		++queue->link_map_cache[txpriv->link_id];
