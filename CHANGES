@@ -1,3 +1,13 @@
+Changes in 2.2.2
+----------------
+
+  * Fix false error "success read after X failures"
+  * Add fill level of Tx buffers to WSM traces
+  * In internal versions, allow send_hif_msg to send not-yet-known API messages
+    (internal driver only)
+  * Fix potential buffer overflow in send_hif_msg
+  * Prepare continuous integration for secure link
+
 Changes in 2.2.1
 ----------------
 
