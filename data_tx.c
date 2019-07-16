@@ -668,7 +668,6 @@ static int wfx_tx_h_align(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiDataF
 		return -ENOMEM;
 	}
 	skb_push(t->skb, offset);
-	t->txpriv.offset += offset;
 	flags->FcOffset = offset;
 	wfx_debug_tx_align(wvif->wdev);
 	return 0;
@@ -701,7 +700,6 @@ static WsmHiTxReqBody_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t
 
 	hdr = (struct wmsg *) skb_push(t->skb, wsm_length);
 	wsm = (WsmHiTxReqBody_t *) hdr->body;
-	t->txpriv.offset += wsm_length;
 	memset(hdr, 0, wsm_length);
 	hdr->len = cpu_to_le16(t->skb->len);
 	hdr->id = cpu_to_le16(WSM_HI_TX_REQ_ID);
@@ -828,16 +826,16 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		goto drop;
 	ret = wfx_tx_h_action(wvif, &t);
 	if (ret)
-		goto drop;
+		goto drop_pull1;
 	wsm = wfx_tx_h_wsm(wvif, &t);
 	if (!wsm) {
 		ret = -ENOMEM;
-		goto drop;
+		goto drop_pull1;
 	}
 	wsm->DataFlags.FcOffset = flags.FcOffset;
 	ret = wfx_tx_h_rate_policy(wvif, &t, wsm);
 	if (ret)
-		goto drop;
+		goto drop_pull2;
 
 	rcu_read_lock();
 	sta = rcu_dereference(t.sta);
@@ -859,9 +857,12 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 
 	return;
 
+drop_pull2:
+	skb_pull(skb, sizeof(WsmHiTxReqBody_t) + sizeof(struct wmsg));
+drop_pull1:
+	skb_pull(skb, flags.FcOffset);
 drop:
 	memcpy(t.tx_info->status.status_driver_data, &t.txpriv, sizeof(t.txpriv));
-	skb_pull(skb, t.txpriv.offset);
 	if (t.txpriv.rate_id != WFX_INVALID_RATE_ID) {
 		wfx_notify_buffered_tx(wvif, skb,
 					  t.txpriv.raw_link_id, t.txpriv.tid);
@@ -1008,9 +1009,11 @@ void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, txpriv->vif_id);
+	WsmHiTxReqBody_t *tx_req = (WsmHiTxReqBody_t *) ((struct wmsg *) skb->data)->body;
+	unsigned int offset = sizeof(WsmHiTxReqBody_t) + sizeof(struct wmsg) + tx_req->DataFlags.FcOffset;
 
 	WARN_ON(!wvif);
-	skb_pull(skb, txpriv->offset);
+	skb_pull(skb, offset);
 	if (txpriv->rate_id != WFX_INVALID_RATE_ID) {
 		wfx_notify_buffered_tx(wvif, skb,
 					  txpriv->raw_link_id, txpriv->tid);
