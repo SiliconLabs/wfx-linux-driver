@@ -290,7 +290,6 @@ struct sk_buff *wfx_queue_pop(struct wfx_queue *queue, u32 link_id_map)
 		list_move_tail(&item->head, &queue->pending);
 		++queue->num_pending;
 		--queue->link_map_cache[txpriv->link_id];
-		item->xmit_timestamp = ktime_get();
 
 		spin_lock_bh(&stats->lock);
 		--stats->num_queued;
@@ -419,7 +418,6 @@ void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 {
 	struct wfx_queue *queue;
 	struct wfx_queue_item *item;
-	ktime_t now = ktime_get();
 	int i;
 
 	dev_info(wdev->dev, "Frames stuck in firmware since %dms or more:\n", limit_ms);
@@ -427,10 +425,7 @@ void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 		queue = &wdev->tx_queue[i];
 		spin_lock_bh(&queue->lock);
 		list_for_each_entry(item, &queue->pending, head) {
-			if (ktime_after(now, ktime_add_ms(item->xmit_timestamp, limit_ms)))
-				dev_info(wdev->dev, "   id %p sent %ums ago",
-					 item->skb,
-					 (unsigned int) ktime_ms_delta(now, item->xmit_timestamp));
+			/* Disabled */
 		}
 		spin_unlock_bh(&queue->lock);
 	}
@@ -438,10 +433,7 @@ void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 
 unsigned wfx_queue_get_pkt_us_delay(struct wfx_queue *queue, u32 pkt_id)
 {
-	ktime_t now = ktime_get();
-	ktime_t xmit_ts = queue->pool[pkt_id & 0xFF].xmit_timestamp;
-
-	return ktime_us_delta(now, xmit_ts);
+	return 0;
 }
 
 bool wfx_queue_stats_is_empty(struct wfx_queue_stats *stats,
