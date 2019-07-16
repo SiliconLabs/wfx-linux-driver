@@ -26,7 +26,6 @@ struct wfx_queue_item {
 	struct sk_buff		*skb;
 	u32			packet_id;
 	ktime_t			xmit_timestamp;
-	u8			generation;
 };
 
 struct wfx_queue {
@@ -92,11 +91,6 @@ void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms);
 static inline u8 wfx_queue_get_queue_id(u32 packet_id)
 {
 	return (packet_id >> 16) & 0xFF;
-}
-
-static inline u8 wfx_queue_get_generation(u32 packet_id)
-{
-	return (packet_id >>  8) & 0xFF;
 }
 
 #endif /* WFX_QUEUE_H */

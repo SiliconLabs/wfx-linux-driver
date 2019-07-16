@@ -35,20 +35,17 @@ static void __wfx_queue_unlock(struct wfx_queue *queue)
 }
 
 static void wfx_queue_parse_id(u32 packet_id, u8 *queue_generation,
-					 u8 *queue_id, u8 *item_generation,
+					 u8 *queue_id,
 					 u8 *item_id)
 {
 	*item_id		= (packet_id >>  0) & 0xFF;
-	*item_generation	= (packet_id >>  8) & 0xFF;
 	*queue_id		= (packet_id >> 16) & 0xFF;
 	*queue_generation	= (packet_id >> 24) & 0xFF;
 }
 
-static u32 wfx_queue_mk_packet_id(u8 queue_generation, u8 queue_id,
-					    u8 item_generation, u8 item_id)
+static u32 wfx_queue_mk_packet_id(u8 queue_generation, u8 queue_id, u8 item_id)
 {
 	return ((u32)item_id << 0) |
-		((u32)item_generation << 8) |
 		((u32)queue_id << 16) |
 		((u32)queue_generation << 24);
 }
@@ -262,10 +259,8 @@ int wfx_queue_put(struct wfx_queue *queue,
 
 		list_move_tail(&item->head, &queue->queue);
 		item->skb = skb;
-		item->generation = 0;
 		item->packet_id = wfx_queue_mk_packet_id(queue->generation,
 							    queue->queue_id,
-							    item->generation,
 							    item - queue->pool);
 
 		++queue->num_queued;
@@ -336,13 +331,12 @@ struct sk_buff *wfx_queue_pop(struct wfx_queue *queue, u32 link_id_map)
 int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id)
 {
 	int ret = 0;
-	u8 queue_generation, queue_id, item_generation, item_id;
+	u8 queue_generation, queue_id, item_id;
 	struct wfx_queue_item *item;
 	struct wfx_queue_stats *stats = queue->stats;
 	struct wfx_txpriv *txpriv;
 
-	wfx_queue_parse_id(packet_id, &queue_generation, &queue_id,
-			      &item_generation, &item_id);
+	wfx_queue_parse_id(packet_id, &queue_generation, &queue_id, &item_id);
 
 	item = &queue->pool[item_id];
 	txpriv = wfx_skb_txpriv(item->skb);
@@ -353,9 +347,6 @@ int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id)
 	} else if (item_id >= (unsigned) queue->capacity) {
 		WARN_ON(1);
 		ret = -EINVAL;
-	} else if (item->generation != item_generation) {
-		WARN_ON(1);
-		ret = -ENOENT;
 	} else {
 		--queue->num_pending;
 		++queue->link_map_cache[txpriv->link_id];
@@ -364,12 +355,6 @@ int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id)
 		++stats->num_queued;
 		++stats->link_map_cache[txpriv->link_id];
 		spin_unlock_bh(&stats->lock);
-
-		item->generation = ++item_generation;
-		item->packet_id = wfx_queue_mk_packet_id(queue_generation,
-							    queue_id,
-							    item_generation,
-							    item_id);
 		list_move(&item->head, &queue->queue);
 	}
 	spin_unlock_bh(&queue->lock);
@@ -379,13 +364,12 @@ int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id)
 int wfx_queue_remove(struct wfx_queue *queue, u32 packet_id)
 {
 	int ret = 0;
-	u8 queue_generation, queue_id, item_generation, item_id;
+	u8 queue_generation, queue_id, item_id;
 	struct wfx_queue_item *item;
 	struct wfx_queue_stats *stats = queue->stats;
 	struct sk_buff *gc_skb = NULL;
 
-	wfx_queue_parse_id(packet_id, &queue_generation, &queue_id,
-			      &item_generation, &item_id);
+	wfx_queue_parse_id(packet_id, &queue_generation, &queue_id, &item_id);
 
 	item = &queue->pool[item_id];
 
@@ -396,15 +380,11 @@ int wfx_queue_remove(struct wfx_queue *queue, u32 packet_id)
 	} else if (item_id >= (unsigned) queue->capacity) {
 		WARN_ON(1);
 		ret = -EINVAL;
-	} else if (item->generation != item_generation) {
-		WARN_ON(1);
-		ret = -ENOENT;
 	} else {
 		gc_skb = item->skb;
 		item->skb = NULL;
 		--queue->num_pending;
 		--queue->num_queued;
-		++item->generation;
 		/* Do not use list_move_tail here, but list_move:
 		 * try to utilize cache row.
 		 */
@@ -427,19 +407,16 @@ int wfx_queue_remove(struct wfx_queue *queue, u32 packet_id)
 struct sk_buff *wfx_queue_get_id(struct wfx_queue *queue, u32 packet_id)
 {
 	struct sk_buff *skb = NULL;
-	u8 queue_generation, queue_id, item_generation, item_id;
+	u8 queue_generation, queue_id, item_id;
 	struct wfx_queue_item *item;
 
-	wfx_queue_parse_id(packet_id, &queue_generation, &queue_id,
-			      &item_generation, &item_id);
+	wfx_queue_parse_id(packet_id, &queue_generation, &queue_id, &item_id);
 	item = &queue->pool[item_id];
 	spin_lock_bh(&queue->lock);
 	BUG_ON(queue_id != queue->queue_id);
 	if (queue_generation != queue->generation) {
 		/* empty */
 	} else if (item_id >= (unsigned) queue->capacity) {
-		WARN_ON(1);
-	} else if (item->generation != item_generation) {
 		WARN_ON(1);
 	} else {
 		skb = item->skb;

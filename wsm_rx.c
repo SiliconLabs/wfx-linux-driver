@@ -440,12 +440,6 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 				   "A frame with expired link id is dropped.\n");
 			action = do_drop;
 		}
-		if (wfx_queue_get_generation(wsm->PacketId) >
-				WFX_MAX_REQUEUE_ATTEMPTS) {
-			dev_warn(wvif->wdev->dev,
-				   "Too many attempts to requeue a frame; dropped.\n");
-			action = do_drop;
-		}
 		break;
 	case NL80211_IFTYPE_ADHOC:
 		if (wvif->state != WFX_STATE_IBSS)
