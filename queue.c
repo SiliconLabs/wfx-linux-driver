@@ -247,6 +247,7 @@ int wfx_queue_put(struct wfx_queue *queue,
 	LIST_HEAD(gc_list);
 	struct wfx_queue_stats *stats = queue->stats;
 	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
+	WsmHiTxReqBody_t *wsm = wfx_skb_txreq(skb);
 
 	if (txpriv->link_id >= queue->stats->map_capacity)
 		return -EINVAL;
@@ -259,7 +260,7 @@ int wfx_queue_put(struct wfx_queue *queue,
 
 		list_move_tail(&item->head, &queue->queue);
 		item->skb = skb;
-		item->packet_id = wfx_queue_mk_packet_id(queue->generation,
+		wsm->PacketId = wfx_queue_mk_packet_id(queue->generation,
 							    queue->queue_id,
 							    item - queue->pool);
 
@@ -294,8 +295,6 @@ struct sk_buff *wfx_queue_pop(struct wfx_queue *queue, u32 link_id_map)
 	struct wfx_queue_stats *stats = queue->stats;
 	const struct wfx_txpriv *txpriv;
 	bool wakeup_stats = false;
-	struct wmsg *tx;
-	WsmHiTxReqBody_t *wsm;
 
 	spin_lock_bh(&queue->lock);
 	list_for_each_entry(item, &queue->queue, head) {
@@ -307,10 +306,7 @@ struct sk_buff *wfx_queue_pop(struct wfx_queue *queue, u32 link_id_map)
 	}
 	WARN_ON(!skb);
 	if (skb) {
-		tx = (struct wmsg *) skb->data;
 		txpriv = wfx_skb_txpriv(skb);
-		wsm = (WsmHiTxReqBody_t *) (tx)->body;
-		wsm->PacketId = item->packet_id;
 		list_move_tail(&item->head, &queue->pending);
 		++queue->num_pending;
 		--queue->link_map_cache[txpriv->link_id];
@@ -452,8 +448,8 @@ void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 		spin_lock_bh(&queue->lock);
 		list_for_each_entry(item, &queue->pending, head) {
 			if (ktime_after(now, ktime_add_ms(item->xmit_timestamp, limit_ms)))
-				dev_info(wdev->dev, "   id %08x sent %ums ago",
-					 item->packet_id,
+				dev_info(wdev->dev, "   id %p sent %ums ago",
+					 item->skb,
 					 (unsigned int) ktime_ms_delta(now, item->xmit_timestamp));
 		}
 		spin_unlock_bh(&queue->lock);

@@ -24,7 +24,6 @@ typedef void (*wfx_queue_skb_dtor_t)(struct wfx_dev *wdev,
 struct wfx_queue_item {
 	struct list_head	head;
 	struct sk_buff		*skb;
-	u32			packet_id;
 	ktime_t			xmit_timestamp;
 };
 
