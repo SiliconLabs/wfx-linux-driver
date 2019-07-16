@@ -402,15 +402,13 @@ void wsm_tx_lock_flush(struct wfx_dev *wdev)
 	wsm_tx_flush(wdev);
 }
 
-static bool wsm_handle_tx_data(struct wfx_vif *wvif,
-			       WsmHiTxReqBody_t *wsm,
-			       const struct ieee80211_tx_info *tx_info,
-			       const struct wfx_txpriv *txpriv,
+static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 			       struct wfx_queue *queue)
 {
 	bool handled = false;
-	uint8_t *frame = wsm->Frame + wsm->DataFlags.FcOffset;
-	__le16 fctl = ((struct ieee80211_hdr *) frame)->frame_control;
+	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
+	WsmHiTxReqBody_t *wsm = wfx_skb_txreq(skb);
+	struct ieee80211_hdr *frame = (struct ieee80211_hdr *) (wsm->Frame + wsm->DataFlags.FcOffset);
 
 	enum {
 		do_probe,
@@ -454,14 +452,14 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif,
 	}
 
 	if (action == do_tx) {
-		if (ieee80211_is_nullfunc(fctl)) {
+		if (ieee80211_is_nullfunc(frame->frame_control)) {
 			mutex_lock(&wvif->bss_loss_lock);
 			if (wvif->bss_loss_state) {
 				wvif->bss_loss_confirm_id = wsm->PacketId;
 				wsm->QueueId.QueueId = WSM_QUEUE_ID_VOICE;
 			}
 			mutex_unlock(&wvif->bss_loss_lock);
-		} else if (ieee80211_has_protected(fctl) &&
+		} else if (ieee80211_has_protected(frame->frame_control) &&
 			   txpriv->hw_key &&
 			   txpriv->hw_key->keyidx != wvif->wep_default_key_id &&
 			   (txpriv->hw_key->cipher == WLAN_CIPHER_SUITE_WEP40 ||
@@ -472,7 +470,7 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif,
 
 	switch (action) {
 	case do_drop:
-		pr_debug("[WSM] Drop frame (0x%.4X).\n", fctl);
+		pr_debug("[WSM] Drop frame (0x%.4X).\n", frame->frame_control);
 		BUG_ON(wfx_queue_remove(queue, wsm->PacketId));
 		handled = true;
 		break;
@@ -582,7 +580,6 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 	struct sk_buff *skb;
 	struct wmsg *hdr = NULL;
 	WsmHiTxReqBody_t *wsm = NULL;
-	struct ieee80211_tx_info *tx_info;
 	struct wfx_queue *queue = NULL;
 	struct wfx_queue *vif_queue = NULL;
 	u32 tx_allowed_mask = 0;
@@ -644,14 +641,12 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 		if (!skb)
 			continue;
 		txpriv = wfx_skb_txpriv(skb);
-		tx_info = IEEE80211_SKB_CB(skb);
 		hdr = (struct wmsg *) skb->data;
-		wsm = (WsmHiTxReqBody_t *) hdr->body;
 		// Note: txpriv->vif_id is reundant with hdr->interface
 		wvif = wdev_to_wvif(wdev, hdr->interface);
 		WARN_ON(!wvif);
 
-		if (wsm_handle_tx_data(wvif, wsm, tx_info, txpriv, queue))
+		if (wsm_handle_tx_data(wvif, skb, queue))
 			continue;  /* Handled by WSM */
 
 		wvif->pspoll_mask &= ~BIT(txpriv->raw_link_id);
@@ -670,6 +665,7 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 
 
 		if (more) {
+			wsm = (WsmHiTxReqBody_t *) hdr->body;
 			hdr80211 = (struct ieee80211_hdr *) (wsm->Frame + wsm->DataFlags.FcOffset);
 			hdr80211->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
 		}
