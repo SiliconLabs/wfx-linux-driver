@@ -137,7 +137,7 @@ void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
 	struct wfx_queue *queue;
 	struct wfx_queue_item *item;
 	struct wfx_dev *wdev = wvif->wdev;
-	struct wfx_txpriv *txpriv;
+	struct wmsg *hdr;
 
 	if (wvif->wdev->chip_frozen) {
 		for (i = 0; i < 4; ++i)
@@ -153,8 +153,8 @@ void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
 			queue = &wdev->tx_queue[i];
 			spin_lock_bh(&queue->lock);
 			list_for_each_entry(item, &queue->queue, head) {
-				txpriv = wfx_skb_txpriv(item->skb);
-				if (txpriv->vif_id == wvif->Id)
+				hdr = (struct wmsg *) item->skb->data;
+				if (hdr->interface == wvif->Id)
 					done = false;
 			}
 			spin_unlock_bh(&queue->lock);

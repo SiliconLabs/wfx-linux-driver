@@ -59,8 +59,13 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf
 static int wsm_tx_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	WsmHiTxCnfBody_t *body = buf;
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 
-	wfx_tx_confirm_cb(wdev, body);
+	WARN_ON(!wvif);
+	if (!wvif)
+		return -EFAULT;
+
+	wfx_tx_confirm_cb(wvif, body);
 	return 0;
 }
 
@@ -68,14 +73,18 @@ static int wsm_multi_tx_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *bu
 {
 	WsmHiMultiTransmitCnfBody_t *body = buf;
 	WsmHiTxCnfBody_t *buf_loc = (WsmHiTxCnfBody_t *) &body->TxConfPayload;
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 	int count = body->NumTxConfs;
 	int i;
 
 	WARN(count <= 0, "Corrupted message");
+	WARN_ON(!wvif);
+	if (!wvif)
+		return -EFAULT;
 
 	wfx_debug_txed_multi(wdev, count);
 	for (i = 0; i < count; ++i) {
-		wfx_tx_confirm_cb(wdev, buf_loc);
+		wfx_tx_confirm_cb(wvif, buf_loc);
 		buf_loc++;
 	}
 	return 0;
@@ -642,7 +651,6 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 			continue;
 		txpriv = wfx_skb_txpriv(skb);
 		hdr = (struct wmsg *) skb->data;
-		// Note: txpriv->vif_id is reundant with hdr->interface
 		wvif = wdev_to_wvif(wdev, hdr->interface);
 		WARN_ON(!wvif);
 

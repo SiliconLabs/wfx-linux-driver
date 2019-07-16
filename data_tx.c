@@ -703,7 +703,7 @@ static WsmHiTxReqBody_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t
 	memset(hdr, 0, wsm_length);
 	hdr->len = cpu_to_le16(t->skb->len);
 	hdr->id = cpu_to_le16(WSM_HI_TX_REQ_ID);
-	hdr->interface = t->txpriv.vif_id;
+	hdr->interface = wvif->Id;
 	wsm->QueueId.PeerStaId = t->txpriv.raw_link_id;
 	// Queue index are inverted between WSM and Linux
 	wsm->QueueId.QueueId = 3 - t->queue;
@@ -802,7 +802,6 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		goto drop;
 
 	WARN_ON(!wvif);
-	t.txpriv.vif_id = wvif->Id;
 	t.da = ieee80211_get_DA(t.hdr);
 	if (control) {
 		t.sta = control->sta;
@@ -871,25 +870,19 @@ drop:
 	ieee80211_tx_status(wdev->hw, skb);
 }
 
-void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
+void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 {
-	struct wfx_vif *wvif;
 	u8 queue_id = wfx_queue_get_queue_id(arg->PacketId);
-	struct wfx_queue *queue = &wdev->tx_queue[queue_id];
+	struct wfx_queue *queue = &wvif->wdev->tx_queue[queue_id];
 	struct sk_buff *skb;
 	const struct wfx_txpriv *txpriv;
 
 	skb = wfx_queue_get_id(queue, arg->PacketId);
 	if (!skb) {
-		dev_warn(wdev->dev, "Received unknown packet_id (%#.8x) from chip\n", arg->PacketId);
+		dev_warn(wvif->wdev->dev, "Received unknown packet_id (%#.8x) from chip\n", arg->PacketId);
 		return;
 	}
 	txpriv = wfx_skb_txpriv(skb);
-
-	wvif = wdev_to_wvif(wdev, txpriv->vif_id);
-	WARN_ON(!wvif);
-	if (!wvif)
-		return;
 
 	if (arg->Status == WSM_REQUEUE) {
 		/* "Requeue" means "implicit suspend" */
@@ -901,7 +894,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 		WARN(!arg->TxResultFlags.Requeue, "Incoherent Status and ResultFlags");
 
 		wfx_suspend_resume(wvif, &suspend);
-		dev_dbg(wdev->dev, "Requeuing for station %d (try %d). STAs asleep: 0x%.8X.\n",
+		dev_dbg(wvif->wdev->dev, "Requeuing for station %d (try %d). STAs asleep: 0x%.8X.\n",
 			   txpriv->link_id, wfx_queue_get_generation(arg->PacketId) + 1,
 			   wvif->sta_asleep_mask);
 		wfx_queue_requeue(queue, arg->PacketId);
@@ -1007,9 +1000,10 @@ static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
 
 void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb)
 {
+	struct wmsg *hdr = (struct wmsg *) skb->data;
+	WsmHiTxReqBody_t *tx_req = (WsmHiTxReqBody_t *) hdr->body;
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, txpriv->vif_id);
-	WsmHiTxReqBody_t *tx_req = (WsmHiTxReqBody_t *) ((struct wmsg *) skb->data)->body;
 	unsigned int offset = sizeof(WsmHiTxReqBody_t) + sizeof(struct wmsg) + tx_req->DataFlags.FcOffset;
 
 	WARN_ON(!wvif);

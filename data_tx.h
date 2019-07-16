@@ -22,7 +22,6 @@ struct wfx_txpriv {
 	u8 raw_link_id;
 	u8 tid;
 	u8 rate_id;
-	u8 vif_id;
 } __packed;
 
 struct tx_policy {
@@ -59,7 +58,7 @@ void tx_policy_upload_work(struct work_struct *work);
 
 void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	    struct sk_buff *skb);
-void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg);
+void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg);
 void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb);
 
 void wfx_link_id_work(struct work_struct *work);
