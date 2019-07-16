@@ -78,6 +78,12 @@ static inline struct wfx_txpriv *wfx_skb_txpriv(struct sk_buff *skb)
 	return (struct wfx_txpriv *) tx_info->status.status_driver_data;
 }
 
+static inline WsmHiTxReqBody_t *wfx_skb_txreq(struct sk_buff *skb)
+{
+	struct wmsg *hdr = (struct wmsg *) skb->data;
+	return (WsmHiTxReqBody_t *) hdr->body;
+}
+
 static inline int wfx_is_ht(const struct wfx_ht_info *ht_info)
 {
 	return ht_info->channel_type != NL80211_CHAN_NO_HT;
