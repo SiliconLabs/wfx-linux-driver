@@ -78,10 +78,6 @@ enum wfx_link_status {
 	WFX_LINK_RESET_REMAP,
 };
 
-#define WFX_MAX_STA_IN_AP_MODE    (8)
-#define WFX_LINK_ID_AFTER_DTIM    (WFX_MAX_STA_IN_AP_MODE + 1)
-#define WFX_LINK_ID_UAPSD         (WFX_MAX_STA_IN_AP_MODE + 2)
-#define WFX_LINK_ID_MAX           (WFX_MAX_STA_IN_AP_MODE + 3)
 struct hwbus_ops;
 struct wfx_debug_priv;
 

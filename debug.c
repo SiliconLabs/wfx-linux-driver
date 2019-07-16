@@ -151,9 +151,9 @@ static void wfx_queue_status_show(struct seq_file *seq,
 	seq_printf(seq, "  locked:   %s\n", q->tx_locked_cnt ? "yes" : "no");
 	seq_printf(seq, "  overfull: %s\n", q->overfull ? "yes" : "no");
 	seq_puts(seq,   "  link map: 0-> ");
-	for (i = 0; i < q->stats->map_capacity; ++i)
+	for (i = 0; i < ARRAY_SIZE(q->link_map_cache); ++i)
 		seq_printf(seq, "%.2d ", q->link_map_cache[i]);
-	seq_printf(seq, "<-%zu\n", q->stats->map_capacity);
+	seq_printf(seq, "<-%zu\n", ARRAY_SIZE(q->link_map_cache));
 }
 
 static void wfx_debug_print_map(struct seq_file *seq,
@@ -164,9 +164,9 @@ static void wfx_debug_print_map(struct seq_file *seq,
 	int i;
 
 	seq_printf(seq, "%s0-> ", label);
-	for (i = 0; i < wdev->tx_queue_stats.map_capacity; ++i)
+	for (i = 0; i < ARRAY_SIZE(wdev->tx_queue_stats.link_map_cache); ++i)
 		seq_printf(seq, "%s ", (map & BIT(i)) ? "**" : "..");
-	seq_printf(seq, "<-%zu\n", wdev->tx_queue_stats.map_capacity - 1);
+	seq_printf(seq, "<-%zu\n", ARRAY_SIZE(wdev->tx_queue_stats.link_map_cache) - 1);
 }
 
 static int wfx_status_show(struct seq_file *seq, void *v)

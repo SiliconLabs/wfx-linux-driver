@@ -72,21 +72,14 @@ static void wfx_queue_register_post_gc(struct list_head *gc_list,
 }
 
 int wfx_queue_stats_init(struct wfx_queue_stats *stats,
-			    size_t map_capacity,
 			    wfx_queue_skb_dtor_t skb_dtor,
 			 struct wfx_dev	*wdev)
 {
 	memset(stats, 0, sizeof(*stats));
-	stats->map_capacity = map_capacity;
 	stats->skb_dtor = skb_dtor;
 	stats->wdev = wdev;
 	spin_lock_init(&stats->lock);
 	init_waitqueue_head(&stats->wait_link_id_empty);
-
-	stats->link_map_cache = kcalloc(map_capacity, sizeof(int), GFP_KERNEL);
-
-	if (!stats->link_map_cache)
-		return -ENOMEM;
 
 	return 0;
 }
@@ -111,14 +104,6 @@ int wfx_queue_init(struct wfx_queue *queue,
 			GFP_KERNEL);
 	if (!queue->pool)
 		return -ENOMEM;
-
-	queue->link_map_cache = kcalloc(stats->map_capacity, sizeof(int),
-			GFP_KERNEL);
-	if (!queue->link_map_cache) {
-		kfree(queue->pool);
-		queue->pool = NULL;
-		return -ENOMEM;
-	}
 
 	for (i = 0; i < capacity; ++i)
 		list_add_tail(&queue->pool[i].head, &queue->free_pool);
@@ -183,7 +168,7 @@ int wfx_queue_clear(struct wfx_queue *queue)
 	queue->num_pending = 0;
 
 	spin_lock_bh(&stats->lock);
-	for (i = 0; i < stats->map_capacity; ++i) {
+	for (i = 0; i < ARRAY_SIZE(stats->link_map_cache); ++i) {
 		stats->num_queued -= queue->link_map_cache[i];
 		stats->link_map_cache[i] -= queue->link_map_cache[i];
 		queue->link_map_cache[i] = 0;
@@ -201,8 +186,6 @@ int wfx_queue_clear(struct wfx_queue *queue)
 
 void wfx_queue_stats_deinit(struct wfx_queue_stats *stats)
 {
-	kfree(stats->link_map_cache);
-	stats->link_map_cache = NULL;
 }
 
 void wfx_queue_deinit(struct wfx_queue *queue)
@@ -210,9 +193,7 @@ void wfx_queue_deinit(struct wfx_queue *queue)
 	wfx_queue_clear(queue);
 	INIT_LIST_HEAD(&queue->free_pool);
 	kfree(queue->pool);
-	kfree(queue->link_map_cache);
 	queue->pool = NULL;
-	queue->link_map_cache = NULL;
 	queue->capacity = 0;
 }
 
@@ -221,7 +202,6 @@ size_t wfx_queue_get_num_queued(struct wfx_queue *queue,
 {
 	size_t ret;
 	int i, bit;
-	size_t map_capacity = queue->stats->map_capacity;
 
 	if (!link_id_map)
 		return 0;
@@ -231,7 +211,7 @@ size_t wfx_queue_get_num_queued(struct wfx_queue *queue,
 		ret = queue->num_queued - queue->num_pending;
 	} else {
 		ret = 0;
-		for (i = 0, bit = 1; i < map_capacity; ++i, bit <<= 1) {
+		for (i = 0, bit = 1; i < ARRAY_SIZE(queue->link_map_cache); ++i, bit <<= 1) {
 			if (link_id_map & bit)
 				ret += queue->link_map_cache[i];
 		}
@@ -249,7 +229,7 @@ int wfx_queue_put(struct wfx_queue *queue,
 	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
 	WsmHiTxReqBody_t *wsm = wfx_skb_txreq(skb);
 
-	if (txpriv->link_id >= queue->stats->map_capacity)
+	if (txpriv->link_id >= ARRAY_SIZE(stats->link_map_cache))
 		return -EINVAL;
 
 	spin_lock_bh(&queue->lock);
@@ -474,7 +454,7 @@ bool wfx_queue_stats_is_empty(struct wfx_queue_stats *stats,
 		empty = stats->num_queued == 0;
 	} else {
 		int i;
-		for (i = 0; i < stats->map_capacity; ++i) {
+		for (i = 0; i < ARRAY_SIZE(stats->link_map_cache); ++i) {
 			if (link_id_map & BIT(i)) {
 				if (stats->link_map_cache[i]) {
 					empty = false;

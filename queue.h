@@ -10,6 +10,12 @@
 
 #include "wsm_cmd_api.h"
 
+#define WFX_MAX_STA_IN_AP_MODE    (8)
+#define WFX_LINK_ID_AFTER_DTIM    (WFX_MAX_STA_IN_AP_MODE + 1)
+#define WFX_LINK_ID_UAPSD         (WFX_MAX_STA_IN_AP_MODE + 2)
+#define WFX_LINK_ID_MAX           (WFX_MAX_STA_IN_AP_MODE + 3)
+
+
 /* extern */ struct sk_buff;
 /* extern */ struct wfx_dev;
 /* extern */ struct wfx_vif;
@@ -37,7 +43,7 @@ struct wfx_queue {
 	struct list_head	free_pool;
 	struct list_head	pending;
 	int			tx_locked_cnt;
-	int			*link_map_cache;
+	int			link_map_cache[WFX_LINK_ID_MAX];
 	bool			overfull;
 	spinlock_t		lock; /* Protect queue entry */
 	u8			queue_id;
@@ -46,16 +52,14 @@ struct wfx_queue {
 
 struct wfx_queue_stats {
 	spinlock_t		lock; /* Protect stats entry */
-	int			*link_map_cache;
+	int			link_map_cache[WFX_LINK_ID_MAX];
 	int			num_queued;
-	size_t			map_capacity;
 	wait_queue_head_t	wait_link_id_empty;
 	wfx_queue_skb_dtor_t	skb_dtor;
 	struct wfx_dev		*wdev;
 };
 
 int wfx_queue_stats_init(struct wfx_queue_stats *stats,
-			    size_t map_capacity,
 			    wfx_queue_skb_dtor_t skb_dtor,
 			    struct wfx_dev *wdev);
 int wfx_queue_init(struct wfx_queue *queue,
