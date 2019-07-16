@@ -241,13 +241,16 @@ int wfx_upload_keys(struct wfx_vif *wvif)
 void wfx_wep_key_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif = container_of(work, struct wfx_vif, wep_key_work);
-	u8 queue_id = wfx_queue_get_queue_id(wvif->wdev->pending_frame_id);
+	WsmHiTxReqBody_t *wsm = wfx_skb_txreq(wvif->wep_pending_skb);
+	uint32_t packet_id = wsm->PacketId;
+	u8 queue_id = wfx_queue_get_queue_id(packet_id);
 	struct wfx_queue *queue = &wvif->wdev->tx_queue[queue_id];
 	int wep_default_key_id = wvif->wep_default_key_id;
 
 	wsm_tx_flush(wvif->wdev);
 	wsm_wep_default_key_id(wvif->wdev, wep_default_key_id, wvif->Id);
-	wfx_queue_requeue(queue, wvif->wdev->pending_frame_id);
+	wfx_queue_requeue(queue, packet_id);
+	wvif->wep_pending_skb = NULL;
 	wsm_tx_unlock(wvif->wdev);
 }
 

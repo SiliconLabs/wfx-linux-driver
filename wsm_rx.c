@@ -478,7 +478,7 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 		pr_debug("[WSM] Issue set_default_wep_key.\n");
 		wsm_tx_lock(wvif->wdev);
 		wvif->wep_default_key_id = txpriv->hw_key->keyidx;
-		wvif->wdev->pending_frame_id = wsm->PacketId;
+		wvif->wep_pending_skb = skb;
 		if (!schedule_work(&wvif->wep_key_work))
 			wsm_tx_unlock(wvif->wdev);
 		handled = true;

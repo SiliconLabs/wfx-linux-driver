@@ -149,11 +149,6 @@ struct wfx_dev {
 	u8				keyset;
 	atomic_t			tx_lock;
 
-	/* WSM Join */
-
-	u32			pending_frame_id;
-
-
 	/* For debugfs 'rx_stats' file */
 	HiRxStats_t rx_stats;
 	struct mutex rx_stats_lock;
@@ -192,6 +187,7 @@ struct wfx_vif {
 
 	/* TX/RX and security */
 	s8			wep_default_key_id;
+	struct sk_buff		*wep_pending_skb;
 
 	enum wfx_state	state;
 
