@@ -145,7 +145,6 @@ static void wfx_queue_status_show(struct seq_file *seq,
 	int i;
 
 	seq_printf(seq, "Queue       %d:\n", q->queue_id);
-	seq_printf(seq, "  capacity: %zu\n", q->capacity);
 	seq_printf(seq, "  queued:   %zu\n", q->num_queued);
 	seq_printf(seq, "  pending:  %zu\n", q->num_pending);
 	seq_printf(seq, "  locked:   %s\n", q->tx_locked_cnt ? "yes" : "no");

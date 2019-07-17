@@ -791,7 +791,9 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	bool tid_update = 0;
 	WsmHiDataFlags_t flags = { };
 	int ret;
+
 	compiletime_assert(sizeof(struct wfx_txpriv) <= FIELD_SIZEOF(struct ieee80211_tx_info, status.status_driver_data), "struct txpriv is too large");
+	WARN(skb->next || skb->prev, "skb is already member of a list");
 
 	// control.vif can be NULL for injected frames
 	if (IEEE80211_SKB_CB(skb)->control.vif)
