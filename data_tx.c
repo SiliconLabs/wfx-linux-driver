@@ -21,22 +21,6 @@
 static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
 				   int link_id, int tid);
 
-/* TX queue lock / unlock */
-
-static void wfx_tx_queues_lock(struct wfx_dev *wdev)
-{
-	int i;
-	for (i = 0; i < 4; ++i)
-		wfx_queue_lock(wdev, &wdev->tx_queue[i]);
-}
-
-static void wfx_tx_queues_unlock(struct wfx_dev *wdev)
-{
-	int i;
-	for (i = 0; i < 4; ++i)
-		wfx_queue_unlock(wdev, &wdev->tx_queue[i]);
-}
-
 /* TX policy cache implementation */
 
 static const struct ieee80211_rate *wfx_get_tx_rate(struct wfx_vif *wvif,

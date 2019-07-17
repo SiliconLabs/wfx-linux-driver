@@ -53,8 +53,8 @@ struct sk_buff *wfx_queue_get_id(struct wfx_dev *wdev, u32 packet_id);
 int wfx_queue_requeue(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_buff *skb);
 int wfx_queue_remove(struct wfx_dev *wdev, struct sk_buff *skb);
 
-void wfx_queue_lock(struct wfx_dev *wdev, struct wfx_queue *queue);
-void wfx_queue_unlock(struct wfx_dev *wdev, struct wfx_queue *queue);
+void wfx_tx_queues_lock(struct wfx_dev *wdev);
+void wfx_tx_queues_unlock(struct wfx_dev *wdev);
 unsigned wfx_queue_get_pkt_us_delay(struct wfx_dev *wdev, struct sk_buff *skb);
 
 bool wfx_queue_stats_is_empty(struct wfx_dev *wdev);
