@@ -829,7 +829,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	tid_update = wfx_tx_h_pm_state(wvif, &t);
 
 	memcpy(t.tx_info->status.status_driver_data, &t.txpriv, sizeof(t.txpriv));
-	ret = wfx_queue_put(wdev, &wdev->tx_queue[t.queue], t.skb);
+	ret = wfx_tx_queue_put(wdev, &wdev->tx_queue[t.queue], t.skb);
 	spin_unlock_bh(&wvif->ps_state_lock);
 	BUG_ON(ret);
 
@@ -861,7 +861,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 	struct sk_buff *skb;
 	const struct wfx_txpriv *txpriv;
 
-	skb = wfx_queue_get_id(wvif->wdev, arg->PacketId);
+	skb = wfx_pending_get(wvif->wdev, arg->PacketId);
 	if (!skb) {
 		dev_warn(wvif->wdev->dev, "Received unknown packet_id (%#.8x) from chip\n", arg->PacketId);
 		return;
@@ -880,7 +880,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 		wfx_suspend_resume(wvif, &suspend);
 		dev_dbg(wvif->wdev->dev, "Requeuing for station %d. STAs asleep: 0x%.8X.\n",
 			   txpriv->link_id, wvif->sta_asleep_mask);
-		wfx_queue_requeue(wvif->wdev, skb);
+		wfx_pending_requeue(wvif->wdev, skb);
 		if (!txpriv->link_id) { // Is multicast?
 			spin_lock_bh(&wvif->ps_state_lock);
 			wvif->buffered_multicasts = true;
@@ -923,7 +923,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 		tx->status.is_valid_ack_signal = false;
 #endif
 		if (!arg->Status) {
-			_trace_tx_stats(arg, wfx_queue_get_pkt_us_delay(wvif->wdev, skb));
+			_trace_tx_stats(arg, wfx_pending_get_pkt_us_delay(wvif->wdev, skb));
 			tx->flags |= IEEE80211_TX_STAT_ACK;
 			tx->status.tx_time = arg->MediaDelay - arg->TxQueueDelay;
 		}
@@ -947,7 +947,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 			}
 		}
 
-		wfx_queue_remove(wvif->wdev, skb);
+		wfx_pending_remove(wvif->wdev, skb);
 	}
 }
 

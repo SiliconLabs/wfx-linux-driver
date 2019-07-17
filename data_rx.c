@@ -57,7 +57,7 @@ static int wfx_handle_pspoll(struct wfx_vif *wvif, struct sk_buff *skb)
 
 	/* Do not report pspols if data for given link id is queued already. */
 	for (i = 0; i < 4; ++i) {
-		if (wfx_queue_get_num_queued(&wvif->wdev->tx_queue[i],
+		if (wfx_tx_queue_get_num_queued(&wvif->wdev->tx_queue[i],
 						pspoll_mask)) {
 			wfx_bh_request_tx(wvif->wdev);
 			drop = 1;

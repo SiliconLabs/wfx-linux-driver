@@ -89,7 +89,7 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply, size_t
 	if (!ret) {
 		dev_err(wdev->dev, "chip did not answer");
 		dev_info(wdev->dev, "list of stuck frames:\n");
-		wfx_queue_dump_old_frames(wdev, 3000);
+		wfx_pending_dump_old_frames(wdev, 3000);
 		wdev->chip_frozen = 1;
 		reinit_completion(&wdev->wsm_cmd.done);
 		ret = -ETIMEDOUT;

@@ -8,6 +8,8 @@
 #ifndef WFX_QUEUE_H
 #define WFX_QUEUE_H
 
+#include <linux/skbuff.h>
+
 #include "wsm_cmd_api.h"
 
 #define WFX_MAX_STA_IN_AP_MODE    (8)
@@ -15,14 +17,8 @@
 #define WFX_LINK_ID_UAPSD         (WFX_MAX_STA_IN_AP_MODE + 2)
 #define WFX_LINK_ID_MAX           (WFX_MAX_STA_IN_AP_MODE + 3)
 
-
-/* extern */ struct sk_buff;
-/* extern */ struct wfx_dev;
-/* extern */ struct wfx_vif;
-/* extern */ struct ieee80211_tx_queue_stats;
-/* extern */ struct wfx_txpriv;
-
-/* forward */ struct wfx_queue_stats;
+struct wfx_dev;
+struct wfx_vif;
 
 struct wfx_queue {
 	struct sk_buff_head	queue;
@@ -39,26 +35,22 @@ struct wfx_queue_stats {
 	wait_queue_head_t	wait_link_id_empty;
 };
 
-void wfx_queue_stats_init(struct wfx_dev *wdev);
-void wfx_queue_stats_deinit(struct wfx_dev *wdev);
-
-int wfx_queue_clear(struct wfx_dev *wdev, struct wfx_queue *queue);
-void wfx_queue_wait_empty_vif(struct wfx_vif *wvif);
-
-size_t wfx_queue_get_num_queued(struct wfx_queue *queue,
-				   u32 link_id_map);
-int wfx_queue_put(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_buff *skb);
-struct sk_buff *wfx_queue_pop(struct wfx_dev *wdev, struct wfx_queue *queue, u32 link_id_map);
-struct sk_buff *wfx_queue_get_id(struct wfx_dev *wdev, u32 packet_id);
-int wfx_queue_requeue(struct wfx_dev *wdev, struct sk_buff *skb);
-int wfx_queue_remove(struct wfx_dev *wdev, struct sk_buff *skb);
-
+void wfx_tx_queues_init(struct wfx_dev *wdev);
+void wfx_tx_queues_deinit(struct wfx_dev *wdev);
 void wfx_tx_queues_lock(struct wfx_dev *wdev);
 void wfx_tx_queues_unlock(struct wfx_dev *wdev);
-unsigned wfx_queue_get_pkt_us_delay(struct wfx_dev *wdev, struct sk_buff *skb);
+bool wfx_tx_queues_is_empty(struct wfx_dev *wdev);
+void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif);
 
-bool wfx_queue_stats_is_empty(struct wfx_dev *wdev);
+int wfx_tx_queue_clear(struct wfx_dev *wdev, struct wfx_queue *queue);
+int wfx_tx_queue_put(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_buff *skb);
+struct sk_buff *wfx_tx_queue_get(struct wfx_dev *wdev, struct wfx_queue *queue, u32 link_id_map);
+size_t wfx_tx_queue_get_num_queued(struct wfx_queue *queue, u32 link_id_map);
 
-void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms);
+struct sk_buff *wfx_pending_get(struct wfx_dev *wdev, u32 packet_id);
+int wfx_pending_remove(struct wfx_dev *wdev, struct sk_buff *skb);
+int wfx_pending_requeue(struct wfx_dev *wdev, struct sk_buff *skb);
+unsigned wfx_pending_get_pkt_us_delay(struct wfx_dev *wdev, struct sk_buff *skb);
+void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms);
 
 #endif /* WFX_QUEUE_H */

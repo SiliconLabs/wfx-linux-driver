@@ -370,7 +370,7 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	mutex_init(&wdev->conf_mutex);
 	mutex_init(&wdev->rx_stats_lock);
 
-	wfx_queue_stats_init(wdev);
+	wfx_tx_queues_init(wdev);
 
 	return wdev;
 }
@@ -379,7 +379,7 @@ void wfx_free_common(struct wfx_dev *wdev)
 {
 	mutex_destroy(&wdev->rx_stats_lock);
 	mutex_destroy(&wdev->conf_mutex);
-	wfx_queue_stats_deinit(wdev);
+	wfx_tx_queues_deinit(wdev);
 	ieee80211_free_hw(wdev->hw);
 }
 

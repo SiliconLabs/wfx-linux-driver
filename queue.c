@@ -51,7 +51,7 @@ static u32 wfx_queue_mk_packet_id(u8 queue_generation, u8 queue_id, u8 item_id)
 }
 
 /* If successful, LOCKS the TX queue! */
-void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
+void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif)
 {
 	int i;
 	bool done;
@@ -63,7 +63,7 @@ void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
 	if (wvif->wdev->chip_frozen) {
 		wsm_tx_lock_flush(wdev);
 		for (i = 0; i < 4; ++i)
-			wfx_queue_clear(wdev, &wdev->tx_queue[i]);
+			wfx_tx_queue_clear(wdev, &wdev->tx_queue[i]);
 		return;
 	}
 
@@ -87,7 +87,7 @@ void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
 	} while (!done);
 }
 
-int wfx_queue_clear(struct wfx_dev *wdev, struct wfx_queue *queue)
+int wfx_tx_queue_clear(struct wfx_dev *wdev, struct wfx_queue *queue)
 {
 	int i;
 	struct sk_buff_head gc_list;
@@ -114,7 +114,7 @@ int wfx_queue_clear(struct wfx_dev *wdev, struct wfx_queue *queue)
 	return 0;
 }
 
-void wfx_queue_stats_init(struct wfx_dev *wdev)
+void wfx_tx_queues_init(struct wfx_dev *wdev)
 {
 	int i;
 
@@ -129,16 +129,16 @@ void wfx_queue_stats_init(struct wfx_dev *wdev)
 	}
 }
 
-void wfx_queue_stats_deinit(struct wfx_dev *wdev)
+void wfx_tx_queues_deinit(struct wfx_dev *wdev)
 {
 	int i;
 
 	WARN_ON(!skb_queue_empty(&wdev->tx_queue_stats.pending));
 	for (i = 0; i < 4; ++i)
-		wfx_queue_clear(wdev, &wdev->tx_queue[i]);
+		wfx_tx_queue_clear(wdev, &wdev->tx_queue[i]);
 }
 
-size_t wfx_queue_get_num_queued(struct wfx_queue *queue,
+size_t wfx_tx_queue_get_num_queued(struct wfx_queue *queue,
 				   u32 link_id_map)
 {
 	size_t ret;
@@ -161,7 +161,7 @@ size_t wfx_queue_get_num_queued(struct wfx_queue *queue,
 	return ret;
 }
 
-int wfx_queue_put(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_buff *skb)
+int wfx_tx_queue_put(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_buff *skb)
 {
 	int ret = 0;
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
@@ -186,7 +186,7 @@ int wfx_queue_put(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_buff 
 	return ret;
 }
 
-struct sk_buff *wfx_queue_pop(struct wfx_dev *wdev, struct wfx_queue *queue, u32 link_id_map)
+struct sk_buff *wfx_tx_queue_get(struct wfx_dev *wdev, struct wfx_queue *queue, u32 link_id_map)
 {
 	struct sk_buff *skb = NULL;
 	struct sk_buff *item;
@@ -221,7 +221,7 @@ struct sk_buff *wfx_queue_pop(struct wfx_dev *wdev, struct wfx_queue *queue, u32
 	return skb;
 }
 
-int wfx_queue_requeue(struct wfx_dev *wdev, struct sk_buff *skb)
+int wfx_pending_requeue(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
@@ -240,7 +240,7 @@ int wfx_queue_requeue(struct wfx_dev *wdev, struct sk_buff *skb)
 	return 0;
 }
 
-int wfx_queue_remove(struct wfx_dev *wdev, struct sk_buff *skb)
+int wfx_pending_remove(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 
@@ -252,7 +252,7 @@ int wfx_queue_remove(struct wfx_dev *wdev, struct sk_buff *skb)
 	return 0;
 }
 
-struct sk_buff *wfx_queue_get_id(struct wfx_dev *wdev, u32 packet_id)
+struct sk_buff *wfx_pending_get(struct wfx_dev *wdev, u32 packet_id)
 {
 	struct sk_buff *skb;
 	WsmHiTxReqBody_t *wsm;
@@ -271,7 +271,7 @@ struct sk_buff *wfx_queue_get_id(struct wfx_dev *wdev, u32 packet_id)
 	return NULL;
 }
 
-void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
+void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 {
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 	ktime_t now = ktime_get();
@@ -292,7 +292,7 @@ void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 	spin_unlock_bh(&stats->pending.lock);
 }
 
-unsigned wfx_queue_get_pkt_us_delay(struct wfx_dev *wdev, struct sk_buff *skb)
+unsigned wfx_pending_get_pkt_us_delay(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	ktime_t now = ktime_get();
 	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
@@ -300,7 +300,7 @@ unsigned wfx_queue_get_pkt_us_delay(struct wfx_dev *wdev, struct sk_buff *skb)
 	return ktime_us_delta(now, txpriv->xmit_timestamp);
 }
 
-bool wfx_queue_stats_is_empty(struct wfx_dev *wdev)
+bool wfx_tx_queues_is_empty(struct wfx_dev *wdev)
 {
 	int i;
 	struct sk_buff_head *queue;

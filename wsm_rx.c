@@ -399,7 +399,7 @@ void wsm_tx_flush(struct wfx_dev *wdev)
 				 msecs_to_jiffies(3000));
 	if (!ret) {
 		dev_warn(wdev->dev, "cannot flush tx buffers (%d still busy)\n", wdev->hif.tx_buffers_used);
-		wfx_queue_dump_old_frames(wdev, 3000);
+		wfx_pending_dump_old_frames(wdev, 3000);
 		// FIXME: drop pending frames here
 		wdev->chip_frozen = 1;
 	}
@@ -475,7 +475,7 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 	switch (action) {
 	case do_drop:
 		pr_debug("[WSM] Drop frame (0x%.4X).\n", frame->frame_control);
-		BUG_ON(wfx_queue_remove(wvif->wdev, skb));
+		BUG_ON(wfx_pending_remove(wvif->wdev, skb));
 		handled = true;
 		break;
 	case do_wep:
@@ -510,7 +510,7 @@ static int wfx_get_prio_queue(struct wfx_vif *wvif,
 	for (i = 0; i < 4; ++i) {
 		int queued;
 		edca = &wvif->edca.params[i];
-		queued = wfx_queue_get_num_queued(&wvif->wdev->tx_queue[i],
+		queued = wfx_tx_queue_get_num_queued(&wvif->wdev->tx_queue[i],
 				tx_allowed_mask);
 		if (!queued)
 			continue;
@@ -527,8 +527,8 @@ static int wfx_get_prio_queue(struct wfx_vif *wvif,
 	/* override winner if bursting */
 	if (winner >= 0 && wvif->wdev->tx_burst_idx >= 0 &&
 	    winner != wvif->wdev->tx_burst_idx &&
-	    !wfx_queue_get_num_queued(&wvif->wdev->tx_queue[winner], tx_allowed_mask & urgent) &&
-	    wfx_queue_get_num_queued(&wvif->wdev->tx_queue[wvif->wdev->tx_burst_idx], tx_allowed_mask))
+	    !wfx_tx_queue_get_num_queued(&wvif->wdev->tx_queue[winner], tx_allowed_mask & urgent) &&
+	    wfx_tx_queue_get_num_queued(&wvif->wdev->tx_queue[wvif->wdev->tx_burst_idx], tx_allowed_mask))
 		winner = wvif->wdev->tx_burst_idx;
 
 	return winner;
@@ -641,7 +641,7 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 
 		queue_num = queue - wdev->tx_queue;
 
-		skb = wfx_queue_pop(wdev, queue, tx_allowed_mask);
+		skb = wfx_tx_queue_get(wdev, queue, tx_allowed_mask);
 		if (!skb)
 			continue;
 		txpriv = wfx_skb_txpriv(skb);
@@ -656,7 +656,7 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 
 		/* allow bursting if txop is set */
 		if (wvif->edca.params[queue_num].TxOpLimit)
-			burst = (int)wfx_queue_get_num_queued(queue, tx_allowed_mask) + 1;
+			burst = (int)wfx_tx_queue_get_num_queued(queue, tx_allowed_mask) + 1;
 		else
 			burst = 1;
 
