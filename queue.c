@@ -34,15 +34,6 @@ static void __wfx_queue_unlock(struct wfx_queue *queue)
 	}
 }
 
-static void wfx_queue_parse_id(u32 packet_id, u8 *queue_generation,
-					 u8 *queue_id,
-					 u8 *item_id)
-{
-	*item_id		= (packet_id >>  0) & 0xFF;
-	*queue_id		= (packet_id >> 16) & 0xFF;
-	*queue_generation	= (packet_id >> 24) & 0xFF;
-}
-
 static u32 wfx_queue_mk_packet_id(u8 queue_generation, u8 queue_id, u8 item_id)
 {
 	return ((u32)item_id << 0) |
@@ -66,6 +57,7 @@ int wfx_queue_stats_init(struct wfx_queue_stats *stats,
 	memset(stats, 0, sizeof(*stats));
 	stats->skb_dtor = skb_dtor;
 	stats->wdev = wdev;
+	skb_queue_head_init(&stats->pending);
 	spin_lock_init(&stats->lock);
 	init_waitqueue_head(&stats->wait_link_id_empty);
 
@@ -81,7 +73,6 @@ int wfx_queue_init(struct wfx_queue *queue,
 	queue->stats = stats;
 	queue->queue_id = queue_id;
 	skb_queue_head_init(&queue->queue);
-	skb_queue_head_init(&queue->pending);
 	spin_lock_init(&queue->lock);
 
 	return 0;
@@ -136,8 +127,6 @@ int wfx_queue_clear(struct wfx_queue *queue)
 	queue->generation++;
 	while ((item = skb_dequeue(&queue->queue)) != NULL)
 		skb_queue_head(&gc_list, item);
-	while ((item = skb_dequeue(&queue->pending)) != NULL)
-		skb_queue_head(&gc_list, item);
 	queue->counter = 0;
 
 	spin_lock_bh(&stats->lock);
@@ -155,6 +144,7 @@ int wfx_queue_clear(struct wfx_queue *queue)
 
 void wfx_queue_stats_deinit(struct wfx_queue_stats *stats)
 {
+	WARN_ON(!skb_queue_empty(&stats->pending));
 }
 
 void wfx_queue_deinit(struct wfx_queue *queue)
@@ -233,10 +223,10 @@ struct sk_buff *wfx_queue_pop(struct wfx_queue *queue, u32 link_id_map)
 	if (skb) {
 		txpriv = wfx_skb_txpriv(skb);
 		skb_unlink(skb, &queue->queue);
-		skb_queue_tail(&queue->pending, skb);
 		--queue->link_map_cache[txpriv->link_id];
 
 		spin_lock_bh(&stats->lock);
+		skb_queue_tail(&stats->pending, skb);
 		--stats->num_queued;
 		if (!--stats->link_map_cache[txpriv->link_id])
 			wakeup_stats = true;
@@ -259,8 +249,8 @@ int wfx_queue_requeue(struct wfx_queue *queue, struct sk_buff *skb)
 	spin_lock_bh(&stats->lock);
 	++stats->num_queued;
 	++stats->link_map_cache[txpriv->link_id];
+	skb_unlink(skb, &stats->pending);
 	spin_unlock_bh(&stats->lock);
-	skb_unlink(skb, &queue->pending);
 	skb_queue_tail(&queue->queue, skb);
 	spin_unlock_bh(&queue->lock);
 	return 0;
@@ -270,9 +260,9 @@ int wfx_queue_remove(struct wfx_queue *queue, struct sk_buff *skb)
 {
 	struct wfx_queue_stats *stats = queue->stats;
 
-	spin_lock_bh(&queue->lock);
-	skb_unlink(skb, &queue->pending);
-	spin_unlock_bh(&queue->lock);
+	spin_lock_bh(&stats->lock);
+	skb_unlink(skb, &stats->pending);
+	spin_unlock_bh(&stats->lock);
 	stats->skb_dtor(stats->wdev, skb);
 
 	return 0;
@@ -282,20 +272,18 @@ struct sk_buff *wfx_queue_get_id(struct wfx_queue *queue, u32 packet_id)
 {
 	struct sk_buff *skb;
 	WsmHiTxReqBody_t *wsm;
-	u8 queue_generation, queue_id, item_id;
+	struct wfx_queue_stats *stats = queue->stats;
 
-	wfx_queue_parse_id(packet_id, &queue_generation, &queue_id, &item_id);
-	WARN_ON(queue_id != queue->queue_id);
-	spin_lock_bh(&queue->lock);
-	skb_queue_walk(&queue->pending, skb) {
+	spin_lock_bh(&stats->lock);
+	skb_queue_walk(&stats->pending, skb) {
 		wsm = wfx_skb_txreq(skb);
 		if (wsm->PacketId == packet_id) {
-			spin_unlock_bh(&queue->lock);
+			spin_unlock_bh(&stats->lock);
 			return skb;
 		}
 	}
 	WARN_ON(1);
-	spin_unlock_bh(&queue->lock);
+	spin_unlock_bh(&stats->lock);
 	return NULL;
 }
 
@@ -315,19 +303,15 @@ void wfx_queue_unlock(struct wfx_queue *queue)
 
 void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 {
-	struct wfx_queue *queue;
+	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 	struct sk_buff *skb;
-	int i;
 
 	dev_info(wdev->dev, "Frames stuck in firmware since %dms or more:\n", limit_ms);
-	for (i = 0; i < 4; i++) {
-		queue = &wdev->tx_queue[i];
-		spin_lock_bh(&queue->lock);
-		skb_queue_walk(&queue->pending, skb) {
-			/* Disabled */
-		}
-		spin_unlock_bh(&queue->lock);
+	spin_lock_bh(&stats->lock);
+	skb_queue_walk(&stats->pending, skb) {
+		/* Disabled */
 	}
+	spin_unlock_bh(&stats->lock);
 }
 
 unsigned wfx_queue_get_pkt_us_delay(struct wfx_queue *queue, struct sk_buff *skb)

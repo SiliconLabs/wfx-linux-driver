@@ -30,7 +30,6 @@ typedef void (*wfx_queue_skb_dtor_t)(struct wfx_dev *wdev,
 struct wfx_queue {
 	struct wfx_queue_stats *stats;
 	struct sk_buff_head	queue;
-	struct sk_buff_head	pending;
 	int			tx_locked_cnt;
 	int			link_map_cache[WFX_LINK_ID_MAX];
 	spinlock_t		lock; /* Protect queue entry */
@@ -43,6 +42,7 @@ struct wfx_queue_stats {
 	spinlock_t		lock; /* Protect stats entry */
 	int			link_map_cache[WFX_LINK_ID_MAX];
 	int			num_queued;
+	struct sk_buff_head	pending;
 	wait_queue_head_t	wait_link_id_empty;
 	wfx_queue_skb_dtor_t	skb_dtor;
 	struct wfx_dev		*wdev;
