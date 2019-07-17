@@ -78,12 +78,12 @@ int wfx_queue_put(struct wfx_queue *queue,
 		     struct sk_buff *skb);
 struct sk_buff *wfx_queue_pop(struct wfx_queue *queue, u32 link_id_map);
 struct sk_buff *wfx_queue_get_id(struct wfx_queue *queue, u32 packet_id);
-int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id);
-int wfx_queue_remove(struct wfx_queue *queue, u32 packet_id);
+int wfx_queue_requeue(struct wfx_queue *queue, struct sk_buff *skb);
+int wfx_queue_remove(struct wfx_queue *queue, struct sk_buff *skb);
 
 void wfx_queue_lock(struct wfx_queue *queue);
 void wfx_queue_unlock(struct wfx_queue *queue);
-unsigned wfx_queue_get_pkt_us_delay(struct wfx_queue *queue, u32 pkt_id);
+unsigned wfx_queue_get_pkt_us_delay(struct wfx_queue *queue, struct sk_buff *skb);
 
 bool wfx_queue_stats_is_empty(struct wfx_queue_stats *stats,
 				 u32 link_id_map);

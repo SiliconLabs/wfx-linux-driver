@@ -474,7 +474,7 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 	switch (action) {
 	case do_drop:
 		pr_debug("[WSM] Drop frame (0x%.4X).\n", frame->frame_control);
-		BUG_ON(wfx_queue_remove(queue, wsm->PacketId));
+		BUG_ON(wfx_queue_remove(queue, skb));
 		handled = true;
 		break;
 	case do_wep:

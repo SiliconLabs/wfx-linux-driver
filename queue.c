@@ -289,18 +289,19 @@ struct sk_buff *wfx_queue_pop(struct wfx_queue *queue, u32 link_id_map)
 	return skb;
 }
 
-int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id)
+int wfx_queue_requeue(struct wfx_queue *queue, struct sk_buff *skb)
 {
 	int ret = 0;
 	u8 queue_generation, queue_id, item_id;
 	struct wfx_queue_item *item;
 	struct wfx_queue_stats *stats = queue->stats;
-	struct wfx_txpriv *txpriv;
+	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
+	WsmHiTxReqBody_t *wsm = wfx_skb_txreq(skb);
+	u32 packet_id = wsm->PacketId;
 
 	wfx_queue_parse_id(packet_id, &queue_generation, &queue_id, &item_id);
 
 	item = &queue->pool[item_id];
-	txpriv = wfx_skb_txpriv(item->skb);
 	spin_lock_bh(&queue->lock);
 	BUG_ON(queue_id != queue->queue_id);
 	if (queue_generation != queue->generation) {
@@ -322,18 +323,19 @@ int wfx_queue_requeue(struct wfx_queue *queue, u32 packet_id)
 	return ret;
 }
 
-int wfx_queue_remove(struct wfx_queue *queue, u32 packet_id)
+int wfx_queue_remove(struct wfx_queue *queue, struct sk_buff *skb)
 {
 	int ret = 0;
 	u8 queue_generation, queue_id, item_id;
 	struct wfx_queue_item *item;
 	struct wfx_queue_stats *stats = queue->stats;
+	WsmHiTxReqBody_t *wsm = wfx_skb_txreq(skb);
+	u32 packet_id = wsm->PacketId;
 	struct sk_buff *gc_skb = NULL;
 
 	wfx_queue_parse_id(packet_id, &queue_generation, &queue_id, &item_id);
 
 	item = &queue->pool[item_id];
-
 	spin_lock_bh(&queue->lock);
 	BUG_ON(queue_id != queue->queue_id);
 	if (queue_generation != queue->generation) {
@@ -411,7 +413,7 @@ void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 	}
 }
 
-unsigned wfx_queue_get_pkt_us_delay(struct wfx_queue *queue, u32 pkt_id)
+unsigned wfx_queue_get_pkt_us_delay(struct wfx_queue *queue, struct sk_buff *skb)
 {
 	return 0;
 }
