@@ -14,25 +14,25 @@
 #include "data_tx.h"
 #include "debug.h"
 
-static void __wfx_queue_lock(struct wfx_queue *queue)
+void wfx_queue_lock(struct wfx_queue *queue)
 {
 	struct wfx_queue_stats *stats = queue->stats;
-	if (queue->tx_locked_cnt++ == 0) {
-		pr_debug("[TX] Queue %d is locked.\n",
-			 queue->queue_id);
+
+	spin_lock_bh(&queue->queue.lock);
+	if (queue->tx_locked_cnt++ == 0)
 		ieee80211_stop_queue(stats->wdev->hw, queue->queue_id);
-	}
+	spin_unlock_bh(&queue->queue.lock);
 }
 
-static void __wfx_queue_unlock(struct wfx_queue *queue)
+void wfx_queue_unlock(struct wfx_queue *queue)
 {
 	struct wfx_queue_stats *stats = queue->stats;
+
+	spin_lock_bh(&queue->queue.lock);
 	BUG_ON(!queue->tx_locked_cnt);
-	if (--queue->tx_locked_cnt == 0) {
-		pr_debug("[TX] Queue %d is unlocked.\n",
-			 queue->queue_id);
+	if (--queue->tx_locked_cnt == 0)
 		ieee80211_wake_queue(stats->wdev->hw, queue->queue_id);
-	}
+	spin_unlock_bh(&queue->queue.lock);
 }
 
 static u32 wfx_queue_mk_packet_id(u8 queue_generation, u8 queue_id, u8 item_id)
@@ -279,20 +279,6 @@ struct sk_buff *wfx_queue_get_id(struct wfx_queue *queue, u32 packet_id)
 	WARN_ON(1);
 	spin_unlock_bh(&stats->pending.lock);
 	return NULL;
-}
-
-void wfx_queue_lock(struct wfx_queue *queue)
-{
-	spin_lock_bh(&queue->queue.lock);
-	__wfx_queue_lock(queue);
-	spin_unlock_bh(&queue->queue.lock);
-}
-
-void wfx_queue_unlock(struct wfx_queue *queue)
-{
-	spin_lock_bh(&queue->queue.lock);
-	__wfx_queue_unlock(queue);
-	spin_unlock_bh(&queue->queue.lock);
 }
 
 void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
