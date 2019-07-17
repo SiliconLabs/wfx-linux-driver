@@ -46,26 +46,6 @@ static void wfx_queue_post_gc(struct wfx_dev *wdev, struct sk_buff_head *gc_list
 		wfx_skb_dtor(wdev, item);
 }
 
-int wfx_queue_stats_init(struct wfx_dev *wdev)
-{
-	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
-
-	memset(stats, 0, sizeof(*stats));
-	skb_queue_head_init(&stats->pending);
-	init_waitqueue_head(&stats->wait_link_id_empty);
-
-	return 0;
-}
-
-int wfx_queue_init(struct wfx_queue *queue, u8 queue_id)
-{
-	memset(queue, 0, sizeof(*queue));
-	queue->queue_id = queue_id;
-	skb_queue_head_init(&queue->queue);
-
-	return 0;
-}
-
 /* If successful, LOCKS the TX queue! */
 void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
 {
@@ -129,16 +109,28 @@ int wfx_queue_clear(struct wfx_dev *wdev, struct wfx_queue *queue)
 	return 0;
 }
 
-void wfx_queue_stats_deinit(struct wfx_dev *wdev)
+void wfx_queue_stats_init(struct wfx_dev *wdev)
 {
-	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
+	int i;
 
-	WARN_ON(!skb_queue_empty(&stats->pending));
+	memset(&wdev->tx_queue_stats, 0, sizeof(wdev->tx_queue_stats));
+	memset(wdev->tx_queue, 0, sizeof(wdev->tx_queue));
+	skb_queue_head_init(&wdev->tx_queue_stats.pending);
+	init_waitqueue_head(&wdev->tx_queue_stats.wait_link_id_empty);
+
+	for (i = 0; i < 4; ++i) {
+		wdev->tx_queue[i].queue_id = i;
+		skb_queue_head_init(&wdev->tx_queue[i].queue);
+	}
 }
 
-void wfx_queue_deinit(struct wfx_dev *wdev, struct wfx_queue *queue)
+void wfx_queue_stats_deinit(struct wfx_dev *wdev)
 {
-	wfx_queue_clear(wdev, queue);
+	int i;
+
+	WARN_ON(!skb_queue_empty(&wdev->tx_queue_stats.pending));
+	for (i = 0; i < 4; ++i)
+		wfx_queue_clear(wdev, &wdev->tx_queue[i]);
 }
 
 size_t wfx_queue_get_num_queued(struct wfx_queue *queue,

@@ -304,7 +304,6 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 				const struct hwbus_ops *hwbus_ops,
 				void *hwbus_priv)
 {
-	int i;
 	struct ieee80211_hw *hw;
 	struct wfx_dev *wdev;
 
@@ -371,31 +370,15 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	mutex_init(&wdev->conf_mutex);
 	mutex_init(&wdev->rx_stats_lock);
 
-	if (wfx_queue_stats_init(wdev))
-		goto err1;
-
-	for (i = 0; i < 4; ++i)
-		if (wfx_queue_init(&wdev->tx_queue[i], i))
-			goto err2;
+	wfx_queue_stats_init(wdev);
 
 	return wdev;
-err2:
-	for (i = 0; i < 4; ++i)
-		wfx_queue_deinit(wdev, &wdev->tx_queue[i]);
-	wfx_queue_stats_deinit(wdev);
-err1:
-	ieee80211_free_hw(hw);
-	return NULL;
 }
 
 void wfx_free_common(struct wfx_dev *wdev)
 {
-	int i;
-
 	mutex_destroy(&wdev->rx_stats_lock);
 	mutex_destroy(&wdev->conf_mutex);
-	for (i = 0; i < 4; ++i)
-		wfx_queue_deinit(wdev, &wdev->tx_queue[i]);
 	wfx_queue_stats_deinit(wdev);
 	ieee80211_free_hw(wdev->hw);
 }

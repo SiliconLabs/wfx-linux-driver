@@ -39,14 +39,11 @@ struct wfx_queue_stats {
 	wait_queue_head_t	wait_link_id_empty;
 };
 
-int wfx_queue_stats_init(struct wfx_dev *wdev);
-int wfx_queue_init(struct wfx_queue *queue, u8 queue_id);
-
-void wfx_queue_wait_empty_vif(struct wfx_vif *wvif);
+void wfx_queue_stats_init(struct wfx_dev *wdev);
+void wfx_queue_stats_deinit(struct wfx_dev *wdev);
 
 int wfx_queue_clear(struct wfx_dev *wdev, struct wfx_queue *queue);
-void wfx_queue_stats_deinit(struct wfx_dev *wdev);
-void wfx_queue_deinit(struct wfx_dev *wdev, struct wfx_queue *queue);
+void wfx_queue_wait_empty_vif(struct wfx_vif *wvif);
 
 size_t wfx_queue_get_num_queued(struct wfx_queue *queue,
 				   u32 link_id_map);
