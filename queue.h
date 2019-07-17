@@ -29,8 +29,6 @@ typedef void (*wfx_queue_skb_dtor_t)(struct wfx_dev *wdev,
 
 struct wfx_queue {
 	struct wfx_queue_stats *stats;
-	size_t			num_queued;
-	size_t			num_pending;
 	struct sk_buff_head	queue;
 	struct sk_buff_head	pending;
 	int			tx_locked_cnt;

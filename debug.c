@@ -145,8 +145,8 @@ static void wfx_queue_status_show(struct seq_file *seq,
 	int i;
 
 	seq_printf(seq, "Queue       %d:\n", q->queue_id);
-	seq_printf(seq, "  queued:   %zu\n", q->num_queued);
-	seq_printf(seq, "  pending:  %zu\n", q->num_pending);
+	seq_printf(seq, "  queued:   %u\n", skb_queue_len(&q->queue));
+	seq_printf(seq, "  pending:  %u\n", skb_queue_len(&q->pending));
 	seq_printf(seq, "  locked:   %s\n", q->tx_locked_cnt ? "yes" : "no");
 	seq_puts(seq,   "  link map: 0-> ");
 	for (i = 0; i < ARRAY_SIZE(q->link_map_cache); ++i)
