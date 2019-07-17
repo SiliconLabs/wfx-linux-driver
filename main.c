@@ -371,7 +371,7 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	mutex_init(&wdev->conf_mutex);
 	mutex_init(&wdev->rx_stats_lock);
 
-	if (wfx_queue_stats_init(&wdev->tx_queue_stats, wfx_skb_dtor, wdev))
+	if (wfx_queue_stats_init(&wdev->tx_queue_stats, wdev))
 		goto err1;
 
 	for (i = 0; i < 4; ++i)

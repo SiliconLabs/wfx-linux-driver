@@ -24,9 +24,6 @@
 
 /* forward */ struct wfx_queue_stats;
 
-typedef void (*wfx_queue_skb_dtor_t)(struct wfx_dev *wdev,
-					struct sk_buff *skb);
-
 struct wfx_queue {
 	struct wfx_queue_stats *stats;
 	struct sk_buff_head	queue;
@@ -43,12 +40,10 @@ struct wfx_queue_stats {
 	int			link_map_cache[WFX_LINK_ID_MAX];
 	struct sk_buff_head	pending;
 	wait_queue_head_t	wait_link_id_empty;
-	wfx_queue_skb_dtor_t	skb_dtor;
 	struct wfx_dev		*wdev;
 };
 
 int wfx_queue_stats_init(struct wfx_queue_stats *stats,
-			    wfx_queue_skb_dtor_t skb_dtor,
 			    struct wfx_dev *wdev);
 int wfx_queue_init(struct wfx_queue *queue,
 		      struct wfx_queue_stats *stats,

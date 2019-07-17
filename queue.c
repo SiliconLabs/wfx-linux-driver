@@ -11,6 +11,7 @@
 #include "queue.h"
 #include "wfx.h"
 #include "wsm_rx.h"
+#include "data_tx.h"
 #include "debug.h"
 
 static void __wfx_queue_lock(struct wfx_queue *queue)
@@ -47,15 +48,13 @@ static void wfx_queue_post_gc(struct wfx_queue_stats *stats,
 	struct sk_buff *item;
 
 	while ((item = skb_dequeue(gc_list)) != NULL)
-		stats->skb_dtor(stats->wdev, item);
+		wfx_skb_dtor(stats->wdev, item);
 }
 
 int wfx_queue_stats_init(struct wfx_queue_stats *stats,
-			    wfx_queue_skb_dtor_t skb_dtor,
 			 struct wfx_dev	*wdev)
 {
 	memset(stats, 0, sizeof(*stats));
-	stats->skb_dtor = skb_dtor;
 	stats->wdev = wdev;
 	skb_queue_head_init(&stats->pending);
 	spin_lock_init(&stats->lock);
@@ -260,7 +259,7 @@ int wfx_queue_remove(struct wfx_queue *queue, struct sk_buff *skb)
 	spin_lock_bh(&stats->lock);
 	skb_unlink(skb, &stats->pending);
 	spin_unlock_bh(&stats->lock);
-	stats->skb_dtor(stats->wdev, skb);
+	wfx_skb_dtor(stats->wdev, skb);
 
 	return 0;
 }
