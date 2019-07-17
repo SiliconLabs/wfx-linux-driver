@@ -158,7 +158,7 @@ void wfx_stop(struct ieee80211_hw *hw)
 	mutex_lock(&wdev->conf_mutex);
 
 	for (i = 0; i < 4; i++)
-		wfx_queue_clear(&wdev->tx_queue[i]);
+		wfx_queue_clear(wdev, &wdev->tx_queue[i]);
 	mutex_unlock(&wdev->conf_mutex);
 
 	if (atomic_xchg(&wdev->tx_lock, 1) != 1)
@@ -828,12 +828,11 @@ static int __wfx_flush(struct wfx_dev *wdev, bool drop)
 	for (;;) {
 		if (drop) {
 			for (i = 0; i < 4; ++i)
-				wfx_queue_clear(&wdev->tx_queue[i]);
+				wfx_queue_clear(wdev, &wdev->tx_queue[i]);
 		} else {
 			ret = wait_event_timeout(
 				wdev->tx_queue_stats.wait_link_id_empty,
-				wfx_queue_stats_is_empty(
-					&wdev->tx_queue_stats, -1),
+				wfx_queue_stats_is_empty(wdev, -1),
 				2 * HZ);
 		}
 
@@ -845,7 +844,7 @@ static int __wfx_flush(struct wfx_dev *wdev, bool drop)
 		}
 
 		wsm_tx_lock_flush(wdev);
-		if (!wfx_queue_stats_is_empty(&wdev->tx_queue_stats, -1)) {
+		if (!wfx_queue_stats_is_empty(wdev, -1)) {
 			/* Highly unlikely: WSM requeued frames. */
 			wsm_tx_unlock(wdev);
 			continue;

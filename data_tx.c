@@ -27,14 +27,14 @@ static void wfx_tx_queues_lock(struct wfx_dev *wdev)
 {
 	int i;
 	for (i = 0; i < 4; ++i)
-		wfx_queue_lock(&wdev->tx_queue[i]);
+		wfx_queue_lock(wdev, &wdev->tx_queue[i]);
 }
 
 static void wfx_tx_queues_unlock(struct wfx_dev *wdev)
 {
 	int i;
 	for (i = 0; i < 4; ++i)
-		wfx_queue_unlock(&wdev->tx_queue[i]);
+		wfx_queue_unlock(wdev, &wdev->tx_queue[i]);
 }
 
 /* TX policy cache implementation */
@@ -845,7 +845,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	tid_update = wfx_tx_h_pm_state(wvif, &t);
 
 	memcpy(t.tx_info->status.status_driver_data, &t.txpriv, sizeof(t.txpriv));
-	ret = wfx_queue_put(&wdev->tx_queue[t.queue], t.skb);
+	ret = wfx_queue_put(wdev, &wdev->tx_queue[t.queue], t.skb);
 	spin_unlock_bh(&wvif->ps_state_lock);
 	BUG_ON(ret);
 
@@ -879,7 +879,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 	struct sk_buff *skb;
 	const struct wfx_txpriv *txpriv;
 
-	skb = wfx_queue_get_id(queue, arg->PacketId);
+	skb = wfx_queue_get_id(wvif->wdev, arg->PacketId);
 	if (!skb) {
 		dev_warn(wvif->wdev->dev, "Received unknown packet_id (%#.8x) from chip\n", arg->PacketId);
 		return;
@@ -898,7 +898,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 		wfx_suspend_resume(wvif, &suspend);
 		dev_dbg(wvif->wdev->dev, "Requeuing for station %d. STAs asleep: 0x%.8X.\n",
 			   txpriv->link_id, wvif->sta_asleep_mask);
-		wfx_queue_requeue(queue, skb);
+		wfx_queue_requeue(wvif->wdev, queue, skb);
 		if (!txpriv->link_id) { // Is multicast?
 			spin_lock_bh(&wvif->ps_state_lock);
 			wvif->buffered_multicasts = true;
@@ -941,7 +941,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 		tx->status.is_valid_ack_signal = false;
 #endif
 		if (!arg->Status) {
-			_trace_tx_stats(arg, wfx_queue_get_pkt_us_delay(queue, skb));
+			_trace_tx_stats(arg, wfx_queue_get_pkt_us_delay(wvif->wdev, skb));
 			tx->flags |= IEEE80211_TX_STAT_ACK;
 			tx->status.tx_time = arg->MediaDelay - arg->TxQueueDelay;
 		}
@@ -965,7 +965,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 			}
 		}
 
-		wfx_queue_remove(queue, skb);
+		wfx_queue_remove(wvif->wdev, skb);
 	}
 }
 

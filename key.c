@@ -249,7 +249,7 @@ void wfx_wep_key_work(struct work_struct *work)
 
 	wsm_tx_flush(wvif->wdev);
 	wsm_wep_default_key_id(wvif->wdev, wep_default_key_id, wvif->Id);
-	wfx_queue_requeue(queue, wvif->wep_pending_skb);
+	wfx_queue_requeue(wvif->wdev, queue, wvif->wep_pending_skb);
 	wvif->wep_pending_skb = NULL;
 	wsm_tx_unlock(wvif->wdev);
 }

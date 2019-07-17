@@ -474,7 +474,7 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 	switch (action) {
 	case do_drop:
 		pr_debug("[WSM] Drop frame (0x%.4X).\n", frame->frame_control);
-		BUG_ON(wfx_queue_remove(queue, skb));
+		BUG_ON(wfx_queue_remove(wvif->wdev, skb));
 		handled = true;
 		break;
 	case do_wep:
@@ -640,7 +640,7 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 
 		queue_num = queue - wdev->tx_queue;
 
-		skb = wfx_queue_pop(queue, tx_allowed_mask);
+		skb = wfx_queue_pop(wdev, queue, tx_allowed_mask);
 		if (!skb)
 			continue;
 		txpriv = wfx_skb_txpriv(skb);
