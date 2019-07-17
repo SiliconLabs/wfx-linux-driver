@@ -46,7 +46,6 @@ struct wfx_queue {
 	size_t			capacity;
 	size_t			num_queued;
 	size_t			num_pending;
-	size_t			num_sent;
 	struct wfx_queue_item *pool;
 	struct list_head	queue;
 	struct list_head	free_pool;

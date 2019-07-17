@@ -472,7 +472,6 @@ int wfx_queue_remove(struct wfx_queue *queue, u32 packet_id)
 		item->skb = NULL;
 		--queue->num_pending;
 		--queue->num_queued;
-		++queue->num_sent;
 		++item->generation;
 		/* Do not use list_move_tail here, but list_move:
 		 * try to utilize cache row.
