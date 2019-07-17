@@ -49,9 +49,9 @@ void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
 	struct wmsg *hdr;
 
 	if (wvif->wdev->chip_frozen) {
+		wsm_tx_lock_flush(wdev);
 		for (i = 0; i < 4; ++i)
 			wfx_queue_clear(wdev, &wdev->tx_queue[i]);
-		wsm_tx_lock_flush(wdev);
 		return;
 	}
 
@@ -286,19 +286,18 @@ unsigned wfx_queue_get_pkt_us_delay(struct wfx_dev *wdev, struct sk_buff *skb)
 	return ktime_us_delta(now, txpriv->xmit_timestamp);
 }
 
-bool wfx_queue_stats_is_empty(struct wfx_dev *wdev, uint32_t link_id_map)
+bool wfx_queue_stats_is_empty(struct wfx_dev *wdev)
 {
 	int i;
-	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
+	struct sk_buff_head *queue;
+	bool ret = true;
 
-	spin_lock_bh(&stats->pending.lock);
-	for (i = 0; i < ARRAY_SIZE(stats->link_map_cache); i++) {
-		if (link_id_map & BIT(i) && stats->link_map_cache[i]) {
-			spin_unlock_bh(&stats->pending.lock);
-			return false;
-		}
+	for (i = 0; i < 4; i++) {
+		queue = &wdev->tx_queue[i].queue;
+		spin_lock_bh(&queue->lock);
+		if (!skb_queue_empty(queue))
+			ret = false;
+		spin_unlock_bh(&queue->lock);
 	}
-	spin_unlock_bh(&stats->pending.lock);
-
-	return true;
+	return ret;
 }

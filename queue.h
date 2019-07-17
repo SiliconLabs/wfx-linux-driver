@@ -57,7 +57,7 @@ void wfx_queue_lock(struct wfx_dev *wdev, struct wfx_queue *queue);
 void wfx_queue_unlock(struct wfx_dev *wdev, struct wfx_queue *queue);
 unsigned wfx_queue_get_pkt_us_delay(struct wfx_dev *wdev, struct sk_buff *skb);
 
-bool wfx_queue_stats_is_empty(struct wfx_dev *wdev, u32 link_id_map);
+bool wfx_queue_stats_is_empty(struct wfx_dev *wdev);
 
 void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms);
 

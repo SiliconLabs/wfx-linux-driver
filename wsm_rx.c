@@ -400,6 +400,7 @@ void wsm_tx_flush(struct wfx_dev *wdev)
 	if (!ret) {
 		dev_warn(wdev->dev, "cannot flush tx buffers (%d still busy)\n", wdev->hif.tx_buffers_used);
 		wfx_queue_dump_old_frames(wdev, 3000);
+		// FIXME: drop pending frames here
 		wdev->chip_frozen = 1;
 	}
 	mutex_unlock(&wdev->wsm_cmd.lock);

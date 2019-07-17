@@ -832,7 +832,7 @@ static int __wfx_flush(struct wfx_dev *wdev, bool drop)
 		} else {
 			ret = wait_event_timeout(
 				wdev->tx_queue_stats.wait_link_id_empty,
-				wfx_queue_stats_is_empty(wdev, -1),
+				wfx_queue_stats_is_empty(wdev),
 				2 * HZ);
 		}
 
@@ -844,7 +844,7 @@ static int __wfx_flush(struct wfx_dev *wdev, bool drop)
 		}
 
 		wsm_tx_lock_flush(wdev);
-		if (!wfx_queue_stats_is_empty(wdev, -1)) {
+		if (!wfx_queue_stats_is_empty(wdev)) {
 			/* Highly unlikely: WSM requeued frames. */
 			wsm_tx_unlock(wdev);
 			continue;
