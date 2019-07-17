@@ -38,14 +38,6 @@ static u32 wfx_queue_mk_packet_id(u8 queue_generation, u8 queue_id, u8 item_id)
 		((u32)queue_generation << 24);
 }
 
-static void wfx_queue_post_gc(struct wfx_dev *wdev, struct sk_buff_head *gc_list)
-{
-	struct sk_buff *item;
-
-	while ((item = skb_dequeue(gc_list)) != NULL)
-		wfx_skb_dtor(wdev, item);
-}
-
 /* If successful, LOCKS the TX queue! */
 void wfx_queue_wait_empty_vif(struct wfx_vif *wvif)
 {
@@ -105,7 +97,8 @@ int wfx_queue_clear(struct wfx_dev *wdev, struct wfx_queue *queue)
 	spin_unlock_bh(&stats->pending.lock);
 	spin_unlock_bh(&queue->queue.lock);
 	wake_up(&stats->wait_link_id_empty);
-	wfx_queue_post_gc(wdev, &gc_list);
+	while ((item = skb_dequeue(&gc_list)) != NULL)
+		wfx_skb_dtor(wdev, item);
 	return 0;
 }
 
