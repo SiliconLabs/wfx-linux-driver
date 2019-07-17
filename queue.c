@@ -221,11 +221,13 @@ struct sk_buff *wfx_queue_pop(struct wfx_dev *wdev, struct wfx_queue *queue, u32
 	return skb;
 }
 
-int wfx_queue_requeue(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_buff *skb)
+int wfx_queue_requeue(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
+	struct wfx_queue *queue = &wdev->tx_queue[skb_get_queue_mapping(skb)];
 
+	WARN_ON(skb_get_queue_mapping(skb) > 3);
 	spin_lock_bh(&queue->queue.lock);
 	++queue->link_map_cache[txpriv->link_id];
 

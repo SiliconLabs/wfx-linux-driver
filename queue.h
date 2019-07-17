@@ -50,7 +50,7 @@ size_t wfx_queue_get_num_queued(struct wfx_queue *queue,
 int wfx_queue_put(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_buff *skb);
 struct sk_buff *wfx_queue_pop(struct wfx_dev *wdev, struct wfx_queue *queue, u32 link_id_map);
 struct sk_buff *wfx_queue_get_id(struct wfx_dev *wdev, u32 packet_id);
-int wfx_queue_requeue(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_buff *skb);
+int wfx_queue_requeue(struct wfx_dev *wdev, struct sk_buff *skb);
 int wfx_queue_remove(struct wfx_dev *wdev, struct sk_buff *skb);
 
 void wfx_tx_queues_lock(struct wfx_dev *wdev);
@@ -60,10 +60,5 @@ unsigned wfx_queue_get_pkt_us_delay(struct wfx_dev *wdev, struct sk_buff *skb);
 bool wfx_queue_stats_is_empty(struct wfx_dev *wdev);
 
 void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms);
-
-static inline u8 wfx_queue_get_queue_id(u32 packet_id)
-{
-	return (packet_id >> 16) & 0xFF;
-}
 
 #endif /* WFX_QUEUE_H */

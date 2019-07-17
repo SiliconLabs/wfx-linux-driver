@@ -858,8 +858,6 @@ drop:
 
 void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 {
-	u8 queue_id = wfx_queue_get_queue_id(arg->PacketId);
-	struct wfx_queue *queue = &wvif->wdev->tx_queue[queue_id];
 	struct sk_buff *skb;
 	const struct wfx_txpriv *txpriv;
 
@@ -882,7 +880,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 		wfx_suspend_resume(wvif, &suspend);
 		dev_dbg(wvif->wdev->dev, "Requeuing for station %d. STAs asleep: 0x%.8X.\n",
 			   txpriv->link_id, wvif->sta_asleep_mask);
-		wfx_queue_requeue(wvif->wdev, queue, skb);
+		wfx_queue_requeue(wvif->wdev, skb);
 		if (!txpriv->link_id) { // Is multicast?
 			spin_lock_bh(&wvif->ps_state_lock);
 			wvif->buffered_multicasts = true;
