@@ -331,26 +331,18 @@ unsigned wfx_queue_get_pkt_us_delay(struct wfx_queue *queue, struct sk_buff *skb
 	return ktime_us_delta(now, txpriv->xmit_timestamp);
 }
 
-bool wfx_queue_stats_is_empty(struct wfx_queue_stats *stats,
-				 u32 link_id_map)
+bool wfx_queue_stats_is_empty(struct wfx_queue_stats *stats, uint32_t link_id_map)
 {
-	bool empty = true;
+	int i;
 
 	spin_lock_bh(&stats->lock);
-	if (link_id_map == (u32)-1) {
-		empty = stats->num_queued == 0;
-	} else {
-		int i;
-		for (i = 0; i < ARRAY_SIZE(stats->link_map_cache); ++i) {
-			if (link_id_map & BIT(i)) {
-				if (stats->link_map_cache[i]) {
-					empty = false;
-					break;
-				}
-			}
+	for (i = 0; i < ARRAY_SIZE(stats->link_map_cache); i++) {
+		if (link_id_map & BIT(i) && stats->link_map_cache[i]) {
+			spin_unlock_bh(&stats->lock);
+			return false;
 		}
 	}
 	spin_unlock_bh(&stats->lock);
 
-	return empty;
+	return true;
 }
