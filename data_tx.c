@@ -889,7 +889,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 			spin_unlock_bh(&wvif->ps_state_lock);
 		}
 	} else {
-		struct ieee80211_tx_info *tx = IEEE80211_SKB_CB(skb);
+		struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
 		int tx_count;
 		int i;
 
@@ -914,18 +914,18 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 
 		// FIXME: use ieee80211_tx_info_clear_status()
 		// Clear all tx->status but status_driver_data
-		tx->status.ack_signal = 0;
-		tx->status.ampdu_ack_len = 0;
-		tx->status.ampdu_len = 0;
-		tx->status.antenna = 0;
-		tx->status.tx_time = 0;
+		tx_info->status.ack_signal = 0;
+		tx_info->status.ampdu_ack_len = 0;
+		tx_info->status.ampdu_len = 0;
+		tx_info->status.antenna = 0;
+		tx_info->status.tx_time = 0;
 #if (KERNEL_VERSION(4, 15, 0) <= LINUX_VERSION_CODE)
-		tx->status.is_valid_ack_signal = false;
+		tx_info->status.is_valid_ack_signal = false;
 #endif
 		if (!arg->Status) {
 			_trace_tx_stats(arg, wfx_pending_get_pkt_us_delay(wvif->wdev, skb));
-			tx->flags |= IEEE80211_TX_STAT_ACK;
-			tx->status.tx_time = arg->MediaDelay - arg->TxQueueDelay;
+			tx_info->flags |= IEEE80211_TX_STAT_ACK;
+			tx_info->status.tx_time = arg->MediaDelay - arg->TxQueueDelay;
 		}
 		if (arg->Status && !arg->AckFailures)
 			tx_count = 0;
@@ -934,15 +934,15 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 
 		for (i = 0; i < IEEE80211_TX_MAX_RATES; i++) {
 			if (!tx_count) {
-				tx->status.rates[i].count = 0;
-				tx->status.rates[i].idx = -1;
-			} else if (tx_count > tx->status.rates[i].count) {
-				tx_count -= tx->status.rates[i].count;
+				tx_info->status.rates[i].count = 0;
+				tx_info->status.rates[i].idx = -1;
+			} else if (tx_count > tx_info->status.rates[i].count) {
+				tx_count -= tx_info->status.rates[i].count;
 			} else {
-				if (arg->TxedRate != wfx_get_tx_rate(wvif, &tx->status.rates[i])->hw_value)
+				if (arg->TxedRate != wfx_get_tx_rate(wvif, &tx_info->status.rates[i])->hw_value)
 					dev_warn(wvif->wdev->dev, "inconsistent tx_info rates: %d != %d\n",
-						 arg->TxedRate, wfx_get_tx_rate(wvif, &tx->status.rates[i])->hw_value);
-				tx->status.rates[i].count = tx_count;
+						 arg->TxedRate, wfx_get_tx_rate(wvif, &tx_info->status.rates[i])->hw_value);
+				tx_info->status.rates[i].count = tx_count;
 				tx_count = 0;
 			}
 		}
