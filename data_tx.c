@@ -679,8 +679,7 @@ static void wfx_tx_h_pm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 static void wfx_tx_h_calc_tid(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
 	if (ieee80211_is_data_qos(t->hdr->frame_control)) {
-		u8 *qos = ieee80211_get_qos_ctl(t->hdr);
-		t->txpriv.tid = qos[0] & IEEE80211_QOS_CTL_TID_MASK;
+		t->txpriv.tid = ieee80211_get_tid(t->hdr);
 	} else if (ieee80211_is_data(t->hdr->frame_control)) {
 		t->txpriv.tid = 0;
 	}

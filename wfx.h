@@ -47,6 +47,15 @@ static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
 #define WSM_PHY_BAND_2_4G		(0)
 #define WSM_PHY_BAND_5G			(1)
 
+#if (KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE)
+static inline u8 ieee80211_get_tid(struct ieee80211_hdr *hdr)
+{
+    u8 *qc = ieee80211_get_qos_ctl(hdr);
+
+    return qc[0] & IEEE80211_QOS_CTL_TID_MASK;
+}
+#endif
+
 #define WSM_KEY_MAX_INDEX		(16)
 #define WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES	2
 /* Start modes */
