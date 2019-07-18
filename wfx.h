@@ -44,10 +44,6 @@ static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
 #define TU_TO_USEC(x) ((x) * 1024)
 #define TU_TO_MSEC(x) ((x) * 1024 / 1000)
 
-/* WFx indication error */
-#define INVALID_PDS_CONFIG_FILE    1
-#define JOIN_CNF_AUTH_FAILED       2
-
 #define WSM_DUAL_CTS_PROT_ENB		BIT(0)
 #define WSM_NON_GREENFIELD_STA_PRESENT	BIT(1)
 

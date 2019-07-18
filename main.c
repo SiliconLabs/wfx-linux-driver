@@ -269,7 +269,7 @@ int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len)
 			dev_dbg(wdev->dev, "Send PDS '%s}'", buf + start);
 			buf[i] = '}';
 			ret = wsm_configuration(wdev, buf + start, i - start + 1);
-			if (ret == INVALID_PDS_CONFIG_FILE) {
+			if (ret == WSM_STATUS_FAILURE) {
 				dev_err(wdev->dev, "PDS bytes %d to %d: invalid data (unsupported options?)\n", start, i);
 				return -EINVAL;
 			}
