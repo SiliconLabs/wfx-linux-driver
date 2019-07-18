@@ -17,6 +17,7 @@ struct wfx_dev;
 struct wfx_vif;
 
 struct wfx_txpriv {
+	ktime_t xmit_timestamp;
 	struct ieee80211_key_conf *hw_key;
 	u8 link_id;
 	u8 raw_link_id;

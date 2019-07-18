@@ -208,7 +208,7 @@ struct sk_buff *wfx_queue_pop(struct wfx_queue *queue, u32 link_id_map)
 	struct sk_buff *skb = NULL;
 	struct sk_buff *item;
 	struct wfx_queue_stats *stats = queue->stats;
-	const struct wfx_txpriv *txpriv;
+	struct wfx_txpriv *txpriv;
 	bool wakeup_stats = false;
 
 	spin_lock_bh(&queue->lock);
@@ -222,6 +222,7 @@ struct sk_buff *wfx_queue_pop(struct wfx_queue *queue, u32 link_id_map)
 	WARN_ON(!skb);
 	if (skb) {
 		txpriv = wfx_skb_txpriv(skb);
+		txpriv->xmit_timestamp = ktime_get();
 		skb_unlink(skb, &queue->queue);
 		--queue->link_map_cache[txpriv->link_id];
 
@@ -304,19 +305,30 @@ void wfx_queue_unlock(struct wfx_queue *queue)
 void wfx_queue_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 {
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
+	ktime_t now = ktime_get();
+	struct wfx_txpriv *txpriv;
+	WsmHiTxReqBody_t *wsm;
 	struct sk_buff *skb;
 
 	dev_info(wdev->dev, "Frames stuck in firmware since %dms or more:\n", limit_ms);
 	spin_lock_bh(&stats->lock);
 	skb_queue_walk(&stats->pending, skb) {
-		/* Disabled */
+		txpriv = wfx_skb_txpriv(skb);
+		wsm = wfx_skb_txreq(skb);
+		if (ktime_after(now, ktime_add_ms(txpriv->xmit_timestamp, limit_ms)))
+			dev_info(wdev->dev, "   id %08x sent %lldms ago",
+					wsm->PacketId,
+					ktime_ms_delta(now, txpriv->xmit_timestamp));
 	}
 	spin_unlock_bh(&stats->lock);
 }
 
 unsigned wfx_queue_get_pkt_us_delay(struct wfx_queue *queue, struct sk_buff *skb)
 {
-	return 0;
+	ktime_t now = ktime_get();
+	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
+
+	return ktime_us_delta(now, txpriv->xmit_timestamp);
 }
 
 bool wfx_queue_stats_is_empty(struct wfx_queue_stats *stats,
