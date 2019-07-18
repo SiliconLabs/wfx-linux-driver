@@ -41,9 +41,6 @@ static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
 #define ieee80211_hw_set(hw, flg)	_ieee80211_hw_set(hw, IEEE80211_HW_##flg)
 #endif
 
-#define WSM_DUAL_CTS_PROT_ENB		BIT(0)
-#define WSM_NON_GREENFIELD_STA_PRESENT	BIT(1)
-
 #if (KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE)
 static inline u8 ieee80211_get_tid(struct ieee80211_hdr *hdr)
 {

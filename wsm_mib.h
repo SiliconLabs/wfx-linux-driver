@@ -265,9 +265,11 @@ static inline int wsm_slot_time(struct wfx_dev *wdev, int val, int Id)
 			     &arg, sizeof(arg), Id);
 }
 
-static inline int wsm_ht_protection(struct wfx_dev *wdev, int val, int Id)
+static inline int wsm_dual_cts_protection(struct wfx_dev *wdev, bool val, int Id)
 {
-	__le32 arg = cpu_to_le32(val);
+	WsmHiMibSetHtProtection_t arg = {
+		.DualCtsProt = val,
+	};
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_SET_HT_PROTECTION,
 			     &arg, sizeof(arg), Id);
