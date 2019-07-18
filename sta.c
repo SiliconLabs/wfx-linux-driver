@@ -1116,7 +1116,6 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	wvif->dtim_period = 0;
 
 	join.ChannelNumber = wvif->channel->hw_value;
-	join.Band = WSM_PHY_BAND_2_4G;
 	memcpy(join.BSSID, bssid, sizeof(join.BSSID));
 
 	if (!conf->ibss_joined) {
@@ -1385,7 +1384,6 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 	int ret;
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 	WsmHiStartReqBody_t start = {
-		.Band			= WSM_PHY_BAND_2_4G,
 		.ChannelNumber		= wvif->channel->hw_value,
 		.BeaconInterval		= conf->beacon_int,
 		.DTIMPeriod		= conf->dtim_period,
