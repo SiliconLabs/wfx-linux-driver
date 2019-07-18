@@ -41,9 +41,6 @@ static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
 #define ieee80211_hw_set(hw, flg)	_ieee80211_hw_set(hw, IEEE80211_HW_##flg)
 #endif
 
-#define TU_TO_USEC(x) ((x) * 1024)
-#define TU_TO_MSEC(x) ((x) * 1024 / 1000)
-
 #define WSM_DUAL_CTS_PROT_ENB		BIT(0)
 #define WSM_NON_GREENFIELD_STA_PRESENT	BIT(1)
 
@@ -57,9 +54,7 @@ static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
 #define WSM_START_MODE_P2P_GO		(1)
 #define WSM_START_MODE_P2P_DEV		(2)
 
-#define WSM_CMD_LAST_CHANCE_TIMEOUT	(HZ * 3 / 2)
-#define WSM_TX_EXTRA_HEADROOM		(28) // sizeof(hdr) + sizeof(tx req) + sizeof(alignment)
-#define WSM_RX_EXTRA_HEADROOM		(16) // sizeof(hdr) + sizeof(rx req)
+#define WFX_MAX_TID               (8)
 
 /* Please keep order */
 enum wfx_state {
@@ -85,7 +80,6 @@ enum wfx_link_status {
 #define WFX_LINK_ID_UAPSD         (WFX_MAX_STA_IN_AP_MODE + 2)
 #define WFX_LINK_ID_MAX           (WFX_MAX_STA_IN_AP_MODE + 3)
 #define WFX_MAX_REQUEUE_ATTEMPTS  (5)
-#define WFX_MAX_TID               (8)
 
 struct hwbus_ops;
 struct wfx_debug_priv;

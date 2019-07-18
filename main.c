@@ -339,8 +339,9 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	hw->queues = 4;
 	hw->max_rates = 8;
 	hw->max_rate_tries = 15;
-	hw->extra_tx_headroom = WSM_TX_EXTRA_HEADROOM + 8;  /* TKIP IV */
-
+	hw->extra_tx_headroom = sizeof(struct sl_hdr) + sizeof(struct wmsg)
+				+ sizeof(WsmHiTxReqBody_t)
+				+ 4 /* alignment */ + 8 /* TKIP IV */;
 	hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
 				     BIT(NL80211_IFTYPE_ADHOC) |
 				     BIT(NL80211_IFTYPE_AP) |
