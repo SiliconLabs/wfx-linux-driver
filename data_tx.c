@@ -558,46 +558,45 @@ struct wfx_txinfo {
 	struct ieee80211_tx_info *tx_info;
 	const struct ieee80211_rate *rate;
 	struct ieee80211_hdr *hdr;
-	const u8 *da;
-	struct wfx_sta_priv *sta_priv;
 	struct ieee80211_sta *sta;
 	struct wfx_txpriv *txpriv;
 };
 
-
 static int wfx_tx_h_calc_link_ids(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
-	if (t->sta && t->sta_priv->link_id) {
-		t->txpriv->raw_link_id =
-				t->txpriv->link_id =
-				t->sta_priv->link_id;
+	struct wfx_txpriv *txpriv = t->txpriv;
+	struct ieee80211_sta *sta = t->sta;
+	struct wfx_sta_priv *sta_priv = sta ? (struct wfx_sta_priv *) &sta->drv_priv : NULL;
+	const u8 *da = ieee80211_get_DA(t->hdr);
+
+	if (sta && sta_priv->link_id) {
+		txpriv->raw_link_id = sta_priv->link_id;
+		txpriv->link_id = sta_priv->link_id;
 	} else if (wvif->mode != NL80211_IFTYPE_AP) {
-		t->txpriv->raw_link_id =
-				t->txpriv->link_id = 0;
-	} else if (is_multicast_ether_addr(t->da)) {
+		txpriv->raw_link_id = 0;
+		txpriv->link_id = 0;
+	} else if (is_multicast_ether_addr(da)) {
 		if (wvif->enable_beacon) {
-			t->txpriv->raw_link_id = 0;
-			t->txpriv->link_id = WFX_LINK_ID_AFTER_DTIM;
+			txpriv->raw_link_id = 0;
+			txpriv->link_id = WFX_LINK_ID_AFTER_DTIM;
 		} else {
-			t->txpriv->raw_link_id = 0;
-			t->txpriv->link_id = 0;
+			txpriv->raw_link_id = 0;
+			txpriv->link_id = 0;
 		}
 	} else {
-		t->txpriv->link_id = wfx_find_link_id(wvif, t->da);
-		if (!t->txpriv->link_id)
-			t->txpriv->link_id = wfx_alloc_link_id(wvif, t->da);
-		if (!t->txpriv->link_id) {
-			dev_err(wvif->wdev->dev,
-				  "No more link IDs available.\n");
+		txpriv->link_id = wfx_find_link_id(wvif, da);
+		if (!txpriv->link_id)
+			txpriv->link_id = wfx_alloc_link_id(wvif, da);
+		if (!txpriv->link_id) {
+			dev_err(wvif->wdev->dev, "No more link IDs available.\n");
 			return -ENOENT;
 		}
-		t->txpriv->raw_link_id = t->txpriv->link_id;
+		txpriv->raw_link_id = txpriv->link_id;
 	}
-	if (t->txpriv->raw_link_id)
-		wvif->link_id_db[t->txpriv->raw_link_id - 1].timestamp =
-				jiffies;
-	if (t->sta && (t->sta->uapsd_queues & BIT(t->queue)))
-		t->txpriv->link_id = WFX_LINK_ID_UAPSD;
+	if (txpriv->raw_link_id)
+		wvif->link_id_db[txpriv->raw_link_id - 1].timestamp = jiffies;
+	if (sta && (sta->uapsd_queues & BIT(t->queue)))
+		txpriv->link_id = WFX_LINK_ID_UAPSD;
 	return 0;
 }
 
@@ -785,11 +784,8 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		goto drop;
 
 	WARN_ON(!wvif);
-	t.da = ieee80211_get_DA(t.hdr);
-	if (control) {
+	if (control)
 		t.sta = control->sta;
-		t.sta_priv = (struct wfx_sta_priv *)&t.sta->drv_priv;
-	}
 
 	if (WARN_ON(t.queue >= 4))
 		goto drop;
