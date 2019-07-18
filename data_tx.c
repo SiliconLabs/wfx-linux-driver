@@ -699,16 +699,14 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 	bool tx_policy_renew = false;
 
 	WARN_ON(!wvif);
-	t->txpriv.rate_id = tx_policy_get(wvif,
-		t->tx_info->control.rates, IEEE80211_TX_MAX_RATES,
-		&tx_policy_renew);
+	t->txpriv.rate_id = tx_policy_get(wvif, t->tx_info->driver_rates,
+					  IEEE80211_TX_MAX_RATES, &tx_policy_renew);
 	if (t->txpriv.rate_id == WFX_INVALID_RATE_ID)
 		return -EFAULT;
 
 	wsm->TxFlags.RetryPolicyIndex = t->txpriv.rate_id;
 
-	t->rate = wfx_get_tx_rate(wvif,
-		&t->tx_info->control.rates[0]),
+	t->rate = wfx_get_tx_rate(wvif, &t->tx_info->driver_rates[0]);
 	wsm->MaxTxRate = t->rate->hw_value;
 
 	if (t->rate->flags & IEEE80211_TX_RC_GREEN_FIELD)
