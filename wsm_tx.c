@@ -425,6 +425,8 @@ int wsm_send_pub_keys(struct wfx_dev *wdev, const uint8_t *pubkey, const uint8_t
 	struct wmsg *hdr;
 	HiSlExchangePubKeysReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
+	// FIXME: use a symbolic name instead of a magic number
+	body->Algorithm = 1;
 	memcpy(body->HostPubKey, pubkey, sizeof(body->HostPubKey));
 	memcpy(body->HostPubKeyMac, pubkey_hmac, sizeof(body->HostPubKeyMac));
 	wfx_fill_header(hdr, -1, HI_SL_EXCHANGE_PUB_KEYS_REQ_ID, sizeof(*body));

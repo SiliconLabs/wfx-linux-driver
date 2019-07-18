@@ -293,6 +293,9 @@ typedef struct HiSetSlMacKeyCnfBody_s {
 #define API_HOST_PUB_KEY_MAC_SIZE                       64
 
 typedef struct HiSlExchangePubKeysReqBody_s {
+	uint8_t    Algorithm:2;
+	uint8_t    Reserved1:6;
+	uint8_t    Reserved2[3];
 	uint8_t    HostPubKey[API_HOST_PUB_KEY_SIZE];
 	uint8_t    HostPubKeyMac[API_HOST_PUB_KEY_MAC_SIZE];
 } __packed HiSlExchangePubKeysReqBody_t;
@@ -314,6 +317,9 @@ typedef struct HiSlExchangePubKeysIndBody_s {
 
 typedef struct HiSlConfigureReqBody_s {
 	uint8_t    EncrBmp[API_ENCR_BMP_SIZE];
+	uint8_t    DisableSessionKeyProtection:1;
+	uint8_t    Reserved1:7;
+	uint8_t    Reserved2[3];
 } __packed HiSlConfigureReqBody_t;
 
 typedef struct HiSlConfigureCnfBody_s {
