@@ -5,13 +5,13 @@ Compiling and installing
 ------------------------
 
 Compiling and installing the driver as a module is straightforward if your
-kernel sources is located in `/lib/modules/$(uname -r)/build`. Just change
+kernel sources are located in `/lib/modules/$(uname -r)/build`. Just change
 directory to driver source directory and run:
 
     make
     sudo make install
 
-If kernel sources is located somewhere else, change `KDIR` variable:
+If kernel sources are located somewhere else, change `KDIR` variable:
 
     make KDIR=your_kernel_directory
     sudo make KDIR=your_kernel_directory install
@@ -26,7 +26,7 @@ At runtime, WFx module needs:
 
 These files can be retrieved from [Github `wfx-firmware` repository][2].
 
-[1]: https://github.com/SiliconLabs/wfx-firmware/blob/master/README_PDS.md
+[1]: https://github.com/SiliconLabs/wfx-firmware/blob/master/PDS/README.md
 [2]: https://github.com/SiliconLabs/wfx-firmware
 
 Loading and probing
@@ -121,7 +121,7 @@ but it is rarely the case.
 
 ### Common properties
 
-Some properties are recognized either by SPI and SDIO versions:
+Some properties are recognized either by SPI or SDIO versions:
 - `wakeup-gpios`: phandle of gpio that will be used to wake-up chip. Without
   this property, driver will disable most of power saving features
 - `config-file`: Use an alternative file as PDS. Default is `wf200.pds`. Only
@@ -267,7 +267,7 @@ Of course, you can also remove the `reset-gpio` attribute from device tree.
 
 ### Loading PDS
 
-You send PDS fragment to chip using `/sys/kernel/debug/ieee80211/phy*/wfx/send_pds`
+You can send PDS fragment to chip using `/sys/kernel/debug/ieee80211/phy*/wfx/send_pds`
 
 You can directly execute `pds_compress` on this file:
 
