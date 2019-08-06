@@ -72,17 +72,6 @@ static struct ieee80211_rate wfx_rates[] = {
 	RATETAB_ENT(540, 13, 0),
 };
 
-static const struct ieee80211_rate wfx_mcs_rates[] = {
-	RATETAB_ENT( 65, 14, IEEE80211_TX_RC_MCS),
-	RATETAB_ENT(130, 15, IEEE80211_TX_RC_MCS),
-	RATETAB_ENT(195, 16, IEEE80211_TX_RC_MCS),
-	RATETAB_ENT(260, 17, IEEE80211_TX_RC_MCS),
-	RATETAB_ENT(390, 18, IEEE80211_TX_RC_MCS),
-	RATETAB_ENT(520, 19, IEEE80211_TX_RC_MCS),
-	RATETAB_ENT(585, 20, IEEE80211_TX_RC_MCS),
-	RATETAB_ENT(650, 21, IEEE80211_TX_RC_MCS),
-};
-
 #define CHAN2G(_channel, _freq, _flags) { \
 	.band = NL80211_BAND_2GHZ, \
 	.center_freq = (_freq),    \
@@ -356,8 +345,6 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	wdev->dev = dev;
 	wdev->hwbus_ops = hwbus_ops;
 	wdev->hwbus_priv = hwbus_priv;
-	wdev->rates = wfx_rates;
-	wdev->mcs_rates = wfx_mcs_rates;
 	memcpy(&wdev->pdata, pdata, sizeof(*pdata));
 	of_property_read_string(dev->of_node, "config-file", &wdev->pdata.file_pds);
 	wdev->pdata.gpio_wakeup = wfx_get_gpio(dev, gpio_wakeup, "wakeup");
