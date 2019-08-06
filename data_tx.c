@@ -21,23 +21,24 @@
 static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
 				   int link_id, int tid);
 
-/* TX policy cache implementation */
-
-static const struct ieee80211_rate *wfx_get_tx_rate(struct wfx_vif *wvif,
-						    const struct ieee80211_tx_rate *rate)
+static int wfx_get_hw_rate(struct wfx_dev *wdev, const struct ieee80211_tx_rate *rate)
 {
-	struct wfx_dev *wdev = wvif->wdev;
-	int band = NL80211_BAND_2GHZ;
-
-	// In some circumstances, channel is unassigned before all data was sent.
-	if (wvif->channel)
-		band = wvif->channel->band;
 	if (rate->idx < 0)
-		return NULL;
-	if (rate->flags & IEEE80211_TX_RC_MCS)
-		return &wdev->mcs_rates[rate->idx];
-	return &wdev->hw->wiphy->bands[band]->bitrates[rate->idx];
+		return -1;
+	if (rate->flags & IEEE80211_TX_RC_MCS) {
+		if (rate->idx > 7) {
+			WARN(1, "wrong rate->idx value: %d", rate->idx);
+			return -1;
+		}
+		return rate->idx + 14;
+	} else {
+		// WFx only support 2GHz, else band information should be
+		// retreived from ieee80211_tx_info
+		return wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->bitrates[rate->idx].hw_value;
+	}
 }
+
+/* TX policy cache implementation */
 
 static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 			    struct ieee80211_tx_rate *rates, size_t count)
@@ -144,12 +145,12 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 		}
 	}
 
-	policy->defined = wfx_get_tx_rate(wvif, &rates[0])->hw_value + 1;
+	policy->defined = wfx_get_hw_rate(wdev, &rates[0]) + 1;
 
 	for (i = 0; i < count; ++i) {
 		register unsigned rateid, off, shift, retries;
 
-		rateid = wfx_get_tx_rate(wvif, &rates[i])->hw_value;
+		rateid = wfx_get_hw_rate(wdev, &rates[i]);
 		off = rateid >> 3;		/* eq. rateid / 8 */
 		shift = (rateid & 0x07) << 2;	/* eq. (rateid % 8) * 4 */
 
@@ -704,7 +705,7 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 
 	wsm->TxFlags.RetryPolicyIndex = t->txpriv->rate_id;
 
-	wsm->MaxTxRate = wfx_get_tx_rate(wvif, &tx_info->driver_rates[0])->hw_value;
+	wsm->MaxTxRate = wfx_get_hw_rate(wvif->wdev, &tx_info->driver_rates[0]);
 
 	if (tx_info->driver_rates[0].flags & IEEE80211_TX_RC_GREEN_FIELD)
 		wsm->HtTxParameters.FrameFormat = WSM_FRAME_FORMAT_GF_HT_11N;
@@ -930,9 +931,9 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 			} else if (tx_count > tx_info->status.rates[i].count) {
 				tx_count -= tx_info->status.rates[i].count;
 			} else {
-				if (arg->TxedRate != wfx_get_tx_rate(wvif, &tx_info->status.rates[i])->hw_value)
+				if (arg->TxedRate != wfx_get_hw_rate(wvif->wdev, &tx_info->status.rates[i]))
 					dev_warn(wvif->wdev->dev, "inconsistent tx_info rates: %d != %d\n",
-						 arg->TxedRate, wfx_get_tx_rate(wvif, &tx_info->status.rates[i])->hw_value);
+						 arg->TxedRate, wfx_get_hw_rate(wvif->wdev, &tx_info->status.rates[i]));
 				tx_info->status.rates[i].count = tx_count;
 				tx_count = 0;
 			}
