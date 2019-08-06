@@ -708,14 +708,11 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 	t->rate = wfx_get_tx_rate(wvif, &tx_info->driver_rates[0]);
 	wsm->MaxTxRate = t->rate->hw_value;
 
-	if (t->rate->flags & IEEE80211_TX_RC_GREEN_FIELD)
-		wsm->HtTxParameters.FrameFormat =
-			WSM_FRAME_FORMAT_GF_HT_11N;
+	if (tx_info->driver_rates[0].flags & IEEE80211_TX_RC_GREEN_FIELD)
+		wsm->HtTxParameters.FrameFormat = WSM_FRAME_FORMAT_GF_HT_11N;
 	else
-		/*HT mixed is used*/
-		wsm->HtTxParameters.FrameFormat =
-			WSM_FRAME_FORMAT_MIXED_FORMAT_HT;
-	if (t->rate->flags & IEEE80211_TX_RC_SHORT_GI || wfx_ht_shortGi(&wvif->ht_info))
+		wsm->HtTxParameters.FrameFormat = WSM_FRAME_FORMAT_MIXED_FORMAT_HT;
+	if (tx_info->driver_rates[0].flags & IEEE80211_TX_RC_SHORT_GI || wfx_ht_shortGi(&wvif->ht_info))
 		wsm->HtTxParameters.ShortGi = 1;
 	if (tx_info->flags & IEEE80211_TX_CTL_LDPC || wfx_ht_fecCoding(&wvif->ht_info))
 		if (wvif->wdev->pdata.support_ldpc)
