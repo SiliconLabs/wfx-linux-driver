@@ -761,7 +761,6 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		.queue = skb_get_queue_mapping(skb),
 		.hdr = (struct ieee80211_hdr *)skb->data,
 	};
-	struct ieee80211_sta *sta;
 	WsmHiTxReqBody_t *wsm;
 	bool tid_update = 0;
 	WsmHiDataFlags_t flags = { };
@@ -816,9 +815,6 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	if (ret)
 		goto drop_pull2;
 
-	rcu_read_lock();
-	sta = rcu_dereference(t.sta);
-
 	spin_lock_bh(&wvif->ps_state_lock);
 	tid_update = wfx_tx_h_pm_state(wvif, &t);
 
@@ -826,10 +822,8 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	spin_unlock_bh(&wvif->ps_state_lock);
 	BUG_ON(ret);
 
-	if (tid_update && sta)
-		ieee80211_sta_set_buffered(sta, t.txpriv->tid, true);
-
-	rcu_read_unlock();
+	if (tid_update && t.sta)
+		ieee80211_sta_set_buffered(t.sta, t.txpriv->tid, true);
 
 	wfx_bh_request_tx(wdev);
 
