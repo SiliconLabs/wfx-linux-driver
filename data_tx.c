@@ -52,24 +52,6 @@ static const struct ieee80211_rate *wfx_get_tx_rate(struct wfx_vif *wvif,
 	return &wdev->hw->wiphy->bands[band]->bitrates[rate->idx];
 }
 
-static void tx_policy_dump(struct tx_policy *policy)
-{
-	pr_debug("[TX policy] %.1X%.1X%.1X%.1X%.1X%.1X%.1X%.1X %.1X%.1X%.1X%.1X%.1X%.1X%.1X%.1X %.1X%.1X%.1X%.1X%.1X%.1X%.1X%.1X: %d\n",
-		 policy->raw[0] & 0x0F,  policy->raw[0] >> 4,
-		 policy->raw[1] & 0x0F,  policy->raw[1] >> 4,
-		 policy->raw[2] & 0x0F,  policy->raw[2] >> 4,
-		 policy->raw[3] & 0x0F,  policy->raw[3] >> 4,
-		 policy->raw[4] & 0x0F,  policy->raw[4] >> 4,
-		 policy->raw[5] & 0x0F,  policy->raw[5] >> 4,
-		 policy->raw[6] & 0x0F,  policy->raw[6] >> 4,
-		 policy->raw[7] & 0x0F,  policy->raw[7] >> 4,
-		 policy->raw[8] & 0x0F,  policy->raw[8] >> 4,
-		 policy->raw[9] & 0x0F,  policy->raw[9] >> 4,
-		 policy->raw[10] & 0x0F,  policy->raw[10] >> 4,
-		 policy->raw[11] & 0x0F,  policy->raw[11] >> 4,
-		 policy->defined);
-}
-
 static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 			    struct ieee80211_tx_rate *rates, size_t count)
 {
@@ -314,7 +296,6 @@ static int tx_policy_get(struct wfx_vif *wvif, struct ieee80211_tx_rate *rates,
 	}
 	idx = tx_policy_find(cache, &wanted);
 	if (idx >= 0) {
-		pr_debug("[TX policy] Used TX policy: %d\n", idx);
 		*renew = false;
 	} else {
 		struct tx_policy_cache_entry *entry;
@@ -326,8 +307,6 @@ static int tx_policy_get(struct wfx_vif *wvif, struct ieee80211_tx_rate *rates,
 			struct tx_policy_cache_entry, link);
 		entry->policy = wanted;
 		idx = entry - cache->cache;
-		pr_debug("[TX policy] New TX policy: %d\n", idx);
-		tx_policy_dump(&entry->policy);
 	}
 	tx_policy_use(cache, &cache->cache[idx]);
 	if (list_empty(&cache->free)) {
@@ -388,7 +367,6 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 	}
 	spin_unlock_bh(&cache->lock);
 	wfx_debug_tx_cache_miss(wvif->wdev);
-	pr_debug("[TX policy] Upload %d policies\n", arg->NumTxRatePolicies);
 	wsm_set_tx_rate_retry_policy(wvif->wdev, arg, wvif->Id);
 	kfree(arg);
 	return 0;
@@ -399,7 +377,6 @@ void tx_policy_upload_work(struct work_struct *work)
 	struct wfx_vif *wvif =
 		container_of(work, struct wfx_vif, tx_policy_upload_work);
 
-	pr_debug("[TX] TX policy upload.\n");
 	tx_policy_upload(wvif);
 
 	wsm_tx_unlock(wvif->wdev);
