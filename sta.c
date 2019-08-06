@@ -39,12 +39,18 @@ static void wfx_mcast_timeout(struct timer_list *t);
 
 static u32 wfx_rate_mask_to_wsm(struct wfx_dev *wdev, u32 rates)
 {
-	u32 ret = 0;
 	int i;
+	u32 ret = 0;
+	// WFx only support 2GHz
+	struct ieee80211_supported_band *sband = wdev->hw->wiphy->bands[NL80211_BAND_2GHZ];
 
-	for (i = 0; i < 32; ++i) {
-		if (rates & BIT(i))
-			ret |= BIT(wdev->rates[i].hw_value);
+	for (i = 0; i < sband->n_bitrates; i++) {
+		if (rates & BIT(i)) {
+			if (i >= sband->n_bitrates)
+				dev_warn(wdev->dev, "unsupported basic rate\n");
+			else
+				ret |= BIT(sband->bitrates[i].hw_value);
+		}
 	}
 	return ret;
 }
