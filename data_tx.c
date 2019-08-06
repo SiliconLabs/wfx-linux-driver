@@ -841,10 +841,6 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	if (ret)
 		goto drop;
 
-	pr_debug("[TX] TX %d bytes (queue: %d, link_id: %d(raw_link_id=%d)).\n",
-		 skb->len, t.queue, t.txpriv.link_id,
-		 t.txpriv.raw_link_id);
-
 	wfx_tx_h_pm(wvif, &t);
 	wfx_tx_h_calc_tid(wvif, &t);
 	ret = wfx_tx_h_crypt(wvif, &t);
