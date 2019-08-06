@@ -555,7 +555,6 @@ void wfx_link_id_work(struct work_struct *work)
 struct wfx_txinfo {
 	struct sk_buff *skb;
 	unsigned queue;
-	const struct ieee80211_rate *rate;
 	struct ieee80211_hdr *hdr;
 	struct ieee80211_sta *sta;
 	struct wfx_txpriv *txpriv;
@@ -705,8 +704,7 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 
 	wsm->TxFlags.RetryPolicyIndex = t->txpriv->rate_id;
 
-	t->rate = wfx_get_tx_rate(wvif, &tx_info->driver_rates[0]);
-	wsm->MaxTxRate = t->rate->hw_value;
+	wsm->MaxTxRate = wfx_get_tx_rate(wvif, &tx_info->driver_rates[0])->hw_value;
 
 	if (tx_info->driver_rates[0].flags & IEEE80211_TX_RC_GREEN_FIELD)
 		wsm->HtTxParameters.FrameFormat = WSM_FRAME_FORMAT_GF_HT_11N;
