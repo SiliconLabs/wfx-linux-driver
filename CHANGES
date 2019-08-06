@@ -2,7 +2,7 @@ Changes in 2.2.3
 ----------------
 
   * Fix queue IDs exchange introduced in firmware API 2.0
-  * Fix potential dead lock whan scan timeout occurs
+  * Fix potential dead lock when scan timeout occurs
 
 Changes in 2.2.2
 ----------------
