@@ -18,9 +18,6 @@
 #define WFX_INVALID_RATE_ID (0xFF)
 #define WFX_LINK_ID_GC_TIMEOUT ((unsigned long)(10 * HZ))
 
-static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
-				   int link_id, int tid);
-
 static int wfx_get_hw_rate(struct wfx_dev *wdev, const struct ieee80211_tx_rate *rate)
 {
 	if (rate->idx < 0)
@@ -681,15 +678,11 @@ static int wfx_tx_get_icv_len(struct ieee80211_key_conf *hw_key)
 	return hw_key->icv_len + mic_space;
 }
 
-void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
-	    struct sk_buff *skb)
+static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct sk_buff *skb)
 {
-	struct wfx_dev *wdev = hw->priv;
-	struct wfx_vif *wvif = NULL;
 	struct wmsg *wmsg;
 	WsmHiTxReqBody_t *wsm;
 	struct wfx_txpriv *txpriv;
-	struct ieee80211_sta *sta = control ? control->sta : NULL;
 	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
 	struct ieee80211_key_conf *hw_key = tx_info->control.hw_key;
 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
@@ -697,26 +690,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	size_t offset = (size_t) skb->data & 3;
 	int wmsg_len = sizeof(struct wmsg) + sizeof(WsmHiTxReqBody_t) + offset;
 
-	compiletime_assert(sizeof(struct wfx_txpriv) <= FIELD_SIZEOF(struct ieee80211_tx_info, status.status_driver_data), "struct txpriv is too large");
-	WARN(skb->next || skb->prev, "skb is already member of a list");
-	// FIXME: why?
-	if (ieee80211_is_action_back(hdr)) {
-		dev_info(wdev->dev, "drop BA action\n");
-		goto drop;
-	}
-
-	// control.vif can be NULL for injected frames
-	if (tx_info->control.vif)
-		wvif = (struct wfx_vif *) tx_info->control.vif->drv_priv;
-	else
-		wvif = wvif_iterate(wdev, NULL);
-	if (!wvif)
-		goto drop;
-
-	WARN_ON(!wvif);
-
-	if (WARN_ON(queue_id >= 4))
-		goto drop;
+	WARN(queue_id >= 4, "unsupported queue_id");
 
 	// From now tx_info->control is unusable
 	memset(tx_info->status.status_driver_data, 0, sizeof(struct wfx_txpriv));
@@ -743,10 +717,11 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	wmsg->len = cpu_to_le16(skb->len);
 	wmsg->id = cpu_to_le16(WSM_HI_TX_REQ_ID);
 	wmsg->interface = wvif->Id;
-	if (skb->len > wdev->wsm_caps.SizeInpChBuf) {
-		dev_warn(wdev->dev, "Requested frame size (%d) is larger than maximum supported (%d)\n",
-			 skb->len, wdev->wsm_caps.SizeInpChBuf);
-		goto drop_pull;
+	if (skb->len > wvif->wdev->wsm_caps.SizeInpChBuf) {
+		dev_warn(wvif->wdev->dev, "requested frame size (%d) is larger than maximum supported (%d)\n",
+			 skb->len, wvif->wdev->wsm_caps.SizeInpChBuf);
+		skb_pull(skb, wmsg_len);
+		return -EIO;
 	}
 
 	// Fill tx request
@@ -755,24 +730,46 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	wsm->QueueId.PeerStaId = txpriv->raw_link_id;
 	// Queue index are inverted between WSM and Linux
 	wsm->QueueId.QueueId = 3 - queue_id;
-	wsm->HtTxParameters = wfx_tx_get_tx_parms(wdev, tx_info);
+	wsm->HtTxParameters = wfx_tx_get_tx_parms(wvif->wdev, tx_info);
 	wsm->TxFlags.RetryPolicyIndex = txpriv->rate_id;
-	wsm->MaxTxRate = wfx_get_hw_rate(wdev, &tx_info->driver_rates[0]);
+	wsm->MaxTxRate = wfx_get_hw_rate(wvif->wdev, &tx_info->driver_rates[0]);
 
 	// Auxilliary operations
 	wfx_tx_manage_pm(wvif, hdr, txpriv, sta);
-	wfx_tx_queue_put(wdev, &wdev->tx_queue[queue_id], skb);
-	wfx_bh_request_tx(wdev);
+	wfx_tx_queue_put(wvif->wdev, &wvif->wdev->tx_queue[queue_id], skb);
+	wfx_bh_request_tx(wvif->wdev);
+	return 0;
+}
+
+void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
+	    struct sk_buff *skb)
+{
+	struct wfx_dev *wdev = hw->priv;
+	struct wfx_vif *wvif;
+	struct ieee80211_sta *sta = control ? control->sta : NULL;
+	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
+	size_t driver_data_room = FIELD_SIZEOF(struct ieee80211_tx_info, status.status_driver_data);
+
+	compiletime_assert(sizeof(struct wfx_txpriv) <= driver_data_room, "struct txpriv is too large");
+	WARN(skb->next || skb->prev, "skb is already member of a list");
+	// control.vif can be NULL for injected frames
+	if (tx_info->control.vif)
+		wvif = (struct wfx_vif *) tx_info->control.vif->drv_priv;
+	else
+		wvif = wvif_iterate(wdev, NULL);
+	if (WARN_ON(!wvif))
+		goto drop;
+	// FIXME: why?
+	if (ieee80211_is_action_back(hdr)) {
+		dev_info(wdev->dev, "drop BA action\n");
+		goto drop;
+	}
+	if (wfx_tx_inner(wvif, sta, skb))
+		goto drop;
 
 	return;
 
-drop_pull:
-	skb_pull(skb, wmsg_len);
-	if (txpriv->rate_id != WFX_INVALID_RATE_ID) {
-		wfx_notify_buffered_tx(wvif, skb,
-					  txpriv->raw_link_id, txpriv->tid);
-		tx_policy_put(wvif, txpriv->rate_id);
-	}
 drop:
 	ieee80211_tx_status(wdev->hw, skb);
 }
