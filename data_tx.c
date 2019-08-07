@@ -610,20 +610,6 @@ static void wfx_tx_h_pm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 	}
 }
 
-static int wfx_tx_h_crypt(struct wfx_vif *wvif, struct wfx_txinfo *t)
-{
-	if (!t->txpriv->hw_key ||
-	    !ieee80211_has_protected(t->hdr->frame_control))
-		return 0;
-
-	skb_put(t->skb, t->txpriv->hw_key->icv_len);
-
-	if (t->txpriv->hw_key->cipher == WLAN_CIPHER_SUITE_TKIP)
-		skb_put(t->skb, 8); /* MIC space */
-
-	return 0;
-}
-
 static int wfx_tx_h_align(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiDataFlags_t *flags)
 {
 	size_t offset = (size_t)t->skb->data & 3;
@@ -751,6 +737,16 @@ static uint8_t wfx_tx_get_tid(struct ieee80211_hdr *hdr)
 		return 0;
 }
 
+static int wfx_tx_get_icv_len(struct ieee80211_key_conf *hw_key)
+{
+	int mic_space;
+
+	if (!hw_key)
+		return 0;
+	mic_space = (hw_key->cipher == WLAN_CIPHER_SUITE_TKIP) ? 8 : 0;
+	return hw_key->icv_len + mic_space;
+}
+
 void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	    struct sk_buff *skb)
 {
@@ -790,9 +786,10 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	memset(tx_info->status.status_driver_data, 0, sizeof(struct wfx_txpriv));
 	t.txpriv = (struct wfx_txpriv *) tx_info->status.status_driver_data;
 	// Fill txpriv
-	t.txpriv->hw_key = hw_key;
 	t.txpriv->tid = wfx_tx_get_tid((struct ieee80211_hdr *) skb->data);
 	t.txpriv->rate_id = WFX_INVALID_RATE_ID;
+	if (ieee80211_has_protected(t.hdr->frame_control))
+		t.txpriv->hw_key = hw_key;
 
 	ret = wfx_tx_h_calc_link_ids(wvif, &t);
 	if (ret)
@@ -804,9 +801,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		goto drop;
 
 	// Fill wmsg
-	ret = wfx_tx_h_crypt(wvif, &t);
-	if (ret)
-		goto drop;
+	skb_put(skb, wfx_tx_get_icv_len(t.txpriv->hw_key));
 	ret = wfx_tx_h_align(wvif, &t, &flags);
 	if (ret)
 		goto drop_pull1;
@@ -897,11 +892,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 		}
 		mutex_unlock(&wvif->bss_loss_lock);
 		/* Pull off any crypto trailers that we added on */
-		if (txpriv->hw_key) {
-			skb_trim(skb, skb->len - txpriv->hw_key->icv_len);
-			if (txpriv->hw_key->cipher == WLAN_CIPHER_SUITE_TKIP)
-				skb_trim(skb, skb->len - 8); /* MIC space */
-		}
+		skb_trim(skb, skb->len - wfx_tx_get_icv_len(txpriv->hw_key));
 
 		// FIXME: use ieee80211_tx_info_clear_status()
 		// Clear all tx->status but status_driver_data
