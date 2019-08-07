@@ -41,9 +41,10 @@ static int wfx_get_hw_rate(struct wfx_dev *wdev, const struct ieee80211_tx_rate 
 /* TX policy cache implementation */
 
 static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
-			    struct ieee80211_tx_rate *rates, size_t count)
+			    struct ieee80211_tx_rate *rates)
 {
 	int i, j;
+	size_t count = IEEE80211_TX_MAX_RATES;
 	struct wfx_dev *wdev = wvif->wdev;
 	unsigned limit = wdev->short_frame_max_tx_count;
 	unsigned total = 0;
@@ -241,13 +242,13 @@ void tx_policy_init(struct wfx_vif *wvif)
 }
 
 static int tx_policy_get(struct wfx_vif *wvif, struct ieee80211_tx_rate *rates,
-			 size_t count, bool *renew)
+			 bool *renew)
 {
 	int idx;
 	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
 	struct tx_policy wanted;
 
-	tx_policy_build(wvif, &wanted, rates, count);
+	tx_policy_build(wvif, &wanted, rates);
 
 	spin_lock_bh(&cache->lock);
 	if (WARN_ON_ONCE(list_empty(&cache->free))) {
@@ -613,7 +614,7 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t)
 
 	WARN_ON(!wvif);
 	t->txpriv->rate_id = tx_policy_get(wvif, tx_info->driver_rates,
-					  IEEE80211_TX_MAX_RATES, &tx_policy_renew);
+					   &tx_policy_renew);
 	if (t->txpriv->rate_id == WFX_INVALID_RATE_ID)
 		return -EFAULT;
 
