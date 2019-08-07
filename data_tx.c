@@ -646,19 +646,19 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 	return 0;
 }
 
-static bool wfx_tx_h_pm_state(struct wfx_vif *wvif, struct wfx_txinfo *t)
+static bool wfx_tx_h_pm_state(struct wfx_vif *wvif, struct wfx_txpriv *txpriv)
 {
 	int was_buffered = 1;
 
-	if (t->txpriv->link_id == WFX_LINK_ID_AFTER_DTIM &&
+	if (txpriv->link_id == WFX_LINK_ID_AFTER_DTIM &&
 	    !wvif->buffered_multicasts) {
 		wvif->buffered_multicasts = true;
 		if (wvif->sta_asleep_mask)
 			schedule_work(&wvif->multicast_start_work);
 	}
 
-	if (t->txpriv->raw_link_id && t->txpriv->tid < WFX_MAX_TID)
-		was_buffered = wvif->link_id_db[t->txpriv->raw_link_id - 1].buffered[t->txpriv->tid]++;
+	if (txpriv->raw_link_id && txpriv->tid < WFX_MAX_TID)
+		was_buffered = wvif->link_id_db[txpriv->raw_link_id - 1].buffered[txpriv->tid]++;
 
 	return !was_buffered;
 }
@@ -771,7 +771,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		goto drop_pull;
 
 	spin_lock_bh(&wvif->ps_state_lock);
-	tid_update = wfx_tx_h_pm_state(wvif, &t);
+	tid_update = wfx_tx_h_pm_state(wvif, t.txpriv);
 
 	ret = wfx_tx_queue_put(wdev, &wdev->tx_queue[t.queue], t.skb);
 	spin_unlock_bh(&wvif->ps_state_lock);
