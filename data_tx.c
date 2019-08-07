@@ -561,6 +561,17 @@ struct wfx_txinfo {
 	struct wfx_txpriv *txpriv;
 };
 
+static bool ieee80211_is_action_back(struct ieee80211_hdr *hdr)
+{
+	struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *) hdr;
+
+	if (!ieee80211_is_action(mgmt->frame_control))
+		return false;
+	if (mgmt->u.action.category != WLAN_CATEGORY_BACK)
+		return false;
+	return true;
+}
+
 static int wfx_tx_h_calc_link_ids(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
 	struct wfx_txpriv *txpriv = t->txpriv;
@@ -608,17 +619,6 @@ static void wfx_tx_h_pm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 		wvif->pspoll_mask &= mask;
 		spin_unlock_bh(&wvif->ps_state_lock);
 	}
-}
-
-static int wfx_tx_h_action(struct wfx_vif *wvif, struct wfx_txinfo *t)
-{
-	struct ieee80211_mgmt *mgmt =
-		(struct ieee80211_mgmt *)t->hdr;
-	if (ieee80211_is_action(t->hdr->frame_control) &&
-	    mgmt->u.action.category == WLAN_CATEGORY_BACK)
-		return 1;
-	else
-		return 0;
 }
 
 static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiTxReqBody_t *wsm)
@@ -720,6 +720,11 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 
 	compiletime_assert(sizeof(struct wfx_txpriv) <= FIELD_SIZEOF(struct ieee80211_tx_info, status.status_driver_data), "struct txpriv is too large");
 	WARN(skb->next || skb->prev, "skb is already member of a list");
+	// FIXME: why?
+	if (ieee80211_is_action_back(t.hdr)) {
+		dev_info(wdev->dev, "drop BA action\n");
+		goto drop;
+	}
 
 	// control.vif can be NULL for injected frames
 	if (tx_info->control.vif)
@@ -750,9 +755,6 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		goto drop;
 
 	wfx_tx_h_pm(wvif, &t);
-	ret = wfx_tx_h_action(wvif, &t);
-	if (ret)
-		goto drop;
 
 	// Fill wmsg
 	WARN(skb_headroom(skb) < wmsg_len, "not enough space in skb");
