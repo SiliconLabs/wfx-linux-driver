@@ -565,6 +565,36 @@ static bool ieee80211_is_action_back(struct ieee80211_hdr *hdr)
 		return false;
 	return true;
 }
+
+static void wfx_tx_manage_pm(struct wfx_vif *wvif, struct ieee80211_hdr *hdr,
+			     struct wfx_txpriv *txpriv, struct ieee80211_sta *sta)
+{
+	bool was_buffered = true;
+	u32 mask = ~BIT(txpriv->raw_link_id);
+
+	spin_lock_bh(&wvif->ps_state_lock);
+	if (ieee80211_is_auth(hdr->frame_control)) {
+		wvif->sta_asleep_mask &= mask;
+		wvif->pspoll_mask &= mask;
+	}
+
+	if (txpriv->link_id == WFX_LINK_ID_AFTER_DTIM && !wvif->buffered_multicasts) {
+		wvif->buffered_multicasts = true;
+		if (wvif->sta_asleep_mask)
+			schedule_work(&wvif->multicast_start_work);
+	}
+
+	if (txpriv->raw_link_id) {
+		wvif->link_id_db[txpriv->raw_link_id - 1].timestamp = jiffies;
+		if (txpriv->tid < WFX_MAX_TID)
+			was_buffered = wvif->link_id_db[txpriv->raw_link_id - 1].buffered[txpriv->tid]++;
+	}
+	spin_unlock_bh(&wvif->ps_state_lock);
+
+	if (!was_buffered && sta)
+		ieee80211_sta_set_buffered(sta, txpriv->tid, true);
+}
+
 static uint8_t wfx_tx_get_raw_link_id(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct ieee80211_hdr *hdr)
 {
 	struct wfx_sta_priv *sta_priv = sta ? (struct wfx_sta_priv *) &sta->drv_priv : NULL;
@@ -587,16 +617,6 @@ static uint8_t wfx_tx_get_raw_link_id(struct wfx_vif *wvif, struct ieee80211_sta
 		}
 		return ret;
 	}
-}
-
-static void wfx_mark_sta(struct wfx_vif *wvif, int link_id)
-{
-	u32 mask = ~BIT(link_id);
-
-	spin_lock_bh(&wvif->ps_state_lock);
-	wvif->sta_asleep_mask &= mask;
-	wvif->pspoll_mask &= mask;
-	spin_unlock_bh(&wvif->ps_state_lock);
 }
 
 static uint8_t wfx_tx_get_rate_id(struct wfx_vif *wvif, struct ieee80211_tx_info *tx_info)
@@ -641,23 +661,6 @@ static WsmHiHtTxParameters_t wfx_tx_get_tx_parms(struct wfx_dev *wdev, struct ie
 	return ret;
 }
 
-static bool wfx_tx_h_pm_state(struct wfx_vif *wvif, struct wfx_txpriv *txpriv)
-{
-	int was_buffered = 1;
-
-	if (txpriv->link_id == WFX_LINK_ID_AFTER_DTIM &&
-	    !wvif->buffered_multicasts) {
-		wvif->buffered_multicasts = true;
-		if (wvif->sta_asleep_mask)
-			schedule_work(&wvif->multicast_start_work);
-	}
-
-	if (txpriv->raw_link_id && txpriv->tid < WFX_MAX_TID)
-		was_buffered = wvif->link_id_db[txpriv->raw_link_id - 1].buffered[txpriv->tid]++;
-
-	return !was_buffered;
-}
-
 static uint8_t wfx_tx_get_tid(struct ieee80211_hdr *hdr)
 {
 	// FIXME: ieee80211_get_tid(hdr) should be sufficient for all cases.
@@ -694,7 +697,6 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	int queue_id = skb_get_queue_mapping(skb);
 	size_t offset = (size_t) skb->data & 3;
 	int wmsg_len = sizeof(struct wmsg) + sizeof(WsmHiTxReqBody_t) + offset;
-	bool tid_update = 0;
 
 	compiletime_assert(sizeof(struct wfx_txpriv) <= FIELD_SIZEOF(struct ieee80211_tx_info, status.status_driver_data), "struct txpriv is too large");
 	WARN(skb->next || skb->prev, "skb is already member of a list");
@@ -719,7 +721,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 
 	// From now tx_info->control is unusable
 	memset(tx_info->status.status_driver_data, 0, sizeof(struct wfx_txpriv));
-	// Fill txpriv and prepare auxilliary operations
+	// Fill txpriv
 	txpriv = (struct wfx_txpriv *) tx_info->status.status_driver_data;
 	txpriv->tid = wfx_tx_get_tid(hdr);
 	txpriv->rate_id = wfx_tx_get_rate_id(wvif, tx_info);
@@ -731,10 +733,6 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		txpriv->link_id = WFX_LINK_ID_AFTER_DTIM;
 	if (sta && (sta->uapsd_queues & BIT(queue_id)))
 		txpriv->link_id = WFX_LINK_ID_UAPSD;
-	if (txpriv->raw_link_id)
-		wvif->link_id_db[txpriv->raw_link_id - 1].timestamp = jiffies;
-	if (ieee80211_is_auth(hdr->frame_control))
-		wfx_mark_sta(wvif, txpriv->raw_link_id);
 
 	// Fill wmsg
 	WARN(skb_headroom(skb) < wmsg_len, "not enough space in skb");
@@ -762,15 +760,9 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	wsm->TxFlags.RetryPolicyIndex = txpriv->rate_id;
 	wsm->MaxTxRate = wfx_get_hw_rate(wdev, &tx_info->driver_rates[0]);
 
-	spin_lock_bh(&wvif->ps_state_lock);
-	tid_update = wfx_tx_h_pm_state(wvif, txpriv);
-
+	// Auxilliary operations
+	wfx_tx_manage_pm(wvif, hdr, txpriv, sta);
 	wfx_tx_queue_put(wdev, &wdev->tx_queue[queue_id], skb);
-	spin_unlock_bh(&wvif->ps_state_lock);
-
-	if (tid_update && sta)
-		ieee80211_sta_set_buffered(sta, txpriv->tid, true);
-
 	wfx_bh_request_tx(wdev);
 
 	return;
