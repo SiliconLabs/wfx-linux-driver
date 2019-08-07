@@ -610,15 +610,6 @@ static void wfx_tx_h_pm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 	}
 }
 
-static void wfx_tx_h_calc_tid(struct wfx_vif *wvif, struct wfx_txinfo *t)
-{
-	if (ieee80211_is_data_qos(t->hdr->frame_control)) {
-		t->txpriv->tid = ieee80211_get_tid(t->hdr);
-	} else if (ieee80211_is_data(t->hdr->frame_control)) {
-		t->txpriv->tid = 0;
-	}
-}
-
 static int wfx_tx_h_crypt(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
 	if (!t->txpriv->hw_key ||
@@ -749,6 +740,17 @@ static bool wfx_tx_h_pm_state(struct wfx_vif *wvif, struct wfx_txinfo *t)
 	return !was_buffered;
 }
 
+static uint8_t wfx_tx_get_tid(struct ieee80211_hdr *hdr)
+{
+	// FIXME: ieee80211_get_tid(hdr) should be sufficient for all cases.
+	if (!ieee80211_is_data(hdr->frame_control))
+		return WFX_MAX_TID;
+	if (ieee80211_is_data_qos(hdr->frame_control))
+		return ieee80211_get_tid(hdr);
+	else
+		return 0;
+}
+
 void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	    struct sk_buff *skb)
 {
@@ -786,7 +788,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 
 	memset(tx_info->status.status_driver_data, 0, sizeof(struct wfx_txpriv));
 	t.txpriv = (struct wfx_txpriv *) tx_info->status.status_driver_data;
-	t.txpriv->tid = WFX_MAX_TID;
+	t.txpriv->tid = wfx_tx_get_tid((struct ieee80211_hdr *) skb->data);
 	t.txpriv->rate_id = WFX_INVALID_RATE_ID;
 	t.txpriv->hw_key = hw_key;
 
@@ -795,7 +797,6 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		goto drop;
 
 	wfx_tx_h_pm(wvif, &t);
-	wfx_tx_h_calc_tid(wvif, &t);
 	ret = wfx_tx_h_crypt(wvif, &t);
 	if (ret)
 		goto drop;
