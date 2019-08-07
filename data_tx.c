@@ -607,23 +607,17 @@ static void wfx_tx_h_pm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 	}
 }
 
-static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t)
+static uint8_t wfx_tx_get_rate_id(struct wfx_vif *wvif, struct ieee80211_tx_info *tx_info)
 {
-	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(t->skb);
 	bool tx_policy_renew = false;
+	uint8_t rate_id;
 
-	WARN_ON(!wvif);
-	t->txpriv->rate_id = tx_policy_get(wvif, tx_info->driver_rates,
-					   &tx_policy_renew);
-	if (t->txpriv->rate_id == WFX_INVALID_RATE_ID)
-		return -EFAULT;
-
+	rate_id = tx_policy_get(wvif, tx_info->driver_rates, &tx_policy_renew);
+	WARN(rate_id == WFX_INVALID_RATE_ID, "Enable to get a valid Tx policy");
 
 	if (tx_policy_renew) {
-		pr_debug("[TX] TX policy renew.\n");
-		/* It's not so optimal to stop TX queues every now and then.
-		 * Better to reimplement task scheduling with
-		 * a counter. TODO.
+		/* FIXME: It's not so optimal to stop TX queues every now and
+		 * then.  Better to reimplement task scheduling with a counter.
 		 */
 		wsm_tx_lock(wvif->wdev);
 		wfx_tx_queues_lock(wvif->wdev);
@@ -632,7 +626,7 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t)
 			wsm_tx_unlock(wvif->wdev);
 		}
 	}
-	return 0;
+	return rate_id;
 }
 
 static WsmHiHtTxParameters_t wfx_tx_get_tx_parms(struct wfx_dev *wdev, struct ieee80211_tx_info *tx_info)
@@ -739,7 +733,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	t.txpriv = (struct wfx_txpriv *) tx_info->status.status_driver_data;
 	// Fill txpriv
 	t.txpriv->tid = wfx_tx_get_tid((struct ieee80211_hdr *) skb->data);
-	t.txpriv->rate_id = WFX_INVALID_RATE_ID;
+	t.txpriv->rate_id = wfx_tx_get_rate_id(wvif, tx_info);
 	t.txpriv->raw_link_id = wfx_tx_get_raw_link_id(wvif, sta, t.hdr);
 	t.txpriv->link_id = t.txpriv->raw_link_id;
 	if (ieee80211_has_protected(t.hdr->frame_control))
@@ -750,9 +744,6 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		t.txpriv->link_id = WFX_LINK_ID_UAPSD;
 	if (t.txpriv->raw_link_id)
 		wvif->link_id_db[t.txpriv->raw_link_id - 1].timestamp = jiffies;
-	ret = wfx_tx_h_rate_policy(wvif, &t);
-	if (ret)
-		goto drop;
 
 	wfx_tx_h_pm(wvif, &t);
 
