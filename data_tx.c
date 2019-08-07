@@ -596,15 +596,14 @@ static uint8_t wfx_tx_get_raw_link_id(struct wfx_vif *wvif, struct ieee80211_sta
 	}
 }
 
-static void wfx_tx_h_pm(struct wfx_vif *wvif, struct wfx_txinfo *t)
+static void wfx_mark_sta(struct wfx_vif *wvif, int link_id)
 {
-	if (ieee80211_is_auth(t->hdr->frame_control)) {
-		u32 mask = ~BIT(t->txpriv->raw_link_id);
-		spin_lock_bh(&wvif->ps_state_lock);
-		wvif->sta_asleep_mask &= mask;
-		wvif->pspoll_mask &= mask;
-		spin_unlock_bh(&wvif->ps_state_lock);
-	}
+	u32 mask = ~BIT(link_id);
+
+	spin_lock_bh(&wvif->ps_state_lock);
+	wvif->sta_asleep_mask &= mask;
+	wvif->pspoll_mask &= mask;
+	spin_unlock_bh(&wvif->ps_state_lock);
 }
 
 static uint8_t wfx_tx_get_rate_id(struct wfx_vif *wvif, struct ieee80211_tx_info *tx_info)
@@ -744,8 +743,8 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		t.txpriv->link_id = WFX_LINK_ID_UAPSD;
 	if (t.txpriv->raw_link_id)
 		wvif->link_id_db[t.txpriv->raw_link_id - 1].timestamp = jiffies;
-
-	wfx_tx_h_pm(wvif, &t);
+	if (ieee80211_is_auth(t.hdr->frame_control))
+		wfx_mark_sta(wvif, t.txpriv->raw_link_id);
 
 	// Fill wmsg
 	WARN(skb_headroom(skb) < wmsg_len, "not enough space in skb");
