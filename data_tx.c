@@ -610,28 +610,6 @@ static void wfx_tx_h_pm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 	}
 }
 
-static int wfx_tx_h_align(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiDataFlags_t *flags)
-{
-	size_t offset = (size_t)t->skb->data & 3;
-
-	if (!offset)
-		return 0;
-
-	if (offset & 1)
-		dev_warn(wvif->wdev->dev, "Attempt to transmit an unaligned frame\n");
-
-	if (skb_headroom(t->skb) < offset) {
-		dev_err(wvif->wdev->dev,
-			  "Bug: no space allocated for DMA alignment. headroom: %d\n",
-			  skb_headroom(t->skb));
-		return -ENOMEM;
-	}
-	skb_push(t->skb, offset);
-	flags->FcOffset = offset;
-	wfx_debug_tx_align(wvif->wdev);
-	return 0;
-}
-
 static int wfx_tx_h_action(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
 	struct ieee80211_mgmt *mgmt =
@@ -641,32 +619,6 @@ static int wfx_tx_h_action(struct wfx_vif *wvif, struct wfx_txinfo *t)
 		return 1;
 	else
 		return 0;
-}
-
-static WsmHiTxReqBody_t *wfx_tx_h_wsm(struct wfx_vif *wvif, struct wfx_txinfo *t)
-{
-	struct wmsg *hdr;
-	WsmHiTxReqBody_t *wsm;
-	u32 wsm_length = sizeof(WsmHiTxReqBody_t) + sizeof(struct wmsg);
-
-	if (WARN(skb_headroom(t->skb) < wsm_length, "Not enough space for WSM headers"))
-		return NULL;
-	if (t->skb->len > wvif->wdev->wsm_caps.SizeInpChBuf) {
-		dev_info(wvif->wdev->dev, "Requested frame size (%d) is larger than maximum supported (%d)\n",
-			 t->skb->len, wvif->wdev->wsm_caps.SizeInpChBuf);
-		return NULL;
-	}
-
-	hdr = (struct wmsg *) skb_push(t->skb, wsm_length);
-	wsm = (WsmHiTxReqBody_t *) hdr->body;
-	memset(hdr, 0, wsm_length);
-	hdr->len = cpu_to_le16(t->skb->len);
-	hdr->id = cpu_to_le16(WSM_HI_TX_REQ_ID);
-	hdr->interface = wvif->Id;
-	wsm->QueueId.PeerStaId = t->txpriv->raw_link_id;
-	// Queue index are inverted between WSM and Linux
-	wsm->QueueId.QueueId = 3 - t->queue;
-	return wsm;
 }
 
 static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiTxReqBody_t *wsm)
@@ -759,9 +711,11 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		.queue = skb_get_queue_mapping(skb),
 		.hdr = (struct ieee80211_hdr *)skb->data,
 	};
+	size_t offset = (size_t) skb->data & 3;
+	int wmsg_len = sizeof(struct wmsg) + sizeof(WsmHiTxReqBody_t) + offset;
+	struct wmsg *wmsg;
 	WsmHiTxReqBody_t *wsm;
 	bool tid_update = 0;
-	WsmHiDataFlags_t flags = { };
 	int ret;
 
 	compiletime_assert(sizeof(struct wfx_txpriv) <= FIELD_SIZEOF(struct ieee80211_tx_info, status.status_driver_data), "struct txpriv is too large");
@@ -801,19 +755,30 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		goto drop;
 
 	// Fill wmsg
+	WARN(skb_headroom(skb) < wmsg_len, "not enough space in skb");
+	WARN(offset & 1, "attempt to transmit an unaligned frame");
 	skb_put(skb, wfx_tx_get_icv_len(t.txpriv->hw_key));
-	ret = wfx_tx_h_align(wvif, &t, &flags);
-	if (ret)
-		goto drop_pull1;
-	wsm = wfx_tx_h_wsm(wvif, &t);
-	if (!wsm)
-		goto drop_pull1;
+	skb_push(skb, wmsg_len);
+	memset(skb->data, 0, wmsg_len);
+	wmsg = (struct wmsg *) skb->data;
+	wmsg->len = cpu_to_le16(skb->len);
+	wmsg->id = cpu_to_le16(WSM_HI_TX_REQ_ID);
+	wmsg->interface = wvif->Id;
+	if (skb->len > wdev->wsm_caps.SizeInpChBuf) {
+		dev_warn(wdev->dev, "Requested frame size (%d) is larger than maximum supported (%d)\n",
+			 skb->len, wdev->wsm_caps.SizeInpChBuf);
+		goto drop_pull;
+	}
 
 	// Fill tx request
-	wsm->DataFlags.FcOffset = flags.FcOffset;
+	wsm = (WsmHiTxReqBody_t *) wmsg->body;
+	wsm->DataFlags.FcOffset = offset;
+	wsm->QueueId.PeerStaId = t.txpriv->raw_link_id;
+	// Queue index are inverted between WSM and Linux
+	wsm->QueueId.QueueId = 3 - t.queue;
 	ret = wfx_tx_h_rate_policy(wvif, &t, wsm);
 	if (ret)
-		goto drop_pull2;
+		goto drop_pull;
 
 	spin_lock_bh(&wvif->ps_state_lock);
 	tid_update = wfx_tx_h_pm_state(wvif, &t);
@@ -829,10 +794,8 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 
 	return;
 
-drop_pull2:
-	skb_pull(skb, sizeof(WsmHiTxReqBody_t) + sizeof(struct wmsg));
-drop_pull1:
-	skb_pull(skb, flags.FcOffset);
+drop_pull:
+	skb_pull(skb, wmsg_len);
 drop:
 	if (t.txpriv->rate_id != WFX_INVALID_RATE_ID) {
 		wfx_notify_buffered_tx(wvif, skb,
