@@ -621,15 +621,6 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 
 	wsm->MaxTxRate = wfx_get_hw_rate(wvif->wdev, &tx_info->driver_rates[0]);
 
-	if (tx_info->driver_rates[0].flags & IEEE80211_TX_RC_GREEN_FIELD)
-		wsm->HtTxParameters.FrameFormat = WSM_FRAME_FORMAT_GF_HT_11N;
-	else
-		wsm->HtTxParameters.FrameFormat = WSM_FRAME_FORMAT_MIXED_FORMAT_HT;
-	if (tx_info->driver_rates[0].flags & IEEE80211_TX_RC_SHORT_GI || wfx_ht_shortGi(&wvif->ht_info))
-		wsm->HtTxParameters.ShortGi = 1;
-	if (tx_info->flags & IEEE80211_TX_CTL_LDPC || wfx_ht_fecCoding(&wvif->ht_info))
-		if (wvif->wdev->pdata.support_ldpc)
-			wsm->HtTxParameters.FecCoding = 1;
 	if (tx_policy_renew) {
 		pr_debug("[TX] TX policy renew.\n");
 		/* It's not so optimal to stop TX queues every now and then.
@@ -644,6 +635,26 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 		}
 	}
 	return 0;
+}
+
+static WsmHiHtTxParameters_t wfx_tx_get_tx_parms(struct wfx_dev *wdev, struct ieee80211_tx_info *tx_info)
+{
+	struct ieee80211_tx_rate *rate = &tx_info->driver_rates[0];
+	WsmHiHtTxParameters_t ret = { };
+
+	if (rate->flags & IEEE80211_TX_RC_GREEN_FIELD)
+		ret.FrameFormat = WSM_FRAME_FORMAT_GF_HT_11N;
+	else
+		ret.FrameFormat = WSM_FRAME_FORMAT_MIXED_FORMAT_HT;
+	if (rate->flags & IEEE80211_TX_RC_SHORT_GI)
+		ret.ShortGi = 1;
+	if (tx_info->flags & IEEE80211_TX_CTL_LDPC && wdev->pdata.support_ldpc)
+		ret.FecCoding = 1;
+	if (tx_info->flags & IEEE80211_TX_CTL_STBC)
+		ret.Stbc = 0; // FIXME: Not yet supported by firmware?
+	if (tx_info->flags & IEEE80211_TX_CTL_AMPDU)
+		ret.Aggregation = 0; // FIXME: what is purpose of this field?
+	return ret;
 }
 
 static bool wfx_tx_h_pm_state(struct wfx_vif *wvif, struct wfx_txpriv *txpriv)
@@ -766,6 +777,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	wsm->QueueId.PeerStaId = t.txpriv->raw_link_id;
 	// Queue index are inverted between WSM and Linux
 	wsm->QueueId.QueueId = 3 - t.queue;
+	wsm->HtTxParameters = wfx_tx_get_tx_parms(wdev, tx_info);
 	ret = wfx_tx_h_rate_policy(wvif, &t, wsm);
 	if (ret)
 		goto drop_pull;
