@@ -695,7 +695,6 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	size_t offset = (size_t) skb->data & 3;
 	int wmsg_len = sizeof(struct wmsg) + sizeof(WsmHiTxReqBody_t) + offset;
 	bool tid_update = 0;
-	int ret;
 
 	compiletime_assert(sizeof(struct wfx_txpriv) <= FIELD_SIZEOF(struct ieee80211_tx_info, status.status_driver_data), "struct txpriv is too large");
 	WARN(skb->next || skb->prev, "skb is already member of a list");
@@ -766,9 +765,8 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	spin_lock_bh(&wvif->ps_state_lock);
 	tid_update = wfx_tx_h_pm_state(wvif, txpriv);
 
-	ret = wfx_tx_queue_put(wdev, &wdev->tx_queue[queue_id], skb);
+	wfx_tx_queue_put(wdev, &wdev->tx_queue[queue_id], skb);
 	spin_unlock_bh(&wvif->ps_state_lock);
-	BUG_ON(ret);
 
 	if (tid_update && sta)
 		ieee80211_sta_set_buffered(sta, txpriv->tid, true);

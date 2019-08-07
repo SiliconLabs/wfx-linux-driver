@@ -161,16 +161,13 @@ size_t wfx_tx_queue_get_num_queued(struct wfx_queue *queue,
 	return ret;
 }
 
-int wfx_tx_queue_put(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_buff *skb)
+void wfx_tx_queue_put(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_buff *skb)
 {
-	int ret = 0;
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
 	WsmHiTxReqBody_t *wsm = wfx_skb_txreq(skb);
 
-	if (txpriv->link_id >= ARRAY_SIZE(stats->link_map_cache))
-		return -EINVAL;
-
+	WARN(txpriv->link_id >= ARRAY_SIZE(stats->link_map_cache), "Invalid link_id value");
 	spin_lock_bh(&queue->queue.lock);
 	wsm->PacketId = wfx_queue_mk_packet_id(queue->generation,
 			queue->queue_id,
@@ -183,7 +180,6 @@ int wfx_tx_queue_put(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_bu
 	++stats->link_map_cache[txpriv->link_id];
 	spin_unlock_bh(&stats->pending.lock);
 	spin_unlock_bh(&queue->queue.lock);
-	return ret;
 }
 
 struct sk_buff *wfx_tx_queue_get(struct wfx_dev *wdev, struct wfx_queue *queue, u32 link_id_map)
