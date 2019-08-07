@@ -606,7 +606,7 @@ static void wfx_tx_h_pm(struct wfx_vif *wvif, struct wfx_txinfo *t)
 	}
 }
 
-static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmHiTxReqBody_t *wsm)
+static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t)
 {
 	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(t->skb);
 	bool tx_policy_renew = false;
@@ -617,9 +617,6 @@ static int wfx_tx_h_rate_policy(struct wfx_vif *wvif, struct wfx_txinfo *t, WsmH
 	if (t->txpriv->rate_id == WFX_INVALID_RATE_ID)
 		return -EFAULT;
 
-	wsm->TxFlags.RetryPolicyIndex = t->txpriv->rate_id;
-
-	wsm->MaxTxRate = wfx_get_hw_rate(wvif->wdev, &tx_info->driver_rates[0]);
 
 	if (tx_policy_renew) {
 		pr_debug("[TX] TX policy renew.\n");
@@ -752,6 +749,9 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 		t.txpriv->link_id = WFX_LINK_ID_UAPSD;
 	if (t.txpriv->raw_link_id)
 		wvif->link_id_db[t.txpriv->raw_link_id - 1].timestamp = jiffies;
+	ret = wfx_tx_h_rate_policy(wvif, &t);
+	if (ret)
+		goto drop;
 
 	wfx_tx_h_pm(wvif, &t);
 
@@ -778,9 +778,8 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	// Queue index are inverted between WSM and Linux
 	wsm->QueueId.QueueId = 3 - t.queue;
 	wsm->HtTxParameters = wfx_tx_get_tx_parms(wdev, tx_info);
-	ret = wfx_tx_h_rate_policy(wvif, &t, wsm);
-	if (ret)
-		goto drop_pull;
+	wsm->TxFlags.RetryPolicyIndex = t.txpriv->rate_id;
+	wsm->MaxTxRate = wfx_get_hw_rate(wdev, &tx_info->driver_rates[0]);
 
 	spin_lock_bh(&wvif->ps_state_lock);
 	tid_update = wfx_tx_h_pm_state(wvif, t.txpriv);
@@ -798,12 +797,12 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 
 drop_pull:
 	skb_pull(skb, wmsg_len);
-drop:
 	if (t.txpriv->rate_id != WFX_INVALID_RATE_ID) {
 		wfx_notify_buffered_tx(wvif, skb,
 					  t.txpriv->raw_link_id, t.txpriv->tid);
 		tx_policy_put(wvif, t.txpriv->rate_id);
 	}
+drop:
 	ieee80211_tx_status(wdev->hw, skb);
 }
 
