@@ -786,31 +786,35 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	if (WARN_ON(t.queue >= 4))
 		goto drop;
 
+	// From now tx_info->control is unusable
 	memset(tx_info->status.status_driver_data, 0, sizeof(struct wfx_txpriv));
 	t.txpriv = (struct wfx_txpriv *) tx_info->status.status_driver_data;
+	// Fill txpriv
+	t.txpriv->hw_key = hw_key;
 	t.txpriv->tid = wfx_tx_get_tid((struct ieee80211_hdr *) skb->data);
 	t.txpriv->rate_id = WFX_INVALID_RATE_ID;
-	t.txpriv->hw_key = hw_key;
 
 	ret = wfx_tx_h_calc_link_ids(wvif, &t);
 	if (ret)
 		goto drop;
 
 	wfx_tx_h_pm(wvif, &t);
+	ret = wfx_tx_h_action(wvif, &t);
+	if (ret)
+		goto drop;
+
+	// Fill wmsg
 	ret = wfx_tx_h_crypt(wvif, &t);
 	if (ret)
 		goto drop;
 	ret = wfx_tx_h_align(wvif, &t, &flags);
 	if (ret)
-		goto drop;
-	ret = wfx_tx_h_action(wvif, &t);
-	if (ret)
 		goto drop_pull1;
 	wsm = wfx_tx_h_wsm(wvif, &t);
-	if (!wsm) {
-		ret = -ENOMEM;
+	if (!wsm)
 		goto drop_pull1;
-	}
+
+	// Fill tx request
 	wsm->DataFlags.FcOffset = flags.FcOffset;
 	ret = wfx_tx_h_rate_policy(wvif, &t, wsm);
 	if (ret)
