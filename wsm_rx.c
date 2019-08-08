@@ -153,8 +153,6 @@ static int wsm_receive_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 	WsmHiRxIndBody_t *body = buf;
 	struct ieee80211_hdr *frame;
-	__le16 fctl;
-	int sta_id;
 
 	if (!wvif) {
 		dev_warn(wdev->dev, "ignore rx data for non existant vif %d\n", hdr->interface);
@@ -169,11 +167,7 @@ static int wsm_receive_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 	     ieee80211_is_beacon(frame->frame_control)))
 		return 0;
 
-	fctl = frame->frame_control;
-
-	sta_id = body->RxFlags.PeerStaId;
-
-	wfx_rx_cb(wvif, body, sta_id, skb_p);
+	wfx_rx_cb(wvif, body, skb_p);
 	if (*skb_p)
 		skb_push(*skb_p, sizeof(struct wmsg) + sizeof(WsmHiRxIndBody_t));
 

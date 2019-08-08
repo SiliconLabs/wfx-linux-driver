@@ -69,18 +69,17 @@ done:
 	return drop;
 }
 
-void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg,
-	       int link_id, struct sk_buff **skb_p)
+void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff **skb_p)
 {
+	int link_id = arg->RxFlags.PeerStaId;
 	struct sk_buff *skb = *skb_p;
 	struct ieee80211_rx_status *hdr = IEEE80211_SKB_RXCB(skb);
-	struct ieee80211_hdr *frame = (struct ieee80211_hdr *)skb->data;
-	struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *)skb->data;
+	struct ieee80211_hdr *frame = (struct ieee80211_hdr *) skb->data;
+	struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *) skb->data;
 	struct wfx_link_entry *entry = NULL;
-
+	size_t hdrlen = ieee80211_hdrlen(frame->frame_control);
 	bool early_data = false;
 	bool p2p = wvif->vif && wvif->vif->p2p;
-	size_t hdrlen;
 
 	hdr->flag = 0;
 
@@ -167,8 +166,6 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg,
 	if (!wvif->cqm_use_rssi)
 		hdr->signal = hdr->signal / 2 - 110;
 	hdr->antenna = 0;
-
-	hdrlen = ieee80211_hdrlen(frame->frame_control);
 
 	if (arg->RxFlags.Encryp) {
 		size_t iv_len = 0, icv_len = 0;
