@@ -152,24 +152,13 @@ static int wsm_receive_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 	WsmHiRxIndBody_t *body = buf;
-	struct ieee80211_hdr *frame;
 
 	if (!wvif) {
 		dev_warn(wdev->dev, "ignore rx data for non existant vif %d\n", hdr->interface);
 		return 0;
 	}
 	skb_pull(*skb_p, sizeof(struct wmsg) + sizeof(WsmHiRxIndBody_t));
-
-	frame = (struct ieee80211_hdr *)(*skb_p)->data;
-
-	if (!body->RcpiRssi &&
-	    (ieee80211_is_probe_resp(frame->frame_control) ||
-	     ieee80211_is_beacon(frame->frame_control)))
-		return 0;
-
 	wfx_rx_cb(wvif, body, skb_p);
-	if (*skb_p)
-		skb_push(*skb_p, sizeof(struct wmsg) + sizeof(WsmHiRxIndBody_t));
 
 	return 0;
 }

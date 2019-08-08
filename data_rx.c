@@ -83,7 +83,10 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff **skb
 
 	hdr->flag = 0;
 
-	if (!wvif)
+	// FIXME: Why do we drop these frames?
+	if (!arg->RcpiRssi &&
+	    (ieee80211_is_probe_resp(frame->frame_control) ||
+	     ieee80211_is_beacon(frame->frame_control)))
 		goto drop;
 
 	if (link_id && link_id <= WFX_MAX_STA_IN_AP_MODE) {
