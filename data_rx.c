@@ -79,7 +79,6 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff **skb
 	struct wfx_link_entry *entry = NULL;
 	size_t hdrlen = ieee80211_hdrlen(frame->frame_control);
 	bool early_data = false;
-	bool p2p = wvif->vif && wvif->vif->p2p;
 
 	hdr->flag = 0;
 
@@ -95,7 +94,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff **skb
 		    ieee80211_is_data(frame->frame_control))
 			early_data = true;
 		entry->timestamp = jiffies;
-	} else if (p2p &&
+	} else if (wvif->vif->p2p &&
 		   ieee80211_is_action(frame->frame_control) &&
 		   (mgmt->u.action.category == WLAN_CATEGORY_PUBLIC)) {
 		pr_debug("[RX] Going to MAP&RESET link ID\n");
@@ -105,7 +104,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff **skb
 		schedule_work(&wvif->link_id_reset_work);
 	}
 
-	if (link_id && p2p &&
+	if (link_id && wvif->vif->p2p &&
 	    ieee80211_is_action(frame->frame_control) &&
 	    mgmt->u.action.category == WLAN_CATEGORY_PUBLIC) {
 		/* Link ID already exists for the ACTION frame.
