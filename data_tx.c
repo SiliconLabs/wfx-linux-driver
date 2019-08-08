@@ -569,7 +569,6 @@ static bool ieee80211_is_action_back(struct ieee80211_hdr *hdr)
 static void wfx_tx_manage_pm(struct wfx_vif *wvif, struct ieee80211_hdr *hdr,
 			     struct wfx_txpriv *txpriv, struct ieee80211_sta *sta)
 {
-	bool was_buffered = true;
 	u32 mask = ~BIT(txpriv->raw_link_id);
 
 	spin_lock_bh(&wvif->ps_state_lock);
@@ -587,11 +586,11 @@ static void wfx_tx_manage_pm(struct wfx_vif *wvif, struct ieee80211_hdr *hdr,
 	if (txpriv->raw_link_id) {
 		wvif->link_id_db[txpriv->raw_link_id - 1].timestamp = jiffies;
 		if (txpriv->tid < WFX_MAX_TID)
-			was_buffered = wvif->link_id_db[txpriv->raw_link_id - 1].buffered[txpriv->tid]++;
+			wvif->link_id_db[txpriv->raw_link_id - 1].buffered[txpriv->tid]++;
 	}
 	spin_unlock_bh(&wvif->ps_state_lock);
 
-	if (!was_buffered && sta)
+	if (sta)
 		ieee80211_sta_set_buffered(sta, txpriv->tid, true);
 }
 
