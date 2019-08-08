@@ -230,11 +230,9 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 
 	if (wvif->state == WFX_STATE_STA) {
 		seq_printf(seq, "Preamble:   %s\n",
-			   wfx_debug_preamble[wvif->association_mode.PreambleType]);
+			   wvif->vif->bss_conf.use_short_preamble ? "short" : "long");
 		seq_printf(seq, "AMPDU spcn: %d\n",
-			   wvif->association_mode.MpduStartSpacing);
-		seq_printf(seq, "Basic rate: 0x%.8X\n",
-			   le32_to_cpu(wvif->association_mode.BasicRateSet));
+			   wfx_ht_ampdu_density(&wvif->ht_info));
 		seq_printf(seq, "Bss lost:   %d beacons\n",
 			   wvif->bss_params.BssFlags.LostCountOnly);
 		seq_printf(seq, "AID:        %d\n",

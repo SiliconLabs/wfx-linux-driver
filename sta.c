@@ -1022,8 +1022,6 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 
 	wvif->disable_beacon_filter = false;
 	wfx_update_filtering(wvif);
-	memset(&wvif->association_mode, 0,
-	       sizeof(wvif->association_mode));
 	memset(&wvif->bss_params, 0, sizeof(wvif->bss_params));
 	wvif->setbssparams_done = false;
 	memset(&wvif->ht_info, 0, sizeof(wvif->ht_info));
@@ -1587,6 +1585,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 
 			if (info->assoc || info->ibss_joined) {
 				struct ieee80211_sta *sta = NULL;
+				 WsmHiMibSetAssociationMode_t association_mode = { };
 
 				if (info->dtim_period)
 					wvif->dtim_period =
@@ -1618,20 +1617,20 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 				else
 					wsm_dual_cts_protection(wdev, false, wvif->Id);
 
-				wvif->association_mode.MixedOrGreenfieldType =
+				association_mode.MixedOrGreenfieldType =
 					wfx_ht_greenfield(&wvif->ht_info);
-				wvif->association_mode.PreambtypeUse = 1;
-				wvif->association_mode.Mode = 1;
-				wvif->association_mode.Rateset = 1;
-				wvif->association_mode.Spacing = 1;
-				wvif->association_mode.PreambleType =
+				association_mode.PreambtypeUse = 1;
+				association_mode.Mode = 1;
+				association_mode.Rateset = 1;
+				association_mode.Spacing = 1;
+				association_mode.PreambleType =
 				info->use_short_preamble ?
 					WSM_PREAMBLE_SHORT :
 					WSM_PREAMBLE_LONG;
-				wvif->association_mode.BasicRateSet =
+				association_mode.BasicRateSet =
 					cpu_to_le32(wfx_rate_mask_to_wsm(wdev,
 							info->basic_rates));
-				wvif->association_mode.MpduStartSpacing =
+				association_mode.MpduStartSpacing =
 					wfx_ht_ampdu_density(&wvif->ht_info);
 
 				wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
@@ -1647,7 +1646,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 					 wvif->dtim_period,
 					 wvif->beacon_int);
 				wsm_set_association_mode(wdev,
-							 &wvif->association_mode, wvif->Id);
+							 &association_mode, wvif->Id);
 
 				if (!info->ibss_joined) {
 					wsm_keep_alive_period(wdev,
@@ -1662,8 +1661,6 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 					wfx_set_pm(wvif, &wvif->powersave_mode);
 				}
 			} else {
-				memset(&wvif->association_mode, 0,
-				       sizeof(wvif->association_mode));
 				memset(&wvif->bss_params, 0,
 				       sizeof(wvif->bss_params));
 			}

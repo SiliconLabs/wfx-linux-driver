@@ -224,7 +224,6 @@ struct wfx_vif {
 	WsmHiSetPmModeReqBody_t		powersave_mode;
 	WsmHiSetBssParamsReqBody_t	bss_params;
 	WsmHiMibSetUapsdInformation_t	uapsd_info;
-	WsmHiMibSetAssociationMode_t	association_mode;
 
 	/* spinlock/mutex */
 	struct mutex		bss_loss_lock;
