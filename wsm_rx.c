@@ -169,12 +169,6 @@ static int wsm_receive_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 	     ieee80211_is_beacon(frame->frame_control)))
 		return 0;
 
-	/* If no RSSI subscription has been made,
-	 * convert RCPI to RSSI here
-	 */
-	if (!wvif->cqm_use_rssi)
-		body->RcpiRssi = body->RcpiRssi / 2 - 110;
-
 	fctl = frame->frame_control;
 
 	sta_id = body->RxFlags.PeerStaId;
