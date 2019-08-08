@@ -148,7 +148,7 @@ static int wsm_keys_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf
 	return 0;
 }
 
-static int wsm_receive_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf, struct sk_buff **skb_p)
+static int wsm_receive_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf, struct sk_buff *skb)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 	WsmHiRxIndBody_t *body = buf;
@@ -157,8 +157,8 @@ static int wsm_receive_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 		dev_warn(wdev->dev, "ignore rx data for non existant vif %d\n", hdr->interface);
 		return 0;
 	}
-	skb_pull(*skb_p, sizeof(struct wmsg) + sizeof(WsmHiRxIndBody_t));
-	wfx_rx_cb(wvif, body, skb_p);
+	skb_pull(skb, sizeof(struct wmsg) + sizeof(WsmHiRxIndBody_t));
+	wfx_rx_cb(wvif, body, skb);
 
 	return 0;
 }
@@ -325,25 +325,33 @@ static const struct {
 	//{ WSM_HI_RX_IND_ID,            wsm_receive_indication },
 };
 
-int wsm_handle_rx(struct wfx_dev *wdev, struct wmsg *wsm, struct sk_buff **skb_p)
+void wsm_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	int i;
+	struct wmsg *wsm = (struct wmsg *) skb->data;
 	int wsm_id = wsm->id;
 
-	if (wsm_id == WSM_HI_RX_IND_ID)
-		return wsm_receive_indication(wdev, wsm, wsm->body, skb_p);
-	// Note: mutex_is_lock cause an implicit memry barrier that protect buf_send
-	if (mutex_is_locked(&wdev->wsm_cmd.lock) && wdev->wsm_cmd.buf_send && wdev->wsm_cmd.buf_send->id == wsm_id)
-		return wsm_generic_confirm(wdev, wsm, wsm->body);
-	for (i = 0; i < ARRAY_SIZE(wsm_handlers); i++)
+	if (wsm_id == WSM_HI_RX_IND_ID) {
+		// wsm_receive_indication take care of skb lifetime
+		wsm_receive_indication(wdev, wsm, wsm->body, skb);
+		return;
+	}
+	// Note: mutex_is_lock cause an implicit memory barrier that protect buf_send
+	if (mutex_is_locked(&wdev->wsm_cmd.lock)
+	    && wdev->wsm_cmd.buf_send && wdev->wsm_cmd.buf_send->id == wsm_id) {
+		wsm_generic_confirm(wdev, wsm, wsm->body);
+		goto free;
+	}
+	for (i = 0; i < ARRAY_SIZE(wsm_handlers); i++) {
 		if (wsm_handlers[i].msg_id == wsm_id) {
 			if (wsm_handlers[i].handler)
-				return wsm_handlers[i].handler(wdev, wsm, wsm->body);
-			else
-				return 0;
+				wsm_handlers[i].handler(wdev, wsm, wsm->body);
+			goto free;
 		}
+	}
 	dev_err(wdev->dev, "Unsupported WSM ID %02x\n", wsm_id);
-	return -EIO;
+free:
+	dev_kfree_skb(skb);
 }
 
 void wsm_tx_lock(struct wfx_dev *wdev)

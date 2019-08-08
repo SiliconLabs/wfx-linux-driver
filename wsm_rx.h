@@ -17,7 +17,7 @@ struct wfx_vif;
 
 int wfx_unmap_link(struct wfx_vif *wvif, int link_id);
 
-int wsm_handle_rx(struct wfx_dev *wdev, struct wmsg *wsm, struct sk_buff **skb_p);
+void wsm_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb);
 struct wmsg *wsm_get_tx(struct wfx_dev *wdev);
 
 void wsm_tx_lock(struct wfx_dev *wdev);

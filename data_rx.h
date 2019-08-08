@@ -13,6 +13,6 @@
 struct wfx_vif;
 struct sk_buff;
 
-void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff **skb_p);
+void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb);
 
 #endif /* WFX_DATA_RX_H */

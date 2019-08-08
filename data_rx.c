@@ -69,10 +69,9 @@ done:
 	return drop;
 }
 
-void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff **skb_p)
+void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 {
 	int link_id = arg->RxFlags.PeerStaId;
-	struct sk_buff *skb = *skb_p;
 	struct ieee80211_rx_status *hdr = IEEE80211_SKB_RXCB(skb);
 	struct ieee80211_hdr *frame = (struct ieee80211_hdr *) skb->data;
 	struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *) skb->data;
@@ -223,7 +222,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff **skb
 
 	if (ieee80211_is_action(frame->frame_control) && arg->RxFlags.MatchUcAddr) {
 		if (wfx_handle_action_rx(wvif->wdev, skb))
-			return;
+			goto drop;
 	} else if (ieee80211_is_beacon(frame->frame_control) &&
 		   !arg->Status && wvif->vif &&
 		   ether_addr_equal(ieee80211_get_SA(frame), wvif->vif->bss_conf.bssid)) {
@@ -263,12 +262,12 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff **skb
 	} else {
 		ieee80211_rx_irqsafe(wvif->wdev->hw, skb);
 	}
-	*skb_p = NULL;
 
 	return;
 
 drop:
 	/* TODO: update failure counters */
+	dev_kfree_skb(skb);
 	return;
 }
 
