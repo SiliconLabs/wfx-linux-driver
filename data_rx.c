@@ -69,6 +69,56 @@ done:
 	return drop;
 }
 
+static int wfx_drop_encrypt_data(struct wfx_dev *wdev, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
+{
+	struct ieee80211_hdr *frame = (struct ieee80211_hdr *) skb->data;
+	size_t hdrlen = ieee80211_hdrlen(frame->frame_control);
+	size_t iv_len, icv_len;
+
+	/* Oops... There is no fast way to ask mac80211 about
+	 * IV/ICV lengths. Even defineas are not exposed.
+	 */
+	switch (arg->RxFlags.Encryp) {
+	case WSM_RI_FLAGS_WEP_ENCRYPTED:
+		iv_len = 4 /* WEP_IV_LEN */;
+		icv_len = 4 /* WEP_ICV_LEN */;
+		break;
+	case WSM_RI_FLAGS_TKIP_ENCRYPTED:
+		iv_len = 8 /* TKIP_IV_LEN */;
+		icv_len = 4 /* TKIP_ICV_LEN */
+			+ 8 /*MICHAEL_MIC_LEN*/;
+		break;
+	case WSM_RI_FLAGS_AES_ENCRYPTED:
+		iv_len = 8 /* CCMP_HDR_LEN */;
+		icv_len = 8 /* CCMP_MIC_LEN */;
+		break;
+	case WSM_RI_FLAGS_WAPI_ENCRYPTED:
+		iv_len = 18 /* WAPI_HDR_LEN */;
+		icv_len = 16 /* WAPI_MIC_LEN */;
+		break;
+	default:
+		dev_err(wdev->dev, "Unknown encryption type %d\n",
+			 arg->RxFlags.Encryp);
+		return -EIO;
+	}
+
+	/* Firmware strips ICV in case of MIC failure. */
+	if (arg->Status == WSM_STATUS_MICFAILURE)
+		icv_len = 0;
+
+	if (skb->len < hdrlen + iv_len + icv_len) {
+		dev_warn(wdev->dev, "Malformed SDU rx'ed. Size is lesser than crypto headers.\n");
+		return -EIO;
+	}
+
+	/* Remove IV, ICV and MIC */
+	skb_trim(skb, skb->len - icv_len);
+	memmove(skb->data + iv_len, skb->data, hdrlen);
+	skb_pull(skb, iv_len);
+	return 0;
+
+}
+
 void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 {
 	int link_id = arg->RxFlags.PeerStaId;
@@ -76,7 +126,6 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 	struct ieee80211_hdr *frame = (struct ieee80211_hdr *) skb->data;
 	struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *) skb->data;
 	struct wfx_link_entry *entry = NULL;
-	size_t hdrlen = ieee80211_hdrlen(frame->frame_control);
 	bool early_data = false;
 
 	memset(hdr, 0, sizeof(*hdr));
@@ -155,65 +204,17 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 		hdr->rate_idx = arg->RxedRate;
 	}
 
-	/* In 802.11n, short guard interval "Short GI" is
-	 * introduced while the default value is 400ns.
-	 * Name            : RX_FLAG_SHORT_GI
-	 * Type         : Boolean, default : 1
-	 * Default value: 400ns.
-	 */
-	/*hdr->flag |= RX_FLAG_SHORT_GI; */
-
 	hdr->signal = arg->RcpiRssi;
 	if (!wvif->cqm_use_rssi)
 		hdr->signal = hdr->signal / 2 - 110;
 	hdr->antenna = 0;
 
 	if (arg->RxFlags.Encryp) {
-		size_t iv_len = 0, icv_len = 0;
-
+		if (wfx_drop_encrypt_data(wvif->wdev, arg, skb))
+			goto drop;
 		hdr->flag |= RX_FLAG_DECRYPTED | RX_FLAG_IV_STRIPPED;
-
-		/* Oops... There is no fast way to ask mac80211 about
-		 * IV/ICV lengths. Even defineas are not exposed.
-		 */
-		switch (arg->RxFlags.Encryp) {
-		case WSM_RI_FLAGS_WEP_ENCRYPTED:
-			iv_len = 4 /* WEP_IV_LEN */;
-			icv_len = 4 /* WEP_ICV_LEN */;
-			break;
-		case WSM_RI_FLAGS_TKIP_ENCRYPTED:
-			iv_len = 8 /* TKIP_IV_LEN */;
-			icv_len = 4 /* TKIP_ICV_LEN */
-				+ 8 /*MICHAEL_MIC_LEN*/;
+		if (arg->RxFlags.Encryp == WSM_RI_FLAGS_TKIP_ENCRYPTED)
 			hdr->flag |= RX_FLAG_MMIC_STRIPPED;
-			break;
-		case WSM_RI_FLAGS_AES_ENCRYPTED:
-			iv_len = 8 /* CCMP_HDR_LEN */;
-			icv_len = 8 /* CCMP_MIC_LEN */;
-			break;
-		case WSM_RI_FLAGS_WAPI_ENCRYPTED:
-			iv_len = 18 /* WAPI_HDR_LEN */;
-			icv_len = 16 /* WAPI_MIC_LEN */;
-			break;
-		default:
-			dev_err(wvif->wdev->dev, "Unknown encryption type %d\n",
-				 arg->RxFlags.Encryp);
-			goto drop;
-		}
-
-		/* Firmware strips ICV in case of MIC failure. */
-		if (arg->Status == WSM_STATUS_MICFAILURE)
-			icv_len = 0;
-
-		if (skb->len < hdrlen + iv_len + icv_len) {
-			dev_warn(wvif->wdev->dev, "Malformed SDU rx'ed. Size is lesser than crypto headers.\n");
-			goto drop;
-		}
-
-		/* Remove IV, ICV and MIC */
-		skb_trim(skb, skb->len - icv_len);
-		memmove(skb->data + iv_len, skb->data, hdrlen);
-		skb_pull(skb, iv_len);
 	}
 
 	wfx_debug_rxed(wvif->wdev);
