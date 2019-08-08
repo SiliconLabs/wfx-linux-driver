@@ -80,7 +80,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff **skb
 	size_t hdrlen = ieee80211_hdrlen(frame->frame_control);
 	bool early_data = false;
 
-	hdr->flag = 0;
+	memset(hdr, 0, sizeof(*hdr));
 
 	// FIXME: Why do we drop these frames?
 	if (!arg->RcpiRssi &&
