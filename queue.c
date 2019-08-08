@@ -43,13 +43,6 @@ void wfx_tx_queues_unlock(struct wfx_dev *wdev)
 	}
 }
 
-static u32 wfx_queue_mk_packet_id(u8 queue_generation, u8 queue_id, u8 item_id)
-{
-	return ((u32)item_id << 0) |
-		((u32)queue_id << 16) |
-		((u32)queue_generation << 24);
-}
-
 /* If successful, LOCKS the TX queue! */
 void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif)
 {
@@ -96,10 +89,8 @@ int wfx_tx_queue_clear(struct wfx_dev *wdev, struct wfx_queue *queue)
 
 	skb_queue_head_init(&gc_list);
 	spin_lock_bh(&queue->queue.lock);
-	queue->generation++;
 	while ((item = __skb_dequeue(&queue->queue)) != NULL)
 		skb_queue_head(&gc_list, item);
-	queue->counter = 0;
 
 	spin_lock_bh(&stats->pending.lock);
 	for (i = 0; i < ARRAY_SIZE(stats->link_map_cache); ++i) {
@@ -165,13 +156,9 @@ void wfx_tx_queue_put(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_b
 {
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
-	WsmHiTxReqBody_t *wsm = wfx_skb_txreq(skb);
 
 	WARN(txpriv->link_id >= ARRAY_SIZE(stats->link_map_cache), "Invalid link_id value");
 	spin_lock_bh(&queue->queue.lock);
-	wsm->PacketId = wfx_queue_mk_packet_id(queue->generation,
-			queue->queue_id,
-			queue->counter++);
 	__skb_queue_tail(&queue->queue, skb);
 
 	++queue->link_map_cache[txpriv->link_id];

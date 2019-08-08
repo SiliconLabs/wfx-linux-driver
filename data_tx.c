@@ -726,6 +726,7 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 
 	// Fill tx request
 	wsm = (WsmHiTxReqBody_t *) wmsg->body;
+	wsm->PacketId = queue_id << 16 | tx_info->ack_frame_id;
 	wsm->DataFlags.FcOffset = offset;
 	wsm->QueueId.PeerStaId = txpriv->raw_link_id;
 	// Queue index are inverted between WSM and Linux

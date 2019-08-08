@@ -25,8 +25,6 @@ struct wfx_queue {
 	int			tx_locked_cnt;
 	int			link_map_cache[WFX_LINK_ID_MAX];
 	u8			queue_id;
-	u8			counter;
-	u8			generation;
 };
 
 struct wfx_queue_stats {
