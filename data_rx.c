@@ -15,17 +15,6 @@
 #include "debug.h"
 #include "traces.h"
 
-static int wfx_handle_action_rx(struct wfx_dev *wdev, struct sk_buff *skb)
-{
-	struct ieee80211_mgmt *mgmt = (void *)skb->data;
-
-	/* Filter block ACK negotiation: fully controlled by firmware */
-	if (mgmt->u.action.category == WLAN_CATEGORY_BACK)
-		return 1;
-
-	return 0;
-}
-
 static int wfx_handle_pspoll(struct wfx_vif *wvif, struct sk_buff *skb)
 {
 	struct ieee80211_sta *sta;
@@ -138,10 +127,9 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 
 	if (link_id && link_id <= WFX_MAX_STA_IN_AP_MODE) {
 		entry = &wvif->link_id_db[link_id - 1];
-		if (entry->status == WFX_LINK_SOFT &&
-		    ieee80211_is_data(frame->frame_control))
-			early_data = true;
 		entry->timestamp = jiffies;
+		if (entry->status == WFX_LINK_SOFT && ieee80211_is_data(frame->frame_control))
+			early_data = true;
 	} else if (wvif->vif->p2p &&
 		   ieee80211_is_action(frame->frame_control) &&
 		   (mgmt->u.action.category == WLAN_CATEGORY_PUBLIC)) {
@@ -171,8 +159,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 			pr_debug("[RX] No key found.\n");
 			goto drop;
 		} else {
-			pr_debug("[RX] Receive failure: %d.\n",
-				 arg->Status);
+			pr_debug("[RX] Receive failure: %d.\n", arg->Status);
 			goto drop;
 		}
 	}
@@ -187,9 +174,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 			goto drop;
 
 	hdr->band = NL80211_BAND_2GHZ;
-	hdr->freq = ieee80211_channel_to_frequency(
-		arg->ChannelNumber,
-			hdr->band);
+	hdr->freq = ieee80211_channel_to_frequency(arg->ChannelNumber, hdr->band);
 
 	if (arg->RxedRate >= 14) {
 #if (KERNEL_VERSION(4, 12, 0) > LINUX_VERSION_CODE)
@@ -221,21 +206,21 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 	if (arg->RxFlags.InAggr)
 		wfx_debug_rxed_agg(wvif->wdev);
 
-	if (ieee80211_is_action(frame->frame_control) && arg->RxFlags.MatchUcAddr) {
-		if (wfx_handle_action_rx(wvif->wdev, skb))
-			goto drop;
-	} else if (ieee80211_is_beacon(frame->frame_control) &&
-		   !arg->Status && wvif->vif &&
-		   ether_addr_equal(ieee80211_get_SA(frame), wvif->vif->bss_conf.bssid)) {
+	/* Filter block ACK negotiation: fully controlled by firmware */
+	if (ieee80211_is_action(frame->frame_control)
+	    && arg->RxFlags.MatchUcAddr
+	    && mgmt->u.action.category == WLAN_CATEGORY_BACK)
+		goto drop;
+	if (ieee80211_is_beacon(frame->frame_control)
+	    && !arg->Status && wvif->vif
+	    && ether_addr_equal(ieee80211_get_SA(frame), wvif->vif->bss_conf.bssid)) {
 		const u8 *tim_ie;
-		u8 *ies = ((struct ieee80211_mgmt *)
-			  (skb->data))->u.beacon.variable;
-		size_t ies_len = skb->len - (ies - (u8 *)(skb->data));
+		u8 *ies = mgmt->u.beacon.variable;
+		size_t ies_len = skb->len - (ies - skb->data);
 
 		tim_ie = cfg80211_find_ie(WLAN_EID_TIM, ies, ies_len);
 		if (tim_ie) {
-			struct ieee80211_tim_ie *tim =
-				(struct ieee80211_tim_ie *)&tim_ie[2];
+			struct ieee80211_tim_ie *tim = (struct ieee80211_tim_ie *) &tim_ie[2];
 
 			if (wvif->dtim_period != tim->dtim_period) {
 				wvif->dtim_period = tim->dtim_period;
@@ -245,8 +230,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 
 		/* Disable beacon filter once we're associated... */
 		if (wvif->disable_beacon_filter &&
-		    (wvif->vif->bss_conf.assoc ||
-		     wvif->vif->bss_conf.ibss_joined)) {
+		    (wvif->vif->bss_conf.assoc || wvif->vif->bss_conf.ibss_joined)) {
 			wvif->disable_beacon_filter = false;
 			schedule_work(&wvif->update_filtering_work);
 		}
