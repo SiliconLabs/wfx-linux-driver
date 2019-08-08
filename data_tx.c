@@ -867,30 +867,25 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 }
 
 static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
-				   int link_id, int tid)
+				   struct wfx_txpriv *txpriv)
 {
 	struct ieee80211_sta *sta;
-	struct ieee80211_hdr *hdr;
-	u8 still_buffered = 0;
+	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
 	u8 *buffered;
 
-	if (link_id && tid < WFX_MAX_TID) {
-		buffered = wvif->link_id_db
-				[link_id - 1].buffered;
+	if (txpriv->raw_link_id && txpriv->tid < WFX_MAX_TID) {
+		buffered = wvif->link_id_db[txpriv->raw_link_id - 1].buffered;
 
 		spin_lock_bh(&wvif->ps_state_lock);
-		if (!buffered[tid])
-			dev_err(wvif->wdev->dev, "wfx_notify_buffered_tx: inconsistent tid (%d)\n", tid);
-		else
-			still_buffered = --buffered[tid];
+		WARN(!buffered[txpriv->tid], "inconsistent notification");
+		buffered[txpriv->tid]--;
 		spin_unlock_bh(&wvif->ps_state_lock);
 
-		if (!still_buffered && tid < WFX_MAX_TID) {
-			hdr = (struct ieee80211_hdr *)skb->data;
+		if (!buffered[txpriv->tid]) {
 			rcu_read_lock();
 			sta = ieee80211_find_sta(wvif->vif, hdr->addr1);
 			if (sta)
-				ieee80211_sta_set_buffered(sta, tid, false);
+				ieee80211_sta_set_buffered(sta, txpriv->tid, false);
 			rcu_read_unlock();
 		}
 	}
@@ -907,8 +902,7 @@ void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb)
 	WARN_ON(!wvif);
 	skb_pull(skb, offset);
 	if (txpriv->rate_id != WFX_INVALID_RATE_ID) {
-		wfx_notify_buffered_tx(wvif, skb,
-					  txpriv->raw_link_id, txpriv->tid);
+		wfx_notify_buffered_tx(wvif, skb, txpriv);
 		tx_policy_put(wvif, txpriv->rate_id);
 	}
 	ieee80211_tx_status(wdev->hw, skb);
