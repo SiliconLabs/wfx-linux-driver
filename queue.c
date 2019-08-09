@@ -124,7 +124,7 @@ int wfx_queue_clear(struct wfx_queue *queue)
 	skb_queue_head_init(&gc_list);
 	spin_lock_bh(&queue->lock);
 	queue->generation++;
-	while ((item = skb_dequeue(&queue->queue)) != NULL)
+	while ((item = __skb_dequeue(&queue->queue)) != NULL)
 		skb_queue_head(&gc_list, item);
 	queue->counter = 0;
 
@@ -189,7 +189,7 @@ int wfx_queue_put(struct wfx_queue *queue,
 	wsm->PacketId = wfx_queue_mk_packet_id(queue->generation,
 			queue->queue_id,
 			queue->counter++);
-	skb_queue_tail(&queue->queue, skb);
+	__skb_queue_tail(&queue->queue, skb);
 
 	++queue->link_map_cache[txpriv->link_id];
 
@@ -220,11 +220,11 @@ struct sk_buff *wfx_queue_pop(struct wfx_queue *queue, u32 link_id_map)
 	if (skb) {
 		txpriv = wfx_skb_txpriv(skb);
 		txpriv->xmit_timestamp = ktime_get();
-		skb_unlink(skb, &queue->queue);
+		__skb_unlink(skb, &queue->queue);
 		--queue->link_map_cache[txpriv->link_id];
 
 		spin_lock_bh(&stats->lock);
-		skb_queue_tail(&stats->pending, skb);
+		__skb_queue_tail(&stats->pending, skb);
 		if (!--stats->link_map_cache[txpriv->link_id])
 			wakeup_stats = true;
 		spin_unlock_bh(&stats->lock);
@@ -245,9 +245,9 @@ int wfx_queue_requeue(struct wfx_queue *queue, struct sk_buff *skb)
 
 	spin_lock_bh(&stats->lock);
 	++stats->link_map_cache[txpriv->link_id];
-	skb_unlink(skb, &stats->pending);
+	__skb_unlink(skb, &stats->pending);
 	spin_unlock_bh(&stats->lock);
-	skb_queue_tail(&queue->queue, skb);
+	__skb_queue_tail(&queue->queue, skb);
 	spin_unlock_bh(&queue->lock);
 	return 0;
 }
@@ -257,7 +257,7 @@ int wfx_queue_remove(struct wfx_queue *queue, struct sk_buff *skb)
 	struct wfx_queue_stats *stats = queue->stats;
 
 	spin_lock_bh(&stats->lock);
-	skb_unlink(skb, &stats->pending);
+	__skb_unlink(skb, &stats->pending);
 	spin_unlock_bh(&stats->lock);
 	wfx_skb_dtor(stats->wdev, skb);
 
