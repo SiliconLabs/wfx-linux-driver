@@ -22,7 +22,6 @@ struct wfx_txpriv {
 	u8 link_id;
 	u8 raw_link_id;
 	u8 tid;
-	u8 rate_id;
 } __packed;
 
 struct tx_policy {

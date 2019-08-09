@@ -697,7 +697,6 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 	// Fill txpriv
 	txpriv = (struct wfx_txpriv *) tx_info->status.status_driver_data;
 	txpriv->tid = wfx_tx_get_tid(hdr);
-	txpriv->rate_id = wfx_tx_get_rate_id(wvif, tx_info);
 	txpriv->raw_link_id = wfx_tx_get_raw_link_id(wvif, sta, hdr);
 	txpriv->link_id = txpriv->raw_link_id;
 	if (ieee80211_has_protected(hdr->frame_control))
@@ -732,7 +731,7 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 	// Queue index are inverted between WSM and Linux
 	wsm->QueueId.QueueId = 3 - queue_id;
 	wsm->HtTxParameters = wfx_tx_get_tx_parms(wvif->wdev, tx_info);
-	wsm->TxFlags.RetryPolicyIndex = txpriv->rate_id;
+	wsm->TxFlags.RetryPolicyIndex = wfx_tx_get_rate_id(wvif, tx_info);
 	wsm->MaxTxRate = wfx_get_hw_rate(wvif->wdev, &tx_info->driver_rates[0]);
 
 	// Auxilliary operations
@@ -902,7 +901,7 @@ void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb)
 	WARN_ON(!wvif);
 	skb_pull(skb, offset);
 	wfx_notify_buffered_tx(wvif, skb, txpriv);
-	tx_policy_put(wvif, txpriv->rate_id);
+	tx_policy_put(wvif, wsm->TxFlags.RetryPolicyIndex);
 	ieee80211_tx_status(wdev->hw, skb);
 }
 
