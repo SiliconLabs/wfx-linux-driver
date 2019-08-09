@@ -894,17 +894,15 @@ static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
 void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	struct wmsg *hdr = (struct wmsg *) skb->data;
-	WsmHiTxReqBody_t *tx_req = (WsmHiTxReqBody_t *) hdr->body;
+	WsmHiTxReqBody_t *wsm = (WsmHiTxReqBody_t *) hdr->body;
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
-	unsigned int offset = sizeof(WsmHiTxReqBody_t) + sizeof(struct wmsg) + tx_req->DataFlags.FcOffset;
+	unsigned int offset = sizeof(WsmHiTxReqBody_t) + sizeof(struct wmsg) + wsm->DataFlags.FcOffset;
 
 	WARN_ON(!wvif);
 	skb_pull(skb, offset);
-	if (txpriv->rate_id != WFX_INVALID_RATE_ID) {
-		wfx_notify_buffered_tx(wvif, skb, txpriv);
-		tx_policy_put(wvif, txpriv->rate_id);
-	}
+	wfx_notify_buffered_tx(wvif, skb, txpriv);
+	tx_policy_put(wvif, txpriv->rate_id);
 	ieee80211_tx_status(wdev->hw, skb);
 }
 
