@@ -950,6 +950,10 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 				tx->status.rates[i].flags |= ht_flags;
 		}
 
+		if (arg->TxedRate != wfx_get_tx_rate(wvif, &tx->status.rates[i])->hw_value)
+			dev_warn(wvif->wdev->dev, "inconsistent tx_info rates: %d != %d\n",
+					arg->TxedRate, wfx_get_tx_rate(wvif, &tx->status.rates[i])->hw_value);
+
 		for (++i; i < IEEE80211_TX_MAX_RATES; ++i) {
 			tx->status.rates[i].count = 0;
 			tx->status.rates[i].idx = -1;
