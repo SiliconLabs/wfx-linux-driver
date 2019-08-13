@@ -278,7 +278,7 @@ static int wfx_spi_probe(struct spi_device *func)
 		gpiod_set_value(bus->gpio_reset, 0);
 		udelay(100);
 		gpiod_set_value(bus->gpio_reset, 1);
-		udelay(1000);
+		udelay(2000);
 	}
 
 	ret = devm_request_irq(&func->dev, func->irq, wfx_spi_irq_handler,
