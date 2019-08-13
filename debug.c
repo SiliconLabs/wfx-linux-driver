@@ -525,6 +525,93 @@ static const struct file_operations wfx_burn_sec_link_key_fops = {
 	.write = wfx_burn_sec_link_key_write,
 };
 
+struct dbgfs_hif_msg {
+	struct wfx_dev *wdev;
+	struct completion complete;
+	u8 reply[1024];
+	int ret;
+};
+
+static ssize_t wfx_send_hif_msg_write(struct file *file, const char __user *user_buf,
+				      size_t count, loff_t *ppos)
+{
+	struct dbgfs_hif_msg *context = file->private_data;
+	struct wfx_dev *wdev = context->wdev;
+	struct wmsg *request;
+
+	if (completion_done(&context->complete)) {
+		dev_dbg(wdev->dev, "read previous result before start a new one\n");
+		return -EBUSY;
+	}
+	if (count < sizeof(struct wmsg))
+		return -EINVAL;
+
+	// wfx_cmd_send() chekc that reply buffer is wide enough, but do not
+	// return precise length read. User have to know how many bytes should
+	// be read. Filling reply buffer with a memory pattern may help user.
+	memset(context->reply, sizeof(context->reply), 0xFF);
+	request = memdup_user(user_buf, count);
+	if (IS_ERR(request))
+		return PTR_ERR(request);
+	if (request->len != count) {
+		kfree(request);
+		return -EINVAL;
+	}
+	context->ret = wfx_cmd_send(wdev, request, context->reply, sizeof(context->reply), false);
+
+	kfree(request);
+	complete(&context->complete);
+	return count;
+}
+
+static ssize_t wfx_send_hif_msg_read(struct file *file, char __user *user_buf,
+				     size_t count, loff_t *ppos)
+{
+	struct dbgfs_hif_msg *context = file->private_data;
+	int ret;
+
+	if (count > sizeof(context->reply))
+		return -EINVAL;
+	ret = wait_for_completion_interruptible(&context->complete);
+	if (ret)
+		return ret;
+	if (context->ret < 0)
+		return context->ret;
+	// Be carefull, write() is waiting for a full message while read()
+	// only return a payload
+	ret = copy_to_user(user_buf, context->reply, count);
+	if (ret)
+		return ret;
+
+	return count;
+}
+
+static int wfx_send_hif_msg_open(struct inode *inode, struct file *file)
+{
+	struct dbgfs_hif_msg *context = kzalloc(sizeof(*context), GFP_KERNEL);
+
+	if (!context)
+		return -ENOMEM;
+	context->wdev = inode->i_private;
+	init_completion(&context->complete);
+	file->private_data = context;
+	return 0;
+}
+
+static int wfx_send_hif_msg_release(struct inode *inode, struct file *file)
+{
+	struct dbgfs_hif_msg *context = file->private_data;
+
+	kfree(context);
+	return 0;
+}
+
+static const struct file_operations wfx_send_hif_msg_fops = {
+	.open = wfx_send_hif_msg_open,
+	.release = wfx_send_hif_msg_release,
+	.write = wfx_send_hif_msg_write,
+	.read = wfx_send_hif_msg_read,
+};
 
 int wfx_debug_init(struct wfx_dev *wdev)
 {
@@ -540,6 +627,7 @@ int wfx_debug_init(struct wfx_dev *wdev)
 	debugfs_create_file("rx_stats", 0444, d, wdev, &wfx_rx_stats_fops);
 	debugfs_create_file("send_pds", 0200, d, wdev, &wfx_send_pds_fops);
 	debugfs_create_file("burn_sec_link_key", 0200, d, wdev, &wfx_burn_sec_link_key_fops);
+	debugfs_create_file("send_hif_msg", 0600, d, wdev, &wfx_send_hif_msg_fops);
 
 	return 0;
 }
