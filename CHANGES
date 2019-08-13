@@ -1,3 +1,10 @@
+Changes in 2.2.4
+----------------
+
+  * Fix potential reset failure. Increase delay after reset to 2ms.
+  * Expose send_hif_msg in debugfs. This debug feature allow to send any HIF
+    request to chip.
+
 Changes in 2.2.3
 ----------------
 
