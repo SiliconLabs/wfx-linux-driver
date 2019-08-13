@@ -948,6 +948,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 		for (i = 0; i < IEEE80211_TX_MAX_RATES; i++) {
 			if (!tx_count) {
 				tx->status.rates[i].count = 0;
+				tx->status.rates[i].idx = -1;
 			} else if (tx_count > tx->status.rates[i].count) {
 				tx_count -= tx->status.rates[i].count;
 			} else {
