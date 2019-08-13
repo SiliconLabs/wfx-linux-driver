@@ -936,13 +936,9 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 		memset(tx->pad, 0, sizeof(tx->pad));
 		if (arg->Status) {
 			tx->flags &= ~IEEE80211_TX_STAT_ACK;
-			tx->flags &= ~IEEE80211_TX_STAT_NOACK_TRANSMITTED;
 		} else {
 			_trace_tx_stats(arg, wfx_queue_get_pkt_us_delay(queue, arg->PacketId));
-			if (tx->flags & IEEE80211_TX_CTL_NO_ACK)
-				tx->flags |= IEEE80211_TX_STAT_NOACK_TRANSMITTED;
-			else
-				tx->flags |= IEEE80211_TX_STAT_ACK;
+			tx->flags |= IEEE80211_TX_STAT_ACK;
 		}
 		if (arg->Status && !arg->AckFailures)
 			tx_count = 0;
