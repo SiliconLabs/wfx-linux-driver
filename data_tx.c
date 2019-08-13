@@ -237,34 +237,6 @@ static int tx_policy_release(struct tx_policy_cache *cache,
 	return ret;
 }
 
-void tx_policy_clean(struct wfx_vif *wvif)
-{
-	int idx, locked;
-	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
-	struct tx_policy_cache_entry *entry;
-
-	wfx_tx_queues_lock(wvif->wdev);
-	spin_lock_bh(&cache->lock);
-	locked = list_empty(&cache->free);
-
-	for (idx = 0; idx < WSM_MIB_NUM_TX_RATE_RETRY_POLICIES; idx++) {
-		entry = &cache->cache[idx];
-		/* Policy usage count should be 0 at this time as all queues
-		   should be empty
-		 */
-		if (WARN_ON(entry->policy.usage_count)) {
-			entry->policy.usage_count = 0;
-			list_move(&entry->link, &cache->free);
-		}
-		memset(&entry->policy, 0, sizeof(entry->policy));
-	}
-	if (locked)
-		wfx_tx_queues_unlock(wvif->wdev);
-
-	wfx_tx_queues_unlock(wvif->wdev);
-	spin_unlock_bh(&cache->lock);
-}
-
 void tx_policy_init(struct wfx_vif *wvif)
 {
 	struct tx_policy_cache *cache = &wvif->tx_policy_cache;

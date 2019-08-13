@@ -408,7 +408,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	wsm_tx_unlock(wdev);
 
 	wsm_set_macaddr(wdev, NULL, wvif->Id);
-	tx_policy_clean(wvif);
 
 	cancel_delayed_work_sync(&wvif->scan.timeout);
 

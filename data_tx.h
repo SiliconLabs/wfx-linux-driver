@@ -46,7 +46,6 @@ struct wfx_ht_info {
 };
 
 void tx_policy_init(struct wfx_vif *wvif);
-void tx_policy_clean(struct wfx_vif *wvif);
 void tx_policy_upload_work(struct work_struct *work);
 
 void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
