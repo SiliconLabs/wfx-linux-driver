@@ -934,9 +934,7 @@ void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
 		// Keep tx->control.rates
 		memset(tx->rate_driver_data, 0, sizeof(tx->rate_driver_data));
 		memset(tx->pad, 0, sizeof(tx->pad));
-		if (arg->Status) {
-			tx->flags &= ~IEEE80211_TX_STAT_ACK;
-		} else {
+		if (!arg->Status) {
 			_trace_tx_stats(arg, wfx_queue_get_pkt_us_delay(queue, arg->PacketId));
 			tx->flags |= IEEE80211_TX_STAT_ACK;
 		}
