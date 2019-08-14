@@ -500,17 +500,16 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 	struct ieee80211_conf *conf = &hw->conf;
 	struct wfx_vif *wvif;
 
-	mutex_lock(&wdev->conf_mutex);
 
 	// FIXME: Interface id should not been hardcoded
 	wvif = wdev_to_wvif(wdev, 0);
 	if (!wvif) {
 		WARN(1, "Interface 0 does not exist anymore");
-		mutex_unlock(&wdev->conf_mutex);
 		return 0;
 	}
 
 	down(&wvif->scan.lock);
+	mutex_lock(&wdev->conf_mutex);
 	if (changed & IEEE80211_CONF_CHANGE_POWER) {
 		wdev->output_power = conf->power_level;
 		pr_debug("[STA] TX power: %d\n", wdev->output_power);
