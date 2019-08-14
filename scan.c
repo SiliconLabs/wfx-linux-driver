@@ -98,7 +98,6 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	if (req->ie_len)
 		memcpy(skb_put(skb, req->ie_len), req->ie, req->ie_len);
 
-	/* will be unlocked in wfx_scan_work() */
 	mutex_lock(&wdev->conf_mutex);
 
 	p = (WsmHiMibTemplateFrame_t *)skb_push(skb, 4);
@@ -154,8 +153,8 @@ void wfx_scan_work(struct work_struct *work)
 			  wvif->scan.begin != wvif->scan.end);
 	int i;
 
-	mutex_lock(&wvif->wdev->conf_mutex);
 	down(&wvif->scan.lock);
+	mutex_lock(&wvif->wdev->conf_mutex);
 
 	if (first_run) {
 		if (wvif->state == WFX_STATE_STA &&
@@ -258,6 +257,7 @@ void wfx_scan_work(struct work_struct *work)
 fail:
 	wvif->scan.curr = wvif->scan.end;
 	mutex_unlock(&wvif->wdev->conf_mutex);
+	up(&wvif->scan.lock);
 	schedule_work(&wvif->scan.work);
 }
 
