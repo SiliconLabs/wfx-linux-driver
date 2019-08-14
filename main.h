@@ -21,7 +21,7 @@ struct wfx_platform_data {
 	/* Keyset and ".sec" extention will appended to this string */
 	const char *file_fw;
 	const char *file_pds;
-	unsigned char sec_link_key[API_KEY_VALUE_SIZE];
+	unsigned char slk_key[API_KEY_VALUE_SIZE];
 	struct gpio_desc *gpio_wakeup;
 	bool support_ldpc;
 	/*

@@ -114,7 +114,7 @@ static int wfx_sl_get_pubkey_mac(struct wfx_dev *wdev, uint8_t *pubkey, uint8_t 
 {
 	return mbedtls_md_hmac(
 			mbedtls_md_info_from_type(MBEDTLS_MD_SHA512),
-			wdev->pdata.sec_link_key, sizeof(wdev->pdata.sec_link_key),
+			wdev->pdata.slk_key, sizeof(wdev->pdata.slk_key),
 			pubkey, API_HOST_PUB_KEY_SIZE,
 			mac);
 }
@@ -235,7 +235,7 @@ int wfx_sl_init(struct wfx_dev *wdev)
 
 	INIT_WORK(&wdev->sl.key_renew_work, wfx_sl_renew_key);
 	init_completion(&wdev->sl.key_renew_done);
-	if (!memzcmp(wdev->pdata.sec_link_key, sizeof(wdev->pdata.sec_link_key)))
+	if (!memzcmp(wdev->pdata.slk_key, sizeof(wdev->pdata.slk_key)))
 		return -EIO;
 	if (wfx_api_older_than(wdev, 2, 0)) {
 		dev_info(wdev->dev, "this driver only support secure link API >= 2.0\n");
@@ -247,7 +247,7 @@ int wfx_sl_init(struct wfx_dev *wdev)
 			return -EIO;
 		wfx_sl_init_cfg(wdev);
 	} else if (link_mode == SEC_LINK_EVAL) {
-		if (wsm_set_mac_key(wdev, wdev->pdata.sec_link_key, SL_MAC_KEY_DEST_RAM))
+		if (wsm_set_mac_key(wdev, wdev->pdata.slk_key, SL_MAC_KEY_DEST_RAM))
 			return -EIO;
 		if (wfx_sl_key_exchange(wdev))
 			return -EIO;

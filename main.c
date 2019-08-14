@@ -43,9 +43,9 @@ static int gpio_wakeup = -2;
 module_param(gpio_wakeup, int, 0644);
 MODULE_PARM_DESC(gpio_wakeup, "gpio number for wakeup. -1 for none.");
 
-static char *sec_link_key = NULL;
-module_param(sec_link_key, charp, 0600);
-MODULE_PARM_DESC(sec_link_key, "Secret key for secure link (expect 64 hexdecimal digits)");
+static char *slk_key = NULL;
+module_param(slk_key, charp, 0600);
+MODULE_PARM_DESC(slk_key, "Secret key for secure link (expect 64 hexdecimal digits)");
 
 #define RATETAB_ENT(_rate, _rateid, _flags) { \
 	.bitrate	= (_rate),   \
@@ -219,19 +219,19 @@ static void wfx_fill_sl_key(struct device *dev, struct wfx_platform_data *pdata)
 	const char *ascii_key = NULL;
 	int ret = 0;
 
-	if (sec_link_key)
-		ascii_key = sec_link_key;
+	if (slk_key)
+		ascii_key = slk_key;
 	if (!ascii_key)
-		ret = of_property_read_string(dev->of_node, "sec_link_key", &ascii_key);
+		ret = of_property_read_string(dev->of_node, "slk_key", &ascii_key);
 	if (ret == -EILSEQ || ret == -ENODATA)
 		dev_err(dev, "ignoring malformatted key from DT\n");
 	if (!ascii_key)
 		return;
 
-	ret = hex2bin(pdata->sec_link_key, ascii_key, sizeof(pdata->sec_link_key));
+	ret = hex2bin(pdata->slk_key, ascii_key, sizeof(pdata->slk_key));
 	if (ret) {
 		dev_err(dev, "ignoring malformatted key: %s\n", ascii_key);
-		memset(pdata->sec_link_key, 0, sizeof(pdata->sec_link_key));
+		memset(pdata->slk_key, 0, sizeof(pdata->slk_key));
 		return;
 	}
 #ifndef CONFIG_WFX_SECURE_LINK

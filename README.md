@@ -125,7 +125,7 @@ Some properties are recognized either by SPI and SDIO versions:
   this property, driver will disable most of power saving features
 - `config-file`: Use an alternative file as PDS. Default is `wf200.pds`. Only
   necessary for development/debug purpose.
-- `sec_link_key`: String representing hexdecimal value of secure link key to
+- `slk_key`: String representing hexdecimal value of secure link key to
   use (only if driver is compiled with `CONFIG_WFX_SECURE_LINK`). Must contains
   64 hexadecimal digits.
 
@@ -153,8 +153,8 @@ Chip may have three mode:
 - eval: no key is burned but secure link is possible.
 - unavailable: secure link is not possible
 
-Key can be set either using `sec_link_key` module parameter or using
-`sec_link_key` DT attribute. In both case, it should contains 64 hexadecimal
+Key can be set either using `slk_key` module parameter or using
+`slk_key` DT attribute. In both case, it should contains 64 hexadecimal
 digits.
 
 If chip is in enforced mode, local key is compared with OTP key from chip. Chip
@@ -166,13 +166,13 @@ enforced mode. It should always succed since keys are garanteed to be the same.
 If chip is in eval mode, user has also possibility to burn a key in OTP.
 Operation is irreversible and chip will automaticaly use enforced mode on next
 reset. User has to write key to
-`/sys/kernel/debug/ieee80211/phy*/wfx/burn_sec_link_key`. In order to avoid
+`/sys/kernel/debug/ieee80211/phy*/wfx/burn_slk_key`. In order to avoid
 unintended key burning, user must follow key with its CRC32. Whole data must be
 formated as a string of hexadecimal digits. So overall process is:
 
     $ dd if=/dev/urandom bs=8 count=1 > secret
     $ ( xxd -p secret; crc32 secret ) | tr -d '\n' > secret+crc32
-    $ dd if=secret+crc32 of=/sys/kernel/debug/ieee80211/phy0/wfx/burn_sec_link_key
+    $ dd if=secret+crc32 of=/sys/kernel/debug/ieee80211/phy0/wfx/burn_slk_key
 
 Advanced driver usage
 ---------------------
