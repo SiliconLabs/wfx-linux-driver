@@ -174,10 +174,6 @@ int wfx_queue_clear(struct wfx_queue *queue)
 		queue->link_map_cache[i] = 0;
 	}
 	spin_unlock_bh(&stats->lock);
-	if (queue->overfull) {
-		queue->overfull = false;
-		__wfx_queue_unlock(queue);
-	}
 	spin_unlock_bh(&queue->lock);
 	wake_up(&stats->wait_link_id_empty);
 	wfx_queue_post_gc(stats, &gc_list);
@@ -251,16 +247,6 @@ int wfx_queue_put(struct wfx_queue *queue,
 		++stats->num_queued;
 		++stats->link_map_cache[txpriv->link_id];
 		spin_unlock_bh(&stats->lock);
-
-		/* TX may happen in parallel sometimes.
-		 * Leave extra queue slots so we don't overflow.
-		 */
-		if (!queue->overfull &&
-		    queue->num_queued >=
-		    (queue->capacity - (num_present_cpus() - 1))) {
-			queue->overfull = true;
-			__wfx_queue_lock(queue);
-		}
 	} else {
 		ret = -ENOENT;
 	}
@@ -364,12 +350,6 @@ int wfx_queue_remove(struct wfx_queue *queue, u32 packet_id)
 		 * try to utilize cache row.
 		 */
 		list_move(&item->head, &queue->free_pool);
-
-		if (queue->overfull &&
-		    (queue->num_queued <= (queue->capacity >> 1))) {
-			queue->overfull = false;
-			__wfx_queue_unlock(queue);
-		}
 	}
 	spin_unlock_bh(&queue->lock);
 

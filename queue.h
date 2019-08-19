@@ -43,7 +43,6 @@ struct wfx_queue {
 	struct list_head	pending;
 	int			tx_locked_cnt;
 	int			link_map_cache[WFX_LINK_ID_MAX];
-	bool			overfull;
 	spinlock_t		lock; /* Protect queue entry */
 	u8			queue_id;
 	u8			generation;
