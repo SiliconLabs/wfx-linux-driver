@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-only
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Implementation of chip-to-host event (aka indications) of WFxxx Split Mac
  * (WSM) API.

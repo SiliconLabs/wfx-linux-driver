@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0-only
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Implementation of host-to-chip commands (aka request/confirmation) of WFxxx
  * Split Mac (WSM) API.
