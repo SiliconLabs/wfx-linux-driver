@@ -37,7 +37,7 @@ static inline int wsm_set_beacon_wakeup_period(struct wfx_dev *wdev,
 	WsmHiMibBeaconWakeUpPeriod_t val = {
 		.WakeupPeriodMin = dtim_interval,
 		.ReceiveDTIM = 0,
-		.WakeupPeriodMax = cpu_to_le16(listen_interval) ,
+		.WakeupPeriodMax = cpu_to_le16(listen_interval),
 	};
 
 	if (dtim_interval > 0xFF || listen_interval > 0xFFFF)
@@ -96,7 +96,7 @@ static inline int wsm_set_beacon_filter_table(struct wfx_dev *wdev,
 					      int Id)
 {
 	size_t buf_len = sizeof(WsmHiMibBcnFilterTable_t)
-		         + ft->NumOfInfoElmts * sizeof(WsmHiIeTableEntry_t);
+			 + ft->NumOfInfoElmts * sizeof(WsmHiIeTableEntry_t);
 
 	cpu_to_le32s(&ft->NumOfInfoElmts);
 	return wsm_write_mib(wdev, WSM_MIB_ID_BEACON_FILTER_TABLE, ft,
@@ -181,35 +181,35 @@ static inline int wsm_set_tx_rate_retry_policy(struct wfx_dev *wdev,
 }
 
 static inline int wsm_set_mac_addr_condition(struct wfx_dev *wdev,
-                        WsmHiMibMacAddrDataFrameCondition_t *arg,
-                        int Id)
+					     WsmHiMibMacAddrDataFrameCondition_t *arg,
+					     int Id)
 {
-    return wsm_write_mib(wdev, WSM_MIB_ID_MAC_ADDR_DATAFRAME_CONDITION,
-                 arg, sizeof(*arg), Id);
+	return wsm_write_mib(wdev, WSM_MIB_ID_MAC_ADDR_DATAFRAME_CONDITION, arg,
+			     sizeof(*arg), Id);
 }
 
 static inline int wsm_set_uc_mc_bc_condition(struct wfx_dev *wdev,
-                      WsmHiMibUcMcBcDataFrameCondition_t *arg,
-                      int Id)
+					     WsmHiMibUcMcBcDataFrameCondition_t *arg,
+					     int Id)
 {
-    return wsm_write_mib(wdev, WSM_MIB_ID_UC_MC_BC_DATAFRAME_CONDITION,
-                 arg, sizeof(*arg), Id);
+	return wsm_write_mib(wdev, WSM_MIB_ID_UC_MC_BC_DATAFRAME_CONDITION, arg,
+			     sizeof(*arg), Id);
 }
 
 static inline int wsm_set_config_data_filter(struct wfx_dev *wdev,
-                      WsmHiMibConfigDataFilter_t *arg,
-                      int Id)
+					     WsmHiMibConfigDataFilter_t *arg,
+					     int Id)
 {
-    return wsm_write_mib(wdev, WSM_MIB_ID_CONFIG_DATA_FILTER,
-                 arg, sizeof(*arg), Id);
+	return wsm_write_mib(wdev, WSM_MIB_ID_CONFIG_DATA_FILTER, arg,
+			     sizeof(*arg), Id);
 }
 
 static inline int wsm_set_data_filtering(struct wfx_dev *wdev,
-                      WsmHiMibSetDataFiltering_t *arg,
-                      int Id)
+					 WsmHiMibSetDataFiltering_t *arg,
+					 int Id)
 {
-    return wsm_write_mib(wdev, WSM_MIB_ID_SET_DATA_FILTERING,
-                 arg, sizeof(*arg), Id);
+	return wsm_write_mib(wdev, WSM_MIB_ID_SET_DATA_FILTERING, arg,
+			     sizeof(*arg), Id);
 }
 
 static inline int wsm_keep_alive_period(struct wfx_dev *wdev,

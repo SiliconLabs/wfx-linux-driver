@@ -54,7 +54,7 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m)
 				m->hdr.seqnum, wdev->sl.rx_seqnum);
 	wdev->sl.rx_seqnum = m->hdr.seqnum + 1;
 	if (wdev->sl.rx_seqnum == BIT(30) / 2)
-		  schedule_work(&wdev->sl.key_renew_work);
+		schedule_work(&wdev->sl.key_renew_work);
 
 	memcpy(output, &m->len, sizeof(m->len));
 	ret = mbedtls_ccm_auth_decrypt(&wdev->sl.ccm_ctxt, payload_len,
@@ -84,7 +84,7 @@ int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *outp
 	nonce[2] = wdev->sl.tx_seqnum;
 	wdev->sl.tx_seqnum++;
 	if (wdev->sl.tx_seqnum == BIT(30) / 2)
-		  schedule_work(&wdev->sl.key_renew_work);
+		schedule_work(&wdev->sl.key_renew_work);
 
 	ret = mbedtls_ccm_encrypt_and_tag(&wdev->sl.ccm_ctxt, payload_len,
 			(uint8_t *) nonce, sizeof(nonce), NULL, 0,

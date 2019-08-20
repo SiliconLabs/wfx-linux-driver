@@ -393,7 +393,7 @@ int wfx_probe(struct wfx_dev *wdev)
 
 	// Current firmware does not support high throughput TX encrypted buffers
 	if (wfx_is_secure_command(wdev, WSM_HI_TX_REQ_ID))
-		 wdev->wsm_caps.NumInpChBufs = 2;
+		wdev->wsm_caps.NumInpChBufs = 2;
 
 	if (wdev->wsm_caps.RegulSelModeInfo.RegionSelMode) {
 		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[11].flags |= IEEE80211_CHAN_NO_IR;

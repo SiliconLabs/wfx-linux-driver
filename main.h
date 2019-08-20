@@ -32,9 +32,9 @@ struct wfx_platform_data {
 };
 
 struct wfx_dev *wfx_init_common(struct device *dev,
-			        const struct wfx_platform_data *pdata,
-			        const struct hwbus_ops *hwbus_ops,
-			        void *hwbus_priv);
+				const struct wfx_platform_data *pdata,
+				const struct hwbus_ops *hwbus_ops,
+				void *hwbus_priv);
 void wfx_free_common(struct wfx_dev *wdev);
 
 int wfx_probe(struct wfx_dev *wdev);
