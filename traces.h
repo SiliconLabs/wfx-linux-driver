@@ -49,14 +49,6 @@
  *          #define list_for_print_symbolic list_names { -1, NULL }
  */
 
-#undef wsm_msg_cnf_name
-#undef wsm_msg_ind_name
-#undef low_msg_cnf_name
-#undef low_msg_ind_name
-#define wsm_msg_cnf_name(msg) TRACE_DEFINE_ENUM(WSM_HI_##msg##_CNF_ID);
-#define wsm_msg_ind_name(msg) TRACE_DEFINE_ENUM(WSM_HI_##msg##_IND_ID);
-#define low_msg_cnf_name(msg) TRACE_DEFINE_ENUM(HI_##msg##_CNF_ID);
-#define low_msg_ind_name(msg) TRACE_DEFINE_ENUM(HI_##msg##_IND_ID);
 #define _wsm_msg_list                          \
 	wsm_msg_cnf_name(ADD_KEY)              \
 	wsm_msg_cnf_name(BEACON_TRANSMIT)      \
@@ -97,8 +89,15 @@
 
 #define wsm_msg_list_enum _wsm_msg_list
 
+#undef wsm_msg_cnf_name
+#undef wsm_msg_ind_name
+#undef low_msg_cnf_name
+#undef low_msg_ind_name
+#define wsm_msg_cnf_name(msg) TRACE_DEFINE_ENUM(WSM_HI_##msg##_CNF_ID);
+#define wsm_msg_ind_name(msg) TRACE_DEFINE_ENUM(WSM_HI_##msg##_IND_ID);
+#define low_msg_cnf_name(msg) TRACE_DEFINE_ENUM(HI_##msg##_CNF_ID);
+#define low_msg_ind_name(msg) TRACE_DEFINE_ENUM(HI_##msg##_IND_ID);
 wsm_msg_list_enum
-
 #undef wsm_msg_cnf_name
 #undef wsm_msg_ind_name
 #undef low_msg_cnf_name
@@ -109,8 +108,6 @@ wsm_msg_list_enum
 #define low_msg_ind_name(msg) { HI_##msg##_IND_ID, #msg },
 #define wsm_msg_list wsm_msg_list_enum { -1, NULL }
 
-#undef wsm_mib_name
-#define wsm_mib_name(mib) TRACE_DEFINE_ENUM(WSM_MIB_ID_##mib);
 #define _wsm_mib_list                                \
 	wsm_mib_name(ARP_IP_ADDRESSES_TABLE)         \
 	wsm_mib_name(ARP_KEEP_ALIVE_PERIOD)          \
@@ -157,8 +154,9 @@ wsm_msg_list_enum
 
 #define wsm_mib_list_enum _wsm_mib_list
 
+#undef wsm_mib_name
+#define wsm_mib_name(mib) TRACE_DEFINE_ENUM(WSM_MIB_ID_##mib);
 wsm_mib_list_enum
-
 #undef wsm_mib_name
 #define wsm_mib_name(mib) { WSM_MIB_ID_##mib, #mib },
 #define wsm_mib_list wsm_mib_list_enum { -1, NULL }
@@ -218,17 +216,18 @@ DEFINE_EVENT(wsm_data, wsm_recv,
 	TP_ARGS(wsm, tx_fill_level, is_recv));
 #define _trace_wsm_recv(wsm, tx_fill_level) trace_wsm_recv(wsm, tx_fill_level, true)
 
+#define wfx_reg_list_enum                                 \
+	wfx_reg_name(WFX_REG_CONFIG,       "CONFIG")      \
+	wfx_reg_name(WFX_REG_CONTROL,      "CONTROL")     \
+	wfx_reg_name(WFX_REG_IN_OUT_QUEUE, "QUEUE")       \
+	wfx_reg_name(WFX_REG_AHB_DPORT,    "AHB")         \
+	wfx_reg_name(WFX_REG_BASE_ADDR,    "BASE_ADDR")   \
+	wfx_reg_name(WFX_REG_SRAM_DPORT,   "SRAM")        \
+	wfx_reg_name(WFX_REG_SET_GEN_R_W,  "SET_GEN_R_W") \
+	wfx_reg_name(WFX_REG_FRAME_OUT,    "FRAME_OUT")
+
 #undef wfx_reg_name
 #define wfx_reg_name(sym, name) TRACE_DEFINE_ENUM(sym);
-#define wfx_reg_list_enum                                  \
-	wfx_reg_name(WFX_REG_CONFIG,       "CONFIG"      ) \
-	wfx_reg_name(WFX_REG_CONTROL,      "CONTROL"     ) \
-	wfx_reg_name(WFX_REG_IN_OUT_QUEUE, "QUEUE"       ) \
-	wfx_reg_name(WFX_REG_AHB_DPORT,    "AHB"         ) \
-	wfx_reg_name(WFX_REG_BASE_ADDR,    "BASE_ADDR"   ) \
-	wfx_reg_name(WFX_REG_SRAM_DPORT,   "SRAM"        ) \
-	wfx_reg_name(WFX_REG_SET_GEN_R_W,  "SET_GEN_R_W" ) \
-	wfx_reg_name(WFX_REG_FRAME_OUT,    "FRAME_OUT"   )
 wfx_reg_list_enum
 #undef wfx_reg_name
 #define wfx_reg_name(sym, name) { sym, name },
