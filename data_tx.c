@@ -18,6 +18,9 @@
 #define WFX_INVALID_RATE_ID (0xFF)
 #define WFX_LINK_ID_GC_TIMEOUT ((unsigned long)(10 * HZ))
 
+static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
+				   int link_id, int tid);
+
 /* TX queue lock / unlock */
 
 static void wfx_tx_queues_lock(struct wfx_dev *wdev)
@@ -858,7 +861,13 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 
 drop:
 	memcpy(t.tx_info->status.status_driver_data, &t.txpriv, sizeof(t.txpriv));
-	wfx_skb_dtor(wdev, skb);
+	skb_pull(skb, t.txpriv.offset);
+	if (t.txpriv.rate_id != WFX_INVALID_RATE_ID) {
+		wfx_notify_buffered_tx(wvif, skb,
+					  t.txpriv.raw_link_id, t.txpriv.tid);
+		tx_policy_put(wvif, t.txpriv.rate_id);
+	}
+	ieee80211_tx_status(wdev->hw, skb);
 }
 
 void wfx_tx_confirm_cb(struct wfx_dev *wdev, WsmHiTxCnfBody_t *arg)
