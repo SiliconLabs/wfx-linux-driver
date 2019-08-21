@@ -352,6 +352,12 @@ int wfx_probe(struct wfx_dev *wdev)
 		goto err2;
 	}
 
+	if (wdev->wsm_caps.RegulSelModeInfo.RegionSelMode) {
+		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[11].flags |= IEEE80211_CHAN_NO_IR;
+		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[12].flags |= IEEE80211_CHAN_NO_IR;
+		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[13].flags |= IEEE80211_CHAN_DISABLED;
+	}
+
 	msleep(100);
 
 	dev_dbg(wdev->dev, "sending configuration file %s", wdev->pdata.file_pds);
