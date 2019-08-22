@@ -176,8 +176,15 @@ static int bh_work_tx(struct wfx_dev *wdev, int max_msg)
 
 	for (i = 0; i < max_msg; i++) {
 		data = NULL;
-		if (wdev->hif.tx_buffers_used < wdev->wsm_caps.NumInpChBufs)
+		if (try_wait_for_completion(&wdev->wsm_cmd.ready)) {
+			// TX_REQ always keep a free buffer and only ont command req can sent at same time
+			WARN(wdev->hif.tx_buffers_used == wdev->wsm_caps.NumInpChBufs, "No free buffer for command request");
+			WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
+			data = (u8 *) wdev->wsm_cmd.buf_send;
+			len = le16_to_cpu(wdev->wsm_cmd.buf_send->len);
+		} else if (wdev->hif.tx_buffers_used < wdev->wsm_caps.NumInpChBufs - 1) {
 			wsm_get_tx(wdev, &data, &len);
+		}
 		if (!data)
 			return i;
 		tx_helper(wdev, data, len);
