@@ -1365,6 +1365,9 @@ static void wfx_do_join(struct wfx_vif *wvif)
 		.BasicRateSet	= wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
 	};
 
+	if (wvif->channel->flags & IEEE80211_CHAN_NO_IR)
+		join.ProbeForJoin = 0;
+
 	if (wvif->state)
 		wfx_do_unjoin(wvif);
 
