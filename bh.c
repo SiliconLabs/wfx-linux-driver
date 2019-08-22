@@ -245,7 +245,7 @@ static void bh_work(struct work_struct *work)
 {
 	struct wfx_dev *wdev = container_of(work, struct wfx_dev, hif.bh);
 	int stats_req = 0, stats_cnf = 0, stats_ind = 0;
-	bool release_chip, last_op_is_rx = false;
+	bool release_chip = false, last_op_is_rx = false;
 	int num_tx, num_rx;
 
 	device_wakeup(wdev);
@@ -266,8 +266,6 @@ static void bh_work(struct work_struct *work)
 	if (!wdev->hif.tx_buffers_used && !work_pending(work) && !atomic_read(&wdev->scan_in_progress)) {
 		device_release(wdev);
 		release_chip = true;
-	} else {
-		release_chip = false;
 	}
 	_trace_bh_stats(stats_ind, stats_req, stats_cnf, wdev->hif.tx_buffers_used, release_chip);
 }
