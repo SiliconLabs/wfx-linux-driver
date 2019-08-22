@@ -1,3 +1,11 @@
+Changes in 2.2.5
+----------------
+
+  * Add support for "Certified parts". These parts restrict usage of channels
+    12, 13 and 14.
+  * Consider NO_IR flag when joining an AP
+  * Fix potential freeze when CCA is enabled.
+
 Changes in 2.2.4
 ----------------
 
