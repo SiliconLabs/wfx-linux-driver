@@ -273,6 +273,31 @@ You can directly execute `pds_compress` on this file:
     pds_compress YOUR.pds.in /sys/kernel/debug/ieee80211/phy*/wfx/send_pds
 
 
+## Send arbitray HIF request to chip
+
+For debug purpose (and only for this purpose please), driver provides a way to
+send arbitrary HIF request to chip. Thus, data written to file
+`/sys/kernel/debug/ieee80211/phy*/wfx/send_hif_msg` will be sent directly to
+Ineo. For exemple:
+
+    echo -en "\x18\x00\x2b\x00\x04\x01\x01\x01\x00\x00\x01\x00\x0a\x32\x28\x48\x8c\x96\x6c\x02\x4c\x1d\x4c\x1d" | tee /sys/kernel/debug/ieee80211/phy*/wfx/send_hif_msg
+
+Payload should include HIF header containing message length and command id.
+
+Data must be sent in one call. In example above, `tee` is mandatory else `echo`
+tend to send string in multiple parts (it split data on `\n`).
+
+Write will fail only if request is malformatted. So, it succeed even if
+firmware returns an error. It is possible to get confirmation returned by
+request by reading `send_hif_msg` after writing it (without closing it).  This
+process is difficult to support in shell.
+
+Obviously, User is responsible of consequence of this data to driver behavior.
+For exemple, sending a Tx request using this interface won't work.
+
+If user want run exemple above with `sudo`, he must take care that pattern
+`phy*` won't work.
+
 ### Enable/Disable UAPSD
 
 For some tests, UAPSD is required. To get it, you need a kernel compiled with
