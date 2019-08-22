@@ -605,10 +605,6 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 	int not_found;
 	int burst;
 
-	if (try_wait_for_completion(&wdev->wsm_cmd.ready)) {
-		WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
-		return wdev->wsm_cmd.buf_send;
-	}
 	for (;;) {
 		int ret = -ENOENT;
 		int queue_num;
