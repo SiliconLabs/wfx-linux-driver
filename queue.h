@@ -41,7 +41,6 @@ struct wfx_queue {
 struct wfx_queue_stats {
 	spinlock_t		lock; /* Protect stats entry */
 	int			link_map_cache[WFX_LINK_ID_MAX];
-	int			num_queued;
 	struct sk_buff_head	pending;
 	wait_queue_head_t	wait_link_id_empty;
 	wfx_queue_skb_dtor_t	skb_dtor;
