@@ -270,8 +270,7 @@ typedef struct WsmHiHtTxParameters_s {
 	uint8_t    Reserved1:1;
 	uint8_t    Stbc:1;
 	uint8_t    Reserved2;
-	uint8_t    Aggregation:1;
-	uint8_t    Reserved3:7;
+	uint8_t    Reserved3;
 	uint8_t    Reserved4;
 } __packed WsmHiHtTxParameters_t;
 

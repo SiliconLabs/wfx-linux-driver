@@ -557,8 +557,6 @@ static WsmHiHtTxParameters_t wfx_tx_get_tx_parms(struct wfx_dev *wdev, struct ie
 		ret.FecCoding = 1;
 	if (tx_info->flags & IEEE80211_TX_CTL_STBC)
 		ret.Stbc = 0; // FIXME: Not yet supported by firmware?
-	if (tx_info->flags & IEEE80211_TX_CTL_AMPDU)
-		ret.Aggregation = 0; // FIXME: what is purpose of this field?
 	return ret;
 }
 
