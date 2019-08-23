@@ -827,15 +827,8 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 		skb_trim(skb, skb->len - wfx_tx_get_icv_len(txpriv->hw_key));
 
 		// FIXME: use ieee80211_tx_info_clear_status()
-		// Clear all tx->status but status_driver_data
-		tx_info->status.ack_signal = 0;
-		tx_info->status.ampdu_ack_len = 0;
-		tx_info->status.ampdu_len = 0;
-		tx_info->status.antenna = 0;
-		tx_info->status.tx_time = 0;
-#if (KERNEL_VERSION(4, 15, 0) <= LINUX_VERSION_CODE)
-		tx_info->status.is_valid_ack_signal = false;
-#endif
+		memset(tx_info->rate_driver_data, 0, sizeof(tx_info->rate_driver_data));
+		memset(tx_info->pad, 0, sizeof(tx_info->pad));
 		if (!arg->Status) {
 			_trace_tx_stats(arg, wfx_pending_get_pkt_us_delay(wvif->wdev, skb));
 			tx_info->flags |= IEEE80211_TX_STAT_ACK;
@@ -866,25 +859,27 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 }
 
 static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
-				   struct wfx_txpriv *txpriv)
+				   WsmHiTxReqBody_t *wsm)
 {
 	struct ieee80211_sta *sta;
 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
+	int tid = wfx_tx_get_tid(hdr);
+	int raw_link_id = wsm->QueueId.PeerStaId;
 	u8 *buffered;
 
-	if (txpriv->raw_link_id && txpriv->tid < WFX_MAX_TID) {
-		buffered = wvif->link_id_db[txpriv->raw_link_id - 1].buffered;
+	if (raw_link_id && tid < WFX_MAX_TID) {
+		buffered = wvif->link_id_db[raw_link_id - 1].buffered;
 
 		spin_lock_bh(&wvif->ps_state_lock);
-		WARN(!buffered[txpriv->tid], "inconsistent notification");
-		buffered[txpriv->tid]--;
+		WARN(!buffered[tid], "inconsistent notification");
+		buffered[tid]--;
 		spin_unlock_bh(&wvif->ps_state_lock);
 
-		if (!buffered[txpriv->tid]) {
+		if (!buffered[tid]) {
 			rcu_read_lock();
 			sta = ieee80211_find_sta(wvif->vif, hdr->addr1);
 			if (sta)
-				ieee80211_sta_set_buffered(sta, txpriv->tid, false);
+				ieee80211_sta_set_buffered(sta, tid, false);
 			rcu_read_unlock();
 		}
 	}
@@ -895,12 +890,11 @@ void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb)
 	struct wmsg *hdr = (struct wmsg *) skb->data;
 	WsmHiTxReqBody_t *wsm = (WsmHiTxReqBody_t *) hdr->body;
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
-	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
 	unsigned int offset = sizeof(WsmHiTxReqBody_t) + sizeof(struct wmsg) + wsm->DataFlags.FcOffset;
 
 	WARN_ON(!wvif);
 	skb_pull(skb, offset);
-	wfx_notify_buffered_tx(wvif, skb, txpriv);
+	wfx_notify_buffered_tx(wvif, skb, wsm);
 	tx_policy_put(wvif, wsm->TxFlags.RetryPolicyIndex);
 	ieee80211_tx_status(wdev->hw, skb);
 }
