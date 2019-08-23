@@ -73,7 +73,7 @@ static inline struct wfx_txpriv *wfx_skb_txpriv(struct sk_buff *skb)
 	if (!skb)
 		return NULL;
 	tx_info = IEEE80211_SKB_CB(skb);
-	return (struct wfx_txpriv *) tx_info->status.status_driver_data;
+	return (struct wfx_txpriv *) tx_info->rate_driver_data;
 }
 
 static inline WsmHiTxReqBody_t *wfx_skb_txreq(struct sk_buff *skb)

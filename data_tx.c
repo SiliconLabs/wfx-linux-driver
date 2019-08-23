@@ -693,9 +693,9 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 	WARN(queue_id >= 4, "unsupported queue_id");
 
 	// From now tx_info->control is unusable
-	memset(tx_info->status.status_driver_data, 0, sizeof(struct wfx_txpriv));
+	memset(tx_info->rate_driver_data, 0, sizeof(struct wfx_txpriv));
 	// Fill txpriv
-	txpriv = (struct wfx_txpriv *) tx_info->status.status_driver_data;
+	txpriv = (struct wfx_txpriv *) tx_info->rate_driver_data;
 	txpriv->tid = wfx_tx_get_tid(hdr);
 	txpriv->raw_link_id = wfx_tx_get_raw_link_id(wvif, sta, hdr);
 	txpriv->link_id = txpriv->raw_link_id;
@@ -749,7 +749,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	struct ieee80211_sta *sta = control ? control->sta : NULL;
 	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
-	size_t driver_data_room = FIELD_SIZEOF(struct ieee80211_tx_info, status.status_driver_data);
+	size_t driver_data_room = FIELD_SIZEOF(struct ieee80211_tx_info, rate_driver_data);
 
 	compiletime_assert(sizeof(struct wfx_txpriv) <= driver_data_room, "struct txpriv is too large");
 	WARN(skb->next || skb->prev, "skb is already member of a list");
