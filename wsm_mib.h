@@ -285,7 +285,7 @@ static inline int wsm_wep_default_key_id(struct wfx_dev *wdev, int val, int Id)
 
 static inline int wsm_rts_threshold(struct wfx_dev *wdev, int val, int Id)
 {
-	__le32 arg = cpu_to_le32(val > 0 ? val : 0);
+	__le32 arg = cpu_to_le32(val > 0 ? val : 0xFFFF);
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_DOT11_RTS_THRESHOLD,
 			     &arg, sizeof(arg), Id);
