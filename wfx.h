@@ -147,7 +147,6 @@ struct wfx_vif {
 	struct ieee80211_vif	*vif;
 	struct ieee80211_channel *channel;
 	int			Id;
-	int			mode;
 	int			dtim_period;
 	int			beacon_int;
 	int			bss_loss_state;

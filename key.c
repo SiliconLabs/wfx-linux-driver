@@ -157,7 +157,7 @@ static int wfx_add_key(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct i
 		if (pairwise)
 			k->Type = fill_tkip_pair(&k->Key.TkipPairwiseKey, key, sta->addr);
 		else
-			k->Type = fill_tkip_group(&k->Key.TkipGroupKey, key, &seq, wvif->mode);
+			k->Type = fill_tkip_group(&k->Key.TkipGroupKey, key, &seq, wvif->vif->type);
 	} else if (key->cipher == WLAN_CIPHER_SUITE_CCMP) {
 		if (pairwise)
 			k->Type = fill_ccmp_pair(&k->Key.AesPairwiseKey, key, sta->addr);

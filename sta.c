@@ -338,7 +338,7 @@ int wfx_add_interface(struct ieee80211_hw *hw,
 	}
 	wvif->vif = vif;
 	wvif->wdev = wdev;
-	wvif->mode = vif->type;
+	wvif->vif->type = vif->type;
 	wfx_vif_setup(wvif);
 	mutex_unlock(&wdev->conf_mutex);
 	wsm_set_macaddr(wdev, vif->addr, wvif->Id);
@@ -750,7 +750,7 @@ int wfx_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			goto out;
 		}
 
-		if (wvif->mode == NL80211_IFTYPE_STATION) {
+		if (wvif->vif->type == NL80211_IFTYPE_STATION) {
 			ret = wfx_set_uapsd_param(wvif, &wvif->edca);
 			new_uapsd_flags = *((u16 *) &wvif->uapsd_info);
 			if (!ret && wvif->setbssparams_done &&
@@ -859,9 +859,9 @@ void wfx_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 
 	if (vif) {
 		wvif = (struct wfx_vif *) vif->drv_priv;
-		if (wvif->mode == NL80211_IFTYPE_MONITOR)
+		if (wvif->vif->type == NL80211_IFTYPE_MONITOR)
 			drop = true;
-		if (wvif->mode == NL80211_IFTYPE_AP && !wvif->enable_beacon)
+		if (wvif->vif->type == NL80211_IFTYPE_AP && !wvif->enable_beacon)
 			drop = true;
 	}
 
@@ -1146,7 +1146,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 			wsm_tx_unlock(wvif->wdev);
 	} else {
 		wvif->join_complete_status = 0;
-		if (wvif->mode == NL80211_IFTYPE_ADHOC)
+		if (wvif->vif->type == NL80211_IFTYPE_ADHOC)
 			wvif->state = WFX_STATE_IBSS;
 		else
 			wvif->state = WFX_STATE_PRE_STA;
@@ -1191,7 +1191,7 @@ int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	struct wfx_link_entry *entry;
 	struct sk_buff *skb;
 
-	if (wvif->mode != NL80211_IFTYPE_AP)
+	if (wvif->vif->type != NL80211_IFTYPE_AP)
 		return 0;
 
 	sta_priv->vif_id = wvif->Id;
@@ -1223,7 +1223,7 @@ int wfx_sta_remove(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			(struct wfx_sta_priv *)&sta->drv_priv;
 	struct wfx_link_entry *entry;
 
-	if (wvif->mode != NL80211_IFTYPE_AP || !sta_priv->link_id)
+	if (wvif->vif->type != NL80211_IFTYPE_AP || !sta_priv->link_id)
 		return 0;
 
 	entry = &wvif->link_id_db[sta_priv->link_id - 1];
@@ -1374,7 +1374,7 @@ void wfx_set_cts_work(struct work_struct *work)
 
 	wsm_erp_use_protection(wvif->wdev, erp_ie[2] & WLAN_ERP_USE_PROTECTION, wvif->Id);
 
-	if (wvif->mode != NL80211_IFTYPE_STATION)
+	if (wvif->vif->type != NL80211_IFTYPE_STATION)
 		wsm_update_ie(wvif->wdev, &target_frame, erp_ie, sizeof(erp_ie), wvif->Id);
 }
 
@@ -1418,7 +1418,7 @@ static int wfx_update_beaconing(struct wfx_vif *wvif)
 {
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 
-	if (wvif->mode == NL80211_IFTYPE_AP) {
+	if (wvif->vif->type == NL80211_IFTYPE_AP) {
 		if (wvif->state != WFX_STATE_AP ||
 		    wvif->beacon_int != conf->beacon_int) {
 			pr_debug("ap restarting\n");
@@ -1443,9 +1443,9 @@ static int wfx_upload_beacon(struct wfx_vif *wvif)
 	struct ieee80211_mgmt *mgmt;
 	WsmHiMibTemplateFrame_t *p;
 
-	if (wvif->mode == NL80211_IFTYPE_STATION ||
-	    wvif->mode == NL80211_IFTYPE_MONITOR ||
-	    wvif->mode == NL80211_IFTYPE_UNSPECIFIED)
+	if (wvif->vif->type == NL80211_IFTYPE_STATION ||
+	    wvif->vif->type == NL80211_IFTYPE_MONITOR ||
+	    wvif->vif->type == NL80211_IFTYPE_UNSPECIFIED)
 		goto done;
 
 	skb = ieee80211_beacon_get(wvif->wdev->hw, wvif->vif);

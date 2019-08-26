@@ -196,7 +196,7 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 		return 0;
 
 	seq_printf(seq, "Mode:       %s\n",
-		   wfx_debug_mode(wvif->mode));
+		   wfx_debug_mode(wvif->vif->type));
 	seq_printf(seq, "Join state: %s\n",
 		   wfx_debug_state[wvif->state]);
 	seq_printf(seq, "Channel:    %d\n",
@@ -211,10 +211,10 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 		seq_puts(seq, "Filter:     beacons\n");
 
 	if (wvif->enable_beacon ||
-	    wvif->mode == NL80211_IFTYPE_AP ||
-	    wvif->mode == NL80211_IFTYPE_ADHOC ||
-	    wvif->mode == NL80211_IFTYPE_MESH_POINT ||
-	    wvif->mode == NL80211_IFTYPE_P2P_GO)
+	    wvif->vif->type == NL80211_IFTYPE_AP ||
+	    wvif->vif->type == NL80211_IFTYPE_ADHOC ||
+	    wvif->vif->type == NL80211_IFTYPE_MESH_POINT ||
+	    wvif->vif->type == NL80211_IFTYPE_P2P_GO)
 		seq_printf(seq, "Beaconing:  %s\n",
 			   wvif->enable_beacon ? "enabled" : "disabled");
 

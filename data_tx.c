@@ -599,7 +599,7 @@ static uint8_t wfx_tx_get_raw_link_id(struct wfx_vif *wvif, struct ieee80211_sta
 
 	if (sta_priv && sta_priv->link_id) {
 		return sta_priv->link_id;
-	} else if (wvif->mode != NL80211_IFTYPE_AP) {
+	} else if (wvif->vif->type != NL80211_IFTYPE_AP) {
 		return 0;
 	} else if (is_multicast_ether_addr(da)) {
 		return 0;
