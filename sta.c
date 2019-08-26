@@ -401,7 +401,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	default:
 		break;
 	}
-	wvif->mode = NL80211_IFTYPE_MONITOR;
 
 	wvif->state = WFX_STATE_PASSIVE;
 	wfx_tx_queues_wait_empty_vif(wvif);
@@ -418,7 +417,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	wfx_free_event_queue(wvif);
 
 	wdev->vif[wvif->Id] = NULL;
-	wvif->mode = NL80211_IFTYPE_UNSPECIFIED;
 	wvif->vif = NULL;
 
 	mutex_unlock(&wdev->conf_mutex);
@@ -1391,7 +1389,6 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 		.PreambleType		= conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
 		.BasicRateSet		= wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
 	};
-
 
 	memset(start.Ssid, 0, sizeof(start.Ssid));
 	if (!conf->hidden_ssid) {

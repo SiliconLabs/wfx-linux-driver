@@ -52,10 +52,6 @@ static inline u8 ieee80211_get_tid(struct ieee80211_hdr *hdr)
 
 #define WSM_KEY_MAX_INDEX		(16)
 #define WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES	2
-/* Start modes */
-#define WSM_START_MODE_AP		(0)
-#define WSM_START_MODE_P2P_GO		(1)
-#define WSM_START_MODE_P2P_DEV		(2)
 
 #define WFX_MAX_TID               (8)
 
