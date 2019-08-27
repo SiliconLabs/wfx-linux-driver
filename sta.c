@@ -300,8 +300,7 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	return 0;
 }
 
-int wfx_add_interface(struct ieee80211_hw *hw,
-			 struct ieee80211_vif *vif)
+int wfx_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 {
 	int i;
 	struct wfx_dev *wdev = hw->priv;
@@ -361,7 +360,7 @@ int wfx_add_interface(struct ieee80211_hw *hw,
 }
 
 void wfx_remove_interface(struct ieee80211_hw *hw,
-			     struct ieee80211_vif *vif)
+			  struct ieee80211_vif *vif)
 {
 	struct wfx_dev *wdev = hw->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
@@ -633,8 +632,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 		bf_ctrl.BcnCount = 1;
 		bf_tbl->NumOfInfoElmts = 0;
 	} else if (is_p2p || !is_sta) {
-		bf_ctrl.Enable = WSM_BEACON_FILTER_ENABLE |
-			WSM_BEACON_FILTER_AUTO_ERP;
+		bf_ctrl.Enable = WSM_BEACON_FILTER_ENABLE | WSM_BEACON_FILTER_AUTO_ERP;
 		bf_ctrl.BcnCount = 0;
 		bf_tbl->NumOfInfoElmts = 2;
 	} else {
@@ -656,15 +654,13 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	if (!ret)
 		ret = wfx_set_multicast_filter(wvif->wdev, &wvif->multicast_filter, wvif->Id);
 	if (ret)
-		dev_err(wvif->wdev->dev,
-			  "Update filtering failed: %d.\n", ret);
+		dev_err(wvif->wdev->dev, "Update filtering failed: %d.\n", ret);
 	kfree(bf_tbl);
 }
 
 void wfx_update_filtering_work(struct work_struct *work)
 {
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, update_filtering_work);
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, update_filtering_work);
 
 	wfx_update_filtering(wvif);
 }
@@ -938,34 +934,27 @@ void wfx_event_handler_work(struct work_struct *work)
 
 void wfx_bss_loss_work(struct work_struct *work)
 {
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, bss_loss_work.work);
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, bss_loss_work.work);
 
-	pr_debug("[CQM] Reporting connection loss.\n");
 	ieee80211_connection_loss(wvif->vif);
 }
 
 void wfx_bss_params_work(struct work_struct *work)
 {
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, bss_params_work);
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, bss_params_work);
 
 	mutex_lock(&wvif->wdev->conf_mutex);
-
 	wvif->bss_params.BssFlags.LostCountOnly = 1;
 	wsm_set_bss_params(wvif->wdev, &wvif->bss_params, wvif->Id);
 	wvif->bss_params.BssFlags.LostCountOnly = 0;
-
 	mutex_unlock(&wvif->wdev->conf_mutex);
 }
 
 void wfx_set_beacon_wakeup_period_work(struct work_struct *work)
 {
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, set_beacon_wakeup_period_work);
-	unsigned period = wvif->dtim_period;
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, set_beacon_wakeup_period_work);
 
-	wsm_set_beacon_wakeup_period(wvif->wdev, period, period, wvif->Id);
+	wsm_set_beacon_wakeup_period(wvif->wdev, wvif->dtim_period, wvif->dtim_period, wvif->Id);
 }
 
 static void wfx_do_unjoin(struct wfx_vif *wvif)
@@ -974,8 +963,7 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 
 	if (atomic_read(&wvif->scan.in_progress)) {
 		if (wvif->delayed_unjoin)
-			dev_dbg(wvif->wdev->dev,
-				  "Delayed unjoin is already scheduled.\n");
+			dev_dbg(wvif->wdev->dev, "Delayed unjoin is already scheduled.\n");
 		else
 			wvif->delayed_unjoin = true;
 		goto done;
@@ -1055,11 +1043,11 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 	struct cfg80211_bss *bss = NULL;
 	WsmHiJoinReqBody_t join = {
-		.Mode		= conf->ibss_joined ? WSM_MODE_IBSS : WSM_MODE_BSS,
-		.PreambleType	= conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
-		.ProbeForJoin	= 1,
-		.AtimWindow	= 0,
-		.BasicRateSet	= wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
+		.Mode = conf->ibss_joined ? WSM_MODE_IBSS : WSM_MODE_BSS,
+		.PreambleType = conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
+		.ProbeForJoin = 1,
+		.AtimWindow = 0,
+		.BasicRateSet = wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
 	};
 
 	if (wvif->channel->flags & IEEE80211_CHAN_NO_IR)
@@ -1165,21 +1153,18 @@ done_put:
 
 void wfx_unjoin_work(struct work_struct *work)
 {
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, unjoin_work);
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, unjoin_work);
 
 	wfx_do_unjoin(wvif);
-
 	wsm_tx_unlock(wvif->wdev);
 }
 
 int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		   struct ieee80211_sta *sta)
+		struct ieee80211_sta *sta)
 {
 	struct wfx_dev *wdev = hw->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
-	struct wfx_sta_priv *sta_priv =
-			(struct wfx_sta_priv *)&sta->drv_priv;
+	struct wfx_sta_priv *sta_priv = (struct wfx_sta_priv *) &sta->drv_priv;
 	struct wfx_link_entry *entry;
 	struct sk_buff *skb;
 
@@ -1189,8 +1174,7 @@ int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	sta_priv->vif_id = wvif->Id;
 	sta_priv->link_id = wfx_find_link_id(wvif, sta->addr);
 	if (!sta_priv->link_id) {
-		dev_info(wdev->dev,
-			   "[AP] No more link IDs available.\n");
+		dev_info(wdev->dev, "[AP] No more link IDs available.\n");
 		return -ENOENT;
 	}
 
@@ -1207,12 +1191,11 @@ int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 }
 
 int wfx_sta_remove(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		      struct ieee80211_sta *sta)
+		   struct ieee80211_sta *sta)
 {
 	struct wfx_dev *wdev = hw->priv;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
-	struct wfx_sta_priv *sta_priv =
-			(struct wfx_sta_priv *)&sta->drv_priv;
+	struct wfx_sta_priv *sta_priv = (struct wfx_sta_priv *) &sta->drv_priv;
 	struct wfx_link_entry *entry;
 
 	if (wvif->vif->type != NL80211_IFTYPE_AP || !sta_priv->link_id)
@@ -1231,8 +1214,8 @@ int wfx_sta_remove(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 }
 
 static void __wfx_sta_notify(struct wfx_vif *wvif,
-				enum sta_notify_cmd notify_cmd,
-				int link_id)
+			     enum sta_notify_cmd notify_cmd,
+			     int link_id)
 {
 	u32 bit, prev;
 
@@ -1273,8 +1256,7 @@ void wfx_sta_notify(struct ieee80211_hw *hw,
 		       struct ieee80211_sta *sta)
 {
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
-	struct wfx_sta_priv *sta_priv =
-		(struct wfx_sta_priv *)&sta->drv_priv;
+	struct wfx_sta_priv *sta_priv = (struct wfx_sta_priv *) &sta->drv_priv;
 
 	spin_lock_bh(&wvif->ps_state_lock);
 	__wfx_sta_notify(wvif, notify_cmd, sta_priv->link_id);
@@ -1284,10 +1266,6 @@ void wfx_sta_notify(struct ieee80211_hw *hw,
 // FIXME: wfx_ps_notify should change each station status independently
 static void wfx_ps_notify(struct wfx_vif *wvif, bool ps)
 {
-	dev_info(wvif->wdev->dev, "%s: %s STAs asleep: %.8X\n", __func__,
-		 ps ? "Start" : "Stop",
-		 wvif->sta_asleep_mask);
-
 	__wfx_sta_notify(wvif, ps ? STA_NOTIFY_AWAKE : STA_NOTIFY_SLEEP, 0);
 }
 
@@ -1303,7 +1281,7 @@ static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
 	pr_debug("[AP] mcast: %s.\n", aid0_bit_set ? "ena" : "dis");
 
 	skb = ieee80211_beacon_get_tim(wvif->wdev->hw, wvif->vif,
-			&tim_offset, &tim_length);
+				       &tim_offset, &tim_length);
 	if (!skb) {
 		if (!__wfx_flush(wvif->wdev, true))
 			wsm_tx_unlock(wvif->wdev);
@@ -1325,7 +1303,6 @@ static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
 	}
 
 	wsm_update_ie(wvif->wdev, &target_frame, tim_ptr, tim_length, wvif->Id);
-
 	dev_kfree_skb(skb);
 
 	return 0;
@@ -1333,10 +1310,9 @@ static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
 
 void wfx_set_tim_work(struct work_struct *work)
 {
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, set_tim_work);
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, set_tim_work);
 
-	(void)wfx_set_tim_impl(wvif, wvif->aid0_bit_set);
+	wfx_set_tim_impl(wvif, wvif->aid0_bit_set);
 }
 
 int wfx_set_tim(struct ieee80211_hw *hw, struct ieee80211_sta *sta,
@@ -1358,8 +1334,6 @@ void wfx_set_cts_work(struct work_struct *work)
 		.Beacon = 1,
 	};
 
-	pr_debug("[STA] wfx_set_cts_work\n");
-
 	mutex_lock(&wvif->wdev->conf_mutex);
 	erp_ie[2] = wvif->erp_info;
 	mutex_unlock(&wvif->wdev->conf_mutex);
@@ -1375,11 +1349,11 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 	int ret;
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 	WsmHiStartReqBody_t start = {
-		.ChannelNumber		= wvif->channel->hw_value,
-		.BeaconInterval		= conf->beacon_int,
-		.DTIMPeriod		= conf->dtim_period,
-		.PreambleType		= conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
-		.BasicRateSet		= wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
+		.ChannelNumber = wvif->channel->hw_value,
+		.BeaconInterval = conf->beacon_int,
+		.DTIMPeriod = conf->dtim_period,
+		.PreambleType = conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
+		.BasicRateSet = wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
 	};
 
 	memset(start.Ssid, 0, sizeof(start.Ssid));
@@ -1422,8 +1396,7 @@ static int wfx_update_beaconing(struct wfx_vif *wvif)
 			wfx_start_ap(wvif);
 			wsm_tx_unlock(wvif->wdev);
 		} else {
-			pr_debug("ap started state: %d\n",
-				 wvif->state);
+			pr_debug("ap started state: %d\n", wvif->state);
 		}
 	}
 	return 0;
@@ -1446,7 +1419,7 @@ static int wfx_upload_beacon(struct wfx_vif *wvif)
 	if (!skb)
 		return -ENOMEM;
 
-	p = (WsmHiMibTemplateFrame_t *)skb_push(skb, 4);
+	p = (WsmHiMibTemplateFrame_t *) skb_push(skb, 4);
 	p->FrameType = WSM_TMPLT_BCN;
 	p->InitRate = API_RATE_INDEX_B_1MBPS; /* 1Mbps DSSS */
 	if (wvif->vif->p2p)
@@ -1464,8 +1437,7 @@ static int wfx_upload_beacon(struct wfx_vif *wvif)
 	 */
 	mgmt = (void *)skb->data;
 	mgmt->frame_control =
-		cpu_to_le16(IEEE80211_FTYPE_MGMT |
-			      IEEE80211_STYPE_PROBE_RESP);
+		cpu_to_le16(IEEE80211_FTYPE_MGMT | IEEE80211_STYPE_PROBE_RESP);
 
 	p->FrameType = WSM_TMPLT_PRBRES;
 
@@ -1560,13 +1532,11 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 		    (BSS_CHANGED_ASSOC | BSS_CHANGED_BSSID |
 		     BSS_CHANGED_IBSS | BSS_CHANGED_BASIC_RATES | BSS_CHANGED_HT)) {
 			if (info->assoc) {
-				if (wvif->state <
-				    WFX_STATE_PRE_STA) {
+				if (wvif->state < WFX_STATE_PRE_STA) {
 					ieee80211_connection_loss(vif);
 					mutex_unlock(&wdev->conf_mutex);
 					return;
-				} else if (wvif->state ==
-				    WFX_STATE_PRE_STA) {
+				} else if (wvif->state == WFX_STATE_PRE_STA) {
 					wvif->state = WFX_STATE_STA;
 				}
 			} else {
@@ -1575,29 +1545,24 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 
 			if (info->assoc || info->ibss_joined) {
 				struct ieee80211_sta *sta = NULL;
-				 WsmHiMibSetAssociationMode_t association_mode = { };
+				WsmHiMibSetAssociationMode_t association_mode = { };
 
 				if (info->dtim_period)
-					wvif->dtim_period =
-						info->dtim_period;
+					wvif->dtim_period = info->dtim_period;
 				wvif->beacon_int = info->beacon_int;
 
 				rcu_read_lock();
 
 				if (info->bssid && !info->ibss_joined)
-					sta = ieee80211_find_sta(vif,
-								 info->bssid);
+					sta = ieee80211_find_sta(vif, info->bssid);
 				if (sta) {
 					wvif->ht_info.ht_cap = sta->ht_cap;
 					wvif->bss_params.OperationalRateSet =
 						wfx_rate_mask_to_wsm(wdev, sta->supp_rates[wvif->channel->band]);
-					wvif->ht_info.operation_mode =
-						info->ht_operation_mode;
+					wvif->ht_info.operation_mode = info->ht_operation_mode;
 				} else {
-					memset(&wvif->ht_info, 0,
-					       sizeof(wvif->ht_info));
-					wvif->bss_params.OperationalRateSet =
-						-1;
+					memset(&wvif->ht_info, 0, sizeof(wvif->ht_info));
+					wvif->bss_params.OperationalRateSet = -1;
 				}
 				rcu_read_unlock();
 
@@ -1607,21 +1572,14 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 				else
 					wsm_dual_cts_protection(wdev, false, wvif->Id);
 
-				association_mode.MixedOrGreenfieldType =
-					wfx_ht_greenfield(&wvif->ht_info);
 				association_mode.PreambtypeUse = 1;
 				association_mode.Mode = 1;
 				association_mode.Rateset = 1;
 				association_mode.Spacing = 1;
-				association_mode.PreambleType =
-				info->use_short_preamble ?
-					WSM_PREAMBLE_SHORT :
-					WSM_PREAMBLE_LONG;
-				association_mode.BasicRateSet =
-					cpu_to_le32(wfx_rate_mask_to_wsm(wdev,
-							info->basic_rates));
-				association_mode.MpduStartSpacing =
-					wfx_ht_ampdu_density(&wvif->ht_info);
+				association_mode.PreambleType = info->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG;
+				association_mode.BasicRateSet = cpu_to_le32(wfx_rate_mask_to_wsm(wdev, info->basic_rates));
+				association_mode.MixedOrGreenfieldType = wfx_ht_greenfield(&wvif->ht_info);
+				association_mode.MpduStartSpacing = wfx_ht_ampdu_density(&wvif->ht_info);
 
 				wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
 				cancel_work_sync(&wvif->unjoin_work);
@@ -1635,19 +1593,13 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 				pr_debug("[STA] DTIM %d, interval: %d\n",
 					 wvif->dtim_period,
 					 wvif->beacon_int);
-				wsm_set_association_mode(wdev,
-							 &association_mode, wvif->Id);
+				wsm_set_association_mode(wdev, &association_mode, wvif->Id);
 
 				if (!info->ibss_joined) {
-					wsm_keep_alive_period(wdev,
-							      30 /* sec */,
-							      wvif->Id);
-					wsm_set_bss_params(wdev,
-							   &wvif->bss_params,
-							   wvif->Id);
+					wsm_keep_alive_period(wdev, 30 /* sec */, wvif->Id);
+					wsm_set_bss_params(wdev, &wvif->bss_params, wvif->Id);
 					wvif->setbssparams_done = true;
-					wfx_set_beacon_wakeup_period_work(
-						&wvif->set_beacon_wakeup_period_work);
+					wfx_set_beacon_wakeup_period_work(&wvif->set_beacon_wakeup_period_work);
 					wfx_set_pm(wvif, &wvif->powersave_mode);
 				}
 			} else {
@@ -1747,12 +1699,10 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 
 void wfx_multicast_start_work(struct work_struct *work)
 {
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, multicast_start_work);
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, multicast_start_work);
 	long tmo = wvif->dtim_period * TU_TO_JIFFIES(wvif->beacon_int + 20);
 
 	cancel_work_sync(&wvif->multicast_stop_work);
-
 	if (!wvif->aid0_bit_set) {
 		wsm_tx_lock_flush(wvif->wdev);
 		wfx_set_tim_impl(wvif, true);
@@ -1764,8 +1714,7 @@ void wfx_multicast_start_work(struct work_struct *work)
 
 void wfx_multicast_stop_work(struct work_struct *work)
 {
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, multicast_stop_work);
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, multicast_stop_work);
 
 	if (wvif->aid0_bit_set) {
 		del_timer_sync(&wvif->mcast_timeout);
@@ -1785,11 +1734,9 @@ void wfx_mcast_timeout(struct timer_list *t)
 {
 	struct wfx_vif *wvif = from_timer(wvif, t, mcast_timeout);
 #endif
-	dev_warn(wvif->wdev->dev,
-		   "Multicast delivery timeout.\n");
+	dev_warn(wvif->wdev->dev, "Multicast delivery timeout.\n");
 	spin_lock_bh(&wvif->ps_state_lock);
-	wvif->tx_multicast = wvif->aid0_bit_set &&
-			     wvif->buffered_multicasts;
+	wvif->tx_multicast = wvif->aid0_bit_set && wvif->buffered_multicasts;
 	if (wvif->tx_multicast)
 		wfx_bh_request_tx(wvif->wdev);
 	spin_unlock_bh(&wvif->ps_state_lock);
@@ -1850,8 +1797,7 @@ void wfx_suspend_resume(struct wfx_vif *wvif,
 			del_timer_sync(&wvif->mcast_timeout);
 	} else {
 		spin_lock_bh(&wvif->ps_state_lock);
-		wfx_ps_notify(wvif,
-			      arg->SuspendResumeFlags.Resume);
+		wfx_ps_notify(wvif, arg->SuspendResumeFlags.Resume);
 		spin_unlock_bh(&wvif->ps_state_lock);
 		if (arg->SuspendResumeFlags.Resume)
 			wfx_bh_request_tx(wvif->wdev);
