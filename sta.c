@@ -1064,7 +1064,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	struct cfg80211_bss *bss = NULL;
 	WsmHiJoinReqBody_t join = {
 		.Mode		= conf->ibss_joined ? WSM_MODE_IBSS : WSM_MODE_BSS,
-		.PreambleType	= WSM_PREAMBLE_LONG,
+		.PreambleType	= conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
 		.ProbeForJoin	= 1,
 		.AtimWindow	= 0,
 		.BasicRateSet	= wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
