@@ -150,22 +150,15 @@ int wfx_start(struct ieee80211_hw *hw)
 void wfx_stop(struct ieee80211_hw *hw)
 {
 	struct wfx_dev *wdev = hw->priv;
-
 	int i;
 
 	wsm_tx_lock_flush(wdev);
-
 	mutex_lock(&wdev->conf_mutex);
-
 	for (i = 0; i < 4; i++)
 		wfx_tx_queue_clear(wdev, &wdev->tx_queue[i]);
 	mutex_unlock(&wdev->conf_mutex);
-
-	if (atomic_xchg(&wdev->tx_lock, 1) != 1)
-		pr_debug("[STA] TX is force-unlocked due to stop request.\n");
-
 	wsm_tx_unlock(wdev);
-	atomic_xchg(&wdev->tx_lock, 0); /* for recovery to work */
+	WARN(atomic_read(&wdev->tx_lock), "tx_lock is locked");
 }
 
 static int wfx_set_uapsd_param(struct wfx_vif		*wvif,
