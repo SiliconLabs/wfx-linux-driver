@@ -59,9 +59,9 @@ MODULE_PARM_DESC(slk_key, "Secret key for secure link (expect 64 hexdecimal digi
 
 static struct ieee80211_rate wfx_rates[] = {
 	RATETAB_ENT( 10,  0, 0),
-	RATETAB_ENT( 20,  1, 0),
-	RATETAB_ENT( 55,  2, 0),
-	RATETAB_ENT(110,  3, 0),
+	RATETAB_ENT( 20,  1, IEEE80211_RATE_SHORT_PREAMBLE),
+	RATETAB_ENT( 55,  2, IEEE80211_RATE_SHORT_PREAMBLE),
+	RATETAB_ENT(110,  3, IEEE80211_RATE_SHORT_PREAMBLE),
 	RATETAB_ENT( 60,  6, 0),
 	RATETAB_ENT( 90,  7, 0),
 	RATETAB_ENT(120,  8, 0),
