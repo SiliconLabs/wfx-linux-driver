@@ -775,9 +775,9 @@ int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
 
 	memcpy(&uapsd_flags, &wvif->uapsd_info, sizeof(uapsd_flags));
 
-	if (uapsd_flags != 0) {
+	if (uapsd_flags != 0)
 		pm.PmMode.FastPsm = 0;
-	}
+
 	// Kernel disable PowerSave when multiple vifs are in use. In contrary,
 	// it is absolutly necessary to enable PowerSave for WF200
 	if (wvif_count(wvif->wdev) > 1) {

@@ -147,7 +147,7 @@ void wfx_scan_work(struct work_struct *work)
 	struct wfx_vif *wvif = container_of(work, struct wfx_vif, scan.work);
 	struct ieee80211_channel **it;
 	struct wsm_scan scan = {
-		.scan_req.ScanType.Type = 0,    /* WSM_SCAN_TYPE_FG, */
+		.scan_req.ScanType.Type = 0,    /* Foreground */
 	};
 	bool first_run = (wvif->scan.begin == wvif->scan.curr &&
 			  wvif->scan.begin != wvif->scan.end);
@@ -219,8 +219,8 @@ void wfx_scan_work(struct work_struct *work)
 		scan.scan_req.NumOfChannels = it - wvif->scan.curr;
 		scan.scan_req.ProbeDelay = 100;
 		if (wvif->state == WFX_STATE_STA) {
-			scan.scan_req.ScanType.Type = 1;        /* WSM_SCAN_TYPE_BG; */
-			scan.scan_req.ScanFlags.Fbg = 1;        /* WSM_SCAN_FLAG_FORCE_BACKGROUND */
+			scan.scan_req.ScanType.Type = 1;
+			scan.scan_req.ScanFlags.Fbg = 1;
 		}
 
 		scan.ch = kcalloc(scan.scan_req.NumOfChannels, sizeof(u8), GFP_KERNEL);

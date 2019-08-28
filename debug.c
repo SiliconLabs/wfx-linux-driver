@@ -99,7 +99,6 @@ static const char * const wfx_debug_state[] = {
 	"access point",
 };
 
-/* WSM_JOIN_PREAMBLE */
 static const char * const wfx_debug_preamble[] = {
 	"long",
 	"short",
