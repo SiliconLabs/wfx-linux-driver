@@ -492,6 +492,7 @@ static int wfx_get_prio_queue(struct wfx_vif *wvif,
 	int winner = -1;
 	int i;
 
+	/* search for a winner using edca params */
 	for (i = 0; i < 4; ++i) {
 		int queued;
 		edca = &wvif->edca.params[i];
@@ -651,7 +652,10 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 		else
 			wdev->tx_burst_idx = -1;
 
-
+		/* more buffered multicast/broadcast frames
+		 *  ==> set MoreData flag in IEEE 802.11 header
+		 *  to inform PS STAs
+		 */
 		if (more) {
 			wsm = (WsmHiTxReqBody_t *) hdr->body;
 			hdr80211 = (struct ieee80211_hdr *) (wsm->Frame + wsm->DataFlags.FcOffset);

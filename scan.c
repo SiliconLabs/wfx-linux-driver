@@ -218,6 +218,7 @@ void wfx_scan_work(struct work_struct *work)
 		scan.ssids = &wvif->scan.ssids[0];
 		scan.scan_req.NumOfChannels = it - wvif->scan.curr;
 		scan.scan_req.ProbeDelay = 100;
+		// FIXME: Check if FW can do active scan while joined.
 		if (wvif->state == WFX_STATE_STA) {
 			scan.scan_req.ScanType.Type = 1;
 			scan.scan_req.ScanFlags.Fbg = 1;

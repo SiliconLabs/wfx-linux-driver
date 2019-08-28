@@ -107,6 +107,7 @@ void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 		wvif->bss_loss_state = 0;
 		schedule_work(&wvif->bss_params_work);
 	} else if (bad) {
+		/* FIXME Should we just keep going until we time out? */
 		if (wvif->bss_loss_state < 3)
 			tx = 1;
 	} else {
@@ -406,6 +407,7 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	wfx_tx_queues_wait_empty_vif(wvif);
 	wsm_tx_unlock(wdev);
 
+	/* FIXME: In add to reset MAC address, try to reset interface */
 	wsm_set_macaddr(wdev, NULL, wvif->Id);
 
 	cancel_delayed_work_sync(&wvif->scan.timeout);
@@ -640,6 +642,9 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 		bf_ctrl.BcnCount = 0;
 		bf_tbl->NumOfInfoElmts = 3;
 	}
+	/* When acting as p2p client being connected to p2p GO, in order to
+	 * receive frames from a different p2p device, turn off bssid filter.
+	 */
 	if (is_p2p)
 		l_rx_filter.bssid = false;
 
@@ -1406,6 +1411,7 @@ static int wfx_update_beaconing(struct wfx_vif *wvif)
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 
 	if (wvif->vif->type == NL80211_IFTYPE_AP) {
+		/* TODO: check if changed channel, band */
 		if (wvif->state != WFX_STATE_AP ||
 		    wvif->beacon_int != conf->beacon_int) {
 			pr_debug("ap restarting\n");
@@ -1453,6 +1459,9 @@ static int wfx_upload_beacon(struct wfx_vif *wvif)
 
 	if (ret)
 		goto done;
+	/* TODO: Distill probe resp; remove TIM and any other beacon-specific
+	 * IEs
+	 */
 	mgmt = (void *)skb->data;
 	mgmt->frame_control =
 		cpu_to_le16(IEEE80211_FTYPE_MGMT |
@@ -1486,7 +1495,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 
 	mutex_lock(&wdev->conf_mutex);
 
-
+	/* TODO: BSS_CHANGED_QOS */
 	if (changed & BSS_CHANGED_ARP_FILTER) {
 		WsmHiMibArpIpAddrTable_t filter = { };
 		nb_arp_addr = info->arp_addr_cnt;
@@ -1687,6 +1696,11 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 		wvif->cqm_rssi_thold = info->cqm_rssi_thold;
 
 		if (info->cqm_rssi_thold || info->cqm_rssi_hyst) {
+			/* FIXME It's not a correct way of setting threshold.
+			 * Upper and lower must be set equal here and adjusted
+			 * in callback. However current implementation is much
+			 * more reliable and stable.
+			 */
 			/* RSSI: signed Q8.0, RCPI: unsigned Q7.1
 			 * RSSI = RCPI / 2 - 110
 			 */
@@ -1707,6 +1721,9 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 			}
 			threshold.Detection = 1;
 		} else {
+			/* We have to enable dummy subscription to get correct
+			 * RSSI values.
+			 */
 			threshold.Detection = 1;
 			threshold.Upperthresh = 1;
 			threshold.Lowerthresh = 1;
