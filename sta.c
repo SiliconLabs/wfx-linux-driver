@@ -1782,15 +1782,13 @@ void wfx_suspend_resume(struct wfx_vif *wvif,
 		bool cancel_tmo = false;
 
 		spin_lock_bh(&wvif->ps_state_lock);
-		if (!arg->SuspendResumeFlags.Resume) {
+		if (!arg->SuspendResumeFlags.Resume)
 			wvif->tx_multicast = false;
-		} else {
-			wvif->tx_multicast = (wvif->aid0_bit_set &&
-					      wvif->buffered_multicasts);
-			if (wvif->tx_multicast) {
-				cancel_tmo = true;
-				wfx_bh_request_tx(wvif->wdev);
-			}
+		else
+			wvif->tx_multicast = wvif->aid0_bit_set && wvif->buffered_multicasts;
+		if (wvif->tx_multicast) {
+			cancel_tmo = true;
+			wfx_bh_request_tx(wvif->wdev);
 		}
 		spin_unlock_bh(&wvif->ps_state_lock);
 		if (cancel_tmo)
