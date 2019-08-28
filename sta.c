@@ -900,17 +900,17 @@ void wfx_event_handler_work(struct work_struct *work)
 			/* RSSI: signed Q8.0, RCPI: unsigned Q7.1
 			 * RSSI = RCPI / 2 - 110
 			 */
-			int rcpi_rssi = (int)(event->evt.EventData.RcpiRssi);
+			int rcpi_rssi;
 			int cqm_evt;
 
 			if (wvif->cqm_use_rssi)
-				rcpi_rssi = (s8)rcpi_rssi;
+				rcpi_rssi = (int8_t) event->evt.EventData.RcpiRssi;
 			else
-				rcpi_rssi =  rcpi_rssi / 2 - 110;
-
-			cqm_evt = (rcpi_rssi <= wvif->cqm_rssi_thold) ?
-				NL80211_CQM_RSSI_THRESHOLD_EVENT_LOW :
-				NL80211_CQM_RSSI_THRESHOLD_EVENT_HIGH;
+				rcpi_rssi = (event->evt.EventData.RcpiRssi / 2) - 110;
+			if (rcpi_rssi <= wvif->cqm_rssi_thold)
+				cqm_evt = NL80211_CQM_RSSI_THRESHOLD_EVENT_LOW;
+			else
+				cqm_evt = NL80211_CQM_RSSI_THRESHOLD_EVENT_HIGH;
 			pr_debug("[CQM] RSSI event: %d.\n", rcpi_rssi);
 #if (KERNEL_VERSION(4, 11, 0) > LINUX_VERSION_CODE)
 			ieee80211_cqm_rssi_notify(wvif->vif, cqm_evt,
