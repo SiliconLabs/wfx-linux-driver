@@ -128,19 +128,14 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 	policy->defined = wfx_get_hw_rate(wdev, &rates[0]) + 1;
 
 	for (i = 0; i < count; ++i) {
-		register unsigned rateid, off, shift, retries;
+		register unsigned rateid, off, shift;
 
+		WARN_ON(rates[i].count > 15);
 		rateid = wfx_get_hw_rate(wdev, &rates[i]);
 		off = rateid >> 3;		/* eq. rateid / 8 */
 		shift = (rateid & 0x07) << 2;	/* eq. (rateid % 8) * 4 */
-
-		retries = rates[i].count;
-		if (retries > 0x0F) {
-			rates[i].count = 0x0f;
-			retries = 0x0F;
-		}
-		policy->tbl[off] |= cpu_to_le32(retries << shift);
-		policy->retry_count += retries;
+		policy->tbl[off] |= cpu_to_le32(rates[i].count << shift);
+		policy->retry_count += rates[i].count;
 	}
 
 	pr_debug("[TX policy] Policy (%zu): %d:%d, %d:%d, %d:%d, %d:%d\n",
@@ -294,10 +289,7 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 			dst->PolicyIndex = i;
 			dst->ShortRetryCount = 255;
 			dst->LongRetryCount = 255;
-
-			/* dst->flags = WSM_TX_RATE_POLICY_FLAG_TERMINATE_WHEN_FINISHED |
-			 *  WSM_TX_RATE_POLICY_FLAG_COUNT_INITIAL_TRANSMIT;
-			 */
+			dst->FirstRateSel = 1;
 			dst->Terminate = 1;
 			dst->CountInit = 1;
 			memcpy(&dst->Rates, src->tbl, sizeof(src->tbl));
@@ -714,7 +706,6 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 	wsm->QueueId.QueueId = 3 - queue_id;
 	wsm->HtTxParameters = wfx_tx_get_tx_parms(wvif->wdev, tx_info);
 	wsm->TxFlags.RetryPolicyIndex = wfx_tx_get_rate_id(wvif, tx_info);
-	wsm->MaxTxRate = wfx_get_hw_rate(wvif->wdev, &tx_info->driver_rates[0]);
 
 	// Auxilliary operations
 	wfx_tx_manage_pm(wvif, hdr, txpriv, sta);
