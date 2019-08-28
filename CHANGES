@@ -2,7 +2,7 @@ Changes in 2.2.5
 ----------------
 
   * Add support for "Certified parts". These parts restrict usage of channels
-    12, 13 and 14.
+    12, 13 and 14 (IPWHIFER-460).
   * Consider NO_IR flag when joining an AP
   * Fix potential freeze when CCA is enabled.
 
