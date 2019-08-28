@@ -290,7 +290,7 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	complete(&wvif->set_pm_mode_complete);
 
 	BUG_ON(ARRAY_SIZE(default_edca_params) != ARRAY_SIZE(wvif->edca.params));
-	for (i = 0; i < ARRAY_SIZE(default_edca_params); i++) {
+	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
 		memcpy(&wvif->edca.params[i], &default_edca_params[i], sizeof(default_edca_params[i]));
 		wvif->edca.uapsd_enable[i] = false;
 	}
@@ -342,7 +342,7 @@ int wfx_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 	wfx_vif_setup(wvif);
 	mutex_unlock(&wdev->conf_mutex);
 	wsm_set_macaddr(wdev, vif->addr, wvif->Id);
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < IEEE80211_NUM_ACS; i++)
 		wsm_set_edca_queue_params(wdev, &wvif->edca.params[i], wvif->Id);
 	wfx_set_uapsd_param(wvif, &wvif->edca);
 	tx_policy_init(wvif);

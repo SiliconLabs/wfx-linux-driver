@@ -217,7 +217,7 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 		seq_printf(seq, "Beaconing:  %s\n",
 			   wvif->enable_beacon ? "enabled" : "disabled");
 
-	for (i = 0; i < 4; ++i)
+	for (i = 0; i < IEEE80211_NUM_ACS; ++i)
 		seq_printf(seq, "EDCA(%d):    %d, %d, %d, %d\n", i,
 			   wvif->edca.params[i].CwMin,
 			   wvif->edca.params[i].CwMax,
@@ -303,7 +303,7 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 		   atomic_read(&wvif->scan.in_progress) ? "active" : "idle");
 
 	seq_puts(seq, "\n");
-	for (i = 0; i < 4; ++i) {
+	for (i = 0; i < IEEE80211_NUM_ACS; ++i) {
 		wfx_queue_status_show(seq, &wdev->tx_queue[i]);
 		seq_puts(seq, "\n");
 	}

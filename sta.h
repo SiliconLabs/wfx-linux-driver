@@ -23,8 +23,8 @@ struct wfx_wsm_event {
 
 struct wsm_edca_params {
 	/* NOTE: index is a linux queue id. */
-	WsmHiEdcaQueueParamsReqBody_t	params[4];
-	bool				uapsd_enable[4];
+	WsmHiEdcaQueueParamsReqBody_t	params[IEEE80211_NUM_ACS];
+	bool				uapsd_enable[IEEE80211_NUM_ACS];
 };
 
 struct wfx_grp_addr_table {

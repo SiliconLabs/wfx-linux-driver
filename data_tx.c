@@ -657,7 +657,7 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 	size_t offset = (size_t) skb->data & 3;
 	int wmsg_len = sizeof(struct wmsg) + sizeof(WsmHiTxReqBody_t) + offset;
 
-	WARN(queue_id >= 4, "unsupported queue_id");
+	WARN(queue_id >= IEEE80211_NUM_ACS, "unsupported queue_id");
 	wfx_tx_fixup_rates(tx_info->driver_rates);
 
 	// From now tx_info->control is unusable

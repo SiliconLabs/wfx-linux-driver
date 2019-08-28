@@ -493,7 +493,7 @@ static int wfx_get_prio_queue(struct wfx_vif *wvif,
 	int i;
 
 	/* search for a winner using edca params */
-	for (i = 0; i < 4; ++i) {
+	for (i = 0; i < IEEE80211_NUM_ACS; ++i) {
 		int queued;
 		edca = &wvif->edca.params[i];
 		queued = wfx_tx_queue_get_num_queued(&wvif->wdev->tx_queue[i],

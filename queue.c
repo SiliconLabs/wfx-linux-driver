@@ -19,7 +19,7 @@ void wfx_tx_queues_lock(struct wfx_dev *wdev)
 	int i;
 	struct wfx_queue *queue;
 
-	for (i = 0; i < 4; ++i) {
+	for (i = 0; i < IEEE80211_NUM_ACS; ++i) {
 		queue = &wdev->tx_queue[i];
 		spin_lock_bh(&queue->queue.lock);
 		if (queue->tx_locked_cnt++ == 0)
@@ -33,7 +33,7 @@ void wfx_tx_queues_unlock(struct wfx_dev *wdev)
 	int i;
 	struct wfx_queue *queue;
 
-	for (i = 0; i < 4; ++i) {
+	for (i = 0; i < IEEE80211_NUM_ACS; ++i) {
 		queue = &wdev->tx_queue[i];
 		spin_lock_bh(&queue->queue.lock);
 		BUG_ON(!queue->tx_locked_cnt);
@@ -63,7 +63,7 @@ void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif)
 	do {
 		done = true;
 		wsm_tx_lock_flush(wdev);
-		for (i = 0; i < 4 && done; ++i) {
+		for (i = 0; i < IEEE80211_NUM_ACS && done; ++i) {
 			queue = &wdev->tx_queue[i];
 			spin_lock_bh(&queue->queue.lock);
 			skb_queue_walk(&queue->queue, item) {
@@ -114,7 +114,7 @@ void wfx_tx_queues_init(struct wfx_dev *wdev)
 	skb_queue_head_init(&wdev->tx_queue_stats.pending);
 	init_waitqueue_head(&wdev->tx_queue_stats.wait_link_id_empty);
 
-	for (i = 0; i < 4; ++i) {
+	for (i = 0; i < IEEE80211_NUM_ACS; ++i) {
 		wdev->tx_queue[i].queue_id = i;
 		skb_queue_head_init(&wdev->tx_queue[i].queue);
 	}
@@ -289,7 +289,7 @@ bool wfx_tx_queues_is_empty(struct wfx_dev *wdev)
 	struct sk_buff_head *queue;
 	bool ret = true;
 
-	for (i = 0; i < 4; i++) {
+	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
 		queue = &wdev->tx_queue[i].queue;
 		spin_lock_bh(&queue->lock);
 		if (!skb_queue_empty(queue))
