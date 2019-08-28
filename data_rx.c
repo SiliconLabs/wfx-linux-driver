@@ -189,9 +189,10 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 		hdr->rate_idx = arg->RxedRate;
 	}
 
-	hdr->signal = arg->RcpiRssi;
 	if (!wvif->cqm_use_rssi)
-		hdr->signal = hdr->signal / 2 - 110;
+		hdr->signal = (int) (arg->RcpiRssi / 2) - 110;
+	else
+		hdr->signal = arg->RcpiRssi;
 	hdr->antenna = 0;
 
 	if (arg->RxFlags.Encryp) {
