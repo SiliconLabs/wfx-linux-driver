@@ -262,10 +262,6 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 
 	seq_printf(seq, "RSSI thold: %d\n",
 		   wvif->cqm_rssi_thold);
-	seq_printf(seq, "Long retr:  %d\n",
-		   wdev->long_frame_max_tx_count);
-	seq_printf(seq, "Short retr: %d\n",
-		   wdev->short_frame_max_tx_count);
 	spin_lock_bh(&wvif->tx_policy_cache.lock);
 	i = 0;
 	list_for_each(item, &wvif->tx_policy_cache.used)

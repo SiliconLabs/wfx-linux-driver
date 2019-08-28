@@ -43,8 +43,6 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 	int i, j;
 	size_t count = IEEE80211_TX_MAX_RATES;
 	struct wfx_dev *wdev = wvif->wdev;
-	unsigned limit = wdev->short_frame_max_tx_count;
-	unsigned total = 0;
 	BUG_ON(rates[0].idx < 0);
 	memset(policy, 0, sizeof(*policy));
 
@@ -62,7 +60,6 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 	}
 
 	/* Eliminate duplicates. */
-	total = rates[0].count;
 	for (i = 0, j = 1; j < count; ++j) {
 		if (rates[j].idx == rates[i].idx) {
 			rates[i].count += rates[j].count;
@@ -73,23 +70,8 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 			if (i != j)
 				rates[i] = rates[j];
 		}
-		total += rates[j].count;
 	}
 	count = i + 1;
-
-	/* Re-fill policy trying to keep every requested rate and with
-	 * respect to the global max tx retransmission count.
-	 */
-	if (limit < count)
-		limit = count;
-	if (total > limit) {
-		for (i = 0; i < count; ++i) {
-			int left = count - i - 1;
-			if (rates[i].count > limit - left)
-				rates[i].count = limit - left;
-			limit -= rates[i].count;
-		}
-	}
 
 	/* HACK!!! Device has problems (at least) switching from
 	 * 54Mbps CTS to 1Mbps. This switch takes enormous amount
@@ -310,8 +292,8 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 			dst = arg->TxRateRetryPolicy + arg->NumTxRatePolicies;
 
 			dst->PolicyIndex = i;
-			dst->ShortRetryCount = wvif->wdev->short_frame_max_tx_count;
-			dst->LongRetryCount = wvif->wdev->long_frame_max_tx_count;
+			dst->ShortRetryCount = 255;
+			dst->LongRetryCount = 255;
 
 			/* dst->flags = WSM_TX_RATE_POLICY_FLAG_TERMINATE_WHEN_FINISHED |
 			 *  WSM_TX_RATE_POLICY_FLAG_COUNT_INITIAL_TRANSMIT;

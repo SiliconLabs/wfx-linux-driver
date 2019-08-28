@@ -115,10 +115,6 @@ struct wfx_dev {
 	/* Radio data */
 	int output_power;
 
-	/* BBP/MAC state */
-	u8				long_frame_max_tx_count;
-	u8				short_frame_max_tx_count;
-
 	int				chip_frozen;
 
 	/* Keep wfx200 awake (WUP = 1) 1 second after each scan to avoid

@@ -533,19 +533,6 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 		wvif = wdev_to_wvif(wdev, 0);
 	}
 
-	if (changed & IEEE80211_CONF_CHANGE_RETRY_LIMITS) {
-		pr_debug("[STA] Retry limits: %d (long), %d (short).\n",
-			 conf->long_frame_max_tx_count,
-			 conf->short_frame_max_tx_count);
-		// FIXME: move wvif->tx_policy_cache.lock to wdev
-		spin_lock_bh(&wvif->tx_policy_cache.lock);
-		wdev->long_frame_max_tx_count = conf->long_frame_max_tx_count;
-		wdev->short_frame_max_tx_count =
-			(conf->short_frame_max_tx_count < 0x0F) ?
-			conf->short_frame_max_tx_count : 0x0F;
-		wdev->hw->max_rate_tries = wdev->short_frame_max_tx_count;
-		spin_unlock_bh(&wvif->tx_policy_cache.lock);
-	}
 	mutex_unlock(&wdev->conf_mutex);
 	up(&wvif->scan.lock);
 	return ret;
