@@ -776,7 +776,10 @@ drop:
 
 void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 {
+	int i;
+	int tx_count;
 	struct sk_buff *skb;
+	struct ieee80211_tx_info *tx_info;
 	const struct wfx_txpriv *txpriv;
 
 	skb = wfx_pending_get(wvif->wdev, arg->PacketId);
@@ -784,78 +787,56 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 		dev_warn(wvif->wdev->dev, "Received unknown packet_id (%#.8x) from chip\n", arg->PacketId);
 		return;
 	}
+	tx_info = IEEE80211_SKB_CB(skb);
 	txpriv = wfx_skb_txpriv(skb);
+	_trace_tx_stats(arg, wfx_pending_get_pkt_us_delay(wvif->wdev, skb));
+	// FIXME: use ieee80211_tx_info_clear_status()
+	memset(tx_info->rate_driver_data, 0, sizeof(tx_info->rate_driver_data));
+	memset(tx_info->pad, 0, sizeof(tx_info->pad));
+	skb_trim(skb, skb->len - wfx_tx_get_icv_len(txpriv->hw_key));
 
-	if (arg->Status == WSM_REQUEUE) {
+	if (arg->Status && !arg->AckFailures)
+		tx_count = 0;
+	else
+		tx_count = arg->AckFailures + 1;
+	for (i = 0; i < IEEE80211_TX_MAX_RATES; i++) {
+		if (!tx_count) {
+			tx_info->status.rates[i].count = 0;
+			tx_info->status.rates[i].idx = -1;
+		} else if (tx_count > tx_info->status.rates[i].count) {
+			tx_count -= tx_info->status.rates[i].count;
+		} else {
+			if (arg->TxedRate != wfx_get_hw_rate(wvif->wdev, &tx_info->status.rates[i]))
+				dev_warn(wvif->wdev->dev, "inconsistent tx_info rates: %d != %d\n",
+					 arg->TxedRate, wfx_get_hw_rate(wvif->wdev, &tx_info->status.rates[i]));
+			tx_info->status.rates[i].count = tx_count;
+			tx_count = 0;
+		}
+	}
+
+	if (!arg->Status) {
+		if (wvif->bss_loss_state && arg->PacketId == wvif->bss_loss_confirm_id)
+			wfx_cqm_bssloss_sm(wvif, 0, 1, 0);
+		tx_info->status.tx_time = arg->MediaDelay - arg->TxQueueDelay;
+		if (tx_info->flags & IEEE80211_TX_CTL_NO_ACK)
+			tx_info->flags |= IEEE80211_TX_STAT_NOACK_TRANSMITTED;
+		else
+			tx_info->flags |= IEEE80211_TX_STAT_ACK;
+	} else if (arg->Status == WSM_REQUEUE) {
 		/* "Requeue" means "implicit suspend" */
 		WsmHiSuspendResumeTxIndBody_t suspend = {
-			.SuspendResumeFlags.Resume	= 0,
-			.SuspendResumeFlags.BcMcOnly		= 1,
+			.SuspendResumeFlags.Resume = 0,
+			.SuspendResumeFlags.BcMcOnly = 1,
 		};
 
 		WARN(!arg->TxResultFlags.Requeue, "Incoherent Status and ResultFlags");
-
 		wfx_suspend_resume(wvif, &suspend);
-		dev_dbg(wvif->wdev->dev, "Requeuing for station %d. STAs asleep: 0x%.8X.\n",
-			   txpriv->link_id, wvif->sta_asleep_mask);
-		wfx_pending_requeue(wvif->wdev, skb);
-		if (!txpriv->link_id) { // Is multicast?
-			spin_lock_bh(&wvif->ps_state_lock);
-			wvif->buffered_multicasts = true;
-			if (wvif->sta_asleep_mask)
-				schedule_work(&wvif->multicast_start_work);
-			spin_unlock_bh(&wvif->ps_state_lock);
-		}
+		tx_info->flags |= IEEE80211_TX_STAT_TX_FILTERED;
 	} else {
-		struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
-		int tx_count;
-		int i;
-
-		mutex_lock(&wvif->bss_loss_lock);
-		if (wvif->bss_loss_state &&
-		    arg->PacketId == wvif->bss_loss_confirm_id) {
-			if (arg->Status) {
-				/* Recovery failed */
-				__wfx_cqm_bssloss_sm(wvif, 0, 0, 1);
-			} else {
-				/* Recovery succeeded */
-				__wfx_cqm_bssloss_sm(wvif, 0, 1, 0);
-			}
-		}
-		mutex_unlock(&wvif->bss_loss_lock);
-		/* Pull off any crypto trailers that we added on */
-		skb_trim(skb, skb->len - wfx_tx_get_icv_len(txpriv->hw_key));
-
-		// FIXME: use ieee80211_tx_info_clear_status()
-		memset(tx_info->rate_driver_data, 0, sizeof(tx_info->rate_driver_data));
-		memset(tx_info->pad, 0, sizeof(tx_info->pad));
-		if (!arg->Status) {
-			_trace_tx_stats(arg, wfx_pending_get_pkt_us_delay(wvif->wdev, skb));
-			tx_info->flags |= IEEE80211_TX_STAT_ACK;
-			tx_info->status.tx_time = arg->MediaDelay - arg->TxQueueDelay;
-		}
-		if (arg->Status && !arg->AckFailures)
-			tx_count = 0;
-		else
-			tx_count = arg->AckFailures + 1;
-
-		for (i = 0; i < IEEE80211_TX_MAX_RATES; i++) {
-			if (!tx_count) {
-				tx_info->status.rates[i].count = 0;
-				tx_info->status.rates[i].idx = -1;
-			} else if (tx_count > tx_info->status.rates[i].count) {
-				tx_count -= tx_info->status.rates[i].count;
-			} else {
-				if (arg->TxedRate != wfx_get_hw_rate(wvif->wdev, &tx_info->status.rates[i]))
-					dev_warn(wvif->wdev->dev, "inconsistent tx_info rates: %d != %d\n",
-						 arg->TxedRate, wfx_get_hw_rate(wvif->wdev, &tx_info->status.rates[i]));
-				tx_info->status.rates[i].count = tx_count;
-				tx_count = 0;
-			}
-		}
-
-		wfx_pending_remove(wvif->wdev, skb);
+		if (wvif->bss_loss_state && arg->PacketId == wvif->bss_loss_confirm_id)
+			wfx_cqm_bssloss_sm(wvif, 0, 0, 1);
 	}
+	wfx_pending_remove(wvif->wdev, skb);
 }
 
 static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
