@@ -158,12 +158,10 @@ int wfx_start(struct ieee80211_hw *hw)
 void wfx_stop(struct ieee80211_hw *hw)
 {
 	struct wfx_dev *wdev = hw->priv;
-	int i;
 
 	wsm_tx_lock_flush(wdev);
 	mutex_lock(&wdev->conf_mutex);
-	for (i = 0; i < 4; i++)
-		wfx_tx_queue_clear(wdev, &wdev->tx_queue[i]);
+	wfx_tx_queues_clear(wdev);
 	mutex_unlock(&wdev->conf_mutex);
 	wsm_tx_unlock(wdev);
 	WARN(atomic_read(&wdev->tx_lock), "tx_lock is locked");
@@ -808,12 +806,11 @@ int wfx_set_rts_threshold(struct ieee80211_hw *hw, u32 value)
 /* If successful, LOCKS the TX queue! */
 static int __wfx_flush(struct wfx_dev *wdev, bool drop)
 {
-	int i, ret;
+	int ret;
 
 	for (;;) {
 		if (drop) {
-			for (i = 0; i < 4; ++i)
-				wfx_tx_queue_clear(wdev, &wdev->tx_queue[i]);
+			wfx_tx_queues_clear(wdev);
 		} else {
 			ret = wait_event_timeout(
 				wdev->tx_queue_stats.wait_link_id_empty,

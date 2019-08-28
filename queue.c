@@ -55,8 +55,7 @@ void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif)
 
 	if (wvif->wdev->chip_frozen) {
 		wsm_tx_lock_flush(wdev);
-		for (i = 0; i < 4; ++i)
-			wfx_tx_queue_clear(wdev, &wdev->tx_queue[i]);
+		wfx_tx_queues_clear(wdev);
 		return;
 	}
 
@@ -80,18 +79,15 @@ void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif)
 	} while (!done);
 }
 
-int wfx_tx_queue_clear(struct wfx_dev *wdev, struct wfx_queue *queue)
+static void wfx_tx_queue_clear(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_buff_head *gc_list)
 {
 	int i;
-	struct sk_buff_head gc_list;
-	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 	struct sk_buff *item;
+	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 
-	skb_queue_head_init(&gc_list);
 	spin_lock_bh(&queue->queue.lock);
 	while ((item = __skb_dequeue(&queue->queue)) != NULL)
-		skb_queue_head(&gc_list, item);
-
+		skb_queue_head(gc_list, item);
 	spin_lock_bh(&stats->pending.lock);
 	for (i = 0; i < ARRAY_SIZE(stats->link_map_cache); ++i) {
 		stats->link_map_cache[i] -= queue->link_map_cache[i];
@@ -99,10 +95,21 @@ int wfx_tx_queue_clear(struct wfx_dev *wdev, struct wfx_queue *queue)
 	}
 	spin_unlock_bh(&stats->pending.lock);
 	spin_unlock_bh(&queue->queue.lock);
+}
+
+void wfx_tx_queues_clear(struct wfx_dev *wdev)
+{
+	int i;
+	struct sk_buff *item;
+	struct sk_buff_head gc_list;
+	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
+
+	skb_queue_head_init(&gc_list);
+	for (i = 0; i < IEEE80211_NUM_ACS; ++i)
+		wfx_tx_queue_clear(wdev, &wdev->tx_queue[i], &gc_list);
 	wake_up(&stats->wait_link_id_empty);
 	while ((item = skb_dequeue(&gc_list)) != NULL)
 		wfx_skb_dtor(wdev, item);
-	return 0;
 }
 
 void wfx_tx_queues_init(struct wfx_dev *wdev)
@@ -122,11 +129,8 @@ void wfx_tx_queues_init(struct wfx_dev *wdev)
 
 void wfx_tx_queues_deinit(struct wfx_dev *wdev)
 {
-	int i;
-
 	WARN_ON(!skb_queue_empty(&wdev->tx_queue_stats.pending));
-	for (i = 0; i < 4; ++i)
-		wfx_tx_queue_clear(wdev, &wdev->tx_queue[i]);
+	wfx_tx_queues_clear(wdev);
 }
 
 size_t wfx_tx_queue_get_num_queued(struct wfx_queue *queue,
