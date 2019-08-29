@@ -117,12 +117,6 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 		policy->rates[rateid / 2] |= count;
 		policy->retry_count += rates[i].count;
 	}
-	pr_debug("[TX policy] Policy (%zu): %d:%d, %d:%d, %d:%d, %d:%d\n",
-		 count,
-		 rates[0].idx, rates[0].count,
-		 rates[1].idx, rates[1].count,
-		 rates[2].idx, rates[2].count,
-		 rates[3].idx, rates[3].count);
 }
 
 static bool tx_policy_is_equal(const struct tx_policy *a, const struct tx_policy *b)
@@ -763,7 +757,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 	}
 	tx_info = IEEE80211_SKB_CB(skb);
 	tx_priv = wfx_skb_tx_priv(skb);
-	_trace_tx_stats(arg, wfx_pending_get_pkt_us_delay(wvif->wdev, skb));
+	_trace_tx_stats(arg, skb, wfx_pending_get_pkt_us_delay(wvif->wdev, skb));
 
 	// You can touch to tx_priv, but don't touch to tx_info->status.
 	if (arg->Status && !arg->AckFailures)
