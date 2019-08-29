@@ -401,7 +401,7 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 			       struct wfx_queue *queue)
 {
 	bool handled = false;
-	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
+	struct wfx_tx_priv *tx_priv = wfx_skb_tx_priv(skb);
 	WsmHiTxReqBody_t *wsm = wfx_skb_txreq(skb);
 	struct ieee80211_hdr *frame = (struct ieee80211_hdr *) (wsm->Frame + wsm->DataFlags.FcOffset);
 
@@ -420,7 +420,7 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 	case NL80211_IFTYPE_AP:
 		if (!wvif->state) {
 			action = do_drop;
-		} else if (!(BIT(txpriv->raw_link_id) &
+		} else if (!(BIT(tx_priv->raw_link_id) &
 		      (BIT(0) | wvif->link_id_map))) {
 			dev_warn(wvif->wdev->dev,
 				   "A frame with expired link id is dropped.\n");
@@ -449,10 +449,10 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 			}
 			mutex_unlock(&wvif->bss_loss_lock);
 		} else if (ieee80211_has_protected(frame->frame_control) &&
-			   txpriv->hw_key &&
-			   txpriv->hw_key->keyidx != wvif->wep_default_key_id &&
-			   (txpriv->hw_key->cipher == WLAN_CIPHER_SUITE_WEP40 ||
-			    txpriv->hw_key->cipher == WLAN_CIPHER_SUITE_WEP104)) {
+			   tx_priv->hw_key &&
+			   tx_priv->hw_key->keyidx != wvif->wep_default_key_id &&
+			   (tx_priv->hw_key->cipher == WLAN_CIPHER_SUITE_WEP40 ||
+			    tx_priv->hw_key->cipher == WLAN_CIPHER_SUITE_WEP104)) {
 			action = do_wep;
 		}
 	}
@@ -466,7 +466,7 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 	case do_wep:
 		pr_debug("[WSM] Issue set_default_wep_key.\n");
 		wsm_tx_lock(wvif->wdev);
-		wvif->wep_default_key_id = txpriv->hw_key->keyidx;
+		wvif->wep_default_key_id = tx_priv->hw_key->keyidx;
 		wvif->wep_pending_skb = skb;
 		if (!schedule_work(&wvif->wep_key_work))
 			wsm_tx_unlock(wvif->wdev);
@@ -573,7 +573,7 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 	struct wfx_queue *vif_queue = NULL;
 	u32 tx_allowed_mask = 0;
 	u32 vif_tx_allowed_mask = 0;
-	const struct wfx_txpriv *txpriv = NULL;
+	const struct wfx_tx_priv *tx_priv = NULL;
 	struct wfx_vif *wvif;
 	/* More is used only for broadcasts. */
 	bool more = false;
@@ -629,7 +629,7 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 		skb = wfx_tx_queue_get(wdev, queue, tx_allowed_mask);
 		if (!skb)
 			continue;
-		txpriv = wfx_skb_txpriv(skb);
+		tx_priv = wfx_skb_tx_priv(skb);
 		hdr = (struct wmsg *) skb->data;
 		wvif = wdev_to_wvif(wdev, hdr->interface);
 		WARN_ON(!wvif);
@@ -637,7 +637,7 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 		if (wsm_handle_tx_data(wvif, skb, queue))
 			continue;  /* Handled by WSM */
 
-		wvif->pspoll_mask &= ~BIT(txpriv->raw_link_id);
+		wvif->pspoll_mask &= ~BIT(tx_priv->raw_link_id);
 
 		/* allow bursting if txop is set */
 		if (wvif->edca.params[queue_num].TxOpLimit)

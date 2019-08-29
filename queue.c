@@ -155,16 +155,16 @@ size_t wfx_tx_queue_get_num_queued(struct wfx_queue *queue,
 void wfx_tx_queue_put(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_buff *skb)
 {
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
-	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
+	struct wfx_tx_priv *tx_priv = wfx_skb_tx_priv(skb);
 
-	WARN(txpriv->link_id >= ARRAY_SIZE(stats->link_map_cache), "Invalid link_id value");
+	WARN(tx_priv->link_id >= ARRAY_SIZE(stats->link_map_cache), "Invalid link_id value");
 	spin_lock_bh(&queue->queue.lock);
 	__skb_queue_tail(&queue->queue, skb);
 
-	++queue->link_map_cache[txpriv->link_id];
+	++queue->link_map_cache[tx_priv->link_id];
 
 	spin_lock_bh(&stats->pending.lock);
-	++stats->link_map_cache[txpriv->link_id];
+	++stats->link_map_cache[tx_priv->link_id];
 	spin_unlock_bh(&stats->pending.lock);
 	spin_unlock_bh(&queue->queue.lock);
 }
@@ -174,27 +174,27 @@ struct sk_buff *wfx_tx_queue_get(struct wfx_dev *wdev, struct wfx_queue *queue, 
 	struct sk_buff *skb = NULL;
 	struct sk_buff *item;
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
-	struct wfx_txpriv *txpriv;
+	struct wfx_tx_priv *tx_priv;
 	bool wakeup_stats = false;
 
 	spin_lock_bh(&queue->queue.lock);
 	skb_queue_walk(&queue->queue, item) {
-		txpriv = wfx_skb_txpriv(item);
-		if (link_id_map & BIT(txpriv->link_id)) {
+		tx_priv = wfx_skb_tx_priv(item);
+		if (link_id_map & BIT(tx_priv->link_id)) {
 			skb = item;
 			break;
 		}
 	}
 	WARN_ON(!skb);
 	if (skb) {
-		txpriv = wfx_skb_txpriv(skb);
-		txpriv->xmit_timestamp = ktime_get();
+		tx_priv = wfx_skb_tx_priv(skb);
+		tx_priv->xmit_timestamp = ktime_get();
 		__skb_unlink(skb, &queue->queue);
-		--queue->link_map_cache[txpriv->link_id];
+		--queue->link_map_cache[tx_priv->link_id];
 
 		spin_lock_bh(&stats->pending.lock);
 		__skb_queue_tail(&stats->pending, skb);
-		if (!--stats->link_map_cache[txpriv->link_id])
+		if (!--stats->link_map_cache[tx_priv->link_id])
 			wakeup_stats = true;
 		spin_unlock_bh(&stats->pending.lock);
 	}
@@ -207,15 +207,15 @@ struct sk_buff *wfx_tx_queue_get(struct wfx_dev *wdev, struct wfx_queue *queue, 
 int wfx_pending_requeue(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
-	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
+	struct wfx_tx_priv *tx_priv = wfx_skb_tx_priv(skb);
 	struct wfx_queue *queue = &wdev->tx_queue[skb_get_queue_mapping(skb)];
 
 	WARN_ON(skb_get_queue_mapping(skb) > 3);
 	spin_lock_bh(&queue->queue.lock);
-	++queue->link_map_cache[txpriv->link_id];
+	++queue->link_map_cache[tx_priv->link_id];
 
 	spin_lock_bh(&stats->pending.lock);
-	++stats->link_map_cache[txpriv->link_id];
+	++stats->link_map_cache[tx_priv->link_id];
 	__skb_unlink(skb, &stats->pending);
 	spin_unlock_bh(&stats->pending.lock);
 	__skb_queue_tail(&queue->queue, skb);
@@ -258,19 +258,19 @@ void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 {
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 	ktime_t now = ktime_get();
-	struct wfx_txpriv *txpriv;
+	struct wfx_tx_priv *tx_priv;
 	WsmHiTxReqBody_t *wsm;
 	struct sk_buff *skb;
 
 	dev_info(wdev->dev, "Frames stuck in firmware since %dms or more:\n", limit_ms);
 	spin_lock_bh(&stats->pending.lock);
 	skb_queue_walk(&stats->pending, skb) {
-		txpriv = wfx_skb_txpriv(skb);
+		tx_priv = wfx_skb_tx_priv(skb);
 		wsm = wfx_skb_txreq(skb);
-		if (ktime_after(now, ktime_add_ms(txpriv->xmit_timestamp, limit_ms)))
+		if (ktime_after(now, ktime_add_ms(tx_priv->xmit_timestamp, limit_ms)))
 			dev_info(wdev->dev, "   id %08x sent %lldms ago",
 					wsm->PacketId,
-					ktime_ms_delta(now, txpriv->xmit_timestamp));
+					ktime_ms_delta(now, tx_priv->xmit_timestamp));
 	}
 	spin_unlock_bh(&stats->pending.lock);
 }
@@ -278,9 +278,9 @@ void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 unsigned wfx_pending_get_pkt_us_delay(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	ktime_t now = ktime_get();
-	struct wfx_txpriv *txpriv = wfx_skb_txpriv(skb);
+	struct wfx_tx_priv *tx_priv = wfx_skb_tx_priv(skb);
 
-	return ktime_us_delta(now, txpriv->xmit_timestamp);
+	return ktime_us_delta(now, tx_priv->xmit_timestamp);
 }
 
 bool wfx_tx_queues_is_empty(struct wfx_dev *wdev)

@@ -538,9 +538,9 @@ static bool ieee80211_is_action_back(struct ieee80211_hdr *hdr)
 }
 
 static void wfx_tx_manage_pm(struct wfx_vif *wvif, struct ieee80211_hdr *hdr,
-			     struct wfx_txpriv *txpriv, struct ieee80211_sta *sta)
+			     struct wfx_tx_priv *tx_priv, struct ieee80211_sta *sta)
 {
-	u32 mask = ~BIT(txpriv->raw_link_id);
+	u32 mask = ~BIT(tx_priv->raw_link_id);
 
 	spin_lock_bh(&wvif->ps_state_lock);
 	if (ieee80211_is_auth(hdr->frame_control)) {
@@ -548,21 +548,21 @@ static void wfx_tx_manage_pm(struct wfx_vif *wvif, struct ieee80211_hdr *hdr,
 		wvif->pspoll_mask &= mask;
 	}
 
-	if (txpriv->link_id == WFX_LINK_ID_AFTER_DTIM && !wvif->buffered_multicasts) {
+	if (tx_priv->link_id == WFX_LINK_ID_AFTER_DTIM && !wvif->buffered_multicasts) {
 		wvif->buffered_multicasts = true;
 		if (wvif->sta_asleep_mask)
 			schedule_work(&wvif->multicast_start_work);
 	}
 
-	if (txpriv->raw_link_id) {
-		wvif->link_id_db[txpriv->raw_link_id - 1].timestamp = jiffies;
-		if (txpriv->tid < WFX_MAX_TID)
-			wvif->link_id_db[txpriv->raw_link_id - 1].buffered[txpriv->tid]++;
+	if (tx_priv->raw_link_id) {
+		wvif->link_id_db[tx_priv->raw_link_id - 1].timestamp = jiffies;
+		if (tx_priv->tid < WFX_MAX_TID)
+			wvif->link_id_db[tx_priv->raw_link_id - 1].buffered[tx_priv->tid]++;
 	}
 	spin_unlock_bh(&wvif->ps_state_lock);
 
 	if (sta)
-		ieee80211_sta_set_buffered(sta, txpriv->tid, true);
+		ieee80211_sta_set_buffered(sta, tx_priv->tid, true);
 }
 
 static uint8_t wfx_tx_get_raw_link_id(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct ieee80211_hdr *hdr)
@@ -656,7 +656,7 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 {
 	struct wmsg *wmsg;
 	WsmHiTxReqBody_t *wsm;
-	struct wfx_txpriv *txpriv;
+	struct wfx_tx_priv *tx_priv;
 	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
 	struct ieee80211_key_conf *hw_key = tx_info->control.hw_key;
 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
@@ -667,23 +667,23 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 	WARN(queue_id >= 4, "unsupported queue_id");
 
 	// From now tx_info->control is unusable
-	memset(tx_info->rate_driver_data, 0, sizeof(struct wfx_txpriv));
-	// Fill txpriv
-	txpriv = (struct wfx_txpriv *) tx_info->rate_driver_data;
-	txpriv->tid = wfx_tx_get_tid(hdr);
-	txpriv->raw_link_id = wfx_tx_get_raw_link_id(wvif, sta, hdr);
-	txpriv->link_id = txpriv->raw_link_id;
+	memset(tx_info->rate_driver_data, 0, sizeof(struct wfx_tx_priv));
+	// Fill tx_priv
+	tx_priv = (struct wfx_tx_priv *) tx_info->rate_driver_data;
+	tx_priv->tid = wfx_tx_get_tid(hdr);
+	tx_priv->raw_link_id = wfx_tx_get_raw_link_id(wvif, sta, hdr);
+	tx_priv->link_id = tx_priv->raw_link_id;
 	if (ieee80211_has_protected(hdr->frame_control))
-		txpriv->hw_key = hw_key;
+		tx_priv->hw_key = hw_key;
 	if (tx_info->flags & IEEE80211_TX_CTL_SEND_AFTER_DTIM)
-		txpriv->link_id = WFX_LINK_ID_AFTER_DTIM;
+		tx_priv->link_id = WFX_LINK_ID_AFTER_DTIM;
 	if (sta && (sta->uapsd_queues & BIT(queue_id)))
-		txpriv->link_id = WFX_LINK_ID_UAPSD;
+		tx_priv->link_id = WFX_LINK_ID_UAPSD;
 
 	// Fill wmsg
 	WARN(skb_headroom(skb) < wmsg_len, "not enough space in skb");
 	WARN(offset & 1, "attempt to transmit an unaligned frame");
-	skb_put(skb, wfx_tx_get_icv_len(txpriv->hw_key));
+	skb_put(skb, wfx_tx_get_icv_len(tx_priv->hw_key));
 	skb_push(skb, wmsg_len);
 	memset(skb->data, 0, wmsg_len);
 	wmsg = (struct wmsg *) skb->data;
@@ -701,14 +701,14 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 	wsm = (WsmHiTxReqBody_t *) wmsg->body;
 	wsm->PacketId = queue_id << 16 | IEEE80211_SEQ_TO_SN(le16_to_cpu(hdr->seq_ctrl));
 	wsm->DataFlags.FcOffset = offset;
-	wsm->QueueId.PeerStaId = txpriv->raw_link_id;
+	wsm->QueueId.PeerStaId = tx_priv->raw_link_id;
 	// Queue index are inverted between WSM and Linux
 	wsm->QueueId.QueueId = 3 - queue_id;
 	wsm->HtTxParameters = wfx_tx_get_tx_parms(wvif->wdev, tx_info);
 	wsm->TxFlags.RetryPolicyIndex = wfx_tx_get_rate_id(wvif, tx_info);
 
 	// Auxilliary operations
-	wfx_tx_manage_pm(wvif, hdr, txpriv, sta);
+	wfx_tx_manage_pm(wvif, hdr, tx_priv, sta);
 	wfx_tx_queue_put(wvif->wdev, &wvif->wdev->tx_queue[queue_id], skb);
 	wfx_bh_request_tx(wvif->wdev);
 	return 0;
@@ -724,7 +724,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
 	size_t driver_data_room = FIELD_SIZEOF(struct ieee80211_tx_info, rate_driver_data);
 
-	compiletime_assert(sizeof(struct wfx_txpriv) <= driver_data_room, "struct txpriv is too large");
+	compiletime_assert(sizeof(struct wfx_tx_priv) <= driver_data_room, "struct tx_priv is too large");
 	WARN(skb->next || skb->prev, "skb is already member of a list");
 	// control.vif can be NULL for injected frames
 	if (tx_info->control.vif)
@@ -753,7 +753,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 	int tx_count;
 	struct sk_buff *skb;
 	struct ieee80211_tx_info *tx_info;
-	const struct wfx_txpriv *txpriv;
+	const struct wfx_tx_priv *tx_priv;
 
 	skb = wfx_pending_get(wvif->wdev, arg->PacketId);
 	if (!skb) {
@@ -761,12 +761,12 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 		return;
 	}
 	tx_info = IEEE80211_SKB_CB(skb);
-	txpriv = wfx_skb_txpriv(skb);
+	tx_priv = wfx_skb_tx_priv(skb);
 	_trace_tx_stats(arg, wfx_pending_get_pkt_us_delay(wvif->wdev, skb));
 	// FIXME: use ieee80211_tx_info_clear_status()
 	memset(tx_info->rate_driver_data, 0, sizeof(tx_info->rate_driver_data));
 	memset(tx_info->pad, 0, sizeof(tx_info->pad));
-	skb_trim(skb, skb->len - wfx_tx_get_icv_len(txpriv->hw_key));
+	skb_trim(skb, skb->len - wfx_tx_get_icv_len(tx_priv->hw_key));
 
 	if (arg->Status && !arg->AckFailures)
 		tx_count = 0;

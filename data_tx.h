@@ -12,11 +12,11 @@
 
 #include "wsm_cmd_api.h"
 
-struct wfx_txpriv;
+struct wfx_tx_priv;
 struct wfx_dev;
 struct wfx_vif;
 
-struct wfx_txpriv {
+struct wfx_tx_priv {
 	ktime_t xmit_timestamp;
 	struct ieee80211_key_conf *hw_key;
 	u8 link_id;
@@ -66,14 +66,14 @@ void wfx_link_id_gc_work(struct work_struct *work);
 void wfx_link_id_reset_work(struct work_struct *work);
 int wfx_find_link_id(struct wfx_vif *wvif, const u8 *mac);
 
-static inline struct wfx_txpriv *wfx_skb_txpriv(struct sk_buff *skb)
+static inline struct wfx_tx_priv *wfx_skb_tx_priv(struct sk_buff *skb)
 {
 	struct ieee80211_tx_info *tx_info;
 
 	if (!skb)
 		return NULL;
 	tx_info = IEEE80211_SKB_CB(skb);
-	return (struct wfx_txpriv *) tx_info->rate_driver_data;
+	return (struct wfx_tx_priv *) tx_info->rate_driver_data;
 }
 
 static inline WsmHiTxReqBody_t *wfx_skb_txreq(struct sk_buff *skb)
