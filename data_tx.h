@@ -25,10 +25,7 @@ struct wfx_tx_priv {
 } __packed;
 
 struct tx_policy {
-	union {
-		__le32 tbl[3];
-		u8 raw[12];
-	};
+	u8  rates[12];
 	u8  defined;
 	u8  usage_count;
 	u8  retry_count;

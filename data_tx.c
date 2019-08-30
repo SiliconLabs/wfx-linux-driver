@@ -105,14 +105,18 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 
 	policy->defined = wfx_get_hw_rate(wdev, &rates[0]) + 1;
 
-	for (i = 0; i < count; ++i) {
-		register unsigned rateid, off, shift;
+	for (i = 0; i < IEEE80211_TX_MAX_RATES; ++i) {
+		unsigned rateid, count;
 
+		if (rates[i].idx < 0)
+			break;
 		WARN_ON(rates[i].count > 15);
 		rateid = wfx_get_hw_rate(wdev, &rates[i]);
-		off = rateid >> 3;		/* eq. rateid / 8 */
-		shift = (rateid & 0x07) << 2;	/* eq. (rateid % 8) * 4 */
-		policy->tbl[off] |= cpu_to_le32(rates[i].count << shift);
+		// Pack two values in each byte of policy->rates
+		count = rates[i].count;
+		if (rateid % 2)
+			count <<= 4;
+		policy->rates[rateid / 2] |= count;
 		policy->retry_count += rates[i].count;
 	}
 
@@ -131,11 +135,11 @@ static bool tx_policy_is_equal(const struct tx_policy *wanted,
 	if (wanted->defined > cached->defined)
 		return false;
 	if (count) {
-		if (memcmp(wanted->raw, cached->raw, count))
+		if (memcmp(wanted->rates, cached->rates, count))
 			return false;
 	}
 	if (wanted->defined & 1) {
-		if ((wanted->raw[count] & 0x0F) != (cached->raw[count] & 0x0F))
+		if ((wanted->rates[count] & 0x0F) != (cached->rates[count] & 0x0F))
 			return false;
 	}
 	return true;
@@ -270,7 +274,7 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 			dst->FirstRateSel = 1;
 			dst->Terminate = 1;
 			dst->CountInit = 1;
-			memcpy(&dst->Rates, src->tbl, sizeof(src->tbl));
+			memcpy(&dst->Rates, src->rates, sizeof(src->rates));
 			src->uploaded = 1;
 			arg->NumTxRatePolicies++;
 		}
