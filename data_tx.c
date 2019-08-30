@@ -40,38 +40,16 @@ static int wfx_get_hw_rate(struct wfx_dev *wdev, const struct ieee80211_tx_rate 
 static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 			    struct ieee80211_tx_rate *rates)
 {
-	int i, j;
-	size_t count = IEEE80211_TX_MAX_RATES;
+	int i;
+	size_t count;
 	struct wfx_dev *wdev = wvif->wdev;
 	BUG_ON(rates[0].idx < 0);
 	memset(policy, 0, sizeof(*policy));
 
-	/* Sort rates in descending order. */
-	for (i = 1; i < count; ++i) {
-		if (rates[i].idx < 0) {
-			count = i;
+	for (i = 1; i < IEEE80211_TX_MAX_RATES; i++)
+		if (rates[i].idx < 0)
 			break;
-		}
-		if (rates[i].idx > rates[i - 1].idx) {
-			struct ieee80211_tx_rate tmp = rates[i - 1];
-			rates[i - 1] = rates[i];
-			rates[i] = tmp;
-		}
-	}
-
-	/* Eliminate duplicates. */
-	for (i = 0, j = 1; j < count; ++j) {
-		if (rates[j].idx == rates[i].idx) {
-			rates[i].count += rates[j].count;
-		} else if (rates[j].idx > rates[i].idx) {
-			break;
-		} else {
-			++i;
-			if (i != j)
-				rates[i] = rates[j];
-		}
-	}
-	count = i + 1;
+	count = i;
 
 	/* HACK!!! Device has problems (at least) switching from
 	 * 54Mbps CTS to 1Mbps. This switch takes enormous amount
@@ -589,6 +567,40 @@ static uint8_t wfx_tx_get_raw_link_id(struct wfx_vif *wvif, struct ieee80211_sta
 	}
 }
 
+static void wfx_tx_fixup_rates(struct ieee80211_tx_rate *rates)
+{
+	int i;
+	bool finished;
+
+	// Firmware is not able to mix rates with differents flags
+	for (i = 0; i < IEEE80211_TX_MAX_RATES; i++) {
+		if (rates[0].flags & IEEE80211_TX_RC_SHORT_GI)
+			rates[i].flags |= IEEE80211_TX_RC_SHORT_GI;
+		if (!(rates[0].flags & IEEE80211_TX_RC_SHORT_GI))
+			rates[i].flags &= ~IEEE80211_TX_RC_SHORT_GI;
+		if (!(rates[0].flags & IEEE80211_TX_RC_USE_RTS_CTS))
+			rates[i].flags &= ~IEEE80211_TX_RC_USE_RTS_CTS;
+	}
+
+	// Sort rates and remove duplicates
+	do {
+		finished = true;
+		for (i = 0; i < IEEE80211_TX_MAX_RATES - 1; i++) {
+			if (rates[i + 1].idx == rates[i].idx && rates[i].idx != -1) {
+				rates[i].count =  max_t(int, rates[i].count, rates[i + 1].count);
+				rates[i + 1].idx = -1;
+				rates[i + 1].count = 0;
+
+				finished = false;
+			}
+			if (rates[i + 1].idx > rates[i].idx) {
+				swap(rates[i + 1], rates[i]);
+				finished = false;
+			}
+		}
+	} while (!finished);
+}
+
 static uint8_t wfx_tx_get_rate_id(struct wfx_vif *wvif, struct ieee80211_tx_info *tx_info)
 {
 	bool tx_policy_renew = false;
@@ -665,6 +677,7 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 	int wmsg_len = sizeof(struct wmsg) + sizeof(WsmHiTxReqBody_t) + offset;
 
 	WARN(queue_id >= 4, "unsupported queue_id");
+	wfx_tx_fixup_rates(tx_info->driver_rates);
 
 	// From now tx_info->control is unusable
 	memset(tx_info->rate_driver_data, 0, sizeof(struct wfx_tx_priv));
