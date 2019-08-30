@@ -763,11 +763,8 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 	tx_info = IEEE80211_SKB_CB(skb);
 	tx_priv = wfx_skb_tx_priv(skb);
 	_trace_tx_stats(arg, wfx_pending_get_pkt_us_delay(wvif->wdev, skb));
-	// FIXME: use ieee80211_tx_info_clear_status()
-	memset(tx_info->rate_driver_data, 0, sizeof(tx_info->rate_driver_data));
-	memset(tx_info->pad, 0, sizeof(tx_info->pad));
-	skb_trim(skb, skb->len - wfx_tx_get_icv_len(tx_priv->hw_key));
 
+	// You can touch to tx_priv, but don't touch to tx_info->status.
 	if (arg->Status && !arg->AckFailures)
 		tx_count = 0;
 	else
@@ -786,6 +783,12 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 			tx_count = 0;
 		}
 	}
+	skb_trim(skb, skb->len - wfx_tx_get_icv_len(tx_priv->hw_key));
+
+	// Form now, you can touch to tx_info->status, but do not touch to tx_priv anymore
+	// FIXME: use ieee80211_tx_info_clear_status()
+	memset(tx_info->rate_driver_data, 0, sizeof(tx_info->rate_driver_data));
+	memset(tx_info->pad, 0, sizeof(tx_info->pad));
 
 	if (!arg->Status) {
 		if (wvif->bss_loss_state && arg->PacketId == wvif->bss_loss_confirm_id)
