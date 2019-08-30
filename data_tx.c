@@ -5,6 +5,7 @@
  * Copyright (c) 2017-2019, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
+#include <linux/crc32.h>
 #include <net/mac80211.h>
 
 #include "data_tx.h"
@@ -103,8 +104,6 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 		}
 	}
 
-	policy->defined = wfx_get_hw_rate(wdev, &rates[0]) + 1;
-
 	for (i = 0; i < IEEE80211_TX_MAX_RATES; ++i) {
 		unsigned rateid, count;
 
@@ -119,7 +118,7 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 		policy->rates[rateid / 2] |= count;
 		policy->retry_count += rates[i].count;
 	}
-
+	policy->hash = crc32(~0, policy->rates, sizeof(policy->rates));
 	pr_debug("[TX policy] Policy (%zu): %d:%d, %d:%d, %d:%d, %d:%d\n",
 		 count,
 		 rates[0].idx, rates[0].count,
@@ -128,41 +127,22 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 		 rates[3].idx, rates[3].count);
 }
 
-static bool tx_policy_is_equal(const struct tx_policy *wanted,
-				      const struct tx_policy *cached)
+static bool tx_policy_is_equal(const struct tx_policy *a, const struct tx_policy *b)
 {
-	size_t count = wanted->defined >> 1;
-	if (wanted->defined > cached->defined)
-		return false;
-	if (count) {
-		if (memcmp(wanted->rates, cached->rates, count))
-			return false;
-	}
-	if (wanted->defined & 1) {
-		if ((wanted->rates[count] & 0x0F) != (cached->rates[count] & 0x0F))
-			return false;
-	}
-	return true;
+	return a->hash == b->hash && !memcmp(a->rates, b->rates, sizeof(a->rates));
 }
 
 static int tx_policy_find(struct tx_policy_cache *cache,
 			  const struct tx_policy *wanted)
 {
-	/* O(n) complexity. Not so good, but there's only 8 entries in
-	 * the cache.
-	 * Also lru helps to reduce search time.
-	 */
 	struct tx_policy_cache_entry *it;
-	/* First search for policy in "used" list */
-	list_for_each_entry(it, &cache->used, link) {
+
+	list_for_each_entry(it, &cache->used, link)
 		if (tx_policy_is_equal(wanted, &it->policy))
 			return it - cache->cache;
-	}
-	/* Then - in "free list" */
-	list_for_each_entry(it, &cache->free, link) {
+	list_for_each_entry(it, &cache->free, link)
 		if (tx_policy_is_equal(wanted, &it->policy))
 			return it - cache->cache;
-	}
 	return -1;
 }
 

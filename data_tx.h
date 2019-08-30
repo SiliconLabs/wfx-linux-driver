@@ -25,8 +25,8 @@ struct wfx_tx_priv {
 } __packed;
 
 struct tx_policy {
+	u32 hash;
 	u8  rates[12];
-	u8  defined;
 	u8  usage_count;
 	u8  retry_count;
 	u8  uploaded;
@@ -39,6 +39,7 @@ struct tx_policy_cache_entry {
 
 struct tx_policy_cache {
 	struct tx_policy_cache_entry cache[WSM_MIB_NUM_TX_RATE_RETRY_POLICIES];
+	// FIXME: use a trees and drop hash from tx_policy
 	struct list_head used;
 	struct list_head free;
 	spinlock_t lock;
