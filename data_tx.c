@@ -224,15 +224,12 @@ static void tx_policy_put(struct wfx_vif *wvif, int idx)
 static int tx_policy_upload(struct wfx_vif *wvif)
 {
 	int i;
-	WsmHiMibTxRateRetryPolicy_t *dst;
-	WsmHiMibSetTxRateRetryPolicy_t *arg;
 	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
+	WsmHiMibSetTxRateRetryPolicy_t *arg =
+		kzalloc(struct_size(arg, TxRateRetryPolicy, WSM_MIB_NUM_TX_RATE_RETRY_POLICIES), GFP_KERNEL);
+	WsmHiMibTxRateRetryPolicy_t *dst;
 
-	arg = kzalloc(sizeof(WsmHiMibSetTxRateRetryPolicy_t) +
-		      sizeof(WsmHiMibTxRateRetryPolicy_t) * WSM_MIB_NUM_TX_RATE_RETRY_POLICIES,
-		      GFP_KERNEL);
 	spin_lock_bh(&cache->lock);
-
 	/* Upload only modified entries. */
 	for (i = 0; i < WSM_MIB_NUM_TX_RATE_RETRY_POLICIES; ++i) {
 		struct tx_policy *src = &cache->cache[i].policy;

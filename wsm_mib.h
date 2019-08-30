@@ -14,6 +14,11 @@
 #include "wsm_tx.h"
 #include "wsm_cmd_api.h"
 
+#if (KERNEL_VERSION(4, 17, 0) > LINUX_VERSION_CODE)
+#define struct_size(p, member, n) \
+	(n * sizeof(*(p)->member) + __must_be_array((p)->member) + sizeof(*(p)))
+#endif
+
 struct wsm_rx_filter {
 	bool	bssid;
 	bool	probeResponder;
@@ -95,8 +100,7 @@ static inline int wsm_set_beacon_filter_table(struct wfx_dev *wdev,
 					      WsmHiMibBcnFilterTable_t *ft,
 					      int Id)
 {
-	size_t buf_len = sizeof(WsmHiMibBcnFilterTable_t)
-			 + ft->NumOfInfoElmts * sizeof(WsmHiIeTableEntry_t);
+	size_t buf_len = struct_size(ft, IeTable, ft->NumOfInfoElmts);
 
 	cpu_to_le32s(&ft->NumOfInfoElmts);
 	return wsm_write_mib(wdev, WSM_MIB_ID_BEACON_FILTER_TABLE, ft,
@@ -173,8 +177,7 @@ static inline int wsm_set_tx_rate_retry_policy(struct wfx_dev *wdev,
 					       WsmHiMibSetTxRateRetryPolicy_t *arg,
 					       int Id)
 {
-	size_t size = sizeof(WsmHiMibSetTxRateRetryPolicy_t) +
-		      sizeof(WsmHiMibTxRateRetryPolicy_t) * arg->NumTxRatePolicies;
+	size_t size = struct_size(arg, TxRateRetryPolicy, arg->NumTxRatePolicies);
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_SET_TX_RATE_RETRY_POLICY, arg,
 			     size, Id);
