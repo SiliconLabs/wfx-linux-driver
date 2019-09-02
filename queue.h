@@ -12,7 +12,7 @@
 
 #include "wsm_cmd_api.h"
 
-#define WFX_MAX_STA_IN_AP_MODE    (8)
+#define WFX_MAX_STA_IN_AP_MODE    14
 #define WFX_LINK_ID_AFTER_DTIM    (WFX_MAX_STA_IN_AP_MODE + 1)
 #define WFX_LINK_ID_UAPSD         (WFX_MAX_STA_IN_AP_MODE + 2)
 #define WFX_LINK_ID_MAX           (WFX_MAX_STA_IN_AP_MODE + 3)
