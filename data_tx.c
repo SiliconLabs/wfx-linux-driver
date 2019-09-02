@@ -628,10 +628,12 @@ static WsmHiHtTxParameters_t wfx_tx_get_tx_parms(struct wfx_dev *wdev, struct ie
 	struct ieee80211_tx_rate *rate = &tx_info->driver_rates[0];
 	WsmHiHtTxParameters_t ret = { };
 
-	if (rate->flags & IEEE80211_TX_RC_GREEN_FIELD)
-		ret.FrameFormat = WSM_FRAME_FORMAT_GF_HT_11N;
-	else
+	if (!(rate->flags & IEEE80211_TX_RC_MCS))
+		ret.FrameFormat = WSM_FRAME_FORMAT_NON_HT;
+	else if (!(rate->flags & IEEE80211_TX_RC_GREEN_FIELD))
 		ret.FrameFormat = WSM_FRAME_FORMAT_MIXED_FORMAT_HT;
+	else
+		ret.FrameFormat = WSM_FRAME_FORMAT_GF_HT_11N;
 	if (rate->flags & IEEE80211_TX_RC_SHORT_GI)
 		ret.ShortGi = 1;
 	if (tx_info->flags & IEEE80211_TX_CTL_LDPC && wdev->pdata.support_ldpc)
