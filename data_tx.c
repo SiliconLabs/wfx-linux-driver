@@ -123,31 +123,28 @@ static bool tx_policy_is_equal(const struct tx_policy *a, const struct tx_policy
 	return !memcmp(a->rates, b->rates, sizeof(a->rates));
 }
 
-static int tx_policy_find(struct tx_policy_cache *cache,
-			  const struct tx_policy *wanted)
+static int tx_policy_find(struct tx_policy_cache *cache, struct tx_policy *wanted)
 {
-	struct tx_policy_cache_entry *it;
+	struct tx_policy *it;
 
 	list_for_each_entry(it, &cache->used, link)
-		if (tx_policy_is_equal(wanted, &it->policy))
+		if (tx_policy_is_equal(wanted, it))
 			return it - cache->cache;
 	list_for_each_entry(it, &cache->free, link)
-		if (tx_policy_is_equal(wanted, &it->policy))
+		if (tx_policy_is_equal(wanted, it))
 			return it - cache->cache;
 	return -1;
 }
 
-static void tx_policy_use(struct tx_policy_cache *cache,
-				 struct tx_policy_cache_entry *entry)
+static void tx_policy_use(struct tx_policy_cache *cache, struct tx_policy *entry)
 {
-	++entry->policy.usage_count;
+	++entry->usage_count;
 	list_move(&entry->link, &cache->used);
 }
 
-static int tx_policy_release(struct tx_policy_cache *cache,
-				    struct tx_policy_cache_entry *entry)
+static int tx_policy_release(struct tx_policy_cache *cache, struct tx_policy *entry)
 {
-	int ret = --entry->policy.usage_count;
+	int ret = --entry->usage_count;
 	if (!ret)
 		list_move(&entry->link, &cache->free);
 	return ret;
@@ -186,14 +183,15 @@ static int tx_policy_get(struct wfx_vif *wvif, struct ieee80211_tx_rate *rates,
 	if (idx >= 0) {
 		*renew = false;
 	} else {
-		struct tx_policy_cache_entry *entry;
+		struct tx_policy *entry;
 		*renew = true;
 		/* If policy is not found create a new one
 		 * using the oldest entry in "free" list
 		 */
-		entry = list_entry(cache->free.prev,
-			struct tx_policy_cache_entry, link);
-		entry->policy = wanted;
+		entry = list_entry(cache->free.prev, struct tx_policy, link);
+		memcpy(entry->rates, wanted.rates, sizeof(entry->rates));
+		entry->uploaded = 0;
+		entry->usage_count = 0;
 		idx = entry - cache->cache;
 	}
 	tx_policy_use(cache, &cache->cache[idx]);
@@ -231,7 +229,7 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 	spin_lock_bh(&cache->lock);
 	/* Upload only modified entries. */
 	for (i = 0; i < WSM_MIB_NUM_TX_RATE_RETRY_POLICIES; ++i) {
-		struct tx_policy *src = &cache->cache[i].policy;
+		struct tx_policy *src = &cache->cache[i];
 
 		if (!src->uploaded && memzcmp(src->rates, sizeof(src->rates))) {
 			dst = arg->TxRateRetryPolicy + arg->NumTxRatePolicies;
