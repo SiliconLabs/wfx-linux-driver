@@ -22,15 +22,6 @@ static int mbedtls_random(void *data, unsigned char *output, size_t len)
 	return 0;
 }
 
-static int memzcmp(void *src, unsigned int size)
-{
-	if (!size)
-		return 0;
-	if (*(unsigned char *) src)
-		return 1;
-	return memcmp(src, src + 1, size - 1);
-}
-
 int wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id)
 {
 	return test_bit(cmd_id, wdev->sl.commands);
