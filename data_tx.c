@@ -115,7 +115,6 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 		if (rateid % 2)
 			count <<= 4;
 		policy->rates[rateid / 2] |= count;
-		policy->retry_count += rates[i].count;
 	}
 }
 
@@ -234,7 +233,7 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 	for (i = 0; i < WSM_MIB_NUM_TX_RATE_RETRY_POLICIES; ++i) {
 		struct tx_policy *src = &cache->cache[i].policy;
 
-		if (src->retry_count && !src->uploaded) {
+		if (!src->uploaded && memzcmp(src->rates, sizeof(src->rates))) {
 			dst = arg->TxRateRetryPolicy + arg->NumTxRatePolicies;
 
 			dst->PolicyIndex = i;

@@ -27,7 +27,6 @@ struct wfx_tx_priv {
 struct tx_policy {
 	u8  rates[12];
 	u8  usage_count;
-	u8  retry_count;
 	u8  uploaded;
 };
 
