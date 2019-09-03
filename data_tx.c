@@ -5,7 +5,6 @@
  * Copyright (c) 2017-2019, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
-#include <linux/crc32.h>
 #include <net/mac80211.h>
 
 #include "data_tx.h"
@@ -118,7 +117,6 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 		policy->rates[rateid / 2] |= count;
 		policy->retry_count += rates[i].count;
 	}
-	policy->hash = crc32(~0, policy->rates, sizeof(policy->rates));
 	pr_debug("[TX policy] Policy (%zu): %d:%d, %d:%d, %d:%d, %d:%d\n",
 		 count,
 		 rates[0].idx, rates[0].count,
@@ -129,7 +127,7 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 
 static bool tx_policy_is_equal(const struct tx_policy *a, const struct tx_policy *b)
 {
-	return a->hash == b->hash && !memcmp(a->rates, b->rates, sizeof(a->rates));
+	return !memcmp(a->rates, b->rates, sizeof(a->rates));
 }
 
 static int tx_policy_find(struct tx_policy_cache *cache,

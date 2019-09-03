@@ -25,7 +25,6 @@ struct wfx_tx_priv {
 } __packed;
 
 struct tx_policy {
-	u32 hash;
 	u8  rates[12];
 	u8  usage_count;
 	u8  retry_count;
