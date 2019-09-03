@@ -760,10 +760,9 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 	_trace_tx_stats(arg, skb, wfx_pending_get_pkt_us_delay(wvif->wdev, skb));
 
 	// You can touch to tx_priv, but don't touch to tx_info->status.
-	if (arg->Status && !arg->AckFailures)
-		tx_count = 0;
-	else
-		tx_count = arg->AckFailures + 1;
+	tx_count = arg->AckFailures;
+	if (!arg->Status || arg->AckFailures)
+		tx_count += 1; // Also report success
 	for (i = 0; i < IEEE80211_TX_MAX_RATES; i++) {
 		rate = &tx_info->status.rates[i];
 		if (rate->idx < 0)
