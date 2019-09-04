@@ -340,45 +340,6 @@ static int wfx_map_link(struct wfx_vif *wvif, struct wfx_link_entry *link_entry,
 	return ret;
 }
 
-void wfx_link_id_reset_work(struct work_struct *work)
-{
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, link_id_reset_work);
-	int temp_link_id;
-
-	if (!wvif->action_link_id) {
-		/* In GO mode we can receive ACTION frames without a linkID */
-		temp_link_id = wfx_alloc_link_id(wvif,
-						&wvif->action_frame_sa[0]);
-		WARN_ON(!temp_link_id);
-		if (temp_link_id) {
-			/* Make sure we execute the WQ */
-			flush_work(&wvif->link_id_work);
-			/* Release the link ID */
-			spin_lock_bh(&wvif->ps_state_lock);
-			wvif->link_id_db[temp_link_id - 1].prev_status =
-				wvif->link_id_db[temp_link_id - 1].status;
-			wvif->link_id_db[temp_link_id - 1].status =
-				WFX_LINK_RESET;
-			spin_unlock_bh(&wvif->ps_state_lock);
-			wsm_tx_lock(wvif->wdev);
-			if (!schedule_work(&wvif->link_id_work))
-				wsm_tx_unlock(wvif->wdev);
-		}
-	} else {
-		spin_lock_bh(&wvif->ps_state_lock);
-		wvif->link_id_db[wvif->action_link_id - 1].prev_status =
-			wvif->link_id_db[wvif->action_link_id - 1].status;
-		wvif->link_id_db[wvif->action_link_id - 1].status =
-			WFX_LINK_RESET_REMAP;
-		spin_unlock_bh(&wvif->ps_state_lock);
-		wsm_tx_lock(wvif->wdev);
-		if (!schedule_work(&wvif->link_id_work))
-			wsm_tx_unlock(wvif->wdev);
-		flush_work(&wvif->link_id_work);
-	}
-}
-
 void wfx_link_id_gc_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
@@ -431,23 +392,6 @@ void wfx_link_id_gc_work(struct work_struct *work)
 			} else {
 				next_gc = min_t(unsigned long, next_gc, ttl);
 			}
-		} else if (wvif->link_id_db[i].status == WFX_LINK_RESET ||
-			   wvif->link_id_db[i].status == WFX_LINK_RESET_REMAP) {
-			int status = wvif->link_id_db[i].status;
-			wvif->link_id_db[i].status =
-				wvif->link_id_db[i].prev_status;
-			wvif->link_id_db[i].timestamp = now;
-			spin_unlock_bh(&wvif->ps_state_lock);
-			wfx_unmap_link(wvif, i + 1);
-			if (status == WFX_LINK_RESET_REMAP) {
-				wfx_map_link(wvif, &wvif->link_id_db[i], i + 1);
-				next_gc = min(next_gc,
-						WFX_LINK_ID_GC_TIMEOUT);
-			} else {
-				need_reset = true;
-				wvif->link_id_db[i].status = WFX_LINK_OFF;
-			}
-			spin_lock_bh(&wvif->ps_state_lock);
 		}
 		if (need_reset) {
 			skb_queue_purge(&wvif->link_id_db[i].rx_queue);

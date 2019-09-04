@@ -127,10 +127,6 @@ static const char *wfx_debug_mode(int mode)
 		return "adhoc";
 	case NL80211_IFTYPE_AP:
 		return "access point";
-	case NL80211_IFTYPE_P2P_CLIENT:
-		return "p2p client";
-	case NL80211_IFTYPE_P2P_GO:
-		return "p2p go";
 	default:
 		return "unsupported";
 	}
@@ -209,8 +205,7 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 
 	if (wvif->enable_beacon ||
 	    wvif->vif->type == NL80211_IFTYPE_AP ||
-	    wvif->vif->type == NL80211_IFTYPE_ADHOC ||
-	    wvif->vif->type == NL80211_IFTYPE_P2P_GO)
+	    wvif->vif->type == NL80211_IFTYPE_ADHOC)
 		seq_printf(seq, "Beaconing:  %s\n",
 			   wvif->enable_beacon ? "enabled" : "disabled");
 

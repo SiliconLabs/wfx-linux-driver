@@ -77,7 +77,6 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	if (!wvif)
 		return -EINVAL;
 
-	/* Scan when P2P_GO corrupt firmware MiniAP mode */
 	if (wvif->state == WFX_STATE_AP)
 		return -EOPNOTSUPP;
 

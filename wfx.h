@@ -70,8 +70,6 @@ enum wfx_link_status {
 	WFX_LINK_RESERVE,
 	WFX_LINK_SOFT,
 	WFX_LINK_HARD,
-	WFX_LINK_RESET,
-	WFX_LINK_RESET_REMAP,
 };
 
 struct hwbus_ops;
@@ -80,7 +78,6 @@ struct wfx_debug_priv;
 struct wfx_link_entry {
 	unsigned long			timestamp;
 	enum wfx_link_status		status;
-	enum wfx_link_status		prev_status;
 	u8			mac[ETH_ALEN];          /* peer MAC address in use */
 	u8			old_mac[ETH_ALEN];      /* Previous peerMAC address. To use in unmap message */
 	u8				buffered[WFX_MAX_TID];
@@ -150,9 +147,6 @@ struct wfx_vif {
 	int			cqm_rssi_thold;
 	int			join_complete_status;
 
-	u8			action_frame_sa[ETH_ALEN];
-	u8			action_link_id;
-
 	u32			link_id_map;
 	u32			sta_asleep_mask;
 	u32			pspoll_mask;
@@ -193,7 +187,6 @@ struct wfx_vif {
 	struct work_struct	set_tim_work;
 	struct work_struct	set_cts_work;
 	struct work_struct	link_id_work;
-	struct work_struct	link_id_reset_work;
 	struct delayed_work	link_id_gc_work;
 	struct work_struct	multicast_start_work;
 	struct work_struct	multicast_stop_work;

@@ -121,7 +121,6 @@ static const struct ieee80211_supported_band wfx_band_2ghz = {
 static const struct ieee80211_iface_limit wdev_iface_limits[] = {
 	{ .max = 1, .types = BIT(NL80211_IFTYPE_STATION) },
 	{ .max = 1, .types = BIT(NL80211_IFTYPE_AP) },
-	{ .max = 1, .types = BIT(NL80211_IFTYPE_P2P_CLIENT) | BIT(NL80211_IFTYPE_P2P_GO) },
 };
 
 static const struct ieee80211_iface_combination wfx_iface_combinations[] = {
@@ -324,9 +323,7 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 				+ 4 /* alignment */ + 8 /* TKIP IV */;
 	hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
 				     BIT(NL80211_IFTYPE_ADHOC) |
-				     BIT(NL80211_IFTYPE_AP) |
-				     BIT(NL80211_IFTYPE_P2P_CLIENT) |
-				     BIT(NL80211_IFTYPE_P2P_GO);
+				     BIT(NL80211_IFTYPE_AP);
 	hw->wiphy->flags |= WIPHY_FLAG_AP_UAPSD;
 	hw->wiphy->flags &= ~WIPHY_FLAG_PS_ON_BY_DEFAULT;
 	hw->wiphy->max_ap_assoc_sta = WFX_MAX_STA_IN_AP_MODE;

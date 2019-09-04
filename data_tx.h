@@ -55,7 +55,6 @@ void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb);
 
 void wfx_link_id_work(struct work_struct *work);
 void wfx_link_id_gc_work(struct work_struct *work);
-void wfx_link_id_reset_work(struct work_struct *work);
 int wfx_find_link_id(struct wfx_vif *wvif, const u8 *mac);
 
 static inline struct wfx_tx_priv *wfx_skb_tx_priv(struct sk_buff *skb)

@@ -130,27 +130,8 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 		entry->timestamp = jiffies;
 		if (entry->status == WFX_LINK_SOFT && ieee80211_is_data(frame->frame_control))
 			early_data = true;
-	} else if (wvif->vif->p2p &&
-		   ieee80211_is_action(frame->frame_control) &&
-		   (mgmt->u.action.category == WLAN_CATEGORY_PUBLIC)) {
-		pr_debug("[RX] Going to MAP&RESET link ID\n");
-		WARN_ON(work_pending(&wvif->link_id_reset_work));
-		ether_addr_copy(&wvif->action_frame_sa[0], ieee80211_get_SA(frame));
-		wvif->action_link_id = 0;
-		schedule_work(&wvif->link_id_reset_work);
 	}
 
-	if (link_id && wvif->vif->p2p &&
-	    ieee80211_is_action(frame->frame_control) &&
-	    mgmt->u.action.category == WLAN_CATEGORY_PUBLIC) {
-		/* Link ID already exists for the ACTION frame.
-		 * Reset and Remap
-		 */
-		WARN_ON(work_pending(&wvif->link_id_reset_work));
-		ether_addr_copy(&wvif->action_frame_sa[0], ieee80211_get_SA(frame));
-		wvif->action_link_id = link_id;
-		schedule_work(&wvif->link_id_reset_work);
-	}
 	if (arg->Status) {
 		if (arg->Status == WSM_STATUS_MICFAILURE) {
 			pr_debug("[RX] MIC failure.\n");

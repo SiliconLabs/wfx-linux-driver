@@ -92,8 +92,7 @@ void wfx_cqm_bssloss_sm(struct wfx_vif *wvif, int init, int good, int bad)
 		schedule_delayed_work(&wvif->bss_loss_work, HZ);
 		wvif->bss_loss_state = 0;
 
-		/* Skip the confimration procedure in P2P case */
-		if (!wvif->vif->p2p && !atomic_read(&wvif->wdev->tx_lock))
+		if (!atomic_read(&wvif->wdev->tx_lock))
 			tx = 1;
 	} else if (good) {
 		cancel_delayed_work_sync(&wvif->bss_loss_work);
@@ -250,7 +249,6 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 
 	/* AP Work */
 	INIT_WORK(&wvif->link_id_work, wfx_link_id_work);
-	INIT_WORK(&wvif->link_id_reset_work, wfx_link_id_reset_work);
 	INIT_DELAYED_WORK(&wvif->link_id_gc_work, wfx_link_id_gc_work);
 	INIT_WORK(&wvif->update_filtering_work, wfx_update_filtering_work);
 
@@ -561,7 +559,6 @@ static int wfx_set_multicast_filter(struct wfx_dev *wdev,
 void wfx_update_filtering(struct wfx_vif *wvif)
 {
 	int ret;
-	bool is_p2p = wvif->vif && wvif->vif->p2p;
 	bool is_sta = wvif->vif && NL80211_IFTYPE_STATION == wvif->vif->type;
 	struct wsm_rx_filter l_rx_filter;
 	WsmHiMibBcnFilterEnable_t bf_ctrl;
@@ -597,7 +594,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 		bf_ctrl.Enable = 0;
 		bf_ctrl.BcnCount = 1;
 		bf_tbl->NumOfInfoElmts = 0;
-	} else if (is_p2p || !is_sta) {
+	} else if (!is_sta) {
 		bf_ctrl.Enable = WSM_BEACON_FILTER_ENABLE | WSM_BEACON_FILTER_AUTO_ERP;
 		bf_ctrl.BcnCount = 0;
 		bf_tbl->NumOfInfoElmts = 2;
@@ -606,11 +603,6 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 		bf_ctrl.BcnCount = 0;
 		bf_tbl->NumOfInfoElmts = 3;
 	}
-	/* When acting as p2p client being connected to p2p GO, in order to
-	 * receive frames from a different p2p device, turn off bssid filter.
-	 */
-	if (is_p2p)
-		l_rx_filter.bssid = false;
 
 	ret = wsm_set_rx_filter(wvif->wdev, &l_rx_filter, wvif->Id);
 	if (!ret)
@@ -1387,8 +1379,6 @@ static int wfx_upload_beacon(struct wfx_vif *wvif)
 	p = (WsmHiMibTemplateFrame_t *) skb_push(skb, 4);
 	p->FrameType = WSM_TMPLT_BCN;
 	p->InitRate = API_RATE_INDEX_B_1MBPS; /* 1Mbps DSSS */
-	if (wvif->vif->p2p)
-		p->InitRate = API_RATE_INDEX_G_6MBPS;
 	p->FrameLength = cpu_to_le16(skb->len - 4);
 
 	ret = wsm_set_template_frame(wvif->wdev, p, wvif->Id);
@@ -1406,12 +1396,8 @@ static int wfx_upload_beacon(struct wfx_vif *wvif)
 
 	p->FrameType = WSM_TMPLT_PRBRES;
 
-	if (wvif->vif->p2p) {
-		ret = wsm_fwd_probe_req(wvif, true);
-	} else {
-		ret = wsm_set_template_frame(wvif->wdev, p, wvif->Id);
-		wsm_fwd_probe_req(wvif, false);
-	}
+	ret = wsm_set_template_frame(wvif->wdev, p, wvif->Id);
+	wsm_fwd_probe_req(wvif, false);
 
 done:
 	if (!skb)
