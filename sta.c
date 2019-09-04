@@ -115,6 +115,7 @@ void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 	}
 
 	/* Spit out a NULL packet to our AP if necessary */
+	// FIXME: call ieee80211_beacon_loss/ieee80211_connection_loss instead
 	if (tx) {
 		struct sk_buff *skb;
 
@@ -127,8 +128,14 @@ void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 #endif
 		if (!skb)
 			dev_err(wvif->wdev->dev, "failed to retrieve a nullfunc\n");
-		if (skb)
+		if (skb) {
+			memset(IEEE80211_SKB_CB(skb), 0, sizeof(*IEEE80211_SKB_CB(skb)));
+			IEEE80211_SKB_CB(skb)->control.vif = wvif->vif;
+			IEEE80211_SKB_CB(skb)->driver_rates[0].idx = 0;
+			IEEE80211_SKB_CB(skb)->driver_rates[0].count = 1;
+			IEEE80211_SKB_CB(skb)->driver_rates[1].idx = -1;
 			wfx_tx(wvif->wdev->hw, NULL, skb);
+		}
 	}
 }
 
