@@ -74,6 +74,9 @@ typedef enum HiGeneralRequestsIds_e {
 	HI_SL_EXCHANGE_PUB_KEYS_REQ_ID                  = 0x28,
 	HI_SL_CONFIGURE_REQ_ID                          = 0x29,
 	HI_PREVENT_ROLLBACK_REQ_ID                      = 0x2a,
+	HI_PTA_SETTINGS_REQ_ID                          = 0x2b,
+	HI_PTA_PRIORITY_REQ_ID                          = 0x2c,
+	HI_PTA_STATE_REQ_ID                             = 0x2d,
 	HI_SHUT_DOWN_REQ_ID                             = 0x32,
 } HiGeneralRequestsIds;
 
@@ -84,6 +87,9 @@ typedef enum HiGeneralConfirmationsIds_e {
 	HI_SL_EXCHANGE_PUB_KEYS_CNF_ID                  = 0x28,
 	HI_SL_CONFIGURE_CNF_ID                          = 0x29,
 	HI_PREVENT_ROLLBACK_CNF_ID                      = 0x2a,
+	HI_PTA_SETTINGS_CNF_ID                          = 0x2b,
+	HI_PTA_PRIORITY_CNF_ID                          = 0x2c,
+	HI_PTA_STATE_CNF_ID                             = 0x2d,
 	HI_SHUT_DOWN_CNF_ID                             = 0x32,
 } HiGeneralConfirmationsIds;
 
@@ -333,5 +339,81 @@ typedef struct HiPreventRollbackReqBody_s {
 typedef struct HiPreventRollbackCnfBody_s {
 	uint32_t   Status;
 } __packed HiPreventRollbackCnfBody_t;
+
+typedef enum HI_PTA_MODES_E {
+	PTA_1W_WLAN_MASTER = 0,
+	PTA_1W_COEX_MASTER = 1,
+	PTA_2W             = 2,
+	PTA_3W             = 3,
+	PTA_4W             = 4
+} HiPtaModeT;
+
+typedef enum HI_SIGNAL_LEVELS_E {
+	SIGNAL_LOW  = 0,
+	SIGNAL_HIGH = 1
+} HiSignalLevelT;
+
+typedef enum HI_COEX_TYPES_E {
+	COEX_TYPE_GENERIC = 0,
+	COEX_TYPE_BLE     = 1
+} HiCoexTypeT;
+
+typedef enum HI_GRANT_STATES_E {
+	NO_GRANT = 0,
+	GRANT    = 1
+} HiGrantStateT;
+
+typedef struct HiPtaSettingsReqBody_s {
+	uint8_t PtaMode;
+	uint8_t RequestSignalActiveLevel;
+	uint8_t PrioritySignalActiveLevel;
+	uint8_t FreqSignalActiveLevel;
+	uint8_t GrantSignalActiveLevel;
+	uint8_t CoexType;
+	uint8_t DefaultGrantState;
+	uint8_t SimultaneousRxAccesses;
+	uint8_t PrioritySamplingTime;
+	uint8_t TxRxSamplingTime;
+	uint8_t FreqSamplingTime;
+	uint8_t GrantValidTime;
+	uint8_t FemControlTime;
+	uint8_t FirstSlotTime;
+	uint16_t PeriodicTxRxSamplingTime;
+	uint16_t CoexQuota;
+	uint16_t WlanQuota;
+} __packed HiPtaSettingsReqBody_t;
+
+typedef struct HiPtaSettingsCnfBody_s {
+	uint32_t Status;
+} __packed HiPtaSettingsCnfBody_t;
+
+typedef enum HI_PTA_PRIORITY_E {
+	HI_PTA_PRIORITY_COEX_MAXIMIZED = 0x00000562,
+	HI_PTA_PRIORITY_COEX_HIGH      = 0x00000462,
+	HI_PTA_PRIORITY_BALANCED       = 0x00001461,
+	HI_PTA_PRIORITY_WLAN_HIGH      = 0x00001851,
+	HI_PTA_PRIORITY_WLAN_MAXIMIZED = 0x00001A51
+} HiPtaPriorityT;
+
+typedef struct HiPtaPriorityReqBody_s {
+	uint32_t Priority;
+} __packed HiPtaPriorityReqBody_t;
+
+typedef struct HiPtaPriorityCnfBody_s {
+	uint32_t Status;
+} __packed HiPtaPriorityCnfBody_t;
+
+typedef enum HI_PTA_STATES_E {
+	PTA_OFF = 0,
+	PTA_ON  = 1
+} HiPtaStateT;
+
+typedef struct HiPtaStateReqBody_s {
+	uint32_t PtaState;
+} __packed HiPtaStateReqBody_t;
+
+typedef struct HiPtaStateCnfBody_s {
+	uint32_t Status;
+} __packed HiPtaStateCnfBody_t;
 
 #endif
