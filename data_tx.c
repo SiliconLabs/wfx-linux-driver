@@ -581,6 +581,9 @@ static void wfx_tx_fixup_rates(struct ieee80211_tx_rate *rates)
 			}
 		}
 	} while (!finished);
+	// All retries use long GI
+	for (i = 1; i < IEEE80211_TX_MAX_RATES; i++)
+		rates[i].flags &= ~IEEE80211_TX_RC_SHORT_GI;
 }
 
 static uint8_t wfx_tx_get_rate_id(struct wfx_vif *wvif, struct ieee80211_tx_info *tx_info)
