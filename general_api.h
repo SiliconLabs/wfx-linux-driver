@@ -28,32 +28,6 @@
 #define HI_CNF_BASE                         0x00
 #define HI_IND_BASE                         0x80
 
-typedef enum ApiRateIndex_e {
-	API_RATE_INDEX_B_1MBPS                   = 0,
-	API_RATE_INDEX_B_2MBPS                   = 1,
-	API_RATE_INDEX_B_5P5MBPS                 = 2,
-	API_RATE_INDEX_B_11MBPS                  = 3,
-	API_RATE_INDEX_PBCC_22MBPS               = 4,
-	API_RATE_INDEX_PBCC_33MBPS               = 5,
-	API_RATE_INDEX_G_6MBPS                   = 6,
-	API_RATE_INDEX_G_9MBPS                   = 7,
-	API_RATE_INDEX_G_12MBPS                  = 8,
-	API_RATE_INDEX_G_18MBPS                  = 9,
-	API_RATE_INDEX_G_24MBPS                  = 10,
-	API_RATE_INDEX_G_36MBPS                  = 11,
-	API_RATE_INDEX_G_48MBPS                  = 12,
-	API_RATE_INDEX_G_54MBPS                  = 13,
-	API_RATE_INDEX_N_6P5MBPS                 = 14,
-	API_RATE_INDEX_N_13MBPS                  = 15,
-	API_RATE_INDEX_N_19P5MBPS                = 16,
-	API_RATE_INDEX_N_26MBPS                  = 17,
-	API_RATE_INDEX_N_39MBPS                  = 18,
-	API_RATE_INDEX_N_52MBPS                  = 19,
-	API_RATE_INDEX_N_58P5MBPS                = 20,
-	API_RATE_INDEX_N_65MBPS                  = 21,
-	API_RATE_NUM_ENTRIES                     = 22
-} ApiRateIndex;
-
 #define WMSG_ID_IS_INDICATION               0x80
 #define WMSG_COUNTER_MAX                    7
 #define WMSG_ENCRYPTED_ENABLE               3
@@ -123,6 +97,32 @@ typedef enum HiStatus_e {
 	PREVENT_ROLLBACK_CNF_SUCCESS                  = 0x1234,
 	PREVENT_ROLLBACK_CNF_WRONG_MAGIC_WORD         = 0x1256
 } HiStatus;
+
+typedef enum ApiRateIndex_e {
+	API_RATE_INDEX_B_1MBPS                   = 0,
+	API_RATE_INDEX_B_2MBPS                   = 1,
+	API_RATE_INDEX_B_5P5MBPS                 = 2,
+	API_RATE_INDEX_B_11MBPS                  = 3,
+	API_RATE_INDEX_PBCC_22MBPS               = 4,
+	API_RATE_INDEX_PBCC_33MBPS               = 5,
+	API_RATE_INDEX_G_6MBPS                   = 6,
+	API_RATE_INDEX_G_9MBPS                   = 7,
+	API_RATE_INDEX_G_12MBPS                  = 8,
+	API_RATE_INDEX_G_18MBPS                  = 9,
+	API_RATE_INDEX_G_24MBPS                  = 10,
+	API_RATE_INDEX_G_36MBPS                  = 11,
+	API_RATE_INDEX_G_48MBPS                  = 12,
+	API_RATE_INDEX_G_54MBPS                  = 13,
+	API_RATE_INDEX_N_6P5MBPS                 = 14,
+	API_RATE_INDEX_N_13MBPS                  = 15,
+	API_RATE_INDEX_N_19P5MBPS                = 16,
+	API_RATE_INDEX_N_26MBPS                  = 17,
+	API_RATE_INDEX_N_39MBPS                  = 18,
+	API_RATE_INDEX_N_52MBPS                  = 19,
+	API_RATE_INDEX_N_58P5MBPS                = 20,
+	API_RATE_INDEX_N_65MBPS                  = 21,
+	API_RATE_NUM_ENTRIES                     = 22
+} ApiRateIndex;
 
 
 typedef enum HiFwType_e {
