@@ -475,7 +475,6 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 	mutex_lock(&wdev->conf_mutex);
 	if (changed & IEEE80211_CONF_CHANGE_POWER) {
 		wdev->output_power = conf->power_level;
-		pr_debug("[STA] TX power: %d\n", wdev->output_power);
 		wsm_set_output_power(wdev, wdev->output_power * 10, wvif->Id);
 	}
 
@@ -530,7 +529,6 @@ static int wfx_set_multicast_filter(struct wfx_dev *wdev,
 		if (ret)
 			return ret;
 		FilterConfig.MacCond |= 1 << i;
-		pr_debug("[STA] Multicast Match addr[%d]: %pM\n", i, MacAddrCond.MacAddress);
 	}
 
 	// Accept unicast and broadcast
@@ -832,7 +830,6 @@ void wfx_event_handler_work(struct work_struct *work)
 	list_for_each_entry(event, &list, link) {
 		switch (event->evt.EventId) {
 		case WSM_EVENT_IND_BSSLOST:
-			pr_debug("[CQM] BSS lost.\n");
 			cancel_work_sync(&wvif->unjoin_work);
 			if (!down_trylock(&wvif->scan.lock)) {
 				wfx_cqm_bssloss_sm(wvif, 1, 0, 0);
@@ -847,7 +844,6 @@ void wfx_event_handler_work(struct work_struct *work)
 			}
 			break;
 		case WSM_EVENT_IND_BSSREGAINED:
-			pr_debug("[CQM] BSS regained.\n");
 			wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
 			cancel_work_sync(&wvif->unjoin_work);
 			break;
@@ -867,7 +863,6 @@ void wfx_event_handler_work(struct work_struct *work)
 				cqm_evt = NL80211_CQM_RSSI_THRESHOLD_EVENT_LOW;
 			else
 				cqm_evt = NL80211_CQM_RSSI_THRESHOLD_EVENT_HIGH;
-			pr_debug("[CQM] RSSI event: %d.\n", rcpi_rssi);
 #if (KERNEL_VERSION(4, 11, 0) > LINUX_VERSION_CODE)
 			ieee80211_cqm_rssi_notify(wvif->vif, cqm_evt,
 						  GFP_KERNEL);
@@ -956,8 +951,6 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 	memset(&wvif->bss_params, 0, sizeof(wvif->bss_params));
 	wvif->setbssparams_done = false;
 	memset(&wvif->ht_info, 0, sizeof(wvif->ht_info));
-
-	pr_debug("[STA] Unjoin completed.\n");
 
 done:
 	mutex_unlock(&wvif->wdev->conf_mutex);
@@ -1234,8 +1227,6 @@ static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
 	u16 tim_offset, tim_length;
 	u8 *tim_ptr;
 
-	pr_debug("[AP] mcast: %s.\n", aid0_bit_set ? "ena" : "dis");
-
 	skb = ieee80211_beacon_get_tim(wvif->wdev->hw, wvif->vif,
 				       &tim_offset, &tim_length);
 	if (!skb) {
@@ -1344,7 +1335,6 @@ static int wfx_update_beaconing(struct wfx_vif *wvif)
 		/* TODO: check if changed channel, band */
 		if (wvif->state != WFX_STATE_AP ||
 		    wvif->beacon_int != conf->beacon_int) {
-			pr_debug("ap restarting\n");
 			wsm_tx_lock_flush(wvif->wdev);
 			if (wvif->state != WFX_STATE_PASSIVE)
 				wsm_reset(wvif->wdev, false, wvif->Id);
@@ -1352,7 +1342,6 @@ static int wfx_update_beaconing(struct wfx_vif *wvif)
 			wfx_start_ap(wvif);
 			wsm_tx_unlock(wvif->wdev);
 		} else {
-			pr_debug("ap started state: %d\n", wvif->state);
 		}
 	}
 	return 0;
@@ -1463,7 +1452,6 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 	if (changed & BSS_CHANGED_ASSOC && !info->assoc &&
 	    (wvif->state == WFX_STATE_STA || wvif->state == WFX_STATE_IBSS)) {
 		/* Shedule unjoin work */
-		pr_debug("[WSM] Issue unjoin command\n");
 		wsm_tx_lock(wdev);
 		if (!schedule_work(&wvif->unjoin_work))
 			wsm_tx_unlock(wdev);
@@ -1540,9 +1528,6 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 				if (wvif->dtim_period < 1)
 					wvif->dtim_period = 1;
 
-				pr_debug("[STA] DTIM %d, interval: %d\n",
-					 wvif->dtim_period,
-					 wvif->beacon_int);
 				wsm_set_association_mode(wdev, &association_mode, wvif->Id);
 
 				if (!info->ibss_joined) {
@@ -1575,8 +1560,6 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 		else
 			wvif->erp_info &= ~WLAN_ERP_BARKER_PREAMBLE;
 
-		pr_debug("[STA] ERP Protection: %x\n", wvif->erp_info);
-
 		if (prev_erp_info != wvif->erp_info)
 			schedule_work(&wvif->set_cts_work);
 	}
@@ -1593,8 +1576,6 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 			.RollingAverageCount	= 8,
 		};
 
-		pr_debug("[CQM] RSSI threshold subscribe: %d +- %d\n",
-			 info->cqm_rssi_thold, info->cqm_rssi_hyst);
 		wvif->cqm_rssi_thold = info->cqm_rssi_thold;
 
 		if (info->cqm_rssi_thold || info->cqm_rssi_hyst) {
@@ -1724,10 +1705,6 @@ int wfx_ampdu_action(struct ieee80211_hw *hw,
 void wfx_suspend_resume(struct wfx_vif *wvif,
 			WsmHiSuspendResumeTxIndBody_t *arg)
 {
-	pr_debug("[AP] %s: %s\n",
-		 arg->SuspendResumeFlags.Resume ? "start" : "stop",
-		 arg->SuspendResumeFlags.BcMcOnly ? "broadcast" : "unicast");
-
 	if (arg->SuspendResumeFlags.BcMcOnly) {
 		bool cancel_tmo = false;
 

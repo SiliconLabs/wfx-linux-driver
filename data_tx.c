@@ -291,7 +291,6 @@ static int wfx_alloc_link_id(struct wfx_vif *wvif, const u8 *mac)
 	if (ret) {
 		struct wfx_link_entry *entry = &wvif->link_id_db[ret - 1];
 
-		pr_debug("[AP] STA added, link_id: %d\n", ret);
 		entry->status = WFX_LINK_RESERVE;
 		ether_addr_copy(entry->mac, mac);
 		memset(&entry->buffered, 0, WFX_MAX_TID);
@@ -393,11 +392,8 @@ void wfx_link_id_gc_work(struct work_struct *work)
 				next_gc = min_t(unsigned long, next_gc, ttl);
 			}
 		}
-		if (need_reset) {
+		if (need_reset)
 			skb_queue_purge(&wvif->link_id_db[i].rx_queue);
-			pr_debug("[AP] STA removed, link_id: %d\n",
-				 0); /* 0 instead of reset.link_id */
-		}
 	}
 	spin_unlock_bh(&wvif->ps_state_lock);
 	if (next_gc != -1)

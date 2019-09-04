@@ -53,7 +53,6 @@ static int wfx_handle_pspoll(struct wfx_vif *wvif, struct sk_buff *skb)
 			break;
 		}
 	}
-	pr_debug("[RX] PSPOLL: %s\n", drop ? "local" : "fwd");
 done:
 	return drop;
 }
@@ -132,18 +131,10 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 			early_data = true;
 	}
 
-	if (arg->Status) {
-		if (arg->Status == WSM_STATUS_MICFAILURE) {
-			pr_debug("[RX] MIC failure.\n");
-			hdr->flag |= RX_FLAG_MMIC_ERROR;
-		} else if (arg->Status == WSM_STATUS_NO_KEY_FOUND) {
-			pr_debug("[RX] No key found.\n");
-			goto drop;
-		} else {
-			pr_debug("[RX] Receive failure: %d.\n", arg->Status);
-			goto drop;
-		}
-	}
+	if (arg->Status == WSM_STATUS_MICFAILURE)
+		hdr->flag |= RX_FLAG_MMIC_ERROR;
+	else if (arg->Status)
+		goto drop;
 
 	if (skb->len < sizeof(struct ieee80211_pspoll)) {
 		dev_warn(wvif->wdev->dev, "Malformed SDU rx'ed. Size is lesser than IEEE header.\n");

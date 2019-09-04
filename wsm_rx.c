@@ -180,10 +180,6 @@ static int wsm_event_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *bu
 		return -ENOMEM;
 
 	memcpy(&event->evt, body, sizeof(WsmHiEventIndBody_t));
-
-	pr_debug("[WSM] Event: %d(%d)\n",
-		 event->evt.EventId, *((u32 *)&event->evt.EventData));
-
 	spin_lock(&wvif->event_queue_lock);
 	first = list_empty(&wvif->event_queue);
 	list_add_tail(&event->link, &wvif->event_queue);
@@ -457,12 +453,10 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 
 	switch (action) {
 	case do_drop:
-		pr_debug("[WSM] Drop frame (0x%.4X).\n", frame->frame_control);
 		BUG_ON(wfx_pending_remove(wvif->wdev, skb));
 		handled = true;
 		break;
 	case do_wep:
-		pr_debug("[WSM] Issue set_default_wep_key.\n");
 		wsm_tx_lock(wvif->wdev);
 		wvif->wep_default_key_id = tx_priv->hw_key->keyidx;
 		wvif->wep_pending_skb = skb;
@@ -471,7 +465,6 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 		handled = true;
 		break;
 	case do_tx:
-		pr_debug("[WSM] Transmit frame.\n");
 		break;
 	default:
 		/* Do nothing */
