@@ -76,24 +76,17 @@ static void wfx_free_event_queue(struct wfx_vif *wvif)
 	__wfx_free_event_queue(&list);
 }
 
-void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
-			     int init, int good, int bad)
+void wfx_cqm_bssloss_sm(struct wfx_vif *wvif, int init, int good, int bad)
 {
 	int tx = 0;
 
+	mutex_lock(&wvif->bss_loss_lock);
 	wvif->delayed_link_loss = 0;
 	cancel_work_sync(&wvif->bss_params_work);
 
-	pr_debug(
-		"[STA] CQM BSSLOSS_SM: state: %d init %d good %d bad: %d txlock: %d uj: %d\n",
-		wvif->bss_loss_state,
-		 init, good, bad,
-		atomic_read(&wvif->wdev->tx_lock),
-		wvif->delayed_unjoin);
-
 	/* If we have a pending unjoin */
 	if (wvif->delayed_unjoin)
-		return;
+		goto end;
 
 	if (init) {
 		schedule_delayed_work(&wvif->bss_loss_work, HZ);
@@ -128,22 +121,15 @@ void __wfx_cqm_bssloss_sm(struct wfx_vif *wvif,
 		skb = ieee80211_nullfunc_get(wvif->wdev->hw, wvif->vif, false);
 #endif
 		if (!skb)
-			dev_err(wvif->wdev->dev, "failed to retrieve a nullfunc\n");
-		if (skb) {
-			memset(IEEE80211_SKB_CB(skb), 0, sizeof(*IEEE80211_SKB_CB(skb)));
-			IEEE80211_SKB_CB(skb)->control.vif = wvif->vif;
-			IEEE80211_SKB_CB(skb)->driver_rates[0].idx = 0;
-			IEEE80211_SKB_CB(skb)->driver_rates[0].count = 1;
-			IEEE80211_SKB_CB(skb)->driver_rates[1].idx = -1;
-			wfx_tx(wvif->wdev->hw, NULL, skb);
-		}
+			goto end;
+		memset(IEEE80211_SKB_CB(skb), 0, sizeof(*IEEE80211_SKB_CB(skb)));
+		IEEE80211_SKB_CB(skb)->control.vif = wvif->vif;
+		IEEE80211_SKB_CB(skb)->driver_rates[0].idx = 0;
+		IEEE80211_SKB_CB(skb)->driver_rates[0].count = 1;
+		IEEE80211_SKB_CB(skb)->driver_rates[1].idx = -1;
+		wfx_tx(wvif->wdev->hw, NULL, skb);
 	}
-}
-
-void wfx_cqm_bssloss_sm(struct wfx_vif *wvif, int init, int good, int bad)
-{
-	mutex_lock(&wvif->bss_loss_lock);
-	__wfx_cqm_bssloss_sm(wvif, init, good, bad);
+end:
 	mutex_unlock(&wvif->bss_loss_lock);
 }
 
