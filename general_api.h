@@ -264,7 +264,11 @@ typedef enum WsmHiError_e {
 	WSM_HI_ERROR_INVALID_SESSION_KEY           = 0x3,
 	WSM_HI_ERROR_OOR_VOLTAGE                   = 0x4,
 	WSM_HI_ERROR_PDS_VERSION                   = 0x5,
-	WSM_HI_ERROR_OOR_TEMPERATURE               = 0x6
+	WSM_HI_ERROR_OOR_TEMPERATURE               = 0x6,
+	WSM_HI_ERROR_REQ_DURING_KEY_EXCHANGE       = 0x7,
+	WSM_HI_ERROR_MULTI_TX_CNF_SECURELINK       = 0x8,
+	WSM_HI_ERROR_SECURELINK_OVERFLOW           = 0x9,
+	WSM_HI_ERROR_SECURELINK_DECRYPTION         = 0xa
 } WsmHiError;
 
 typedef struct HiErrorIndBody_s {
@@ -273,11 +277,35 @@ typedef struct HiErrorIndBody_s {
 } __packed HiErrorIndBody_t;
 
 typedef enum SecureLinkState_e {
-	SEC_LINK_UNAVAILABLE                       = 0x0,
-	SEC_LINK_RESERVED                          = 0x1,
-	SEC_LINK_EVAL                              = 0x2,
-	SEC_LINK_ENFORCED                          = 0x3
+	SEC_LINK_UNAVAILABLE                    = 0x0,
+	SEC_LINK_RESERVED                       = 0x1,
+	SEC_LINK_EVAL                           = 0x2,
+	SEC_LINK_ENFORCED                       = 0x3
 } SecureLinkState;
+
+typedef enum HiSlEncryptionType_e {
+	NO_ENCRYPTION = 0,
+	TX_ENCRYPTION = 1,
+	RX_ENCRYPTION = 2,
+	HP_ENCRYPTION = 3
+} HiSlEncryptionType;
+
+typedef struct HiSlMsgHdr_s {
+	uint32_t    nonce:30;
+	uint32_t    encrypted:2;
+} __packed HiSlMsgHdr_t ;
+
+typedef struct HiSlMsg_s {
+	HiSlMsgHdr_t   Header;
+	uint16_t        MsgLen;
+	uint8_t         Payload[];
+} __packed HiSlMsg_t ;
+
+#define AES_CCM_TAG_SIZE     16
+
+typedef struct HiSlTag_s {
+	uint8_t tag[16];
+} __packed HiSlTag_t;
 
 typedef enum SlMacKeyDest_e {
 	SL_MAC_KEY_DEST_OTP                        = 0x78,
@@ -297,6 +325,11 @@ typedef struct HiSetSlMacKeyCnfBody_s {
 
 #define API_HOST_PUB_KEY_SIZE                           32
 #define API_HOST_PUB_KEY_MAC_SIZE                       64
+
+typedef enum HiSlSessionKeyAlg_e {
+	HI_SL_CURVE25519                                = 0x01,
+	HI_SL_KDF                                       = 0x02
+} HiSlSessionKeyAlg;
 
 typedef struct HiSlExchangePubKeysReqBody_s {
 	uint8_t    Algorithm:2;
@@ -329,7 +362,7 @@ typedef struct HiSlConfigureReqBody_s {
 } __packed HiSlConfigureReqBody_t;
 
 typedef struct HiSlConfigureCnfBody_s {
-	uint32_t   Status;
+	uint32_t Status;
 } __packed HiSlConfigureCnfBody_t;
 
 typedef struct HiPreventRollbackReqBody_s {
@@ -337,7 +370,7 @@ typedef struct HiPreventRollbackReqBody_s {
 } __packed HiPreventRollbackReqBody_t;
 
 typedef struct HiPreventRollbackCnfBody_s {
-	uint32_t   Status;
+	uint32_t    Status;
 } __packed HiPreventRollbackCnfBody_t;
 
 typedef enum HI_PTA_MODES_E {
