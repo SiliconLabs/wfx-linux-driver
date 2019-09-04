@@ -417,23 +417,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	}
 }
 
-int wfx_change_interface(struct ieee80211_hw *hw,
-			    struct ieee80211_vif *vif,
-			    enum nl80211_iftype new_type,
-			    bool p2p)
-{
-	int ret = 0;
-
-	if (new_type != vif->type || vif->p2p != p2p) {
-		wfx_remove_interface(hw, vif);
-		vif->type = new_type;
-		vif->p2p = p2p;
-		ret = wfx_add_interface(hw, vif);
-	}
-
-	return ret;
-}
-
 int wfx_add_chanctx(struct ieee80211_hw *hw,
 		    struct ieee80211_chanctx_conf *conf)
 {
