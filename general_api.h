@@ -16,9 +16,6 @@
 #define __packed __attribute__((__packed__))
 #endif
 
-#define HI_API_VERSION_MINOR                0x00
-#define HI_API_VERSION_MAJOR                0x01
-
 #define GENERAL_INTERFACE_ID                2
 
 #define HI_MSG_ID_MASK                      0x00FF
