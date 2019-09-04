@@ -431,9 +431,6 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 		if (wvif->state != WFX_STATE_IBSS)
 			action = do_drop;
 		break;
-	case NL80211_IFTYPE_MESH_POINT:
-		action = do_tx;
-		break;
 	case NL80211_IFTYPE_MONITOR:
 	default:
 		action = do_drop;

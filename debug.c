@@ -125,8 +125,6 @@ static const char *wfx_debug_mode(int mode)
 		return "station";
 	case NL80211_IFTYPE_ADHOC:
 		return "adhoc";
-	case NL80211_IFTYPE_MESH_POINT:
-		return "mesh point";
 	case NL80211_IFTYPE_AP:
 		return "access point";
 	case NL80211_IFTYPE_P2P_CLIENT:
@@ -212,7 +210,6 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 	if (wvif->enable_beacon ||
 	    wvif->vif->type == NL80211_IFTYPE_AP ||
 	    wvif->vif->type == NL80211_IFTYPE_ADHOC ||
-	    wvif->vif->type == NL80211_IFTYPE_MESH_POINT ||
 	    wvif->vif->type == NL80211_IFTYPE_P2P_GO)
 		seq_printf(seq, "Beaconing:  %s\n",
 			   wvif->enable_beacon ? "enabled" : "disabled");
