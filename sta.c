@@ -560,7 +560,8 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 {
 	int ret;
 	bool is_sta = wvif->vif && NL80211_IFTYPE_STATION == wvif->vif->type;
-	struct wsm_rx_filter l_rx_filter;
+	bool filter_bssid = wvif->filter_bssid;
+	bool filter_probe_resp = wvif->filter_probe_resp;
 	WsmHiMibBcnFilterEnable_t bf_ctrl;
 	WsmHiMibBcnFilterTable_t *bf_tbl;
 	WsmHiIeTableEntry_t ie_tbl[] = {
@@ -583,8 +584,6 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 		}
 	};
 
-	memcpy(&l_rx_filter, &wvif->rx_filter, sizeof(l_rx_filter));
-
 	if (wvif->state == WFX_STATE_PASSIVE)
 		return;
 
@@ -604,7 +603,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 		bf_tbl->NumOfInfoElmts = 3;
 	}
 
-	ret = wsm_set_rx_filter(wvif->wdev, &l_rx_filter, wvif->Id);
+	ret = wsm_set_rx_filter(wvif->wdev, filter_bssid, filter_probe_resp, wvif->Id);
 	if (!ret)
 		ret = wsm_set_beacon_filter_table(wvif->wdev, bf_tbl, wvif->Id);
 	if (!ret)
@@ -660,7 +659,7 @@ void wfx_configure_filter(struct ieee80211_hw *hw,
 
 	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
 		down(&wvif->scan.lock);
-		wvif->rx_filter.bssid = (*total_flags & (FIF_OTHER_BSS | FIF_PROBE_REQ)) ? 0 : 1;
+		wvif->filter_bssid = (*total_flags & (FIF_OTHER_BSS | FIF_PROBE_REQ)) ? 0 : 1;
 		wvif->disable_beacon_filter = !(*total_flags & FIF_PROBE_REQ);
 		wsm_fwd_probe_req(wvif, true);
 		wfx_update_filtering(wvif);

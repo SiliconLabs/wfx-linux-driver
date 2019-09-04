@@ -19,11 +19,6 @@
 	(n * sizeof(*(p)->member) + __must_be_array((p)->member) + sizeof(*(p)))
 #endif
 
-struct wsm_rx_filter {
-	bool	bssid;
-	bool	probeResponder;
-};
-
 static inline int wsm_set_output_power(struct wfx_dev *wdev,
 				       int power_level,
 				       int Id)
@@ -83,15 +78,14 @@ static inline int wsm_set_macaddr(struct wfx_dev *wdev, u8 *mac, int Id)
 	return wsm_write_mib(wdev, WSM_MIB_ID_DOT11_MAC_ADDRESS, &msg, sizeof(msg), Id);
 }
 
-static inline int wsm_set_rx_filter(struct wfx_dev *wdev,
-				    const struct wsm_rx_filter *arg,
-				    int Id)
+static inline int wsm_set_rx_filter(struct wfx_dev *wdev, bool filter_bssid,
+				    bool filter_probe_resp, int Id)
 {
 	__le32 val = 0;
 
-	if (arg->bssid)
+	if (filter_bssid)
 		val |= cpu_to_le32(BIT(1));
-	if (arg->probeResponder)
+	if (filter_probe_resp)
 		val |= cpu_to_le32(BIT(3));
 	return wsm_write_mib(wdev, WSM_MIB_ID_RX_FILTER, &val, sizeof(val), Id);
 }

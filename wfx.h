@@ -161,6 +161,8 @@ struct wfx_vif {
 	bool			delayed_unjoin;
 	bool			disable_beacon_filter;
 	bool			cqm_use_rssi;
+	bool			filter_probe_resp;
+	bool			filter_bssid;
 
 	/* TX/RX and security */
 	s8			wep_default_key_id;
@@ -170,7 +172,6 @@ struct wfx_vif {
 
 	struct wfx_scan		scan;
 	struct wfx_ht_info	ht_info;
-	struct wsm_rx_filter	rx_filter;
 	struct wsm_edca_params	edca;
 	struct wfx_link_entry	link_id_db[WFX_MAX_STA_IN_AP_MODE];
 	struct wfx_grp_addr_table	multicast_filter;

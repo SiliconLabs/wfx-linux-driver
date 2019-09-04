@@ -195,9 +195,9 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 	seq_printf(seq, "Channel:    %d\n",
 		   wvif->channel ? wvif->channel->hw_value : -1);
 
-	if (wvif->rx_filter.bssid)
+	if (wvif->filter_bssid)
 		seq_puts(seq, "Filter:     bssid\n");
-	if (wvif->rx_filter.probeResponder)
+	if (wvif->filter_probe_resp)
 		seq_puts(seq, "Filter:     probeResponder\n");
 
 	if (!wvif->disable_beacon_filter)
