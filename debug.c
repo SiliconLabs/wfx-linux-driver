@@ -81,7 +81,7 @@ static int wfx_counters_show(struct seq_file *seq, void *v)
 	struct wfx_dev *wdev = seq->private;
 	struct hif_mib_extended_count_table counters;
 
-	ret = wsm_get_counters_table(wdev, &counters, 0);
+	ret = wsm_get_counters_table(wdev, &counters);
 	if (ret < 0)
 		return ret;
 	if (ret > 0)

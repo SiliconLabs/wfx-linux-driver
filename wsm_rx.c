@@ -96,14 +96,14 @@ int wfx_unmap_link(struct wfx_vif *wvif, int sta_id)
 	if (sta_id)
 		mac_addr = wvif->link_id_db[sta_id - 1].old_mac;
 
-	return wsm_map_link(wvif->wdev, mac_addr, 1, sta_id, wvif->id);
+	return wsm_map_link(wvif, mac_addr, 1, sta_id);
 }
 
 int wsm_fwd_probe_req(struct wfx_vif *wvif, bool enable)
 {
 	wvif->filter_probe_resp = enable;
-	return wsm_set_rx_filter(wvif->wdev, wvif->filter_bssid,
-				 wvif->filter_probe_resp, wvif->id);
+	return wsm_set_rx_filter(wvif, wvif->filter_bssid,
+				 wvif->filter_probe_resp);
 }
 
 

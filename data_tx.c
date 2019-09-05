@@ -247,7 +247,7 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 		}
 	}
 	spin_unlock_bh(&cache->lock);
-	wsm_set_tx_rate_retry_policy(wvif->wdev, arg, wvif->id);
+	wsm_set_tx_rate_retry_policy(wvif, arg);
 	kfree(arg);
 	return 0;
 }
@@ -328,7 +328,7 @@ static int wfx_map_link(struct wfx_vif *wvif, struct wfx_link_entry *link_entry,
 {
 	int ret;
 
-	ret = wsm_map_link(wvif->wdev, link_entry->mac, 0, sta_id, wvif->id);
+	ret = wsm_map_link(wvif, link_entry->mac, 0, sta_id);
 
 	if (ret == 0)
 		/* Save the MAC address currently associated with the peer

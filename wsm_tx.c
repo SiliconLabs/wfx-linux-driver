@@ -155,20 +155,20 @@ int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 	return ret;
 }
 
-int wsm_reset(struct wfx_dev *wdev, bool reset_stat, int id)
+int wsm_reset(struct wfx_vif *wvif, bool reset_stat)
 {
 	int ret;
 	struct hif_msg *hdr;
 	struct hif_req_reset *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	body->reset_flags.reset_stat = reset_stat;
-	wfx_fill_header(hdr, id, WSM_HI_RESET_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	wfx_fill_header(hdr, wvif->id, WSM_HI_RESET_REQ_ID, sizeof(*body));
+	ret = wfx_cmd_send(wvif->wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
 
-int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *val, size_t val_len, int id)
+int wsm_read_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id, void *val, size_t val_len)
 {
 	int ret;
 	struct hif_msg *hdr;
@@ -177,7 +177,7 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *val, size_t val_len, in
 	struct hif_cnf_read_mib *reply = kmalloc(buf_len, GFP_KERNEL);
 
 	body->mib_id = cpu_to_le16(mib_id);
-	wfx_fill_header(hdr, id, WSM_HI_READ_MIB_REQ_ID, sizeof(*body));
+	wfx_fill_header(hdr, vif_id, WSM_HI_READ_MIB_REQ_ID, sizeof(*body));
 	ret = wfx_cmd_send(wdev, hdr, reply, buf_len, false);
 
 	if (!ret && mib_id != reply->mib_id) {
@@ -196,7 +196,7 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 mib_id, void *val, size_t val_len, in
 	return ret;
 }
 
-int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *val, size_t val_len, int id)
+int wsm_write_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id, void *val, size_t val_len)
 {
 	int ret;
 	struct hif_msg *hdr;
@@ -206,13 +206,13 @@ int wsm_write_mib(struct wfx_dev *wdev, u16 mib_id, void *val, size_t val_len, i
 	body->mib_id = cpu_to_le16(mib_id);
 	body->length = cpu_to_le16(val_len);
 	memcpy(&body->mib_data, val, val_len);
-	wfx_fill_header(hdr, id, WSM_HI_WRITE_MIB_REQ_ID, buf_len);
+	wfx_fill_header(hdr, vif_id, WSM_HI_WRITE_MIB_REQ_ID, buf_len);
 	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
 
-int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int id)
+int wsm_scan(struct wfx_vif *wvif, const struct wsm_scan *arg)
 {
 	int ret, i;
 	struct hif_msg *hdr;
@@ -242,26 +242,26 @@ int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int id)
 	memcpy(ptr, arg->ch, arg->scan_req.num_of_channels * sizeof(u8));
 	ptr += arg->scan_req.num_of_channels * sizeof(u8);
 	WARN(buf_len != ptr - (u8 *) body, "Allocation size mismatch");
-	wfx_fill_header(hdr, id, WSM_HI_START_SCAN_REQ_ID, buf_len);
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	wfx_fill_header(hdr, wvif->id, WSM_HI_START_SCAN_REQ_ID, buf_len);
+	ret = wfx_cmd_send(wvif->wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
 
-int wsm_stop_scan(struct wfx_dev *wdev, int id)
+int wsm_stop_scan(struct wfx_vif *wvif)
 {
 	int ret;
 	struct hif_msg *hdr;
 	// body associated to WSM_HI_STOP_SCAN_REQ_ID is empty
 	wfx_alloc_wsm(0, &hdr);
 
-	wfx_fill_header(hdr, id, WSM_HI_STOP_SCAN_REQ_ID, 0);
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	wfx_fill_header(hdr, wvif->id, WSM_HI_STOP_SCAN_REQ_ID, 0);
+	ret = wfx_cmd_send(wvif->wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
 
-int wsm_join(struct wfx_dev *wdev, const struct hif_req_join *arg, int id)
+int wsm_join(struct wfx_vif *wvif, const struct hif_req_join *arg)
 {
 	int ret;
 	struct hif_msg *hdr;
@@ -273,13 +273,13 @@ int wsm_join(struct wfx_dev *wdev, const struct hif_req_join *arg, int id)
 	cpu_to_le32s(&body->ssid_length);
 	cpu_to_le32s(&body->beacon_interval);
 	cpu_to_le32s(&body->basic_rate_set);
-	wfx_fill_header(hdr, id, WSM_HI_JOIN_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	wfx_fill_header(hdr, wvif->id, WSM_HI_JOIN_REQ_ID, sizeof(*body));
+	ret = wfx_cmd_send(wvif->wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
 
-int wsm_set_bss_params(struct wfx_dev *wdev, const struct hif_req_set_bss_params *arg, int id)
+int wsm_set_bss_params(struct wfx_vif *wvif, const struct hif_req_set_bss_params *arg)
 {
 	int ret;
 	struct hif_msg *hdr;
@@ -288,8 +288,8 @@ int wsm_set_bss_params(struct wfx_dev *wdev, const struct hif_req_set_bss_params
 	memcpy(body, arg, sizeof(*body));
 	cpu_to_le16s(&body->aid);
 	cpu_to_le32s(&body->operational_rate_set);
-	wfx_fill_header(hdr, id, WSM_HI_SET_BSS_PARAMS_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	wfx_fill_header(hdr, wvif->id, WSM_HI_SET_BSS_PARAMS_REQ_ID, sizeof(*body));
+	ret = wfx_cmd_send(wvif->wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
@@ -327,7 +327,7 @@ int wsm_remove_key(struct wfx_dev *wdev, int idx)
 	return ret;
 }
 
-int wsm_set_edca_queue_params(struct wfx_dev *wdev, const struct hif_req_edca_queue_params *arg, int id)
+int wsm_set_edca_queue_params(struct wfx_vif *wvif, const struct hif_req_edca_queue_params *arg)
 {
 	int ret;
 	struct hif_msg *hdr;
@@ -338,26 +338,26 @@ int wsm_set_edca_queue_params(struct wfx_dev *wdev, const struct hif_req_edca_qu
 	cpu_to_le16s(&body->cw_min);
 	cpu_to_le16s(&body->cw_max);
 	cpu_to_le16s(&body->tx_op_limit);
-	wfx_fill_header(hdr, id, WSM_HI_EDCA_QUEUE_PARAMS_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	wfx_fill_header(hdr, wvif->id, WSM_HI_EDCA_QUEUE_PARAMS_REQ_ID, sizeof(*body));
+	ret = wfx_cmd_send(wvif->wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
 
-int wsm_set_pm(struct wfx_dev *wdev, const struct hif_req_set_pm_mode *arg, int id)
+int wsm_set_pm(struct wfx_vif *wvif, const struct hif_req_set_pm_mode *arg)
 {
 	int ret;
 	struct hif_msg *hdr;
 	struct hif_req_set_pm_mode *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	memcpy(body, arg, sizeof(*body));
-	wfx_fill_header(hdr, id, WSM_HI_SET_PM_MODE_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	wfx_fill_header(hdr, wvif->id, WSM_HI_SET_PM_MODE_REQ_ID, sizeof(*body));
+	ret = wfx_cmd_send(wvif->wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
 
-int wsm_start(struct wfx_dev *wdev, const struct hif_req_start *arg, int id)
+int wsm_start(struct wfx_vif *wvif, const struct hif_req_start *arg)
 {
 	int ret;
 	struct hif_msg *hdr;
@@ -367,26 +367,26 @@ int wsm_start(struct wfx_dev *wdev, const struct hif_req_start *arg, int id)
 	cpu_to_le16s(&body->channel_number);
 	cpu_to_le32s(&body->beacon_interval);
 	cpu_to_le32s(&body->basic_rate_set);
-	wfx_fill_header(hdr, id, WSM_HI_START_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	wfx_fill_header(hdr, wvif->id, WSM_HI_START_REQ_ID, sizeof(*body));
+	ret = wfx_cmd_send(wvif->wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
 
-int wsm_beacon_transmit(struct wfx_dev *wdev, bool enable_beaconing, int id)
+int wsm_beacon_transmit(struct wfx_vif *wvif, bool enable_beaconing)
 {
 	int ret;
 	struct hif_msg *hdr;
 	struct hif_req_beacon_transmit *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	body->enable_beaconing = enable_beaconing ? 1 : 0;
-	wfx_fill_header(hdr, id, WSM_HI_BEACON_TRANSMIT_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	wfx_fill_header(hdr, wvif->id, WSM_HI_BEACON_TRANSMIT_REQ_ID, sizeof(*body));
+	ret = wfx_cmd_send(wvif->wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
 
-int wsm_map_link(struct wfx_dev *wdev, u8 *mac_addr, int flags, int sta_id, int id)
+int wsm_map_link(struct wfx_vif *wvif, u8 *mac_addr, int flags, int sta_id)
 {
 	int ret;
 	struct hif_msg *hdr;
@@ -396,14 +396,14 @@ int wsm_map_link(struct wfx_dev *wdev, u8 *mac_addr, int flags, int sta_id, int 
 		ether_addr_copy(body->mac_addr, mac_addr);
 	body->map_link_flags = *(struct hif_map_link_flags *) &flags;
 	body->peer_sta_id = sta_id;
-	wfx_fill_header(hdr, id, WSM_HI_MAP_LINK_REQ_ID, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	wfx_fill_header(hdr, wvif->id, WSM_HI_MAP_LINK_REQ_ID, sizeof(*body));
+	ret = wfx_cmd_send(wvif->wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
 
-int wsm_update_ie(struct wfx_dev *wdev, const struct hif_ie_flags *target_frame,
-		  const u8 *ies, size_t ies_len, int id)
+int wsm_update_ie(struct wfx_vif *wvif, const struct hif_ie_flags *target_frame,
+		  const u8 *ies, size_t ies_len)
 {
 	int ret;
 	struct hif_msg *hdr;
@@ -413,8 +413,8 @@ int wsm_update_ie(struct wfx_dev *wdev, const struct hif_ie_flags *target_frame,
 	memcpy(&body->ie_flags, target_frame, sizeof(struct hif_ie_flags));
 	body->num_i_es = cpu_to_le16(1);
 	memcpy(body->ie, ies, ies_len);
-	wfx_fill_header(hdr, id, WSM_HI_UPDATE_IE_REQ_ID, buf_len);
-	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
+	wfx_fill_header(hdr, wvif->id, WSM_HI_UPDATE_IE_REQ_ID, buf_len);
+	ret = wfx_cmd_send(wvif->wdev, hdr, NULL, 0, false);
 	kfree(hdr);
 	return ret;
 }
