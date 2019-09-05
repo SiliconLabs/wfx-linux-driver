@@ -25,7 +25,7 @@ struct wfx_scan {
 	struct ieee80211_channel **begin;
 	struct ieee80211_channel **curr;
 	struct ieee80211_channel **end;
-	WsmHiSsidDef_t			ssids[WSM_API_MAX_NB_SSIDS];
+	struct hif_ssid_def		ssids[WSM_API_MAX_NB_SSIDS];
 	int output_power;
 	int n_ssids;
 	int status;
@@ -34,7 +34,7 @@ struct wfx_scan {
 
 void wfx_scan_work(struct work_struct *work);
 void wfx_scan_timeout(struct work_struct *work);
-void wfx_scan_complete_cb(struct wfx_vif *wvif, WsmHiScanCmplIndBody_t *arg);
+void wfx_scan_complete_cb(struct wfx_vif *wvif, struct hif_ind_scan_cmpl *arg);
 void wfx_scan_failed_cb(struct wfx_vif *wvif);
 
 #endif /* WFX_SCAN_H */

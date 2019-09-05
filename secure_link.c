@@ -61,7 +61,7 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m)
 	return 0;
 }
 
-int wfx_sl_encode(struct wfx_dev *wdev, struct wmsg *input, struct sl_wmsg *output)
+int wfx_sl_encode(struct wfx_dev *wdev, struct hif_msg *input, struct sl_wmsg *output)
 {
 	int payload_len = round_up(input->len - sizeof(input->len), 16);
 	uint8_t *tag = output->payload + payload_len;

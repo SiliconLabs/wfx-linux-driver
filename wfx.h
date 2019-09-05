@@ -121,17 +121,17 @@ struct wfx_dev {
 
 	/* Keys are global to chip */
 	u32			key_map;
-	WsmHiAddKeyReqBody_t		keys[WSM_KEY_MAX_INDEX + 1];
+	struct hif_req_add_key		keys[WSM_KEY_MAX_INDEX + 1];
 
 	/* WSM */
 	struct wsm_cmd			wsm_cmd;
 	struct completion		firmware_ready;
-	HiStartupIndBody_t		wsm_caps;
+	struct hif_ind_startup		wsm_caps;
 	u8				keyset;
 	atomic_t			tx_lock;
 
 	/* For debugfs 'rx_stats' file */
-	HiRxStats_t rx_stats;
+	struct hif_rx_stats rx_stats;
 	struct mutex rx_stats_lock;
 };
 
@@ -194,9 +194,9 @@ struct wfx_vif {
 	struct timer_list	mcast_timeout;
 
 	/* API */
-	WsmHiSetPmModeReqBody_t		powersave_mode;
-	WsmHiSetBssParamsReqBody_t	bss_params;
-	WsmHiMibSetUapsdInformation_t	uapsd_info;
+	struct hif_req_set_pm_mode		powersave_mode;
+	struct hif_req_set_bss_params	bss_params;
+	struct hif_mib_set_uapsd_information	uapsd_info;
 
 	/* spinlock/mutex */
 	struct mutex		bss_loss_lock;

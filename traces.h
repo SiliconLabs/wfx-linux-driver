@@ -162,7 +162,7 @@ wsm_mib_list_enum
 #define wsm_mib_list wsm_mib_list_enum { -1, NULL }
 
 DECLARE_EVENT_CLASS(wsm_data,
-	TP_PROTO(struct wmsg *wsm, int tx_fill_level, bool is_recv),
+	TP_PROTO(struct hif_msg *wsm, int tx_fill_level, bool is_recv),
 	TP_ARGS(wsm, tx_fill_level, is_recv),
 	TP_STRUCT__entry(
 		__field(int, tx_fill_level)
@@ -192,7 +192,7 @@ DECLARE_EVENT_CLASS(wsm_data,
 			__entry->mib = -1;
 			header_len = 0;
 		}
-		__entry->buf_len = min_t(int, __entry->msg_len, sizeof(__entry->buf)) - sizeof(struct wmsg) - header_len;
+		__entry->buf_len = min_t(int, __entry->msg_len, sizeof(__entry->buf)) - sizeof(struct hif_msg) - header_len;
 		memcpy(__entry->buf, wsm->body + header_len, __entry->buf_len);
 	),
 	TP_printk("%d:%d:%s_%s%s%s: %s%s (%d bytes)",
@@ -208,11 +208,11 @@ DECLARE_EVENT_CLASS(wsm_data,
 	)
 );
 DEFINE_EVENT(wsm_data, wsm_send,
-	TP_PROTO(struct wmsg *wsm, int tx_fill_level, bool is_recv),
+	TP_PROTO(struct hif_msg *wsm, int tx_fill_level, bool is_recv),
 	TP_ARGS(wsm, tx_fill_level, is_recv));
 #define _trace_wsm_send(wsm, tx_fill_level) trace_wsm_send(wsm, tx_fill_level, false)
 DEFINE_EVENT(wsm_data, wsm_recv,
-	TP_PROTO(struct wmsg *wsm, int tx_fill_level, bool is_recv),
+	TP_PROTO(struct hif_msg *wsm, int tx_fill_level, bool is_recv),
 	TP_ARGS(wsm, tx_fill_level, is_recv));
 #define _trace_wsm_recv(wsm, tx_fill_level) trace_wsm_recv(wsm, tx_fill_level, true)
 
@@ -331,7 +331,7 @@ DEFINE_EVENT(io_data, io_read,
 #define _trace_io_read(reg, io_buf, len) trace_io_read(reg, -1, io_buf, len)
 
 TRACE_EVENT(tx_stats,
-	TP_PROTO(WsmHiTxCnfBody_t *tx_cnf, struct sk_buff *skb, int delay),
+	TP_PROTO(struct hif_cnf_tx *tx_cnf, struct sk_buff *skb, int delay),
 	TP_ARGS(tx_cnf, skb, delay),
 	TP_STRUCT__entry(
 		__field(int, pkt_id)

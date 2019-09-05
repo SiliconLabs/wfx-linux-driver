@@ -18,12 +18,12 @@ struct wfx_vif;
 
 struct wfx_wsm_event {
 	struct list_head link;
-	WsmHiEventIndBody_t evt;
+	struct hif_ind_event evt;
 };
 
 struct wsm_edca_params {
 	/* NOTE: index is a linux queue id. */
-	WsmHiEdcaQueueParamsReqBody_t	params[IEEE80211_NUM_ACS];
+	struct hif_req_edca_queue_params	params[IEEE80211_NUM_ACS];
 	bool				uapsd_enable[IEEE80211_NUM_ACS];
 };
 
@@ -78,12 +78,12 @@ int wfx_assign_vif_chanctx(struct ieee80211_hw *, struct ieee80211_vif *, struct
 void wfx_unassign_vif_chanctx(struct ieee80211_hw *, struct ieee80211_vif *, struct ieee80211_chanctx_conf *);
 
 // WSM Callbacks
-void wfx_suspend_resume(struct wfx_vif *wvif, WsmHiSuspendResumeTxIndBody_t *arg);
+void wfx_suspend_resume(struct wfx_vif *wvif, struct hif_ind_suspend_resume_tx *arg);
 
 // Other Helpers
 void wfx_cqm_bssloss_sm(struct wfx_vif *wvif, int init, int good, int bad);
 
 void wfx_update_filtering(struct wfx_vif *wvif);
-int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg);
+int wfx_set_pm(struct wfx_vif *wvif, const struct hif_req_set_pm_mode *arg);
 
 #endif /* WFX_STA_H */

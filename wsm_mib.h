@@ -34,7 +34,7 @@ static inline int wsm_set_beacon_wakeup_period(struct wfx_dev *wdev,
 					       unsigned listen_interval,
 					       int Id)
 {
-	WsmHiMibBeaconWakeUpPeriod_t val = {
+	struct hif_mib_beacon_wake_up_period val = {
 		.wakeup_period_min = dtim_interval,
 		.receive_dtim = 0,
 		.wakeup_period_max = cpu_to_le16(listen_interval),
@@ -47,7 +47,7 @@ static inline int wsm_set_beacon_wakeup_period(struct wfx_dev *wdev,
 }
 
 static inline int wsm_set_rcpi_rssi_threshold(struct wfx_dev *wdev,
-					      WsmHiMibRcpiRssiThreshold_t *arg,
+					      struct hif_mib_rcpi_rssi_threshold *arg,
 					      int Id)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_RCPI_RSSI_THRESHOLD, arg,
@@ -55,23 +55,23 @@ static inline int wsm_set_rcpi_rssi_threshold(struct wfx_dev *wdev,
 }
 
 static inline int wsm_get_counters_table(struct wfx_dev *wdev,
-					 WsmHiMibExtendedCountTable_t *arg,
+					 struct hif_mib_extended_count_table *arg,
 					 int Id)
 {
 	if (wfx_api_older_than(wdev, 1, 3)) {
-		// WsmHiMibExtendedCountTable_t is wider than WsmHiMibCountTable_t
+		// struct hif_mib_extended_count_table is wider than struct hif_mib_count_table
 		memset(arg, 0xFF, sizeof(*arg));
 		return wsm_read_mib(wdev, WSM_MIB_ID_COUNTERS_TABLE,
-				    arg, sizeof(WsmHiMibCountTable_t), Id);
+				    arg, sizeof(struct hif_mib_count_table), Id);
 	} else {
 		return wsm_read_mib(wdev, WSM_MIB_ID_EXTENDED_COUNTERS_TABLE,
-				    arg, sizeof(WsmHiMibExtendedCountTable_t), Id);
+				    arg, sizeof(struct hif_mib_extended_count_table), Id);
 	}
 }
 
 static inline int wsm_set_macaddr(struct wfx_dev *wdev, u8 *mac, int Id)
 {
-	WsmHiMibMacAddress_t msg = { };
+	struct hif_mib_mac_address msg = { };
 
 	if (mac)
 		ether_addr_copy(msg.mac_addr, mac);
@@ -91,7 +91,7 @@ static inline int wsm_set_rx_filter(struct wfx_dev *wdev, bool filter_bssid,
 }
 
 static inline int wsm_set_beacon_filter_table(struct wfx_dev *wdev,
-					      WsmHiMibBcnFilterTable_t *ft,
+					      struct hif_mib_bcn_filter_table *ft,
 					      int Id)
 {
 	size_t buf_len = struct_size(ft, ie_table, ft->num_of_info_elmts);
@@ -104,7 +104,7 @@ static inline int wsm_set_beacon_filter_table(struct wfx_dev *wdev,
 static inline int wsm_beacon_filter_control(struct wfx_dev *wdev, int enable,
 					    int beacon_count, int Id)
 {
-	WsmHiMibBcnFilterEnable_t arg = {
+	struct hif_mib_bcn_filter_enable arg = {
 	    .enable = cpu_to_le32(enable),
 	    .bcn_count = cpu_to_le32(beacon_count),
 	};
@@ -112,9 +112,9 @@ static inline int wsm_beacon_filter_control(struct wfx_dev *wdev, int enable,
 			     sizeof(arg), Id);
 }
 
-static inline int wsm_set_operational_mode(struct wfx_dev *wdev, enum WsmOpPowerMode_e mode)
+static inline int wsm_set_operational_mode(struct wfx_dev *wdev, enum hif_op_power_mode mode)
 {
-	WsmHiMibGlOperationalPowerMode_t val = {
+	struct hif_mib_gl_operational_power_mode val = {
 		.power_mode = mode,
 		.wup_ind_activation = 1,
 	};
@@ -124,7 +124,7 @@ static inline int wsm_set_operational_mode(struct wfx_dev *wdev, enum WsmOpPower
 }
 
 static inline int wsm_set_template_frame(struct wfx_dev *wdev,
-					 WsmHiMibTemplateFrame_t *arg,
+					 struct hif_mib_template_frame *arg,
 					 int Id)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_TEMPLATE_FRAME, arg,
@@ -150,7 +150,7 @@ static inline int wsm_set_block_ack_policy(struct wfx_dev *wdev,
 					   u8 tx_tid_policy, u8 rx_tid_policy,
 					   int Id)
 {
-	WsmHiMibBlockAckPolicy_t val = {
+	struct hif_mib_block_ack_policy val = {
 		.block_ack_tx_tid_policy = tx_tid_policy,
 		.block_ack_rx_tid_policy = rx_tid_policy,
 	};
@@ -160,7 +160,7 @@ static inline int wsm_set_block_ack_policy(struct wfx_dev *wdev,
 }
 
 static inline int wsm_set_association_mode(struct wfx_dev *wdev,
-					   WsmHiMibSetAssociationMode_t *arg,
+					   struct hif_mib_set_association_mode *arg,
 					   int Id)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_SET_ASSOCIATION_MODE, arg,
@@ -168,7 +168,7 @@ static inline int wsm_set_association_mode(struct wfx_dev *wdev,
 }
 
 static inline int wsm_set_tx_rate_retry_policy(struct wfx_dev *wdev,
-					       WsmHiMibSetTxRateRetryPolicy_t *arg,
+					       struct hif_mib_set_tx_rate_retry_policy *arg,
 					       int Id)
 {
 	size_t size = struct_size(arg, tx_rate_retry_policy, arg->num_tx_rate_policies);
@@ -178,7 +178,7 @@ static inline int wsm_set_tx_rate_retry_policy(struct wfx_dev *wdev,
 }
 
 static inline int wsm_set_mac_addr_condition(struct wfx_dev *wdev,
-					     WsmHiMibMacAddrDataFrameCondition_t *arg,
+					     struct hif_mib_mac_addr_data_frame_condition *arg,
 					     int Id)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_MAC_ADDR_DATAFRAME_CONDITION, arg,
@@ -186,7 +186,7 @@ static inline int wsm_set_mac_addr_condition(struct wfx_dev *wdev,
 }
 
 static inline int wsm_set_uc_mc_bc_condition(struct wfx_dev *wdev,
-					     WsmHiMibUcMcBcDataFrameCondition_t *arg,
+					     struct hif_mib_uc_mc_bc_data_frame_condition *arg,
 					     int Id)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_UC_MC_BC_DATAFRAME_CONDITION, arg,
@@ -194,7 +194,7 @@ static inline int wsm_set_uc_mc_bc_condition(struct wfx_dev *wdev,
 }
 
 static inline int wsm_set_config_data_filter(struct wfx_dev *wdev,
-					     WsmHiMibConfigDataFilter_t *arg,
+					     struct hif_mib_config_data_filter *arg,
 					     int Id)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_CONFIG_DATA_FILTER, arg,
@@ -202,7 +202,7 @@ static inline int wsm_set_config_data_filter(struct wfx_dev *wdev,
 }
 
 static inline int wsm_set_data_filtering(struct wfx_dev *wdev,
-					 WsmHiMibSetDataFiltering_t *arg,
+					 struct hif_mib_set_data_filtering *arg,
 					 int Id)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_SET_DATA_FILTERING, arg,
@@ -213,7 +213,7 @@ static inline int wsm_keep_alive_period(struct wfx_dev *wdev,
 					int period,
 					int Id)
 {
-	WsmHiMibKeepAlivePeriod_t arg = {
+	struct hif_mib_keep_alive_period arg = {
 		.keep_alive_period = cpu_to_le16(period),
 	};
 
@@ -222,7 +222,7 @@ static inline int wsm_keep_alive_period(struct wfx_dev *wdev,
 };
 
 static inline int wsm_set_arp_ipv4_filter(struct wfx_dev *wdev,
-					  WsmHiMibArpIpAddrTable_t *fp,
+					  struct hif_mib_arp_ip_addr_table *fp,
 					  int Id)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_ARP_IP_ADDRESSES_TABLE,
@@ -239,7 +239,7 @@ static inline int wsm_use_multi_tx_conf(struct wfx_dev *wdev,
 }
 
 static inline int wsm_set_uapsd_info(struct wfx_dev *wdev,
-				     WsmHiMibSetUapsdInformation_t *arg,
+				     struct hif_mib_set_uapsd_information *arg,
 				     int Id)
 {
 	return wsm_write_mib(wdev, WSM_MIB_ID_SET_UAPSD_INFORMATION,
@@ -264,7 +264,7 @@ static inline int wsm_slot_time(struct wfx_dev *wdev, int val, int Id)
 
 static inline int wsm_dual_cts_protection(struct wfx_dev *wdev, bool val, int Id)
 {
-	WsmHiMibSetHtProtection_t arg = {
+	struct hif_mib_set_ht_protection arg = {
 		.dual_cts_prot = val,
 	};
 

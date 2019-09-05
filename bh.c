@@ -50,7 +50,7 @@ static void device_release(struct wfx_dev *wdev)
 static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 {
 	struct sk_buff *skb;
-	struct wmsg *wsm;
+	struct hif_msg *wsm;
 	size_t alloc_len;
 	size_t computed_len;
 	int release_count;
@@ -72,7 +72,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	piggyback = le16_to_cpup((u16 *) (skb->data + alloc_len - 2));
 	_trace_piggyback(piggyback, false);
 
-	wsm = (struct wmsg *) skb->data;
+	wsm = (struct hif_msg *) skb->data;
 	WARN(wsm->encrypted & 0x1, "unsupported encryption type");
 	if (wsm->encrypted == 0x2) {
 		if (wfx_sl_decode(wdev, (void *) wsm))
@@ -96,7 +96,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	if (!(wsm->id & WMSG_ID_IS_INDICATION)) {
 		(*is_cnf)++;
 		if (wsm->id == WSM_HI_MULTI_TRANSMIT_CNF_ID)
-			release_count = le32_to_cpu(((WsmHiMultiTransmitCnfBody_t *) wsm->body)->num_tx_confs);
+			release_count = le32_to_cpu(((struct hif_cnf_multi_transmit *) wsm->body)->num_tx_confs);
 		else
 			release_count = 1;
 		WARN(wdev->hif.tx_buffers_used < release_count, "corrupted buffer counter");
@@ -158,7 +158,7 @@ static int bh_work_rx(struct wfx_dev *wdev, int max_msg, int *num_cnf)
 	return i;
 }
 
-static void tx_helper(struct wfx_dev *wdev, struct wmsg *wsm)
+static void tx_helper(struct wfx_dev *wdev, struct hif_msg *wsm)
 {
 	int ret;
 	void *data;
@@ -203,7 +203,7 @@ end:
 
 static int bh_work_tx(struct wfx_dev *wdev, int max_msg)
 {
-	struct wmsg *wsm;
+	struct hif_msg *wsm;
 	int i;
 
 	for (i = 0; i < max_msg; i++) {

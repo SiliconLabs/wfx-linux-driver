@@ -72,7 +72,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	struct cfg80211_scan_request *req = &hw_req->req;
 	struct sk_buff *skb;
 	int i, ret;
-	WsmHiMibTemplateFrame_t *p;
+	struct hif_mib_template_frame *p;
 
 	if (!wvif)
 		return -EINVAL;
@@ -99,7 +99,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 
 	mutex_lock(&wdev->conf_mutex);
 
-	p = (WsmHiMibTemplateFrame_t *)skb_push(skb, 4);
+	p = (struct hif_mib_template_frame *)skb_push(skb, 4);
 	p->frame_type = WSM_TMPLT_PRBREQ;
 	p->frame_length = cpu_to_le16(skb->len - 4);
 	ret = wsm_set_template_frame(wdev, p, wvif->Id);
@@ -126,7 +126,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	wvif->scan.output_power = wdev->output_power;
 
 	for (i = 0; i < req->n_ssids; ++i) {
-		WsmHiSsidDef_t *dst = &wvif->scan.ssids[wvif->scan.n_ssids];
+		struct hif_ssid_def *dst = &wvif->scan.ssids[wvif->scan.n_ssids];
 
 		memcpy(&dst->ssid[0], req->ssids[i].ssid, sizeof(dst->ssid));
 		dst->ssid_length = req->ssids[i].ssid_len;
@@ -158,7 +158,7 @@ void wfx_scan_work(struct work_struct *work)
 	if (first_run) {
 		if (wvif->state == WFX_STATE_STA &&
 		    !(wvif->powersave_mode.pm_mode.enter_psm)) {
-			WsmHiSetPmModeReqBody_t pm = wvif->powersave_mode;
+			struct hif_req_set_pm_mode pm = wvif->powersave_mode;
 
 			pm.pm_mode.enter_psm = 1;
 			wfx_set_pm(wvif, &pm);
@@ -277,7 +277,7 @@ void wfx_scan_failed_cb(struct wfx_vif *wvif)
 	}
 }
 
-void wfx_scan_complete_cb(struct wfx_vif *wvif, WsmHiScanCmplIndBody_t *arg)
+void wfx_scan_complete_cb(struct wfx_vif *wvif, struct hif_ind_scan_cmpl *arg)
 {
 	if (cancel_delayed_work_sync(&wvif->scan.timeout) > 0) {
 		wvif->scan.status = 1;

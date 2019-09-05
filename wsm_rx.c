@@ -17,7 +17,7 @@
 #include "secure_link.h"
 #include "sta.h"
 
-static int wsm_generic_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+static int wsm_generic_confirm(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
 	// All confirm messages start with status
 	int status = le32_to_cpu(*((__le32 *) buf));
@@ -56,9 +56,9 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf
 	return status;
 }
 
-static int wsm_tx_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+static int wsm_tx_confirm(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
-	WsmHiTxCnfBody_t *body = buf;
+	struct hif_cnf_tx *body = buf;
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 
 	WARN_ON(!wvif);
@@ -69,10 +69,10 @@ static int wsm_tx_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 	return 0;
 }
 
-static int wsm_multi_tx_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+static int wsm_multi_tx_confirm(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
-	WsmHiMultiTransmitCnfBody_t *body = buf;
-	WsmHiTxCnfBody_t *buf_loc = (WsmHiTxCnfBody_t *) &body->tx_conf_payload;
+	struct hif_cnf_multi_transmit *body = buf;
+	struct hif_cnf_tx *buf_loc = (struct hif_cnf_tx *) &body->tx_conf_payload;
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 	int count = body->num_tx_confs;
 	int i;
@@ -108,15 +108,15 @@ int wsm_fwd_probe_req(struct wfx_vif *wvif, bool enable)
 }
 
 
-static int wsm_startup_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+static int wsm_startup_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
-	HiStartupIndBody_t *body = buf;
+	struct hif_ind_startup *body = buf;
 
 	if (body->status || body->firmware_type > 4) {
 		dev_err(wdev->dev, "Received invalid startup indication");
 		return -EINVAL;
 	}
-	memcpy(&wdev->wsm_caps, body, sizeof(HiStartupIndBody_t));
+	memcpy(&wdev->wsm_caps, body, sizeof(struct hif_ind_startup));
 	le32_to_cpus(&wdev->wsm_caps.status);
 	le16_to_cpus(&wdev->wsm_caps.hardware_id);
 	le16_to_cpus(&wdev->wsm_caps.num_inp_ch_bufs);
@@ -126,7 +126,7 @@ static int wsm_startup_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 	return 0;
 }
 
-static int wsm_wakeup_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+static int wsm_wakeup_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
 	if (!wdev->pdata.gpio_wakeup
 	    || !gpiod_get_value(wdev->pdata.gpio_wakeup)) {
@@ -136,9 +136,9 @@ static int wsm_wakeup_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *b
 	return 0;
 }
 
-static int wsm_keys_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+static int wsm_keys_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
-	HiSlExchangePubKeysIndBody_t *body = buf;
+	struct hif_ind_sl_exchange_pub_keys *body = buf;
 
 	// Compatibility with legacy secure link
 	if (body->status == SL_PUB_KEY_EXCHANGE_STATUS_SUCCESS)
@@ -149,25 +149,25 @@ static int wsm_keys_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf
 	return 0;
 }
 
-static int wsm_receive_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf, struct sk_buff *skb)
+static int wsm_receive_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf, struct sk_buff *skb)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
-	WsmHiRxIndBody_t *body = buf;
+	struct hif_ind_rx *body = buf;
 
 	if (!wvif) {
 		dev_warn(wdev->dev, "ignore rx data for non existant vif %d\n", hdr->interface);
 		return 0;
 	}
-	skb_pull(skb, sizeof(struct wmsg) + sizeof(WsmHiRxIndBody_t));
+	skb_pull(skb, sizeof(struct hif_msg) + sizeof(struct hif_ind_rx));
 	wfx_rx_cb(wvif, body, skb);
 
 	return 0;
 }
 
-static int wsm_event_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+static int wsm_event_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
-	WsmHiEventIndBody_t *body = buf;
+	struct hif_ind_event *body = buf;
 	struct wfx_wsm_event *event;
 	int first;
 
@@ -179,7 +179,7 @@ static int wsm_event_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *bu
 	if (!event)
 		return -ENOMEM;
 
-	memcpy(&event->evt, body, sizeof(WsmHiEventIndBody_t));
+	memcpy(&event->evt, body, sizeof(struct hif_ind_event));
 	spin_lock(&wvif->event_queue_lock);
 	first = list_empty(&wvif->event_queue);
 	list_add_tail(&event->link, &wvif->event_queue);
@@ -191,7 +191,7 @@ static int wsm_event_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *bu
 	return 0;
 }
 
-static int wsm_pm_mode_complete_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+static int wsm_pm_mode_complete_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 
@@ -201,10 +201,10 @@ static int wsm_pm_mode_complete_indication(struct wfx_dev *wdev, struct wmsg *hd
 	return 0;
 }
 
-static int wsm_scan_complete_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+static int wsm_scan_complete_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
-	WsmHiScanCmplIndBody_t *body = buf;
+	struct hif_ind_scan_cmpl *body = buf;
 
 	WARN_ON(!wvif);
 	wfx_scan_complete_cb(wvif, body);
@@ -212,7 +212,7 @@ static int wsm_scan_complete_indication(struct wfx_dev *wdev, struct wmsg *hdr, 
 	return 0;
 }
 
-static int wsm_join_complete_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+static int wsm_join_complete_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
 
@@ -222,10 +222,10 @@ static int wsm_join_complete_indication(struct wfx_dev *wdev, struct wmsg *hdr, 
 	return 0;
 }
 
-static int wsm_suspend_resume_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+static int wsm_suspend_resume_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
-	WsmHiSuspendResumeTxIndBody_t *body = buf;
+	struct hif_ind_suspend_resume_tx *body = buf;
 
 	WARN_ON(!wvif);
 	wfx_suspend_resume(wvif, body);
@@ -233,9 +233,9 @@ static int wsm_suspend_resume_indication(struct wfx_dev *wdev, struct wmsg *hdr,
 	return 0;
 }
 
-static int wsm_error_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+static int wsm_error_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
-	HiErrorIndBody_t *body = buf;
+	struct hif_ind_error *body = buf;
 	u8 *pRollback = (u8 *) body->data;
 	u32 *pStatus = (u32 *) body->data;
 
@@ -265,9 +265,9 @@ static int wsm_error_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *bu
 	return 0;
 }
 
-static int wsm_generic_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+static int wsm_generic_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
-	HiGenericIndBody_t *body = buf;
+	struct hif_ind_generic *body = buf;
 
 	switch (body->indication_type) {
 	case  HI_GENERIC_INDICATION_TYPE_RAW:
@@ -289,7 +289,7 @@ static int wsm_generic_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 	}
 }
 
-static int wsm_exception_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
+static int wsm_exception_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
 	size_t len = hdr->len - 4; // drop header
 	dev_err(wdev->dev, "Firmware exception.\n");
@@ -301,7 +301,7 @@ static int wsm_exception_indication(struct wfx_dev *wdev, struct wmsg *hdr, void
 
 static const struct {
 	int msg_id;
-	int (*handler)(struct wfx_dev *, struct wmsg *, void *);
+	int (*handler)(struct wfx_dev *, struct hif_msg *, void *);
 } wsm_handlers[] = {
 	/* Confirmations */
 	{ WSM_HI_TX_CNF_ID,              wsm_tx_confirm },
@@ -325,7 +325,7 @@ static const struct {
 void wsm_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	int i;
-	struct wmsg *wsm = (struct wmsg *) skb->data;
+	struct hif_msg *wsm = (struct hif_msg *) skb->data;
 	int wsm_id = wsm->id;
 
 	if (wsm_id == WSM_HI_RX_IND_ID) {
@@ -399,7 +399,7 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 {
 	bool handled = false;
 	struct wfx_tx_priv *tx_priv = wfx_skb_tx_priv(skb);
-	WsmHiTxReqBody_t *wsm = wfx_skb_txreq(skb);
+	struct hif_req_tx *wsm = wfx_skb_txreq(skb);
 	struct ieee80211_hdr *frame = (struct ieee80211_hdr *) (wsm->frame + wsm->data_flags.fc_offset);
 
 	enum {
@@ -478,7 +478,7 @@ static int wfx_get_prio_queue(struct wfx_vif *wvif,
 {
 	static const int urgent = BIT(WFX_LINK_ID_AFTER_DTIM) |
 		BIT(WFX_LINK_ID_UAPSD);
-	WsmHiEdcaQueueParamsReqBody_t *edca;
+	struct hif_req_edca_queue_params *edca;
 	unsigned score, best = -1;
 	int winner = -1;
 	int i;
@@ -556,11 +556,11 @@ found:
  *   that are allowed to be sent in the same TxOp than the current reported message.
  *   But it does not guaranty that we have the time to send them all in the duration of the TxOp.
  */
-struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
+struct hif_msg *wsm_get_tx(struct wfx_dev *wdev)
 {
 	struct sk_buff *skb;
-	struct wmsg *hdr = NULL;
-	WsmHiTxReqBody_t *wsm = NULL;
+	struct hif_msg *hdr = NULL;
+	struct hif_req_tx *wsm = NULL;
 	struct wfx_queue *queue = NULL;
 	struct wfx_queue *vif_queue = NULL;
 	u32 tx_allowed_mask = 0;
@@ -622,7 +622,7 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 		if (!skb)
 			continue;
 		tx_priv = wfx_skb_tx_priv(skb);
-		hdr = (struct wmsg *) skb->data;
+		hdr = (struct hif_msg *) skb->data;
 		wvif = wdev_to_wvif(wdev, hdr->interface);
 		WARN_ON(!wvif);
 
@@ -648,7 +648,7 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 		 *  to inform PS STAs
 		 */
 		if (more) {
-			wsm = (WsmHiTxReqBody_t *) hdr->body;
+			wsm = (struct hif_req_tx *) hdr->body;
 			hdr80211 = (struct ieee80211_hdr *) (wsm->frame + wsm->data_flags.fc_offset);
 			hdr80211->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
 		}

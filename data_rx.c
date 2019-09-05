@@ -57,7 +57,7 @@ done:
 	return drop;
 }
 
-static int wfx_drop_encrypt_data(struct wfx_dev *wdev, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
+static int wfx_drop_encrypt_data(struct wfx_dev *wdev, struct hif_ind_rx *arg, struct sk_buff *skb)
 {
 	struct ieee80211_hdr *frame = (struct ieee80211_hdr *) skb->data;
 	size_t hdrlen = ieee80211_hdrlen(frame->frame_control);
@@ -107,7 +107,7 @@ static int wfx_drop_encrypt_data(struct wfx_dev *wdev, WsmHiRxIndBody_t *arg, st
 
 }
 
-void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
+void wfx_rx_cb(struct wfx_vif *wvif, struct hif_ind_rx *arg, struct sk_buff *skb)
 {
 	int link_id = arg->rx_flags.peer_sta_id;
 	struct ieee80211_rx_status *hdr = IEEE80211_SKB_RXCB(skb);

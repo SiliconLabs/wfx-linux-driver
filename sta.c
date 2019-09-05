@@ -197,8 +197,8 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 {
 	int i;
 	// FIXME: parameters are set by kernel juste after interface_add.
-	// Keep WsmHiEdcaQueueParamsReqBody_t blank?
-	WsmHiEdcaQueueParamsReqBody_t default_edca_params[] = {
+	// Keep struct hif_req_edca_queue_params blank?
+	struct hif_req_edca_queue_params default_edca_params[] = {
 		[IEEE80211_AC_VO] = {
 			.queue_id = WSM_QUEUE_ID_VOICE,
 			.aifsn = 2,
@@ -507,10 +507,10 @@ static int wfx_set_multicast_filter(struct wfx_dev *wdev,
 					   int Id)
 {
 	int i, ret;
-	WsmHiMibConfigDataFilter_t FilterConfig = { };
-	WsmHiMibSetDataFiltering_t DataFiltering = { };
-	WsmHiMibMacAddrDataFrameCondition_t MacAddrCond = { };
-	WsmHiMibUcMcBcDataFrameCondition_t UcMcBcCond = { };
+	struct hif_mib_config_data_filter FilterConfig = { };
+	struct hif_mib_set_data_filtering DataFiltering = { };
+	struct hif_mib_mac_addr_data_frame_condition MacAddrCond = { };
+	struct hif_mib_uc_mc_bc_data_frame_condition UcMcBcCond = { };
 
 	// Temporary workaround for filters
 	return wsm_set_data_filtering(wdev, &DataFiltering, Id);
@@ -560,9 +560,9 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	bool is_sta = wvif->vif && NL80211_IFTYPE_STATION == wvif->vif->type;
 	bool filter_bssid = wvif->filter_bssid;
 	bool filter_probe_resp = wvif->filter_probe_resp;
-	WsmHiMibBcnFilterEnable_t bf_ctrl;
-	WsmHiMibBcnFilterTable_t *bf_tbl;
-	WsmHiIeTableEntry_t ie_tbl[] = {
+	struct hif_mib_bcn_filter_enable bf_ctrl;
+	struct hif_mib_bcn_filter_table *bf_tbl;
+	struct hif_ie_table_entry ie_tbl[] = {
 		{
 			.ie_id        = WLAN_EID_VENDOR_SPECIFIC,
 			.has_changed  = 1,
@@ -585,7 +585,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	if (wvif->state == WFX_STATE_PASSIVE)
 		return;
 
-	bf_tbl = kmalloc(sizeof(WsmHiMibBcnFilterTable_t) + sizeof(ie_tbl), GFP_KERNEL);
+	bf_tbl = kmalloc(sizeof(struct hif_mib_bcn_filter_table) + sizeof(ie_tbl), GFP_KERNEL);
 	memcpy(bf_tbl->ie_table, ie_tbl, sizeof(ie_tbl));
 	if (wvif->disable_beacon_filter) {
 		bf_ctrl.enable = 0;
@@ -673,7 +673,7 @@ int wfx_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	int ret = 0;
 	/* To prevent re-applying PM request OID again and again*/
 	u16 old_uapsd_flags, new_uapsd_flags;
-	WsmHiEdcaQueueParamsReqBody_t *edca;
+	struct hif_req_edca_queue_params *edca;
 
 	mutex_lock(&wdev->conf_mutex);
 
@@ -720,9 +720,9 @@ int wfx_get_stats(struct ieee80211_hw *hw,
 	return 0;
 }
 
-int wfx_set_pm(struct wfx_vif *wvif, const WsmHiSetPmModeReqBody_t *arg)
+int wfx_set_pm(struct wfx_vif *wvif, const struct hif_req_set_pm_mode *arg)
 {
-	WsmHiSetPmModeReqBody_t pm = *arg;
+	struct hif_req_set_pm_mode pm = *arg;
 	u16 uapsd_flags;
 	int ret;
 
@@ -991,7 +991,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	const u8 *bssid;
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 	struct cfg80211_bss *bss = NULL;
-	WsmHiJoinReqBody_t join = {
+	struct hif_req_join join = {
 		.mode = conf->ibss_joined ? WSM_MODE_IBSS : WSM_MODE_BSS,
 		.preamble_type = conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
 		.probe_for_join = 1,
@@ -1221,7 +1221,7 @@ static void wfx_ps_notify(struct wfx_vif *wvif, bool ps)
 static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
 {
 	struct sk_buff *skb;
-	WsmHiIeFlags_t target_frame = {
+	struct hif_ie_flags target_frame = {
 		.beacon = 1,
 	};
 	u16 tim_offset, tim_length;
@@ -1277,7 +1277,7 @@ void wfx_set_cts_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif = container_of(work, struct wfx_vif, set_cts_work);
 	u8 erp_ie[3] = { WLAN_EID_ERP_INFO, 1, 0 };
-	WsmHiIeFlags_t target_frame = {
+	struct hif_ie_flags target_frame = {
 		.beacon = 1,
 	};
 
@@ -1295,7 +1295,7 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 {
 	int ret;
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
-	WsmHiStartReqBody_t start = {
+	struct hif_req_start start = {
 		.channel_number = wvif->channel->hw_value,
 		.beacon_interval = conf->beacon_int,
 		.dtim_period = conf->dtim_period,
@@ -1352,7 +1352,7 @@ static int wfx_upload_beacon(struct wfx_vif *wvif)
 	int ret = 0;
 	struct sk_buff *skb = NULL;
 	struct ieee80211_mgmt *mgmt;
-	WsmHiMibTemplateFrame_t *p;
+	struct hif_mib_template_frame *p;
 
 	if (wvif->vif->type == NL80211_IFTYPE_STATION ||
 	    wvif->vif->type == NL80211_IFTYPE_MONITOR ||
@@ -1364,7 +1364,7 @@ static int wfx_upload_beacon(struct wfx_vif *wvif)
 	if (!skb)
 		return -ENOMEM;
 
-	p = (WsmHiMibTemplateFrame_t *) skb_push(skb, 4);
+	p = (struct hif_mib_template_frame *) skb_push(skb, 4);
 	p->frame_type = WSM_TMPLT_BCN;
 	p->init_rate = API_RATE_INDEX_B_1MBPS; /* 1Mbps DSSS */
 	p->frame_length = cpu_to_le16(skb->len - 4);
@@ -1408,7 +1408,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 
 	/* TODO: BSS_CHANGED_QOS */
 	if (changed & BSS_CHANGED_ARP_FILTER) {
-		WsmHiMibArpIpAddrTable_t filter = { };
+		struct hif_mib_arp_ip_addr_table filter = { };
 		nb_arp_addr = info->arp_addr_cnt;
 
 		if (nb_arp_addr <= 0 || nb_arp_addr > WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES)
@@ -1483,7 +1483,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 
 			if (info->assoc || info->ibss_joined) {
 				struct ieee80211_sta *sta = NULL;
-				WsmHiMibSetAssociationMode_t association_mode = { };
+				struct hif_mib_set_association_mode association_mode = { };
 
 				if (info->dtim_period)
 					wvif->dtim_period = info->dtim_period;
@@ -1572,7 +1572,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 	}
 
 	if (changed & (BSS_CHANGED_ASSOC | BSS_CHANGED_CQM)) {
-		WsmHiMibRcpiRssiThreshold_t threshold = {
+		struct hif_mib_rcpi_rssi_threshold threshold = {
 			.rolling_average_count	= 8,
 		};
 
@@ -1703,7 +1703,7 @@ int wfx_ampdu_action(struct ieee80211_hw *hw,
 }
 
 void wfx_suspend_resume(struct wfx_vif *wvif,
-			WsmHiSuspendResumeTxIndBody_t *arg)
+			struct hif_ind_suspend_resume_tx *arg)
 {
 	if (arg->suspend_resume_flags.bc_mc_only) {
 		bool cancel_tmo = false;

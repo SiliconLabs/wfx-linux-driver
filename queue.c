@@ -51,7 +51,7 @@ void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif)
 	struct wfx_queue *queue;
 	struct sk_buff *item;
 	struct wfx_dev *wdev = wvif->wdev;
-	struct wmsg *hdr;
+	struct hif_msg *hdr;
 
 	if (wvif->wdev->chip_frozen) {
 		wsm_tx_lock_flush(wdev);
@@ -66,7 +66,7 @@ void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif)
 			queue = &wdev->tx_queue[i];
 			spin_lock_bh(&queue->queue.lock);
 			skb_queue_walk(&queue->queue, item) {
-				hdr = (struct wmsg *) item->data;
+				hdr = (struct hif_msg *) item->data;
 				if (hdr->interface == wvif->Id)
 					done = false;
 			}
@@ -242,7 +242,7 @@ int wfx_pending_remove(struct wfx_dev *wdev, struct sk_buff *skb)
 struct sk_buff *wfx_pending_get(struct wfx_dev *wdev, u32 packet_id)
 {
 	struct sk_buff *skb;
-	WsmHiTxReqBody_t *wsm;
+	struct hif_req_tx *wsm;
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 
 	spin_lock_bh(&stats->pending.lock);
@@ -263,7 +263,7 @@ void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 	ktime_t now = ktime_get();
 	struct wfx_tx_priv *tx_priv;
-	WsmHiTxReqBody_t *wsm;
+	struct hif_req_tx *wsm;
 	struct sk_buff *skb;
 
 	dev_info(wdev->dev, "Frames stuck in firmware since %dms or more:\n", limit_ms);

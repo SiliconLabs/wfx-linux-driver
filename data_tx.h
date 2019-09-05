@@ -50,7 +50,7 @@ void tx_policy_upload_work(struct work_struct *work);
 
 void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	    struct sk_buff *skb);
-void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg);
+void wfx_tx_confirm_cb(struct wfx_vif *wvif, struct hif_cnf_tx *arg);
 void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb);
 
 void wfx_link_id_work(struct work_struct *work);
@@ -67,10 +67,10 @@ static inline struct wfx_tx_priv *wfx_skb_tx_priv(struct sk_buff *skb)
 	return (struct wfx_tx_priv *) tx_info->rate_driver_data;
 }
 
-static inline WsmHiTxReqBody_t *wfx_skb_txreq(struct sk_buff *skb)
+static inline struct hif_req_tx *wfx_skb_txreq(struct sk_buff *skb)
 {
-	struct wmsg *hdr = (struct wmsg *) skb->data;
-	return (WsmHiTxReqBody_t *) hdr->body;
+	struct hif_msg *hdr = (struct hif_msg *) skb->data;
+	return (struct hif_req_tx *) hdr->body;
 }
 
 static inline int wfx_is_ht(const struct wfx_ht_info *ht_info)

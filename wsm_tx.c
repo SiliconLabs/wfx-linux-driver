@@ -23,7 +23,7 @@ void init_wsm_cmd(struct wsm_cmd *wsm_cmd)
 	mutex_init(&wsm_cmd->key_renew_lock);
 }
 
-static void wfx_fill_header(struct wmsg *hdr, int if_id, unsigned cmd, size_t size)
+static void wfx_fill_header(struct hif_msg *hdr, int if_id, unsigned cmd, size_t size)
 {
 	if (if_id == -1)
 		if_id = 2;
@@ -37,16 +37,16 @@ static void wfx_fill_header(struct wmsg *hdr, int if_id, unsigned cmd, size_t si
 	hdr->interface = if_id;
 }
 
-static void *wfx_alloc_wsm(size_t body_len, struct wmsg **hdr)
+static void *wfx_alloc_wsm(size_t body_len, struct hif_msg **hdr)
 {
-	*hdr = kzalloc(sizeof(struct wmsg) + body_len, GFP_KERNEL);
+	*hdr = kzalloc(sizeof(struct hif_msg) + body_len, GFP_KERNEL);
 	if (*hdr)
 		return (*hdr)->body;
 	else
 		return NULL;
 }
 
-int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply, size_t reply_len, bool async)
+int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request, void *reply, size_t reply_len, bool async)
 {
 	const char *mib_name = "";
 	const char *mib_sep = "";
@@ -124,7 +124,7 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct wmsg *request, void *reply, size_t
 int wsm_shutdown(struct wfx_dev *wdev)
 {
 	int ret;
-	struct wmsg *hdr;
+	struct hif_msg *hdr;
 
 	wfx_alloc_wsm(0, &hdr);
 	wfx_fill_header(hdr, -1, HI_SHUT_DOWN_REQ_ID, 0);
@@ -143,9 +143,9 @@ int wsm_shutdown(struct wfx_dev *wdev)
 int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 {
 	int ret;
-	size_t buf_len = sizeof(HiConfigurationReqBody_t) + len;
-	struct wmsg *hdr;
-	HiConfigurationReqBody_t *body = wfx_alloc_wsm(buf_len, &hdr);
+	size_t buf_len = sizeof(struct hif_req_configuration) + len;
+	struct hif_msg *hdr;
+	struct hif_req_configuration *body = wfx_alloc_wsm(buf_len, &hdr);
 
 	body->length = cpu_to_le16(len);
 	memcpy(body->pds_data, conf, len);
@@ -158,8 +158,8 @@ int wsm_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 int wsm_reset(struct wfx_dev *wdev, bool reset_stat, int Id)
 {
 	int ret;
-	struct wmsg *hdr;
-	WsmHiResetReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	struct hif_msg *hdr;
+	struct hif_req_reset *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	body->reset_flags.reset_stat = reset_stat;
 	wfx_fill_header(hdr, Id, WSM_HI_RESET_REQ_ID, sizeof(*body));
@@ -171,10 +171,10 @@ int wsm_reset(struct wfx_dev *wdev, bool reset_stat, int Id)
 int wsm_read_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len, int Id)
 {
 	int ret;
-	struct wmsg *hdr;
-	int buf_len = sizeof(WsmHiReadMibCnfBody_t) + val_len;
-	WsmHiReadMibReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
-	WsmHiReadMibCnfBody_t *reply = kmalloc(buf_len, GFP_KERNEL);
+	struct hif_msg *hdr;
+	int buf_len = sizeof(struct hif_cnf_read_mib) + val_len;
+	struct hif_req_read_mib *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	struct hif_cnf_read_mib *reply = kmalloc(buf_len, GFP_KERNEL);
 
 	body->mib_id = cpu_to_le16(id);
 	wfx_fill_header(hdr, Id, WSM_HI_READ_MIB_REQ_ID, sizeof(*body));
@@ -199,9 +199,9 @@ int wsm_read_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len, int Id
 int wsm_write_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len, int Id)
 {
 	int ret;
-	struct wmsg *hdr;
-	int buf_len = sizeof(WsmHiWriteMibReqBody_t) + val_len;
-	WsmHiWriteMibReqBody_t *body = wfx_alloc_wsm(buf_len, &hdr);
+	struct hif_msg *hdr;
+	int buf_len = sizeof(struct hif_req_write_mib) + val_len;
+	struct hif_req_write_mib *body = wfx_alloc_wsm(buf_len, &hdr);
 
 	body->mib_id = cpu_to_le16(id);
 	body->length = cpu_to_le16(val_len);
@@ -215,12 +215,12 @@ int wsm_write_mib(struct wfx_dev *wdev, u16 id, void *val, size_t val_len, int I
 int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id)
 {
 	int ret, i;
-	struct wmsg *hdr;
-	WsmHiSsidDef_t *ssids;
-	size_t buf_len = sizeof(WsmHiStartScanReqBody_t) +
+	struct hif_msg *hdr;
+	struct hif_ssid_def *ssids;
+	size_t buf_len = sizeof(struct hif_req_start_scan) +
 		arg->scan_req.num_of_channels * sizeof(u8) +
-		arg->scan_req.num_of_ssi_ds * sizeof(WsmHiSsidDef_t);
-	WsmHiStartScanReqBody_t *body = wfx_alloc_wsm(buf_len, &hdr);
+		arg->scan_req.num_of_ssi_ds * sizeof(struct hif_ssid_def);
+	struct hif_req_start_scan *body = wfx_alloc_wsm(buf_len, &hdr);
 	u8 *ptr = (u8 *) body + sizeof(*body);
 
 	WARN(arg->scan_req.num_of_channels > WSM_API_MAX_NB_CHANNELS, "Invalid params");
@@ -228,17 +228,17 @@ int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id)
 	WARN(arg->scan_req.band > 1, "Invalid params");
 
 	// FIXME: This API is unnecessary complex, fixing NumOfChannels and
-	// adding a member SsidDef at end of WsmHiStartScanReqBody_t would
+	// adding a member SsidDef at end of struct hif_req_start_scan would
 	// simplify that a lot.
 	memcpy(body, &arg->scan_req, sizeof(*body));
 	cpu_to_le32s(&body->min_channel_time);
 	cpu_to_le32s(&body->max_channel_time);
 	cpu_to_le32s(&body->tx_power_level);
-	memcpy(ptr, arg->ssids, arg->scan_req.num_of_ssi_ds * sizeof(WsmHiSsidDef_t));
-	ssids = (WsmHiSsidDef_t *) ptr;
+	memcpy(ptr, arg->ssids, arg->scan_req.num_of_ssi_ds * sizeof(struct hif_ssid_def));
+	ssids = (struct hif_ssid_def *) ptr;
 	for (i = 0; i < body->num_of_ssi_ds; ++i)
 		cpu_to_le32s(&ssids[i].ssid_length);
-	ptr += arg->scan_req.num_of_ssi_ds * sizeof(WsmHiSsidDef_t);
+	ptr += arg->scan_req.num_of_ssi_ds * sizeof(struct hif_ssid_def);
 	memcpy(ptr, arg->ch, arg->scan_req.num_of_channels * sizeof(u8));
 	ptr += arg->scan_req.num_of_channels * sizeof(u8);
 	WARN(buf_len != ptr - (u8 *) body, "Allocation size mismatch");
@@ -251,7 +251,7 @@ int wsm_scan(struct wfx_dev *wdev, const struct wsm_scan *arg, int Id)
 int wsm_stop_scan(struct wfx_dev *wdev, int Id)
 {
 	int ret;
-	struct wmsg *hdr;
+	struct hif_msg *hdr;
 	// body associated to WSM_HI_STOP_SCAN_REQ_ID is empty
 	wfx_alloc_wsm(0, &hdr);
 
@@ -261,13 +261,13 @@ int wsm_stop_scan(struct wfx_dev *wdev, int Id)
 	return ret;
 }
 
-int wsm_join(struct wfx_dev *wdev, const WsmHiJoinReqBody_t *arg, int Id)
+int wsm_join(struct wfx_dev *wdev, const struct hif_req_join *arg, int Id)
 {
 	int ret;
-	struct wmsg *hdr;
-	WsmHiJoinReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	struct hif_msg *hdr;
+	struct hif_req_join *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
-	memcpy(body, arg, sizeof(WsmHiJoinReqBody_t));
+	memcpy(body, arg, sizeof(struct hif_req_join));
 	cpu_to_le16s(&body->channel_number);
 	cpu_to_le16s(&body->atim_window);
 	cpu_to_le32s(&body->ssid_length);
@@ -279,11 +279,11 @@ int wsm_join(struct wfx_dev *wdev, const WsmHiJoinReqBody_t *arg, int Id)
 	return ret;
 }
 
-int wsm_set_bss_params(struct wfx_dev *wdev, const WsmHiSetBssParamsReqBody_t *arg, int Id)
+int wsm_set_bss_params(struct wfx_dev *wdev, const struct hif_req_set_bss_params *arg, int Id)
 {
 	int ret;
-	struct wmsg *hdr;
-	WsmHiSetBssParamsReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	struct hif_msg *hdr;
+	struct hif_req_set_bss_params *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	memcpy(body, arg, sizeof(*body));
 	cpu_to_le16s(&body->aid);
@@ -294,12 +294,12 @@ int wsm_set_bss_params(struct wfx_dev *wdev, const WsmHiSetBssParamsReqBody_t *a
 	return ret;
 }
 
-int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg)
+int wsm_add_key(struct wfx_dev *wdev, const struct hif_req_add_key *arg)
 {
 	int ret;
-	struct wmsg *hdr;
+	struct hif_msg *hdr;
 	// FIXME: only send necessary bits
-	WsmHiAddKeyReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	struct hif_req_add_key *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	// FIXME: swap bytes as necessary in body
 	memcpy(body, arg, sizeof(*body));
@@ -317,8 +317,8 @@ int wsm_add_key(struct wfx_dev *wdev, const WsmHiAddKeyReqBody_t *arg)
 int wsm_remove_key(struct wfx_dev *wdev, int idx)
 {
 	int ret;
-	struct wmsg *hdr;
-	WsmHiRemoveKeyReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	struct hif_msg *hdr;
+	struct hif_req_remove_key *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	body->entry_index = idx;
 	wfx_fill_header(hdr, -1, WSM_HI_REMOVE_KEY_REQ_ID, sizeof(*body));
@@ -327,11 +327,11 @@ int wsm_remove_key(struct wfx_dev *wdev, int idx)
 	return ret;
 }
 
-int wsm_set_edca_queue_params(struct wfx_dev *wdev, const WsmHiEdcaQueueParamsReqBody_t *arg, int Id)
+int wsm_set_edca_queue_params(struct wfx_dev *wdev, const struct hif_req_edca_queue_params *arg, int Id)
 {
 	int ret;
-	struct wmsg *hdr;
-	WsmHiEdcaQueueParamsReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	struct hif_msg *hdr;
+	struct hif_req_edca_queue_params *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	// NOTE: queues numerotation are not the same between WFx and Linux
 	memcpy(body, arg, sizeof(*body));
@@ -344,11 +344,11 @@ int wsm_set_edca_queue_params(struct wfx_dev *wdev, const WsmHiEdcaQueueParamsRe
 	return ret;
 }
 
-int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg, int Id)
+int wsm_set_pm(struct wfx_dev *wdev, const struct hif_req_set_pm_mode *arg, int Id)
 {
 	int ret;
-	struct wmsg *hdr;
-	WsmHiSetPmModeReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	struct hif_msg *hdr;
+	struct hif_req_set_pm_mode *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	memcpy(body, arg, sizeof(*body));
 	wfx_fill_header(hdr, Id, WSM_HI_SET_PM_MODE_REQ_ID, sizeof(*body));
@@ -357,11 +357,11 @@ int wsm_set_pm(struct wfx_dev *wdev, const WsmHiSetPmModeReqBody_t *arg, int Id)
 	return ret;
 }
 
-int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg, int Id)
+int wsm_start(struct wfx_dev *wdev, const struct hif_req_start *arg, int Id)
 {
 	int ret;
-	struct wmsg *hdr;
-	WsmHiStartReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	struct hif_msg *hdr;
+	struct hif_req_start *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	memcpy(body, arg, sizeof(*body));
 	cpu_to_le16s(&body->channel_number);
@@ -376,8 +376,8 @@ int wsm_start(struct wfx_dev *wdev, const WsmHiStartReqBody_t *arg, int Id)
 int wsm_beacon_transmit(struct wfx_dev *wdev, bool enable_beaconing, int Id)
 {
 	int ret;
-	struct wmsg *hdr;
-	WsmHiBeaconTransmitReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	struct hif_msg *hdr;
+	struct hif_req_beacon_transmit *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	body->enable_beaconing = enable_beaconing ? 1 : 0;
 	wfx_fill_header(hdr, Id, WSM_HI_BEACON_TRANSMIT_REQ_ID, sizeof(*body));
@@ -389,12 +389,12 @@ int wsm_beacon_transmit(struct wfx_dev *wdev, bool enable_beaconing, int Id)
 int wsm_map_link(struct wfx_dev *wdev, u8 *mac_addr, int flags, int sta_id, int Id)
 {
 	int ret;
-	struct wmsg *hdr;
-	WsmHiMapLinkReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	struct hif_msg *hdr;
+	struct hif_req_map_link *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	if (mac_addr)
 		ether_addr_copy(body->mac_addr, mac_addr);
-	body->map_link_flags = *(WsmHiMapLinkFlags_t *) &flags;
+	body->map_link_flags = *(struct hif_map_link_flags *) &flags;
 	body->peer_sta_id = sta_id;
 	wfx_fill_header(hdr, Id, WSM_HI_MAP_LINK_REQ_ID, sizeof(*body));
 	ret = wfx_cmd_send(wdev, hdr, NULL, 0, false);
@@ -402,15 +402,15 @@ int wsm_map_link(struct wfx_dev *wdev, u8 *mac_addr, int flags, int sta_id, int 
 	return ret;
 }
 
-int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame,
+int wsm_update_ie(struct wfx_dev *wdev, const struct hif_ie_flags *target_frame,
 		  const u8 *ies, size_t ies_len, int Id)
 {
 	int ret;
-	struct wmsg *hdr;
-	int buf_len = sizeof(WsmHiUpdateIeReqBody_t) + ies_len;
-	WsmHiUpdateIeReqBody_t *body = wfx_alloc_wsm(buf_len, &hdr);
+	struct hif_msg *hdr;
+	int buf_len = sizeof(struct hif_req_update_ie) + ies_len;
+	struct hif_req_update_ie *body = wfx_alloc_wsm(buf_len, &hdr);
 
-	memcpy(&body->ie_flags, target_frame, sizeof(WsmHiIeFlags_t));
+	memcpy(&body->ie_flags, target_frame, sizeof(struct hif_ie_flags));
 	body->num_i_es = cpu_to_le16(1);
 	memcpy(body->ie, ies, ies_len);
 	wfx_fill_header(hdr, Id, WSM_HI_UPDATE_IE_REQ_ID, buf_len);
@@ -422,8 +422,8 @@ int wsm_update_ie(struct wfx_dev *wdev, const WsmHiIeFlags_t *target_frame,
 int wsm_send_pub_keys(struct wfx_dev *wdev, const uint8_t *pubkey, const uint8_t *pubkey_hmac)
 {
 	int ret;
-	struct wmsg *hdr;
-	HiSlExchangePubKeysReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	struct hif_msg *hdr;
+	struct hif_req_sl_exchange_pub_keys *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	body->algorithm = HI_SL_CURVE25519;
 	memcpy(body->host_pub_key, pubkey, sizeof(body->host_pub_key));
@@ -440,8 +440,8 @@ int wsm_send_pub_keys(struct wfx_dev *wdev, const uint8_t *pubkey, const uint8_t
 int wsm_sl_config(struct wfx_dev *wdev, const unsigned long *bitmap)
 {
 	int ret;
-	struct wmsg *hdr;
-	HiSlConfigureReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	struct hif_msg *hdr;
+	struct hif_req_sl_configure *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	memcpy(body->encr_bmp, bitmap, sizeof(body->encr_bmp));
 	wfx_fill_header(hdr, -1, HI_SL_CONFIGURE_REQ_ID, sizeof(*body));
@@ -453,8 +453,8 @@ int wsm_sl_config(struct wfx_dev *wdev, const unsigned long *bitmap)
 int wsm_set_mac_key(struct wfx_dev *wdev, const uint8_t *slk_key, int destination)
 {
 	int ret;
-	struct wmsg *hdr;
-	HiSetSlMacKeyReqBody_t *body = wfx_alloc_wsm(sizeof(*body), &hdr);
+	struct hif_msg *hdr;
+	struct hif_req_set_sl_mac_key *body = wfx_alloc_wsm(sizeof(*body), &hdr);
 
 	memcpy(body->key_value, slk_key, sizeof(body->key_value));
 	body->otp_or_ram = destination;

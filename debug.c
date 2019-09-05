@@ -326,7 +326,7 @@ static int wfx_counters_show(struct seq_file *seq, void *v)
 {
 	int ret;
 	struct wfx_dev *wdev = seq->private;
-	WsmHiMibExtendedCountTable_t counters;
+	struct hif_mib_extended_count_table counters;
 
 	ret = wsm_get_counters_table(wdev, &counters, 0);
 	if (ret < 0)
@@ -398,7 +398,7 @@ static const char *channel_names[] = {
 static int wfx_rx_stats_show(struct seq_file *seq, void *v)
 {
 	struct wfx_dev *wdev = seq->private;
-	HiRxStats_t *st = &wdev->rx_stats;
+	struct hif_rx_stats *st = &wdev->rx_stats;
 	int i;
 
 	mutex_lock(&wdev->rx_stats_lock);
@@ -516,13 +516,13 @@ static ssize_t wfx_send_hif_msg_write(struct file *file, const char __user *user
 {
 	struct dbgfs_hif_msg *context = file->private_data;
 	struct wfx_dev *wdev = context->wdev;
-	struct wmsg *request;
+	struct hif_msg *request;
 
 	if (completion_done(&context->complete)) {
 		dev_dbg(wdev->dev, "read previous result before start a new one\n");
 		return -EBUSY;
 	}
-	if (count < sizeof(struct wmsg))
+	if (count < sizeof(struct hif_msg))
 		return -EINVAL;
 
 	// wfx_cmd_send() chekc that reply buffer is wide enough, but do not

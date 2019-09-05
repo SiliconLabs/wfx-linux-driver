@@ -222,9 +222,9 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 {
 	int i;
 	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
-	WsmHiMibSetTxRateRetryPolicy_t *arg =
+	struct hif_mib_set_tx_rate_retry_policy *arg =
 		kzalloc(struct_size(arg, tx_rate_retry_policy, WSM_MIB_NUM_TX_RATE_RETRY_POLICIES), GFP_KERNEL);
-	WsmHiMibTxRateRetryPolicy_t *dst;
+	struct hif_mib_tx_rate_retry_policy *dst;
 
 	spin_lock_bh(&cache->lock);
 	/* Upload only modified entries. */
@@ -536,10 +536,10 @@ static uint8_t wfx_tx_get_rate_id(struct wfx_vif *wvif, struct ieee80211_tx_info
 	return rate_id;
 }
 
-static WsmHiHtTxParameters_t wfx_tx_get_tx_parms(struct wfx_dev *wdev, struct ieee80211_tx_info *tx_info)
+static struct hif_ht_tx_parameters wfx_tx_get_tx_parms(struct wfx_dev *wdev, struct ieee80211_tx_info *tx_info)
 {
 	struct ieee80211_tx_rate *rate = &tx_info->driver_rates[0];
-	WsmHiHtTxParameters_t ret = { };
+	struct hif_ht_tx_parameters ret = { };
 
 	if (!(rate->flags & IEEE80211_TX_RC_MCS))
 		ret.frame_format = WSM_FRAME_FORMAT_NON_HT;
@@ -579,15 +579,15 @@ static int wfx_tx_get_icv_len(struct ieee80211_key_conf *hw_key)
 
 static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct sk_buff *skb)
 {
-	struct wmsg *wmsg;
-	WsmHiTxReqBody_t *wsm;
+	struct hif_msg *hif_msg;
+	struct hif_req_tx *wsm;
 	struct wfx_tx_priv *tx_priv;
 	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
 	struct ieee80211_key_conf *hw_key = tx_info->control.hw_key;
 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
 	int queue_id = tx_info->hw_queue;
 	size_t offset = (size_t) skb->data & 3;
-	int wmsg_len = sizeof(struct wmsg) + sizeof(WsmHiTxReqBody_t) + offset;
+	int wmsg_len = sizeof(struct hif_msg) + sizeof(struct hif_req_tx) + offset;
 
 	WARN(queue_id >= IEEE80211_NUM_ACS, "unsupported queue_id");
 	wfx_tx_fixup_rates(tx_info->driver_rates);
@@ -606,16 +606,16 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 	if (sta && (sta->uapsd_queues & BIT(queue_id)))
 		tx_priv->link_id = WFX_LINK_ID_UAPSD;
 
-	// Fill wmsg
+	// Fill hif_msg
 	WARN(skb_headroom(skb) < wmsg_len, "not enough space in skb");
 	WARN(offset & 1, "attempt to transmit an unaligned frame");
 	skb_put(skb, wfx_tx_get_icv_len(tx_priv->hw_key));
 	skb_push(skb, wmsg_len);
 	memset(skb->data, 0, wmsg_len);
-	wmsg = (struct wmsg *) skb->data;
-	wmsg->len = cpu_to_le16(skb->len);
-	wmsg->id = cpu_to_le16(WSM_HI_TX_REQ_ID);
-	wmsg->interface = wvif->Id;
+	hif_msg = (struct hif_msg *) skb->data;
+	hif_msg->len = cpu_to_le16(skb->len);
+	hif_msg->id = cpu_to_le16(WSM_HI_TX_REQ_ID);
+	hif_msg->interface = wvif->Id;
 	if (skb->len > wvif->wdev->wsm_caps.size_inp_ch_buf) {
 		dev_warn(wvif->wdev->dev, "requested frame size (%d) is larger than maximum supported (%d)\n",
 			 skb->len, wvif->wdev->wsm_caps.size_inp_ch_buf);
@@ -624,7 +624,7 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 	}
 
 	// Fill tx request
-	wsm = (WsmHiTxReqBody_t *) wmsg->body;
+	wsm = (struct hif_req_tx *) hif_msg->body;
 	wsm->packet_id = queue_id << 16 | IEEE80211_SEQ_TO_SN(le16_to_cpu(hdr->seq_ctrl));
 	wsm->data_flags.fc_offset = offset;
 	wsm->queue_id.peer_sta_id = tx_priv->raw_link_id;
@@ -673,7 +673,7 @@ drop:
 	ieee80211_tx_status(wdev->hw, skb);
 }
 
-void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
+void wfx_tx_confirm_cb(struct wfx_vif *wvif, struct hif_cnf_tx *arg)
 {
 	int i;
 	int tx_count;
@@ -733,13 +733,13 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 		else
 			tx_info->flags |= IEEE80211_TX_STAT_ACK;
 	} else if (arg->status == WSM_REQUEUE) {
-		/* "Requeue" means "implicit suspend" */
-		WsmHiSuspendResumeTxIndBody_t suspend = {
+		/* "REQUEUE" means "implicit suspend" */
+		struct hif_ind_suspend_resume_tx suspend = {
 			.suspend_resume_flags.resume = 0,
 			.suspend_resume_flags.bc_mc_only = 1,
 		};
 
-		WARN(!arg->tx_result_flags.requeue, "Incoherent status and ResultFlags");
+		WARN(!arg->tx_result_flags.requeue, "incoherent status and result_flags");
 		wfx_suspend_resume(wvif, &suspend);
 		tx_info->flags |= IEEE80211_TX_STAT_TX_FILTERED;
 	} else {
@@ -750,7 +750,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, WsmHiTxCnfBody_t *arg)
 }
 
 static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
-				   WsmHiTxReqBody_t *wsm)
+				   struct hif_req_tx *wsm)
 {
 	struct ieee80211_sta *sta;
 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
@@ -778,10 +778,10 @@ static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
 
 void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb)
 {
-	struct wmsg *hdr = (struct wmsg *) skb->data;
-	WsmHiTxReqBody_t *wsm = (WsmHiTxReqBody_t *) hdr->body;
+	struct hif_msg *hdr = (struct hif_msg *) skb->data;
+	struct hif_req_tx *wsm = (struct hif_req_tx *) hdr->body;
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
-	unsigned int offset = sizeof(WsmHiTxReqBody_t) + sizeof(struct wmsg) + wsm->data_flags.fc_offset;
+	unsigned int offset = sizeof(struct hif_req_tx) + sizeof(struct hif_msg) + wsm->data_flags.fc_offset;
 
 	WARN_ON(!wvif);
 	skb_pull(skb, offset);
