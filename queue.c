@@ -66,7 +66,7 @@ void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif)
 			spin_lock_bh(&queue->queue.lock);
 			skb_queue_walk(&queue->queue, item) {
 				hdr = (struct hif_msg *) item->data;
-				if (hdr->interface == wvif->Id)
+				if (hdr->interface == wvif->id)
 					done = false;
 			}
 			spin_unlock_bh(&queue->queue.lock);

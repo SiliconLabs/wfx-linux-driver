@@ -147,7 +147,7 @@ static int wfx_add_key(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct i
 	if (idx < 0)
 		return -EINVAL;
 	k = &wdev->keys[idx];
-	k->int_id = wvif->Id;
+	k->int_id = wvif->id;
 	if (key->cipher == WLAN_CIPHER_SUITE_WEP40 || key->cipher ==  WLAN_CIPHER_SUITE_WEP104) {
 		if (pairwise)
 			k->type = fill_wep_pair(&k->key.wep_pairwise_key, key, sta->addr);
@@ -231,7 +231,7 @@ int wfx_upload_keys(struct wfx_vif *wvif)
 	for (i = 0; i < WSM_KEY_MAX_INDEX; i++) {
 		if (wdev->key_map & BIT(i)) {
 			key = &wdev->keys[i];
-			if (key->int_id == wvif->Id)
+			if (key->int_id == wvif->id)
 				wsm_add_key(wdev, key);
 		}
 	}
@@ -243,7 +243,7 @@ void wfx_wep_key_work(struct work_struct *work)
 	struct wfx_vif *wvif = container_of(work, struct wfx_vif, wep_key_work);
 
 	wsm_tx_flush(wvif->wdev);
-	wsm_wep_default_key_id(wvif->wdev, wvif->wep_default_key_id, wvif->Id);
+	wsm_wep_default_key_id(wvif->wdev, wvif->wep_default_key_id, wvif->id);
 	wfx_pending_requeue(wvif->wdev, wvif->wep_pending_skb);
 	wvif->wep_pending_skb = NULL;
 	wsm_tx_unlock(wvif->wdev);

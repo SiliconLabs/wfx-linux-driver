@@ -246,7 +246,7 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 		}
 	}
 	spin_unlock_bh(&cache->lock);
-	wsm_set_tx_rate_retry_policy(wvif->wdev, arg, wvif->Id);
+	wsm_set_tx_rate_retry_policy(wvif->wdev, arg, wvif->id);
 	kfree(arg);
 	return 0;
 }
@@ -327,7 +327,7 @@ static int wfx_map_link(struct wfx_vif *wvif, struct wfx_link_entry *link_entry,
 {
 	int ret;
 
-	ret = wsm_map_link(wvif->wdev, link_entry->mac, 0, sta_id, wvif->Id);
+	ret = wsm_map_link(wvif->wdev, link_entry->mac, 0, sta_id, wvif->id);
 
 	if (ret == 0)
 		/* Save the MAC address currently associated with the peer
@@ -614,7 +614,7 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 	hif_msg = (struct hif_msg *) skb->data;
 	hif_msg->len = cpu_to_le16(skb->len);
 	hif_msg->id = cpu_to_le16(WSM_HI_TX_REQ_ID);
-	hif_msg->interface = wvif->Id;
+	hif_msg->interface = wvif->id;
 	if (skb->len > wvif->wdev->wsm_caps.size_inp_ch_buf) {
 		dev_warn(wvif->wdev->dev, "requested frame size (%d) is larger than maximum supported (%d)\n",
 			 skb->len, wvif->wdev->wsm_caps.size_inp_ch_buf);
