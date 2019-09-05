@@ -75,12 +75,12 @@ enum wfx_link_status {
 struct hwbus_ops;
 
 struct wfx_link_entry {
-	unsigned long			timestamp;
-	enum wfx_link_status		status;
-	u8			mac[ETH_ALEN];          /* peer MAC address in use */
-	u8			old_mac[ETH_ALEN];      /* Previous peerMAC address. To use in unmap message */
-	u8				buffered[WFX_MAX_TID];
-	struct sk_buff_head		rx_queue;
+	unsigned long		timestamp;
+	enum wfx_link_status	status;
+	uint8_t			mac[ETH_ALEN];
+	uint8_t			old_mac[ETH_ALEN];
+	uint8_t			buffered[WFX_MAX_TID];
+	struct sk_buff_head	rx_queue;
 };
 
 struct wfx_dev {

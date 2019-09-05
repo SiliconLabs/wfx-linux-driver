@@ -152,7 +152,7 @@ void wfx_stop(struct ieee80211_hw *hw)
 	WARN(atomic_read(&wdev->tx_lock), "tx_lock is locked");
 }
 
-static int wfx_set_uapsd_param(struct wfx_vif		*wvif,
+static int wfx_set_uapsd_param(struct wfx_vif *wvif,
 			   const struct wsm_edca_params *arg)
 {
 	int ret;
@@ -503,8 +503,8 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 }
 
 static int wfx_set_multicast_filter(struct wfx_dev *wdev,
-					   struct wfx_grp_addr_table *fp,
-					   int Id)
+				    struct wfx_grp_addr_table *fp,
+				    int Id)
 {
 	int i, ret;
 	struct hif_mib_config_data_filter FilterConfig = { };
@@ -803,8 +803,7 @@ void wfx_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		wsm_tx_unlock(wdev);
 }
 
-/* ******************************************************************** */
-/* WSM callbacks							*/
+/* WSM callbacks */
 
 void wfx_event_handler_work(struct work_struct *work)
 {
@@ -1564,7 +1563,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 
 	if (changed & (BSS_CHANGED_ASSOC | BSS_CHANGED_CQM)) {
 		struct hif_mib_rcpi_rssi_threshold threshold = {
-			.rolling_average_count	= 8,
+			.rolling_average_count = 8,
 		};
 
 		wvif->cqm_rssi_thold = info->cqm_rssi_thold;

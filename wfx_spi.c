@@ -29,8 +29,8 @@ MODULE_PARM_DESC(gpio_reset, "gpio number for reset. -1 for none.");
 #define SET_READ 0x8000         /* usage: or operation */
 
 struct wfx_spi_priv {
-	struct spi_device	*func;
-	struct wfx_dev		*core;
+	struct spi_device *func;
+	struct wfx_dev *core;
 	struct gpio_desc *gpio_reset;
 	struct work_struct request_rx;
 	bool need_swab;

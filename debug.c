@@ -202,8 +202,9 @@ static const struct file_operations wfx_send_pds_fops = {
 	.write = wfx_send_pds_write,
 };
 
-static ssize_t wfx_burn_slk_key_write(struct file *file, const char __user *user_buf,
-			     size_t count, loff_t *ppos)
+static ssize_t wfx_burn_slk_key_write(struct file *file,
+				      const char __user *user_buf,
+				      size_t count, loff_t *ppos)
 {
 	struct wfx_dev *wdev = file->private_data;
 	char bin_buf[API_KEY_VALUE_SIZE + 4];

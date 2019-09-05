@@ -48,9 +48,9 @@ module_param(slk_key, charp, 0600);
 MODULE_PARM_DESC(slk_key, "Secret key for secure link (expect 64 hexdecimal digits)");
 
 #define RATETAB_ENT(_rate, _rateid, _flags) { \
-	.bitrate	= (_rate),   \
-	.hw_value	= (_rateid), \
-	.flags		= (_flags),  \
+	.bitrate  = (_rate),   \
+	.hw_value = (_rateid), \
+	.flags    = (_flags),  \
 }
 
 static struct ieee80211_rate wfx_rates[] = {

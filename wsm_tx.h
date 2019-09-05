@@ -17,8 +17,8 @@ struct wfx_vif;
 
 struct wsm_scan {
 	struct hif_req_start_scan scan_req;
-	struct hif_ssid_def		*ssids;
-	u8			*ch;
+	struct hif_ssid_def *ssids;
+	uint8_t *ch;
 };
 
 struct wsm_cmd {
@@ -27,7 +27,7 @@ struct wsm_cmd {
 	struct completion ready;
 	struct completion done;
 	bool              async;
-	struct hif_msg		*buf_send;
+	struct hif_msg    *buf_send;
 	void              *buf_recv;
 	size_t            len_recv;
 	int               ret;

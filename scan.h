@@ -25,7 +25,7 @@ struct wfx_scan {
 	struct ieee80211_channel **begin;
 	struct ieee80211_channel **curr;
 	struct ieee80211_channel **end;
-	struct hif_ssid_def		ssids[WSM_API_MAX_NB_SSIDS];
+	struct hif_ssid_def ssids[WSM_API_MAX_NB_SSIDS];
 	int output_power;
 	int n_ssids;
 	int status;

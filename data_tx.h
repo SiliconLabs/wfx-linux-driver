@@ -19,16 +19,16 @@ struct wfx_vif;
 struct wfx_tx_priv {
 	ktime_t xmit_timestamp;
 	struct ieee80211_key_conf *hw_key;
-	u8 link_id;
-	u8 raw_link_id;
-	u8 tid;
+	uint8_t link_id;
+	uint8_t raw_link_id;
+	uint8_t tid;
 } __packed;
 
 struct tx_policy {
 	struct list_head link;
-	u8  rates[12];
-	u8  usage_count;
-	u8  uploaded;
+	uint8_t rates[12];
+	uint8_t usage_count;
+	uint8_t uploaded;
 };
 
 struct tx_policy_cache {
@@ -40,9 +40,9 @@ struct tx_policy_cache {
 };
 
 struct wfx_ht_info {
-	struct ieee80211_sta_ht_cap	ht_cap;
-	enum nl80211_channel_type	channel_type;
-	u16				operation_mode;
+	struct ieee80211_sta_ht_cap ht_cap;
+	enum nl80211_channel_type channel_type;
+	uint16_t operation_mode;
 };
 
 void tx_policy_init(struct wfx_vif *wvif);
