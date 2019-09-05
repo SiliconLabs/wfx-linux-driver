@@ -370,7 +370,7 @@ typedef struct HiPreventRollbackCnfBody_s {
 	uint32_t    Status;
 } __packed HiPreventRollbackCnfBody_t;
 
-typedef enum HI_PTA_MODES_E {
+typedef enum HI_PTA_MODE_E {
 	PTA_1W_WLAN_MASTER = 0,
 	PTA_1W_COEX_MASTER = 1,
 	PTA_2W             = 2,
@@ -378,17 +378,17 @@ typedef enum HI_PTA_MODES_E {
 	PTA_4W             = 4
 } HiPtaModeT;
 
-typedef enum HI_SIGNAL_LEVELS_E {
+typedef enum HI_SIGNAL_LEVEL_E {
 	SIGNAL_LOW  = 0,
 	SIGNAL_HIGH = 1
 } HiSignalLevelT;
 
-typedef enum HI_COEX_TYPES_E {
+typedef enum HI_COEX_TYPE_E {
 	COEX_TYPE_GENERIC = 0,
 	COEX_TYPE_BLE     = 1
 } HiCoexTypeT;
 
-typedef enum HI_GRANT_STATES_E {
+typedef enum HI_GRANT_STATE_E {
 	NO_GRANT = 0,
 	GRANT    = 1
 } HiGrantStateT;
@@ -433,7 +433,7 @@ typedef struct HiPtaPriorityCnfBody_s {
 	uint32_t Status;
 } __packed HiPtaPriorityCnfBody_t;
 
-typedef enum HI_PTA_STATES_E {
+typedef enum HI_PTA_STATE_E {
 	PTA_OFF = 0,
 	PTA_ON  = 1
 } HiPtaStateT;
