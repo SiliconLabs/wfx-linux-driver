@@ -10,6 +10,7 @@
 #include <linux/etherdevice.h>
 
 #include "wsm_rx.h"
+#include "wsm_mib.h"
 #include "wfx.h"
 #include "bh.h"
 #include "data_rx.h"

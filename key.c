@@ -8,6 +8,7 @@
 #include <net/mac80211.h>
 
 #include "wfx.h"
+#include "wsm_mib.h"
 #include "wsm_rx.h"
 #include "key.h"
 

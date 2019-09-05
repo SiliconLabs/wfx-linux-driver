@@ -28,6 +28,7 @@ static const struct file_operations __name ## _fops = {			\
 
 #include "debug.h"
 #include "wfx.h"
+#include "wsm_mib.h"
 #include "wsm_tx.h"
 #include "sta.h"
 

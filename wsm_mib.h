@@ -11,13 +11,9 @@
 
 #include <linux/etherdevice.h>
 
+#include "wfx.h"
 #include "wsm_tx.h"
 #include "api_wsm_cmd.h"
-
-#if (KERNEL_VERSION(4, 17, 0) > LINUX_VERSION_CODE)
-#define struct_size(p, member, n) \
-	(n * sizeof(*(p)->member) + __must_be_array((p)->member) + sizeof(*(p)))
-#endif
 
 static inline int wsm_set_output_power(struct wfx_dev *wdev,
 				       int power_level,
