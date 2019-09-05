@@ -10,7 +10,7 @@
 #ifndef WFX_WSM_TX_H
 #define WFX_WSM_TX_H
 
-#include "wsm_cmd_api.h"
+#include "api_wsm_cmd.h"
 
 struct wfx_dev;
 struct wfx_vif;

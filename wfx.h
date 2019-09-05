@@ -22,7 +22,7 @@
 #include "scan.h"
 #include "secure_link.h"
 #include "sta.h"
-#include "wsm_cmd_api.h"
+#include "api_wsm_cmd.h"
 #include "wsm_mib.h"
 #include "wsm_tx.h"
 

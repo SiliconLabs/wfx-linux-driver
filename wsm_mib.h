@@ -12,7 +12,7 @@
 #include <linux/etherdevice.h>
 
 #include "wsm_tx.h"
-#include "wsm_cmd_api.h"
+#include "api_wsm_cmd.h"
 
 #if (KERNEL_VERSION(4, 17, 0) > LINUX_VERSION_CODE)
 #define struct_size(p, member, n) \

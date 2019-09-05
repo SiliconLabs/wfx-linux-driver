@@ -5,7 +5,7 @@
 #ifndef SECURE_LINK_H
 #define SECURE_LINK_H
 
-#include "general_api.h"
+#include "api_general.h"
 
 struct wfx_dev;
 

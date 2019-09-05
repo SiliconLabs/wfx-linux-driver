@@ -8,7 +8,7 @@
 #ifndef WFX_DATA_RX_H
 #define WFX_DATA_RX_H
 
-#include "wsm_cmd_api.h"
+#include "api_wsm_cmd.h"
 
 struct wfx_vif;
 struct sk_buff;

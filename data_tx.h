@@ -10,7 +10,7 @@
 
 #include <linux/list.h>
 
-#include "wsm_cmd_api.h"
+#include "api_wsm_cmd.h"
 
 struct wfx_tx_priv;
 struct wfx_dev;

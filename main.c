@@ -21,7 +21,7 @@
 #include <linux/firmware.h>
 
 #include "wfx_version.h"
-#include "wsm_cmd_api.h"
+#include "api_wsm_cmd.h"
 #include "wfx.h"
 #include "fwio.h"
 #include "hwio.h"
