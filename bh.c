@@ -93,7 +93,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 		goto err;
 	}
 
-	if (!(wsm->id & WMSG_ID_IS_INDICATION)) {
+	if (!(wsm->id & HIF_ID_IS_INDICATION)) {
 		(*is_cnf)++;
 		if (wsm->id == WSM_HI_MULTI_TRANSMIT_CNF_ID)
 			release_count = le32_to_cpu(((struct hif_cnf_multi_transmit *) wsm->body)->num_tx_confs);
@@ -110,7 +110,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 		if (wsm->seqnum != wdev->hif.rx_seqnum)
 			dev_warn(wdev->dev, "wrong message sequence: %d != %d\n",
 				 wsm->seqnum, wdev->hif.rx_seqnum);
-		wdev->hif.rx_seqnum = (wsm->seqnum + 1) % (WMSG_COUNTER_MAX + 1);
+		wdev->hif.rx_seqnum = (wsm->seqnum + 1) % (HIF_COUNTER_MAX + 1);
 	}
 
 	skb_put(skb, wsm->len);
@@ -168,7 +168,7 @@ static void tx_helper(struct wfx_dev *wdev, struct hif_msg *wsm)
 	BUG_ON(len < sizeof(*wsm));
 
 	wsm->seqnum = wdev->hif.tx_seqnum;
-	wdev->hif.tx_seqnum = (wdev->hif.tx_seqnum + 1) % (WMSG_COUNTER_MAX + 1);
+	wdev->hif.tx_seqnum = (wdev->hif.tx_seqnum + 1) % (HIF_COUNTER_MAX + 1);
 
 	if (wfx_is_secure_command(wdev, wsm->id)) {
 		len = round_up(len - sizeof(wsm->len), 16) + sizeof(wsm->len)
