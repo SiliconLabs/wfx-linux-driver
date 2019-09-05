@@ -96,7 +96,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	if (!(wsm->id & WMSG_ID_IS_INDICATION)) {
 		(*is_cnf)++;
 		if (wsm->id == WSM_HI_MULTI_TRANSMIT_CNF_ID)
-			release_count = le32_to_cpu(((WsmHiMultiTransmitCnfBody_t *) wsm->body)->NumTxConfs);
+			release_count = le32_to_cpu(((WsmHiMultiTransmitCnfBody_t *) wsm->body)->num_tx_confs);
 		else
 			release_count = 1;
 		WARN(wdev->hif.tx_buffers_used < release_count, "corrupted buffer counter");
@@ -186,9 +186,9 @@ static void tx_helper(struct wfx_dev *wdev, struct wmsg *wsm)
 	} else {
 		data = wsm;
 	}
-	WARN(len > wdev->wsm_caps.SizeInpChBuf,
+	WARN(len > wdev->wsm_caps.size_inp_ch_buf,
 	     "%s: request exceed WFx capability: %zu > %d", __func__,
-	     len, wdev->wsm_caps.SizeInpChBuf);
+	     len, wdev->wsm_caps.size_inp_ch_buf);
 	len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, len);
 	ret = wfx_data_write(wdev, data, len);
 	if (ret)
@@ -208,9 +208,9 @@ static int bh_work_tx(struct wfx_dev *wdev, int max_msg)
 
 	for (i = 0; i < max_msg; i++) {
 		wsm = NULL;
-		if (wdev->hif.tx_buffers_used < wdev->wsm_caps.NumInpChBufs) {
+		if (wdev->hif.tx_buffers_used < wdev->wsm_caps.num_inp_ch_bufs) {
 			if (try_wait_for_completion(&wdev->wsm_cmd.ready)) {
-				WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
+				WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "data locking error");
 				wsm = wdev->wsm_cmd.buf_send;
 			} else {
 				wsm = wsm_get_tx(wdev);

@@ -350,12 +350,12 @@ TRACE_EVENT(tx_stats,
 		struct ieee80211_tx_rate *rates = tx_info->driver_rates;
 		int i;
 
-		__entry->pkt_id = tx_cnf->PacketId;
-		__entry->delay_media = tx_cnf->MediaDelay;
-		__entry->delay_queue = tx_cnf->TxQueueDelay;
+		__entry->pkt_id = tx_cnf->packet_id;
+		__entry->delay_media = tx_cnf->media_delay;
+		__entry->delay_queue = tx_cnf->tx_queue_delay;
 		__entry->delay_fw = delay;
-		__entry->ack_failures = tx_cnf->AckFailures;
-		if (!tx_cnf->Status || __entry->ack_failures)
+		__entry->ack_failures = tx_cnf->ack_failures;
+		if (!tx_cnf->status || __entry->ack_failures)
 			__entry->ack_failures += 1;
 
 		for (i = 0; i < IEEE80211_NUM_ACS; i++) {
@@ -376,9 +376,9 @@ TRACE_EVENT(tx_stats,
 			__entry->flags |= 0x08;
 		if (tx_info->flags & IEEE80211_TX_CTL_SEND_AFTER_DTIM)
 			__entry->flags |= 0x10;
-		if (tx_cnf->Status)
+		if (tx_cnf->status)
 			__entry->flags |= 0x20;
-		if (tx_cnf->Status == WSM_REQUEUE)
+		if (tx_cnf->status == WSM_REQUEUE)
 			__entry->flags |= 0x40;
 	),
 	TP_printk("packet ID: %08x, rate policy: %s %d|%d %d|%d %d|%d %d|%d -> %d attempt, Delays media/queue/total: %4dus/%4dus/%4dus",

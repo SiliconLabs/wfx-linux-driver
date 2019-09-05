@@ -248,7 +248,7 @@ struct sk_buff *wfx_pending_get(struct wfx_dev *wdev, u32 packet_id)
 	spin_lock_bh(&stats->pending.lock);
 	skb_queue_walk(&stats->pending, skb) {
 		wsm = wfx_skb_txreq(skb);
-		if (wsm->PacketId == packet_id) {
+		if (wsm->packet_id == packet_id) {
 			spin_unlock_bh(&stats->pending.lock);
 			return skb;
 		}
@@ -273,7 +273,7 @@ void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 		wsm = wfx_skb_txreq(skb);
 		if (ktime_after(now, ktime_add_ms(tx_priv->xmit_timestamp, limit_ms)))
 			dev_info(wdev->dev, "   id %08x sent %lldms ago",
-					wsm->PacketId,
+					wsm->packet_id,
 					ktime_ms_delta(now, tx_priv->xmit_timestamp));
 	}
 	spin_unlock_bh(&stats->pending.lock);

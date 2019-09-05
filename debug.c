@@ -167,20 +167,20 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 	// FIXME: wfx_status_show should be local to one interface
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, 0);
 	struct wfx_debug_priv *d = wdev->debug;
-	u32 *p_Capa = (u32 *)&wdev->wsm_caps.Capabilities;
+	u32 *p_Capa = (u32 *)&wdev->wsm_caps.capabilities;
 
 	WARN_ON(!wvif);
 	seq_puts(seq,
-		 "Status of Linux Wireless network device drivers for Siliconlabs WFx unit\n");
+		 "status of Linux Wireless network device drivers for Siliconlabs WFx unit\n");
 	seq_printf(seq, "Firmware:   %s %d %d.%d\n",
-		   get_fw_type(wdev->wsm_caps.FirmwareType),
-		   wdev->wsm_caps.FirmwareMajor,
-		   wdev->wsm_caps.FirmwareMinor,
-		   wdev->wsm_caps.FirmwareBuild);
+		   get_fw_type(wdev->wsm_caps.firmware_type),
+		   wdev->wsm_caps.firmware_major,
+		   wdev->wsm_caps.firmware_minor,
+		   wdev->wsm_caps.firmware_build);
 	seq_printf(seq, "FW caps:    0x%.8X\n",
 		   *p_Capa);
 	seq_printf(seq, "FW label:  '%s'\n",
-		   wdev->wsm_caps.FirmwareLabel);
+		   wdev->wsm_caps.firmware_label);
 	seq_printf(seq, "Keyset:     0x%02X\n",
 		   wdev->keyset);
 	seq_printf(seq, "Power mode: %d\n",
@@ -211,10 +211,10 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 
 	for (i = 0; i < IEEE80211_NUM_ACS; ++i)
 		seq_printf(seq, "EDCA(%d):    %d, %d, %d, %d\n", i,
-			   wvif->edca.params[i].CwMin,
-			   wvif->edca.params[i].CwMax,
-			   wvif->edca.params[i].AIFSN,
-			   wvif->edca.params[i].TxOpLimit);
+			   wvif->edca.params[i].cw_min,
+			   wvif->edca.params[i].cw_max,
+			   wvif->edca.params[i].aifsn,
+			   wvif->edca.params[i].tx_op_limit);
 
 	if (wvif->state == WFX_STATE_STA) {
 		seq_printf(seq, "Preamble:   %s\n",
@@ -222,14 +222,14 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 		seq_printf(seq, "AMPDU spcn: %d\n",
 			   wfx_ht_ampdu_density(&wvif->ht_info));
 		seq_printf(seq, "Bss lost:   %d beacons\n",
-			   wvif->bss_params.BssFlags.LostCountOnly);
+			   wvif->bss_params.bss_flags.lost_count_only);
 		seq_printf(seq, "AID:        %d\n",
-			   wvif->bss_params.AID);
+			   wvif->bss_params.aid);
 		seq_printf(seq, "Rates:      0x%.8X\n",
-			   wvif->bss_params.OperationalRateSet);
+			   wvif->bss_params.operational_rate_set);
 		seq_printf(seq, "Powersave WiFi:  ");
-		if (wvif->powersave_mode.PmMode.EnterPsm)
-			if (wvif->powersave_mode.PmMode.FastPsm)
+		if (wvif->powersave_mode.pm_mode.enter_psm)
+			if (wvif->powersave_mode.pm_mode.fast_psm)
 				seq_puts(seq, "dynamic\n");
 			else
 				seq_puts(seq, "on\n");
@@ -262,8 +262,8 @@ static int wfx_status_show(struct seq_file *seq, void *v)
 
 	seq_puts(seq, "\n");
 	seq_printf(seq, "TX bufs:    %d x %d bytes\n",
-		   wdev->wsm_caps.NumInpChBufs,
-		   wdev->wsm_caps.SizeInpChBuf);
+		   wdev->wsm_caps.num_inp_ch_bufs,
+		   wdev->wsm_caps.size_inp_ch_buf);
 	seq_printf(seq, "Used bufs:  %d\n",
 		   wdev->hif.tx_buffers_used);
 	seq_printf(seq, "Device:     %s\n",
@@ -335,35 +335,35 @@ static int wfx_counters_show(struct seq_file *seq, void *v)
 		return -EIO;
 
 #define PUT_COUNTER(name) \
-	seq_printf(seq, "%24s %d\n", #name ":", le32_to_cpu(counters.Count##name))
+	seq_printf(seq, "%24s %d\n", #name ":", le32_to_cpu(counters.count_##name))
 
-	PUT_COUNTER(TxPackets);
-	PUT_COUNTER(TxMulticastFrames);
-	PUT_COUNTER(TxFramesSuccess);
-	PUT_COUNTER(TxFrameFailures);
-	PUT_COUNTER(TxFramesRetried);
-	PUT_COUNTER(TxFramesMultiRetried);
+	PUT_COUNTER(tx_packets);
+	PUT_COUNTER(tx_multicast_frames);
+	PUT_COUNTER(tx_frames_success);
+	PUT_COUNTER(tx_frame_failures);
+	PUT_COUNTER(tx_frames_retried);
+	PUT_COUNTER(tx_frames_multi_retried);
 
-	PUT_COUNTER(RtsSuccess);
-	PUT_COUNTER(RtsFailures);
-	PUT_COUNTER(AckFailures);
+	PUT_COUNTER(rts_success);
+	PUT_COUNTER(rts_failures);
+	PUT_COUNTER(ack_failures);
 
-	PUT_COUNTER(RxPackets);
-	PUT_COUNTER(RxFramesSuccess);
-	PUT_COUNTER(RxPacketErrors);
-	PUT_COUNTER(PlcpErrors);
-	PUT_COUNTER(FcsErrors);
-	PUT_COUNTER(RxDecryptionFailures);
-	PUT_COUNTER(RxMicFailures);
-	PUT_COUNTER(RxNoKeyFailures);
-	PUT_COUNTER(RxFrameDuplicates);
-	PUT_COUNTER(RxMulticastFrames);
-	PUT_COUNTER(RxCMACICVErrors);
-	PUT_COUNTER(RxCMACReplays);
-	PUT_COUNTER(RxMgmtCCMPReplays);
+	PUT_COUNTER(rx_packets);
+	PUT_COUNTER(rx_frames_success);
+	PUT_COUNTER(rx_packet_errors);
+	PUT_COUNTER(plcp_errors);
+	PUT_COUNTER(fcs_errors);
+	PUT_COUNTER(rx_decryption_failures);
+	PUT_COUNTER(rx_mic_failures);
+	PUT_COUNTER(rx_no_key_failures);
+	PUT_COUNTER(rx_frame_duplicates);
+	PUT_COUNTER(rx_multicast_frames);
+	PUT_COUNTER(rx_cmacicv_errors);
+	PUT_COUNTER(rx_cmac_replays);
+	PUT_COUNTER(rx_mgmt_ccmp_replays);
 
-	PUT_COUNTER(RxBeacon);
-	PUT_COUNTER(MissBeacon);
+	PUT_COUNTER(rx_beacon);
+	PUT_COUNTER(miss_beacon);
 
 #undef PUT_COUNTER
 
@@ -402,20 +402,20 @@ static int wfx_rx_stats_show(struct seq_file *seq, void *v)
 	int i;
 
 	mutex_lock(&wdev->rx_stats_lock);
-	seq_printf(seq, "Timestamp: %dus\n", st->Date);
+	seq_printf(seq, "Timestamp: %dus\n", st->date);
 	seq_printf(seq, "Low power clock: frequency %uHz, external %s\n",
-		st->PwrClkFreq,
-		st->IsExtPwrClk ? "yes" : "no");
+		st->pwr_clk_freq,
+		st->is_ext_pwr_clk ? "yes" : "no");
 	seq_printf(seq, "Num. of frames: %d, PER (x10e4): %d, Throughput: %dKbps/s\n",
-		st->NbRxFrame, st->PerTotal, st->Throughput);
+		st->nb_rx_frame, st->per_total, st->throughput);
 	seq_printf(seq, "       Num. of      PER     RSSI      SNR      CFO\n");
 	seq_printf(seq, "        frames  (x10e4)    (dBm)     (dB)    (kHz)\n");
 	for (i = 0; i < ARRAY_SIZE(channel_names); i++) {
 		if (channel_names[i])
 			seq_printf(seq, "%5s %8d %8d %8d %8d %8d\n",
-				   channel_names[i], st->NbRxByRate[i],
-				   st->Per[i], st->Rssi[i] / 100,
-				   st->Snr[i] / 100, st->Cfo[i]);
+				   channel_names[i], st->nb_rx_by_rate[i],
+				   st->per[i], st->rssi[i] / 100,
+				   st->snr[i] / 100, st->cfo[i]);
 	}
 	mutex_unlock(&wdev->rx_stats_lock);
 
@@ -464,11 +464,11 @@ static ssize_t wfx_burn_slk_key_write(struct file *file, const char __user *user
 	dev_info(wdev->dev, "this driver does not support secure link\n");
 	return -EINVAL;
 #endif
-	if (wdev->wsm_caps.Capabilities.LinkMode == SEC_LINK_ENFORCED) {
+	if (wdev->wsm_caps.capabilities.link_mode == SEC_LINK_ENFORCED) {
 		dev_err(wdev->dev, "key was already burned on this device\n");
 		return -EINVAL;
 	}
-	if (wdev->wsm_caps.Capabilities.LinkMode != SEC_LINK_EVAL) {
+	if (wdev->wsm_caps.capabilities.link_mode != SEC_LINK_EVAL) {
 		dev_err(wdev->dev, "this device does not support secure link\n");
 		return -EINVAL;
 	}

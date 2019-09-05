@@ -20,7 +20,7 @@ static int wfx_alloc_key(struct wfx_dev *wdev)
 		return -1;
 
 	wdev->key_map |= BIT(idx);
-	wdev->keys[idx].EntryIndex = idx;
+	wdev->keys[idx].entry_index = idx;
 	return idx;
 }
 
@@ -33,19 +33,19 @@ static void wfx_free_key(struct wfx_dev *wdev, int idx)
 
 static uint8_t fill_wep_pair(WsmHiWepPairwiseKey_t *msg, struct ieee80211_key_conf *key, u8 *peer_addr)
 {
-	WARN_ON(key->keylen > sizeof(msg->KeyData));
-	msg->KeyLength = key->keylen;
-	memcpy(msg->KeyData, key->key, key->keylen);
-	ether_addr_copy(msg->PeerAddress, peer_addr);
+	WARN_ON(key->keylen > sizeof(msg->key_data));
+	msg->key_length = key->keylen;
+	memcpy(msg->key_data, key->key, key->keylen);
+	ether_addr_copy(msg->peer_address, peer_addr);
 	return WSM_KEY_TYPE_WEP_PAIRWISE;
 }
 
 static uint8_t fill_wep_group(WsmHiWepGroupKey_t *msg, struct ieee80211_key_conf *key)
 {
-	WARN_ON(key->keylen > sizeof(msg->KeyData));
-	msg->KeyId = key->keyidx;
-	msg->KeyLength = key->keylen;
-	memcpy(msg->KeyData, key->key, key->keylen);
+	WARN_ON(key->keylen > sizeof(msg->key_data));
+	msg->key_id = key->keyidx;
+	msg->key_length = key->keylen;
+	memcpy(msg->key_data, key->key, key->keylen);
 	return WSM_KEY_TYPE_WEP_DEFAULT;
 }
 
@@ -53,13 +53,13 @@ static uint8_t fill_tkip_pair(WsmHiTkipPairwiseKey_t *msg, struct ieee80211_key_
 {
 	uint8_t *keybuf = key->key;
 
-	WARN_ON(key->keylen != sizeof(msg->TkipKeyData) + sizeof(msg->TxMicKey) + sizeof(msg->RxMicKey));
-	memcpy(msg->TkipKeyData, keybuf, sizeof(msg->TkipKeyData));
-	keybuf += sizeof(msg->TkipKeyData);
-	memcpy(msg->TxMicKey, keybuf, sizeof(msg->TxMicKey));
-	keybuf += sizeof(msg->TxMicKey);
-	memcpy(msg->RxMicKey, keybuf, sizeof(msg->RxMicKey));
-	ether_addr_copy(msg->PeerAddress, peer_addr);
+	WARN_ON(key->keylen != sizeof(msg->tkip_key_data) + sizeof(msg->tx_mic_key) + sizeof(msg->rx_mic_key));
+	memcpy(msg->tkip_key_data, keybuf, sizeof(msg->tkip_key_data));
+	keybuf += sizeof(msg->tkip_key_data);
+	memcpy(msg->tx_mic_key, keybuf, sizeof(msg->tx_mic_key));
+	keybuf += sizeof(msg->tx_mic_key);
+	memcpy(msg->rx_mic_key, keybuf, sizeof(msg->rx_mic_key));
+	ether_addr_copy(msg->peer_address, peer_addr);
 	return WSM_KEY_TYPE_TKIP_PAIRWISE;
 }
 
@@ -67,34 +67,34 @@ static uint8_t fill_tkip_group(WsmHiTkipGroupKey_t *msg, struct ieee80211_key_co
 {
 	uint8_t *keybuf = key->key;
 
-	WARN_ON(key->keylen != sizeof(msg->TkipKeyData) + 2 * sizeof(msg->RxMicKey));
-	msg->KeyId = key->keyidx;
-	memcpy(msg->RxSequenceCounter, &seq->tkip.iv16, sizeof(seq->tkip.iv16));
-	memcpy(msg->RxSequenceCounter + sizeof(uint16_t), &seq->tkip.iv32, sizeof(seq->tkip.iv32));
-	memcpy(msg->TkipKeyData, keybuf, sizeof(msg->TkipKeyData));
-	keybuf += sizeof(msg->TkipKeyData);
+	WARN_ON(key->keylen != sizeof(msg->tkip_key_data) + 2 * sizeof(msg->rx_mic_key));
+	msg->key_id = key->keyidx;
+	memcpy(msg->rx_sequence_counter, &seq->tkip.iv16, sizeof(seq->tkip.iv16));
+	memcpy(msg->rx_sequence_counter + sizeof(uint16_t), &seq->tkip.iv32, sizeof(seq->tkip.iv32));
+	memcpy(msg->tkip_key_data, keybuf, sizeof(msg->tkip_key_data));
+	keybuf += sizeof(msg->tkip_key_data);
 	if (iftype == NL80211_IFTYPE_AP)
-		memcpy(msg->RxMicKey, keybuf + 0, sizeof(msg->RxMicKey)); // Use Tx MIC Key
+		memcpy(msg->rx_mic_key, keybuf + 0, sizeof(msg->rx_mic_key)); // Use Tx MIC Key
 	else
-		memcpy(msg->RxMicKey, keybuf + 8, sizeof(msg->RxMicKey)); // Use Rx MIC Key
+		memcpy(msg->rx_mic_key, keybuf + 8, sizeof(msg->rx_mic_key)); // Use Rx MIC Key
 	return WSM_KEY_TYPE_TKIP_GROUP;
 }
 
 static uint8_t fill_ccmp_pair(WsmHiAesPairwiseKey_t *msg, struct ieee80211_key_conf *key, u8 *peer_addr)
 {
-	WARN_ON(key->keylen != sizeof(msg->AesKeyData));
-	ether_addr_copy(msg->PeerAddress, peer_addr);
-	memcpy(msg->AesKeyData, key->key, key->keylen);
+	WARN_ON(key->keylen != sizeof(msg->aes_key_data));
+	ether_addr_copy(msg->peer_address, peer_addr);
+	memcpy(msg->aes_key_data, key->key, key->keylen);
 	return WSM_KEY_TYPE_AES_PAIRWISE;
 }
 
 static uint8_t fill_ccmp_group(WsmHiAesGroupKey_t *msg, struct ieee80211_key_conf *key, struct ieee80211_key_seq *seq)
 {
-	WARN_ON(key->keylen != sizeof(msg->AesKeyData));
-	memcpy(msg->AesKeyData, key->key, key->keylen);
-	memcpy(msg->RxSequenceCounter, seq->ccmp.pn, sizeof(seq->ccmp.pn));
-	memreverse(msg->RxSequenceCounter, sizeof(seq->ccmp.pn));
-	msg->KeyId = key->keyidx;
+	WARN_ON(key->keylen != sizeof(msg->aes_key_data));
+	memcpy(msg->aes_key_data, key->key, key->keylen);
+	memcpy(msg->rx_sequence_counter, seq->ccmp.pn, sizeof(seq->ccmp.pn));
+	memreverse(msg->rx_sequence_counter, sizeof(seq->ccmp.pn));
+	msg->key_id = key->keyidx;
 	return WSM_KEY_TYPE_AES_GROUP;
 }
 
@@ -102,12 +102,12 @@ static uint8_t fill_sms4_pair(WsmHiWapiPairwiseKey_t *msg, struct ieee80211_key_
 {
 	uint8_t *keybuf = key->key;
 
-	WARN_ON(key->keylen != sizeof(msg->WapiKeyData) + sizeof(msg->MicKeyData));
-	ether_addr_copy(msg->PeerAddress, peer_addr);
-	memcpy(msg->WapiKeyData, keybuf, sizeof(msg->WapiKeyData));
-	keybuf += sizeof(msg->WapiKeyData);
-	memcpy(msg->MicKeyData, keybuf, sizeof(msg->MicKeyData));
-	msg->KeyId = key->keyidx;
+	WARN_ON(key->keylen != sizeof(msg->wapi_key_data) + sizeof(msg->mic_key_data));
+	ether_addr_copy(msg->peer_address, peer_addr);
+	memcpy(msg->wapi_key_data, keybuf, sizeof(msg->wapi_key_data));
+	keybuf += sizeof(msg->wapi_key_data);
+	memcpy(msg->mic_key_data, keybuf, sizeof(msg->mic_key_data));
+	msg->key_id = key->keyidx;
 	return WSM_KEY_TYPE_WAPI_PAIRWISE;
 }
 
@@ -115,21 +115,21 @@ static uint8_t fill_sms4_group(WsmHiWapiGroupKey_t *msg, struct ieee80211_key_co
 {
 	uint8_t *keybuf = key->key;
 
-	WARN_ON(key->keylen != sizeof(msg->WapiKeyData) + sizeof(msg->MicKeyData));
-	memcpy(msg->WapiKeyData, keybuf, sizeof(msg->WapiKeyData));
-	keybuf += sizeof(msg->WapiKeyData);
-	memcpy(msg->MicKeyData, keybuf, sizeof(msg->MicKeyData));
-	msg->KeyId = key->keyidx;
+	WARN_ON(key->keylen != sizeof(msg->wapi_key_data) + sizeof(msg->mic_key_data));
+	memcpy(msg->wapi_key_data, keybuf, sizeof(msg->wapi_key_data));
+	keybuf += sizeof(msg->wapi_key_data);
+	memcpy(msg->mic_key_data, keybuf, sizeof(msg->mic_key_data));
+	msg->key_id = key->keyidx;
 	return WSM_KEY_TYPE_WAPI_GROUP;
 }
 
 static uint8_t fill_aes_cmac_group(WsmHiIgtkGroupKey_t *msg, struct ieee80211_key_conf *key, struct ieee80211_key_seq *seq)
 {
-	WARN_ON(key->keylen != sizeof(msg->IGTKKeyData));
-	memcpy(msg->IGTKKeyData, key->key, key->keylen);
-	memcpy(msg->IPN, seq->aes_cmac.pn, sizeof(seq->aes_cmac.pn));
-	memreverse(msg->IPN, sizeof(seq->aes_cmac.pn));
-	msg->KeyId = key->keyidx;
+	WARN_ON(key->keylen != sizeof(msg->igtk_key_data));
+	memcpy(msg->igtk_key_data, key->key, key->keylen);
+	memcpy(msg->ipn, seq->aes_cmac.pn, sizeof(seq->aes_cmac.pn));
+	memreverse(msg->ipn, sizeof(seq->aes_cmac.pn));
+	msg->key_id = key->keyidx;
 	return WSM_KEY_TYPE_IGTK_GROUP;
 }
 
@@ -147,29 +147,29 @@ static int wfx_add_key(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct i
 	if (idx < 0)
 		return -EINVAL;
 	k = &wdev->keys[idx];
-	k->IntId = wvif->Id;
+	k->int_id = wvif->Id;
 	if (key->cipher == WLAN_CIPHER_SUITE_WEP40 || key->cipher ==  WLAN_CIPHER_SUITE_WEP104) {
 		if (pairwise)
-			k->Type = fill_wep_pair(&k->Key.WepPairwiseKey, key, sta->addr);
+			k->type = fill_wep_pair(&k->key.wep_pairwise_key, key, sta->addr);
 		else
-			k->Type = fill_wep_group(&k->Key.WepGroupKey, key);
+			k->type = fill_wep_group(&k->key.wep_group_key, key);
 	} else if (key->cipher == WLAN_CIPHER_SUITE_TKIP) {
 		if (pairwise)
-			k->Type = fill_tkip_pair(&k->Key.TkipPairwiseKey, key, sta->addr);
+			k->type = fill_tkip_pair(&k->key.tkip_pairwise_key, key, sta->addr);
 		else
-			k->Type = fill_tkip_group(&k->Key.TkipGroupKey, key, &seq, wvif->vif->type);
+			k->type = fill_tkip_group(&k->key.tkip_group_key, key, &seq, wvif->vif->type);
 	} else if (key->cipher == WLAN_CIPHER_SUITE_CCMP) {
 		if (pairwise)
-			k->Type = fill_ccmp_pair(&k->Key.AesPairwiseKey, key, sta->addr);
+			k->type = fill_ccmp_pair(&k->key.aes_pairwise_key, key, sta->addr);
 		else
-			k->Type = fill_ccmp_group(&k->Key.AesGroupKey, key, &seq);
+			k->type = fill_ccmp_group(&k->key.aes_group_key, key, &seq);
 	} else if (key->cipher ==  WLAN_CIPHER_SUITE_SMS4) {
 		if (pairwise)
-			k->Type = fill_sms4_pair(&k->Key.WapiPairwiseKey, key, sta->addr);
+			k->type = fill_sms4_pair(&k->key.wapi_pairwise_key, key, sta->addr);
 		else
-			k->Type = fill_sms4_group(&k->Key.WapiGroupKey, key);
+			k->type = fill_sms4_group(&k->key.wapi_group_key, key);
 	} else if (key->cipher ==  WLAN_CIPHER_SUITE_AES_CMAC) {
-		k->Type = fill_aes_cmac_group(&k->Key.IgtkGroupKey, key, &seq);
+		k->type = fill_aes_cmac_group(&k->key.igtk_group_key, key, &seq);
 	} else {
 		dev_warn(wdev->dev, "unsupported key type %d\n", key->cipher);
 		wfx_free_key(wdev, idx);
@@ -231,7 +231,7 @@ int wfx_upload_keys(struct wfx_vif *wvif)
 	for (i = 0; i < WSM_KEY_MAX_INDEX; i++) {
 		if (wdev->key_map & BIT(i)) {
 			key = &wdev->keys[i];
-			if (key->IntId == wvif->Id)
+			if (key->int_id == wvif->Id)
 				wsm_add_key(wdev, key);
 		}
 	}

@@ -158,11 +158,11 @@ static const struct ieee80211_ops wfx_ops = {
 
 bool wfx_api_older_than(struct wfx_dev *wdev, int major, int minor)
 {
-	if (wdev->wsm_caps.ApiVersionMajor < major)
+	if (wdev->wsm_caps.api_version_major < major)
 		return true;
-	if (wdev->wsm_caps.ApiVersionMajor > major)
+	if (wdev->wsm_caps.api_version_major > major)
 		return false;
-	if (wdev->wsm_caps.ApiVersionMinor < minor)
+	if (wdev->wsm_caps.api_version_minor < minor)
 		return true;
 	return false;
 }
@@ -393,30 +393,30 @@ int wfx_probe(struct wfx_dev *wdev)
 
 	// FIXME: fill wiphy::fw_version and wiphy::hw_version
 	dev_info(wdev->dev, "Firmware \"%s\" started. Version: %d.%d.%d API: %d.%d Keyset: %02X caps: 0x%.8X\n",
-		 wdev->wsm_caps.FirmwareLabel, wdev->wsm_caps.FirmwareMajor,
-		 wdev->wsm_caps.FirmwareMinor, wdev->wsm_caps.FirmwareBuild,
-		 wdev->wsm_caps.ApiVersionMajor, wdev->wsm_caps.ApiVersionMinor,
-		 wdev->keyset, *((u32 *) &wdev->wsm_caps.Capabilities));
-	strncpy(wdev->hw->wiphy->fw_version, wdev->wsm_caps.FirmwareLabel, sizeof(wdev->hw->wiphy->fw_version));
+		 wdev->wsm_caps.firmware_label, wdev->wsm_caps.firmware_major,
+		 wdev->wsm_caps.firmware_minor, wdev->wsm_caps.firmware_build,
+		 wdev->wsm_caps.api_version_major, wdev->wsm_caps.api_version_minor,
+		 wdev->keyset, *((u32 *) &wdev->wsm_caps.capabilities));
+	strncpy(wdev->hw->wiphy->fw_version, wdev->wsm_caps.firmware_label, sizeof(wdev->hw->wiphy->fw_version));
 
 	if (wfx_api_older_than(wdev, 1, 0)) {
 		dev_err(wdev->dev, "Unsupported firmware API version (expect 1 while firmware returns %d)\n",
-			wdev->wsm_caps.ApiVersionMajor);
+			wdev->wsm_caps.api_version_major);
 		err = -ENOTSUPP;
 		goto err2;
 	}
 
 	err = wfx_sl_init(wdev);
-	if (err && wdev->wsm_caps.Capabilities.LinkMode == SEC_LINK_ENFORCED) {
+	if (err && wdev->wsm_caps.capabilities.link_mode == SEC_LINK_ENFORCED) {
 		dev_err(wdev->dev, "chip require secure_link, but can't negociate it\n");
 		goto err2;
 	}
 
 	// Current firmware does not support high throughput TX encrypted buffers
 	if (wfx_is_secure_command(wdev, WSM_HI_TX_REQ_ID))
-		wdev->wsm_caps.NumInpChBufs = 2;
+		wdev->wsm_caps.num_inp_ch_bufs = 2;
 
-	if (wdev->wsm_caps.RegulSelModeInfo.RegionSelMode) {
+	if (wdev->wsm_caps.regul_sel_mode_info.region_sel_mode) {
 		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[11].flags |= IEEE80211_CHAN_NO_IR;
 		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[12].flags |= IEEE80211_CHAN_NO_IR;
 		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[13].flags |= IEEE80211_CHAN_DISABLED;
@@ -447,7 +447,7 @@ int wfx_probe(struct wfx_dev *wdev)
 			ether_addr_copy(wdev->addresses[i].addr, macaddr);
 			wdev->addresses[i].addr[ETH_ALEN - 1] += i;
 		}
-		ether_addr_copy(wdev->addresses[i].addr, wdev->wsm_caps.MacAddr[i]);
+		ether_addr_copy(wdev->addresses[i].addr, wdev->wsm_caps.mac_addr[i]);
 		if (!is_valid_ether_addr(wdev->addresses[i].addr)) {
 			dev_warn(wdev->dev, "using random MAC address\n");
 			eth_random_addr(wdev->addresses[i].addr);

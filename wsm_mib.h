@@ -35,9 +35,9 @@ static inline int wsm_set_beacon_wakeup_period(struct wfx_dev *wdev,
 					       int Id)
 {
 	WsmHiMibBeaconWakeUpPeriod_t val = {
-		.WakeupPeriodMin = dtim_interval,
-		.ReceiveDTIM = 0,
-		.WakeupPeriodMax = cpu_to_le16(listen_interval),
+		.wakeup_period_min = dtim_interval,
+		.receive_dtim = 0,
+		.wakeup_period_max = cpu_to_le16(listen_interval),
 	};
 
 	if (dtim_interval > 0xFF || listen_interval > 0xFFFF)
@@ -74,7 +74,7 @@ static inline int wsm_set_macaddr(struct wfx_dev *wdev, u8 *mac, int Id)
 	WsmHiMibMacAddress_t msg = { };
 
 	if (mac)
-		ether_addr_copy(msg.MacAddr, mac);
+		ether_addr_copy(msg.mac_addr, mac);
 	return wsm_write_mib(wdev, WSM_MIB_ID_DOT11_MAC_ADDRESS, &msg, sizeof(msg), Id);
 }
 
@@ -94,9 +94,9 @@ static inline int wsm_set_beacon_filter_table(struct wfx_dev *wdev,
 					      WsmHiMibBcnFilterTable_t *ft,
 					      int Id)
 {
-	size_t buf_len = struct_size(ft, IeTable, ft->NumOfInfoElmts);
+	size_t buf_len = struct_size(ft, ie_table, ft->num_of_info_elmts);
 
-	cpu_to_le32s(&ft->NumOfInfoElmts);
+	cpu_to_le32s(&ft->num_of_info_elmts);
 	return wsm_write_mib(wdev, WSM_MIB_ID_BEACON_FILTER_TABLE, ft,
 			     buf_len, Id);
 }
@@ -105,8 +105,8 @@ static inline int wsm_beacon_filter_control(struct wfx_dev *wdev, int enable,
 					    int beacon_count, int Id)
 {
 	WsmHiMibBcnFilterEnable_t arg = {
-	    .Enable = cpu_to_le32(enable),
-	    .BcnCount = cpu_to_le32(beacon_count),
+	    .enable = cpu_to_le32(enable),
+	    .bcn_count = cpu_to_le32(beacon_count),
 	};
 	return wsm_write_mib(wdev, WSM_MIB_ID_BEACON_FILTER_ENABLE, &arg,
 			     sizeof(arg), Id);
@@ -115,8 +115,8 @@ static inline int wsm_beacon_filter_control(struct wfx_dev *wdev, int enable,
 static inline int wsm_set_operational_mode(struct wfx_dev *wdev, enum WsmOpPowerMode_e mode)
 {
 	WsmHiMibGlOperationalPowerMode_t val = {
-		.PowerMode = mode,
-		.WupIndActivation = 1,
+		.power_mode = mode,
+		.wup_ind_activation = 1,
 	};
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_GL_OPERATIONAL_POWER_MODE,
@@ -151,8 +151,8 @@ static inline int wsm_set_block_ack_policy(struct wfx_dev *wdev,
 					   int Id)
 {
 	WsmHiMibBlockAckPolicy_t val = {
-		.BlockAckTxTidPolicy = tx_tid_policy,
-		.BlockAckRxTidPolicy = rx_tid_policy,
+		.block_ack_tx_tid_policy = tx_tid_policy,
+		.block_ack_rx_tid_policy = rx_tid_policy,
 	};
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_BLOCK_ACK_POLICY, &val,
@@ -171,7 +171,7 @@ static inline int wsm_set_tx_rate_retry_policy(struct wfx_dev *wdev,
 					       WsmHiMibSetTxRateRetryPolicy_t *arg,
 					       int Id)
 {
-	size_t size = struct_size(arg, TxRateRetryPolicy, arg->NumTxRatePolicies);
+	size_t size = struct_size(arg, tx_rate_retry_policy, arg->num_tx_rate_policies);
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_SET_TX_RATE_RETRY_POLICY, arg,
 			     size, Id);
@@ -214,7 +214,7 @@ static inline int wsm_keep_alive_period(struct wfx_dev *wdev,
 					int Id)
 {
 	WsmHiMibKeepAlivePeriod_t arg = {
-		.KeepAlivePeriod = cpu_to_le16(period),
+		.keep_alive_period = cpu_to_le16(period),
 	};
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_KEEP_ALIVE_PERIOD,
@@ -265,7 +265,7 @@ static inline int wsm_slot_time(struct wfx_dev *wdev, int val, int Id)
 static inline int wsm_dual_cts_protection(struct wfx_dev *wdev, bool val, int Id)
 {
 	WsmHiMibSetHtProtection_t arg = {
-		.DualCtsProt = val,
+		.dual_cts_prot = val,
 	};
 
 	return wsm_write_mib(wdev, WSM_MIB_ID_SET_HT_PROTECTION,

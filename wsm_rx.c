@@ -19,20 +19,20 @@
 
 static int wsm_generic_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
-	// All confirm messages start with Status
+	// All confirm messages start with status
 	int status = le32_to_cpu(*((__le32 *) buf));
 	int cmd = hdr->id;
 	int len = hdr->len - 4; // drop header
 
-	WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "Data locking error");
+	WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "data locking error");
 
 	if (!wdev->wsm_cmd.buf_send) {
-		dev_warn(wdev->dev, "Unexpected confirmation: 0x%.2X\n", cmd);
+		dev_warn(wdev->dev, "Unexpected confirmation: 0x%.2x\n", cmd);
 		return -EINVAL;
 	}
 
 	if (cmd != wdev->wsm_cmd.buf_send->id) {
-		dev_warn(wdev->dev, "Chip response mismatch request: 0x%.2X vs 0x%.2X\n",
+		dev_warn(wdev->dev, "Chip response mismatch request: 0x%.2x vs 0x%.2x\n",
 			 cmd, wdev->wsm_cmd.buf_send->id);
 		return -EINVAL;
 	}
@@ -72,9 +72,9 @@ static int wsm_tx_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 static int wsm_multi_tx_confirm(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	WsmHiMultiTransmitCnfBody_t *body = buf;
-	WsmHiTxCnfBody_t *buf_loc = (WsmHiTxCnfBody_t *) &body->TxConfPayload;
+	WsmHiTxCnfBody_t *buf_loc = (WsmHiTxCnfBody_t *) &body->tx_conf_payload;
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
-	int count = body->NumTxConfs;
+	int count = body->num_tx_confs;
 	int i;
 
 	WARN(count <= 0, "Corrupted message");
@@ -112,15 +112,15 @@ static int wsm_startup_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 {
 	HiStartupIndBody_t *body = buf;
 
-	if (body->Status || body->FirmwareType > 4) {
+	if (body->status || body->firmware_type > 4) {
 		dev_err(wdev->dev, "Received invalid startup indication");
 		return -EINVAL;
 	}
 	memcpy(&wdev->wsm_caps, body, sizeof(HiStartupIndBody_t));
-	le32_to_cpus(&wdev->wsm_caps.Status);
-	le16_to_cpus(&wdev->wsm_caps.HardwareId);
-	le16_to_cpus(&wdev->wsm_caps.NumInpChBufs);
-	le16_to_cpus(&wdev->wsm_caps.SizeInpChBuf);
+	le32_to_cpus(&wdev->wsm_caps.status);
+	le16_to_cpus(&wdev->wsm_caps.hardware_id);
+	le16_to_cpus(&wdev->wsm_caps.num_inp_ch_bufs);
+	le16_to_cpus(&wdev->wsm_caps.size_inp_ch_buf);
 
 	complete(&wdev->firmware_ready);
 	return 0;
@@ -141,11 +141,11 @@ static int wsm_keys_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf
 	HiSlExchangePubKeysIndBody_t *body = buf;
 
 	// Compatibility with legacy secure link
-	if (body->Status == SL_PUB_KEY_EXCHANGE_STATUS_SUCCESS)
-		body->Status = 0;
-	if (body->Status)
+	if (body->status == SL_PUB_KEY_EXCHANGE_STATUS_SUCCESS)
+		body->status = 0;
+	if (body->status)
 		dev_warn(wdev->dev, "secure link negociation error\n");
-	wfx_sl_check_pubkey(wdev, body->NcpPubKey, body->NcpPubKeyMac);
+	wfx_sl_check_pubkey(wdev, body->ncp_pub_key, body->ncp_pub_key_mac);
 	return 0;
 }
 
@@ -236,10 +236,10 @@ static int wsm_suspend_resume_indication(struct wfx_dev *wdev, struct wmsg *hdr,
 static int wsm_error_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *buf)
 {
 	HiErrorIndBody_t *body = buf;
-	u8 *pRollback = (u8 *) body->Data;
-	u32 *pStatus = (u32 *) body->Data;
+	u8 *pRollback = (u8 *) body->data;
+	u32 *pStatus = (u32 *) body->data;
 
-	switch (body->Type) {
+	switch (body->type) {
 	case  WSM_HI_ERROR_FIRMWARE_ROLLBACK:
 		dev_err(wdev->dev, "asynchronous error: firmware rollback error %d\n", *pRollback);
 		break;
@@ -259,7 +259,7 @@ static int wsm_error_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *bu
 		dev_err(wdev->dev, "asynchronous error: wrong PDS payload or version: %#.8x\n", *pStatus);
 		break;
 	default:
-		dev_err(wdev->dev, "asynchronous error: unknown (%d)\n", body->Type);
+		dev_err(wdev->dev, "asynchronous error: unknown (%d)\n", body->type);
 		break;
 	}
 	return 0;
@@ -269,22 +269,22 @@ static int wsm_generic_indication(struct wfx_dev *wdev, struct wmsg *hdr, void *
 {
 	HiGenericIndBody_t *body = buf;
 
-	switch (body->IndicationType) {
+	switch (body->indication_type) {
 	case  HI_GENERIC_INDICATION_TYPE_RAW:
 		return 0;
 	case HI_GENERIC_INDICATION_TYPE_STRING:
-		dev_info(wdev->dev, "firmware says: %s", (char *) body->IndicationData.RawData);
+		dev_info(wdev->dev, "firmware says: %s", (char *) body->indication_data.raw_data);
 		return 0;
 	case HI_GENERIC_INDICATION_TYPE_RX_STATS:
 		mutex_lock(&wdev->rx_stats_lock);
 		// Older firmware send a generic indication beside RxStats
 		if (!wfx_api_older_than(wdev, 1, 4))
-			dev_info(wdev->dev, "RX test ongoing. Temperature: %d°C\n", body->IndicationData.RxStats.CurrentTemp);
-		memcpy(&wdev->rx_stats, &body->IndicationData.RxStats, sizeof(wdev->rx_stats));
+			dev_info(wdev->dev, "RX test ongoing. Temperature: %d°C\n", body->indication_data.rx_stats.current_temp);
+		memcpy(&wdev->rx_stats, &body->indication_data.rx_stats, sizeof(wdev->rx_stats));
 		mutex_unlock(&wdev->rx_stats_lock);
 		return 0;
 	default:
-		dev_err(wdev->dev, "generic_indication: unknown indication type: %#.8x\n", body->IndicationType);
+		dev_err(wdev->dev, "generic_indication: unknown indication type: %#.8x\n", body->indication_type);
 		return -EIO;
 	}
 }
@@ -400,7 +400,7 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 	bool handled = false;
 	struct wfx_tx_priv *tx_priv = wfx_skb_tx_priv(skb);
 	WsmHiTxReqBody_t *wsm = wfx_skb_txreq(skb);
-	struct ieee80211_hdr *frame = (struct ieee80211_hdr *) (wsm->Frame + wsm->DataFlags.FcOffset);
+	struct ieee80211_hdr *frame = (struct ieee80211_hdr *) (wsm->frame + wsm->data_flags.fc_offset);
 
 	enum {
 		do_probe,
@@ -438,8 +438,8 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 		if (ieee80211_is_nullfunc(frame->frame_control)) {
 			mutex_lock(&wvif->bss_loss_lock);
 			if (wvif->bss_loss_state) {
-				wvif->bss_loss_confirm_id = wsm->PacketId;
-				wsm->QueueId.QueueId = WSM_QUEUE_ID_VOICE;
+				wvif->bss_loss_confirm_id = wsm->packet_id;
+				wsm->queue_id.queue_id = WSM_QUEUE_ID_VOICE;
 			}
 			mutex_unlock(&wvif->bss_loss_lock);
 		} else if (ieee80211_has_protected(frame->frame_control) &&
@@ -492,8 +492,8 @@ static int wfx_get_prio_queue(struct wfx_vif *wvif,
 		if (!queued)
 			continue;
 		*total += queued;
-		score = ((edca->AIFSN + edca->CwMin) << 16) +
-			((edca->CwMax - edca->CwMin) *
+		score = ((edca->aifsn + edca->cw_min) << 16) +
+			((edca->cw_max - edca->cw_min) *
 			 (get_random_int() & 0xFFFF));
 		if (score < best && (winner < 0 || i != 3)) {
 			best = score;
@@ -632,7 +632,7 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 		wvif->pspoll_mask &= ~BIT(tx_priv->raw_link_id);
 
 		/* allow bursting if txop is set */
-		if (wvif->edca.params[queue_num].TxOpLimit)
+		if (wvif->edca.params[queue_num].tx_op_limit)
 			burst = (int)wfx_tx_queue_get_num_queued(queue, tx_allowed_mask) + 1;
 		else
 			burst = 1;
@@ -649,7 +649,7 @@ struct wmsg *wsm_get_tx(struct wfx_dev *wdev)
 		 */
 		if (more) {
 			wsm = (WsmHiTxReqBody_t *) hdr->body;
-			hdr80211 = (struct ieee80211_hdr *) (wsm->Frame + wsm->DataFlags.FcOffset);
+			hdr80211 = (struct ieee80211_hdr *) (wsm->frame + wsm->data_flags.fc_offset);
 			hdr80211->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
 		}
 		return hdr;

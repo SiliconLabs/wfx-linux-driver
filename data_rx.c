@@ -66,7 +66,7 @@ static int wfx_drop_encrypt_data(struct wfx_dev *wdev, WsmHiRxIndBody_t *arg, st
 	/* Oops... There is no fast way to ask mac80211 about
 	 * IV/ICV lengths. Even defineas are not exposed.
 	 */
-	switch (arg->RxFlags.Encryp) {
+	switch (arg->rx_flags.encryp) {
 	case WSM_RI_FLAGS_WEP_ENCRYPTED:
 		iv_len = 4 /* WEP_IV_LEN */;
 		icv_len = 4 /* WEP_ICV_LEN */;
@@ -86,12 +86,12 @@ static int wfx_drop_encrypt_data(struct wfx_dev *wdev, WsmHiRxIndBody_t *arg, st
 		break;
 	default:
 		dev_err(wdev->dev, "Unknown encryption type %d\n",
-			 arg->RxFlags.Encryp);
+			 arg->rx_flags.encryp);
 		return -EIO;
 	}
 
 	/* Firmware strips ICV in case of MIC failure. */
-	if (arg->Status == WSM_STATUS_MICFAILURE)
+	if (arg->status == WSM_STATUS_MICFAILURE)
 		icv_len = 0;
 
 	if (skb->len < hdrlen + iv_len + icv_len) {
@@ -109,7 +109,7 @@ static int wfx_drop_encrypt_data(struct wfx_dev *wdev, WsmHiRxIndBody_t *arg, st
 
 void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 {
-	int link_id = arg->RxFlags.PeerStaId;
+	int link_id = arg->rx_flags.peer_sta_id;
 	struct ieee80211_rx_status *hdr = IEEE80211_SKB_RXCB(skb);
 	struct ieee80211_hdr *frame = (struct ieee80211_hdr *) skb->data;
 	struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *) skb->data;
@@ -119,7 +119,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 	memset(hdr, 0, sizeof(*hdr));
 
 	// FIXME: Why do we drop these frames?
-	if (!arg->RcpiRssi &&
+	if (!arg->rcpi_rssi &&
 	    (ieee80211_is_probe_resp(frame->frame_control) ||
 	     ieee80211_is_beacon(frame->frame_control)))
 		goto drop;
@@ -131,9 +131,9 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 			early_data = true;
 	}
 
-	if (arg->Status == WSM_STATUS_MICFAILURE)
+	if (arg->status == WSM_STATUS_MICFAILURE)
 		hdr->flag |= RX_FLAG_MMIC_ERROR;
-	else if (arg->Status)
+	else if (arg->status)
 		goto drop;
 
 	if (skb->len < sizeof(struct ieee80211_pspoll)) {
@@ -146,46 +146,46 @@ void wfx_rx_cb(struct wfx_vif *wvif, WsmHiRxIndBody_t *arg, struct sk_buff *skb)
 			goto drop;
 
 	hdr->band = NL80211_BAND_2GHZ;
-	hdr->freq = ieee80211_channel_to_frequency(arg->ChannelNumber, hdr->band);
+	hdr->freq = ieee80211_channel_to_frequency(arg->channel_number, hdr->band);
 
-	if (arg->RxedRate >= 14) {
+	if (arg->rxed_rate >= 14) {
 #if (KERNEL_VERSION(4, 12, 0) > LINUX_VERSION_CODE)
 		hdr->flag |= RX_FLAG_HT;
 #else
 		hdr->encoding = RX_ENC_HT;
 #endif
-		hdr->rate_idx = arg->RxedRate - 14;
-	} else if (arg->RxedRate >= 4) {
-		hdr->rate_idx = arg->RxedRate - 2;
+		hdr->rate_idx = arg->rxed_rate - 14;
+	} else if (arg->rxed_rate >= 4) {
+		hdr->rate_idx = arg->rxed_rate - 2;
 	} else {
-		hdr->rate_idx = arg->RxedRate;
+		hdr->rate_idx = arg->rxed_rate;
 	}
 
 	if (!wvif->cqm_use_rssi)
-		hdr->signal = (int) (arg->RcpiRssi / 2) - 110;
+		hdr->signal = (int) (arg->rcpi_rssi / 2) - 110;
 	else
-		hdr->signal = arg->RcpiRssi;
+		hdr->signal = arg->rcpi_rssi;
 	hdr->antenna = 0;
 
-	if (arg->RxFlags.Encryp) {
+	if (arg->rx_flags.encryp) {
 		if (wfx_drop_encrypt_data(wvif->wdev, arg, skb))
 			goto drop;
 		hdr->flag |= RX_FLAG_DECRYPTED | RX_FLAG_IV_STRIPPED;
-		if (arg->RxFlags.Encryp == WSM_RI_FLAGS_TKIP_ENCRYPTED)
+		if (arg->rx_flags.encryp == WSM_RI_FLAGS_TKIP_ENCRYPTED)
 			hdr->flag |= RX_FLAG_MMIC_STRIPPED;
 	}
 
 	wfx_debug_rxed(wvif->wdev);
-	if (arg->RxFlags.InAggr)
+	if (arg->rx_flags.in_aggr)
 		wfx_debug_rxed_agg(wvif->wdev);
 
 	/* Filter block ACK negotiation: fully controlled by firmware */
 	if (ieee80211_is_action(frame->frame_control)
-	    && arg->RxFlags.MatchUcAddr
+	    && arg->rx_flags.match_uc_addr
 	    && mgmt->u.action.category == WLAN_CATEGORY_BACK)
 		goto drop;
 	if (ieee80211_is_beacon(frame->frame_control)
-	    && !arg->Status && wvif->vif
+	    && !arg->status && wvif->vif
 	    && ether_addr_equal(ieee80211_get_SA(frame), wvif->vif->bss_conf.bssid)) {
 		const u8 *tim_ie;
 		u8 *ies = mgmt->u.beacon.variable;
