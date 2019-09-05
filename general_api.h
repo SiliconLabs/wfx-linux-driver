@@ -290,13 +290,13 @@ typedef enum HiSlEncryptionType_e {
 typedef struct HiSlMsgHdr_s {
 	uint32_t    nonce:30;
 	uint32_t    encrypted:2;
-} __packed HiSlMsgHdr_t ;
+} __packed HiSlMsgHdr_t;
 
 typedef struct HiSlMsg_s {
 	HiSlMsgHdr_t   Header;
 	uint16_t        MsgLen;
 	uint8_t         Payload[];
-} __packed HiSlMsg_t ;
+} __packed HiSlMsg_t;
 
 #define AES_CCM_TAG_SIZE     16
 
