@@ -419,7 +419,7 @@ int wsm_update_ie(struct wfx_vif *wvif, const struct hif_ie_flags *target_frame,
 	return ret;
 }
 
-int wsm_send_pub_keys(struct wfx_dev *wdev, const uint8_t *pubkey, const uint8_t *pubkey_hmac)
+int wsm_sl_send_pub_keys(struct wfx_dev *wdev, const uint8_t *pubkey, const uint8_t *pubkey_hmac)
 {
 	int ret;
 	struct hif_msg *hdr;
@@ -450,7 +450,7 @@ int wsm_sl_config(struct wfx_dev *wdev, const unsigned long *bitmap)
 	return ret;
 }
 
-int wsm_set_mac_key(struct wfx_dev *wdev, const uint8_t *slk_key, int destination)
+int wsm_sl_set_mac_key(struct wfx_dev *wdev, const uint8_t *slk_key, int destination)
 {
 	int ret;
 	struct hif_msg *hdr;

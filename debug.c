@@ -245,7 +245,7 @@ static ssize_t wfx_burn_slk_key_write(struct file *file,
 		dev_err(wdev->dev, "incorrect crc32: %08x != %08x\n", crc32, *user_crc32);
 		return -EINVAL;
 	}
-	ret = wsm_set_mac_key(wdev, bin_buf, SL_MAC_KEY_DEST_OTP);
+	ret = wsm_sl_set_mac_key(wdev, bin_buf, SL_MAC_KEY_DEST_OTP);
 	if (ret) {
 		dev_err(wdev->dev, "chip returned error %d\n", ret);
 		return -EIO;
