@@ -272,11 +272,13 @@ static inline void memreverse(uint8_t *src, uint8_t length)
 
 static inline int memzcmp(void *src, unsigned int size)
 {
+	uint8_t *buf = src;
+
 	if (!size)
 		return 0;
-	if (*(unsigned char *) src)
+	if (*buf)
 		return 1;
-	return memcmp(src, src + 1, size - 1);
+	return memcmp(buf, buf + 1, size - 1);
 }
 
 #endif /* WFX_H */
