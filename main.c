@@ -146,7 +146,6 @@ static const struct ieee80211_ops wfx_ops = {
 	.bss_info_changed	= wfx_bss_info_changed,
 	.prepare_multicast	= wfx_prepare_multicast,
 	.configure_filter	= wfx_configure_filter,
-	.get_stats		= wfx_get_stats,
 	.ampdu_action		= wfx_ampdu_action,
 	.flush			= wfx_flush,
 	.add_chanctx		= wfx_add_chanctx,

@@ -40,7 +40,6 @@ int wfx_config(struct ieee80211_hw *, u32);
 int wfx_set_rts_threshold(struct ieee80211_hw *, u32);
 u64 wfx_prepare_multicast(struct ieee80211_hw *, struct netdev_hw_addr_list *);
 void wfx_configure_filter(struct ieee80211_hw *, unsigned, unsigned *, u64);
-int wfx_get_stats(struct ieee80211_hw *, struct ieee80211_low_level_stats *);
 
 int wfx_add_interface(struct ieee80211_hw *, struct ieee80211_vif *);
 void wfx_remove_interface(struct ieee80211_hw *, struct ieee80211_vif *);

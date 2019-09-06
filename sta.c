@@ -711,15 +711,6 @@ out:
 	return ret;
 }
 
-int wfx_get_stats(struct ieee80211_hw *hw,
-		     struct ieee80211_low_level_stats *stats)
-{
-	struct wfx_dev *wdev = hw->priv;
-
-	memcpy(stats, &wdev->stats, sizeof(*stats));
-	return 0;
-}
-
 int wfx_set_pm(struct wfx_vif *wvif, const struct hif_req_set_pm_mode *arg)
 {
 	struct hif_req_set_pm_mode pm = *arg;
