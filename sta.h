@@ -16,6 +16,12 @@
 struct wfx_dev;
 struct wfx_vif;
 
+struct wfx_ht_info {
+	struct ieee80211_sta_ht_cap ht_cap;
+	enum nl80211_channel_type channel_type;
+	uint16_t operation_mode;
+};
+
 struct wfx_wsm_event {
 	struct list_head link;
 	struct hif_ind_event evt;

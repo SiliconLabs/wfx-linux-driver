@@ -1382,6 +1382,26 @@ done:
 	return ret;
 }
 
+static int wfx_is_ht(const struct wfx_ht_info *ht_info)
+{
+	return ht_info->channel_type != NL80211_CHAN_NO_HT;
+}
+
+static int wfx_ht_greenfield(const struct wfx_ht_info *ht_info)
+{
+	return wfx_is_ht(ht_info) &&
+		(ht_info->ht_cap.cap & IEEE80211_HT_CAP_GRN_FLD) &&
+		!(ht_info->operation_mode &
+		  IEEE80211_HT_OP_MODE_NON_GF_STA_PRSNT);
+}
+
+static int wfx_ht_ampdu_density(const struct wfx_ht_info *ht_info)
+{
+	if (!wfx_is_ht(ht_info))
+		return 0;
+	return ht_info->ht_cap.ampdu_density;
+}
+
 void wfx_bss_info_changed(struct ieee80211_hw *hw,
 			     struct ieee80211_vif *vif,
 			     struct ieee80211_bss_conf *info,

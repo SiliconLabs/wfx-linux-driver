@@ -40,11 +40,6 @@ struct tx_policy_cache {
 	spinlock_t lock;
 };
 
-struct wfx_ht_info {
-	struct ieee80211_sta_ht_cap ht_cap;
-	enum nl80211_channel_type channel_type;
-	uint16_t operation_mode;
-};
 
 void tx_policy_init(struct wfx_vif *wvif);
 void tx_policy_upload_work(struct work_struct *work);
@@ -72,38 +67,7 @@ static inline struct hif_req_tx *wfx_skb_txreq(struct sk_buff *skb)
 {
 	struct hif_msg *hdr = (struct hif_msg *) skb->data;
 	return (struct hif_req_tx *) hdr->body;
-}
 
-static inline int wfx_is_ht(const struct wfx_ht_info *ht_info)
-{
-	return ht_info->channel_type != NL80211_CHAN_NO_HT;
-}
-
-static inline int wfx_ht_greenfield(const struct wfx_ht_info *ht_info)
-{
-	return wfx_is_ht(ht_info) &&
-		(ht_info->ht_cap.cap & IEEE80211_HT_CAP_GRN_FLD) &&
-		!(ht_info->operation_mode &
-		  IEEE80211_HT_OP_MODE_NON_GF_STA_PRSNT);
-}
-
-static inline int wfx_ht_fecCoding(const struct wfx_ht_info *ht_info)
-{
-	return wfx_is_ht(ht_info) &&
-	       (ht_info->ht_cap.cap & IEEE80211_HT_CAP_LDPC_CODING);
-}
-
-static inline int wfx_ht_shortGi(const struct wfx_ht_info *ht_info)
-{
-	return wfx_is_ht(ht_info) &&
-	       (ht_info->ht_cap.cap & IEEE80211_HT_CAP_SGI_20);
-}
-
-static inline int wfx_ht_ampdu_density(const struct wfx_ht_info *ht_info)
-{
-	if (!wfx_is_ht(ht_info))
-		return 0;
-	return ht_info->ht_cap.ampdu_density;
 }
 
 #endif /* WFX_DATA_TX_H */
