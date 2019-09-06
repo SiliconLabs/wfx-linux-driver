@@ -246,7 +246,6 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 		}
 	}
 	spin_unlock_bh(&cache->lock);
-	wfx_debug_tx_cache_miss(wvif->wdev);
 	wsm_set_tx_rate_retry_policy(wvif->wdev, arg, wvif->Id);
 	kfree(arg);
 	return 0;

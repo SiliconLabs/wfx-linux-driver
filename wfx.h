@@ -73,7 +73,6 @@ enum wfx_link_status {
 };
 
 struct hwbus_ops;
-struct wfx_debug_priv;
 
 struct wfx_link_entry {
 	unsigned long			timestamp;
@@ -100,7 +99,6 @@ struct wfx_dev {
 	struct wfx_hif			hif;
 	struct sl_context		sl;
 
-	struct wfx_debug_priv	*debug;
 
 	/* Mutex for device configuration */
 	struct mutex			conf_mutex;

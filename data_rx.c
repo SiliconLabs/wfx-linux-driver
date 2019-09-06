@@ -12,8 +12,6 @@
 #include "wsm_rx.h"
 #include "bh.h"
 #include "sta.h"
-#include "debug.h"
-#include "traces.h"
 
 static int wfx_handle_pspoll(struct wfx_vif *wvif, struct sk_buff *skb)
 {
@@ -175,10 +173,6 @@ void wfx_rx_cb(struct wfx_vif *wvif, struct hif_ind_rx *arg, struct sk_buff *skb
 			hdr->flag |= RX_FLAG_MMIC_STRIPPED;
 	}
 
-	wfx_debug_rxed(wvif->wdev);
-	if (arg->rx_flags.in_aggr)
-		wfx_debug_rxed_agg(wvif->wdev);
-
 	/* Filter block ACK negotiation: fully controlled by firmware */
 	if (ieee80211_is_action(frame->frame_control)
 	    && arg->rx_flags.match_uc_addr
@@ -224,7 +218,6 @@ void wfx_rx_cb(struct wfx_vif *wvif, struct hif_ind_rx *arg, struct sk_buff *skb
 	return;
 
 drop:
-	/* TODO: update failure counters */
 	dev_kfree_skb(skb);
 	return;
 }

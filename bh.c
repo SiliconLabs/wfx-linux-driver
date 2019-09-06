@@ -11,7 +11,6 @@
 #include "bh.h"
 #include "wfx.h"
 #include "hwio.h"
-#include "debug.h"
 #include "wsm_rx.h"
 #include "traces.h"
 #include "secure_link.h"

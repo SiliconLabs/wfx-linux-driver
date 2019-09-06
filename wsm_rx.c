@@ -13,7 +13,6 @@
 #include "wfx.h"
 #include "bh.h"
 #include "data_rx.h"
-#include "debug.h"
 #include "secure_link.h"
 #include "sta.h"
 
@@ -82,7 +81,6 @@ static int wsm_multi_tx_confirm(struct wfx_dev *wdev, struct hif_msg *hdr, void 
 	if (!wvif)
 		return -EFAULT;
 
-	wfx_debug_txed_multi(wdev, count);
 	for (i = 0; i < count; ++i) {
 		wfx_tx_confirm_cb(wvif, buf_loc);
 		buf_loc++;

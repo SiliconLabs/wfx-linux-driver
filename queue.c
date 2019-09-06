@@ -12,7 +12,6 @@
 #include "wfx.h"
 #include "wsm_rx.h"
 #include "data_tx.h"
-#include "debug.h"
 
 void wfx_tx_queues_lock(struct wfx_dev *wdev)
 {
