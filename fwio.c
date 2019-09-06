@@ -234,13 +234,6 @@ static void print_boot_status(struct wfx_dev *wdev)
 	}
 }
 
-#define CHECK(function) \
-	do { \
-		ret = function; \
-		if (ret < 0) \
-			goto error;\
-	} while (0)
-
 int load_firmware_secure(struct wfx_dev *wdev)
 {
 	const struct firmware *fw = NULL;
@@ -255,40 +248,50 @@ int load_firmware_secure(struct wfx_dev *wdev)
 	if (!buf)
 		return -ENOMEM;
 
-	CHECK(sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_READY));
-	CHECK(wait_ncp_status(wdev, NCP_INFO_READY));
+	sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_READY);
+	ret = wait_ncp_status(wdev, NCP_INFO_READY);
+	if (ret)
+		goto error;
 
-	CHECK(sram_buf_read(wdev, WFX_BOOTLOADER_LABEL, buf, BOOTLOADER_LABEL_SIZE));
+	sram_buf_read(wdev, WFX_BOOTLOADER_LABEL, buf, BOOTLOADER_LABEL_SIZE);
 	buf[BOOTLOADER_LABEL_SIZE] = 0;
 	dev_dbg(wdev->dev, "bootloader: \"%s\"\n", buf);
 
-	CHECK(sram_buf_read(wdev, WFX_PTE_INFO, buf, PTE_INFO_SIZE));
-	CHECK(get_firmware(wdev, buf[PTE_INFO_KEYSET_IDX], &fw, &fw_offset));
+	sram_buf_read(wdev, WFX_PTE_INFO, buf, PTE_INFO_SIZE);
+	ret = get_firmware(wdev, buf[PTE_INFO_KEYSET_IDX], &fw, &fw_offset);
+	if (ret)
+		goto error;
 	header_size = fw_offset + FW_SIGNATURE_SIZE + FW_HASH_SIZE;
 
-	CHECK(sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_INFO_READ));
-	CHECK(wait_ncp_status(wdev, NCP_READY));
+	sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_INFO_READ);
+	ret = wait_ncp_status(wdev, NCP_READY);
+	if (ret)
+		goto error;
 
-	CHECK(sram_reg_write(wdev, WFX_DNLD_FIFO, 0xFFFFFFFF)); // Fifo init
-	CHECK(sram_write_dma_safe(wdev, WFX_DCA_FW_VERSION, "\x01\x00\x00\x00", FW_VERSION_SIZE));
-	CHECK(sram_write_dma_safe(wdev, WFX_DCA_FW_SIGNATURE, fw->data + fw_offset, FW_SIGNATURE_SIZE));
-	CHECK(sram_write_dma_safe(wdev, WFX_DCA_FW_HASH, fw->data + fw_offset + FW_SIGNATURE_SIZE, FW_HASH_SIZE));
-	CHECK(sram_reg_write(wdev, WFX_DCA_IMAGE_SIZE, fw->size - header_size));
-	CHECK(sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_UPLOAD_PENDING));
-	CHECK(wait_ncp_status(wdev, NCP_DOWNLOAD_PENDING));
+	sram_reg_write(wdev, WFX_DNLD_FIFO, 0xFFFFFFFF); // Fifo init
+	sram_write_dma_safe(wdev, WFX_DCA_FW_VERSION, "\x01\x00\x00\x00", FW_VERSION_SIZE);
+	sram_write_dma_safe(wdev, WFX_DCA_FW_SIGNATURE, fw->data + fw_offset, FW_SIGNATURE_SIZE);
+	sram_write_dma_safe(wdev, WFX_DCA_FW_HASH, fw->data + fw_offset + FW_SIGNATURE_SIZE, FW_HASH_SIZE);
+	sram_reg_write(wdev, WFX_DCA_IMAGE_SIZE, fw->size - header_size);
+	sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_UPLOAD_PENDING);
+	ret = wait_ncp_status(wdev, NCP_DOWNLOAD_PENDING);
+	if (ret)
+		goto error;
 
 	start = ktime_get();
-	CHECK(upload_firmware(wdev, fw->data + header_size, fw->size - header_size));
+	ret = upload_firmware(wdev, fw->data + header_size, fw->size - header_size);
+	if (ret)
+		goto error;
 	dev_dbg(wdev->dev, "firmware load after %lldus\n", ktime_us_delta(ktime_get(), start));
 
-	CHECK(sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_UPLOAD_COMPLETE));
+	sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_UPLOAD_COMPLETE);
 	ret = wait_ncp_status(wdev, NCP_AUTH_OK);
 	// Legacy ROM support
 	if (ret < 0)
 		ret = wait_ncp_status(wdev, NCP_PUB_KEY_RDY);
 	if (ret < 0)
 		goto error;
-	CHECK(sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_OK_TO_JUMP));
+	sram_reg_write(wdev, WFX_DCA_HOST_STATUS, HOST_OK_TO_JUMP);
 
 error:
 	kfree(buf);
@@ -298,7 +301,6 @@ error:
 		print_boot_status(wdev);
 	return ret;
 }
-#undef CHECK
 
 static int init_gpr(struct wfx_dev *wdev)
 {
