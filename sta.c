@@ -506,49 +506,49 @@ static int wfx_set_multicast_filter(struct wfx_vif *wvif,
 				    struct wfx_grp_addr_table *fp)
 {
 	int i, ret;
-	struct hif_mib_config_data_filter FilterConfig = { };
-	struct hif_mib_set_data_filtering DataFiltering = { };
-	struct hif_mib_mac_addr_data_frame_condition MacAddrCond = { };
-	struct hif_mib_uc_mc_bc_data_frame_condition UcMcBcCond = { };
+	struct hif_mib_config_data_filter config = { };
+	struct hif_mib_set_data_filtering filter_data = { };
+	struct hif_mib_mac_addr_data_frame_condition filter_addr_val = { };
+	struct hif_mib_uc_mc_bc_data_frame_condition filter_addr_type = { };
 
 	// Temporary workaround for filters
-	return wsm_set_data_filtering(wvif, &DataFiltering);
+	return wsm_set_data_filtering(wvif, &filter_data);
 
 	if (!fp->enable) {
-		DataFiltering.enable = 0;
-		return wsm_set_data_filtering(wvif, &DataFiltering);
+		filter_data.enable = 0;
+		return wsm_set_data_filtering(wvif, &filter_data);
 	}
 
 	// A1 Address match on list
 	for (i = 0; i < fp->num_addresses; i++) {
-		MacAddrCond.condition_idx = i;
-		MacAddrCond.address_type = WSM_MAC_ADDR_A1;
-		ether_addr_copy(MacAddrCond.mac_address, fp->address_list[i]);
-		ret = wsm_set_mac_addr_condition(wvif, &MacAddrCond);
+		filter_addr_val.condition_idx = i;
+		filter_addr_val.address_type = WSM_MAC_ADDR_A1;
+		ether_addr_copy(filter_addr_val.mac_address, fp->address_list[i]);
+		ret = wsm_set_mac_addr_condition(wvif, &filter_addr_val);
 		if (ret)
 			return ret;
-		FilterConfig.mac_cond |= 1 << i;
+		config.mac_cond |= 1 << i;
 	}
 
 	// Accept unicast and broadcast
-	UcMcBcCond.condition_idx = 0;
-	UcMcBcCond.param.bits.type_unicast = 1;
-	UcMcBcCond.param.bits.type_broadcast = 1;
-	ret = wsm_set_uc_mc_bc_condition(wvif, &UcMcBcCond);
+	filter_addr_type.condition_idx = 0;
+	filter_addr_type.param.bits.type_unicast = 1;
+	filter_addr_type.param.bits.type_broadcast = 1;
+	ret = wsm_set_uc_mc_bc_condition(wvif, &filter_addr_type);
 	if (ret)
 		return ret;
 
-	FilterConfig.uc_mc_bc_cond = 1;
-	FilterConfig.filter_idx = 0; // TODO #define MULTICAST_FILTERING 0
-	FilterConfig.enable = 1;
-	ret = wsm_set_config_data_filter(wvif, &FilterConfig);
+	config.uc_mc_bc_cond = 1;
+	config.filter_idx = 0; // TODO #define MULTICAST_FILTERING 0
+	config.enable = 1;
+	ret = wsm_set_config_data_filter(wvif, &config);
 	if (ret)
 		return ret;
 
 	// discard all data frames except match filter
-	DataFiltering.enable = 1;
-	DataFiltering.default_filter = 1; // discard all
-	ret = wsm_set_data_filtering(wvif, &DataFiltering);
+	filter_data.enable = 1;
+	filter_data.default_filter = 1; // discard all
+	ret = wsm_set_data_filtering(wvif, &filter_data);
 
 	return ret;
 }
