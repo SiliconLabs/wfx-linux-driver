@@ -193,7 +193,8 @@ DECLARE_EVENT_CLASS(wsm_data,
 			__entry->mib = -1;
 			header_len = 0;
 		}
-		__entry->buf_len = min_t(int, __entry->msg_len, sizeof(__entry->buf)) - sizeof(struct hif_msg) - header_len;
+		__entry->buf_len = min_t(int, __entry->msg_len, sizeof(__entry->buf))
+				   - sizeof(struct hif_msg) - header_len;
 		memcpy(__entry->buf, wsm->body + header_len, __entry->buf_len);
 	),
 	TP_printk("%d:%d:%s_%s%s%s: %s%s (%d bytes)",

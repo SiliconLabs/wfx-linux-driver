@@ -52,7 +52,7 @@ static inline int wsm_get_counters_table(struct wfx_dev *wdev,
 					 struct hif_mib_extended_count_table *arg)
 {
 	if (wfx_api_older_than(wdev, 1, 3)) {
-		// hif_mib_extended_count_table is wider than hif_mib_count_table
+		// extended_count_table is wider than count_table
 		memset(arg, 0xFF, sizeof(*arg));
 		return wsm_read_mib(wdev, 0, WSM_MIB_ID_COUNTERS_TABLE,
 				    arg, sizeof(struct hif_mib_count_table));
@@ -102,8 +102,8 @@ static inline int wsm_beacon_filter_control(struct wfx_vif *wvif,
 		.enable = cpu_to_le32(enable),
 		.bcn_count = cpu_to_le32(beacon_count),
 	};
-	return wsm_write_mib(wvif->wdev, wvif->id, WSM_MIB_ID_BEACON_FILTER_ENABLE, &arg,
-			     sizeof(arg));
+	return wsm_write_mib(wvif->wdev, wvif->id, WSM_MIB_ID_BEACON_FILTER_ENABLE,
+			     &arg, sizeof(arg));
 }
 
 static inline int wsm_set_operational_mode(struct wfx_dev *wdev,

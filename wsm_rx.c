@@ -332,7 +332,8 @@ void wsm_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
 		wsm_receive_indication(wdev, wsm, wsm->body, skb);
 		return;
 	}
-	// Note: mutex_is_lock cause an implicit memory barrier that protect buf_send
+	// Note: mutex_is_lock cause an implicit memory barrier that protect
+	// buf_send
 	if (mutex_is_locked(&wdev->wsm_cmd.lock)
 	    && wdev->wsm_cmd.buf_send && wdev->wsm_cmd.buf_send->id == wsm_id) {
 		wsm_generic_confirm(wdev, wsm, wsm->body);

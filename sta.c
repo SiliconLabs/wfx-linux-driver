@@ -697,7 +697,6 @@ int wfx_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			new_uapsd_flags = *((u16 *) &wvif->uapsd_info);
 			if (!ret && wvif->setbssparams_done &&
 			    wvif->state == WFX_STATE_STA &&
-			    /* (old_uapsd_flags != le16_to_cpu(wvif->uapsd_info.uapsd_flags))) */
 			    old_uapsd_flags != new_uapsd_flags)
 				ret = wfx_set_pm(wvif, &wvif->powersave_mode);
 		}
@@ -1418,15 +1417,15 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 	/* TODO: BSS_CHANGED_QOS */
 	if (changed & BSS_CHANGED_ARP_FILTER) {
 		struct hif_mib_arp_ip_addr_table filter = { };
-		nb_arp_addr = info->arp_addr_cnt;
 
+		nb_arp_addr = info->arp_addr_cnt;
 		if (nb_arp_addr <= 0 || nb_arp_addr > WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES)
 			nb_arp_addr = 0;
 
 		for (i = 0; i < WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES; i++) {
 			filter.condition_idx = i;
 			if (i < nb_arp_addr) {
-				/* Caution: type of arp_addr_list[i] is __be32 */
+				// Caution: type of arp_addr_list[i] is __be32
 				memcpy(filter.ipv4_address, &info->arp_addr_list[i], sizeof(filter.ipv4_address));
 				filter.arp_enable = WSM_ARP_NS_FILTERING_ENABLE;
 			} else {

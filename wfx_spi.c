@@ -216,14 +216,15 @@ static irqreturn_t wfx_spi_irq_handler(int irq, void *priv)
 
 static void wfx_spi_request_rx(struct work_struct *work)
 {
-	struct wfx_spi_priv *bus = container_of(work, struct wfx_spi_priv, request_rx);
+	struct wfx_spi_priv *bus =
+		container_of(work, struct wfx_spi_priv, request_rx);
 
 	wfx_bh_request_rx(bus->core);
 }
 
 static size_t wfx_spi_align_size(void *priv, size_t size)
 {
-	// Most of SPI controllers avoid DMA if buffer size is not 32bits aligned
+	// Most of SPI controllers avoid DMA if buffer size is not 32bit aligned
 	return ALIGN(size, 4);
 }
 

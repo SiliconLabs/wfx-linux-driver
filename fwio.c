@@ -66,7 +66,7 @@
 #define WAKEUP_TIMEOUT 200 // milliseconds
 
 static const char * const fwio_error_strings[] = {
-	[ERR_INVALID_SEC_TYPE] = "Invalid section type (may be caused by a wrong encryption)",
+	[ERR_INVALID_SEC_TYPE] = "Invalid section type or wrong encryption",
 	[ERR_SIG_VERIF_FAILED] = "Signature verification failed",
 	[ERR_AES_CTRL_KEY] = "AES control key not initialized",
 	[ERR_ECC_PUB_KEY] = "ECC public key not initialized",

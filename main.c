@@ -415,7 +415,7 @@ int wfx_probe(struct wfx_dev *wdev)
 		goto err2;
 	}
 
-	// Current firmware does not support high throughput TX encrypted buffers
+	// Current firmware does not support secure link with high throughput
 	if (wfx_is_secure_command(wdev, WSM_HI_TX_REQ_ID))
 		wdev->wsm_caps.num_inp_ch_bufs = 2;
 

@@ -648,7 +648,8 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
 	size_t driver_data_room = FIELD_SIZEOF(struct ieee80211_tx_info, rate_driver_data);
 
-	compiletime_assert(sizeof(struct wfx_tx_priv) <= driver_data_room, "struct tx_priv is too large");
+	compiletime_assert(sizeof(struct wfx_tx_priv) <= driver_data_room,
+			   "struct tx_priv is too large");
 	WARN(skb->next || skb->prev, "skb is already member of a list");
 	// control.vif can be NULL for injected frames
 	if (tx_info->control.vif)
@@ -717,7 +718,8 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, struct hif_cnf_tx *arg)
 		dev_warn(wvif->wdev->dev, "%d more retries than expected\n", tx_count);
 	skb_trim(skb, skb->len - wfx_tx_get_icv_len(tx_priv->hw_key));
 
-	// Form now, you can touch to tx_info->status, but do not touch to tx_priv anymore
+	// From now, you can touch to tx_info->status, but do not touch to
+	// tx_priv anymore
 	// FIXME: use ieee80211_tx_info_clear_status()
 	memset(tx_info->rate_driver_data, 0, sizeof(tx_info->rate_driver_data));
 	memset(tx_info->pad, 0, sizeof(tx_info->pad));
