@@ -79,8 +79,8 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 			goto err;
 		le16_to_cpus(wsm->len);
 		computed_len = round_up(wsm->len - sizeof(wsm->len), 16)
-			       + sizeof(struct sl_wmsg)
-			       + sizeof(struct sl_tag);
+			       + sizeof(struct hif_sl_msg)
+			       + sizeof(struct hif_sl_tag);
 	} else {
 		le16_to_cpus(wsm->len);
 		computed_len = round_up(wsm->len, 2);
@@ -172,7 +172,7 @@ static void tx_helper(struct wfx_dev *wdev, struct hif_msg *wsm)
 
 	if (wfx_is_secure_command(wdev, wsm->id)) {
 		len = round_up(len - sizeof(wsm->len), 16) + sizeof(wsm->len)
-		      + sizeof(struct sl_hdr) + sizeof(struct sl_tag);
+		      + sizeof(struct hif_sl_msg_hdr) + sizeof(struct hif_sl_tag);
 		// AES support encryption in-place. However, mac80211 access to
 		// 802.11 header after frame was sent (to get MAC addresses).
 		// So, keep origin buffer clear.

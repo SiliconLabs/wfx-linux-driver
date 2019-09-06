@@ -9,21 +9,6 @@
 
 struct wfx_dev;
 
-struct sl_tag {
-	uint8_t tag[16];
-};
-
-struct sl_hdr {
-	uint32_t    seqnum:30;
-	uint32_t    encrypted:2;
-} __packed;
-
-struct sl_wmsg {
-	struct sl_hdr hdr;
-	uint16_t      len;
-	uint8_t       payload[];
-} __packed;
-
 #ifdef CONFIG_WFX_SECURE_LINK
 
 #include <linux/bitmap.h>
@@ -41,8 +26,8 @@ struct sl_context {
 };
 
 int wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id);
-int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m);
-int wfx_sl_encode(struct wfx_dev *wdev, struct hif_msg *input, struct sl_wmsg *output);
+int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m);
+int wfx_sl_encode(struct wfx_dev *wdev, struct hif_msg *input, struct hif_sl_msg *output);
 int wfx_sl_check_pubkey(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac);
 int wfx_sl_init(struct wfx_dev *wdev);
 void wfx_sl_deinit(struct wfx_dev *wdev);
@@ -57,12 +42,12 @@ static inline bool wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id)
 	return false;
 }
 
-static inline int wfx_sl_decode(struct wfx_dev *wdev, struct sl_wmsg *m)
+static inline int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m)
 {
 	return -EIO;
 }
 
-static inline int wfx_sl_encode(struct wfx_dev *wdev, struct hif_msg *input, struct sl_wmsg *output)
+static inline int wfx_sl_encode(struct wfx_dev *wdev, struct hif_msg *input, struct hif_sl_msg *output)
 {
 	return -EIO;
 }
