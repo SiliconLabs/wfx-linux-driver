@@ -32,7 +32,8 @@ static void wfx_free_key(struct wfx_dev *wdev, int idx)
 	wdev->key_map &= ~BIT(idx);
 }
 
-static uint8_t fill_wep_pair(struct hif_wep_pairwise_key *msg, struct ieee80211_key_conf *key, u8 *peer_addr)
+static uint8_t fill_wep_pair(struct hif_wep_pairwise_key *msg,
+			     struct ieee80211_key_conf *key, u8 *peer_addr)
 {
 	WARN_ON(key->keylen > sizeof(msg->key_data));
 	msg->key_length = key->keylen;
@@ -41,7 +42,8 @@ static uint8_t fill_wep_pair(struct hif_wep_pairwise_key *msg, struct ieee80211_
 	return WSM_KEY_TYPE_WEP_PAIRWISE;
 }
 
-static uint8_t fill_wep_group(struct hif_wep_group_key *msg, struct ieee80211_key_conf *key)
+static uint8_t fill_wep_group(struct hif_wep_group_key *msg,
+			      struct ieee80211_key_conf *key)
 {
 	WARN_ON(key->keylen > sizeof(msg->key_data));
 	msg->key_id = key->keyidx;
@@ -50,11 +52,14 @@ static uint8_t fill_wep_group(struct hif_wep_group_key *msg, struct ieee80211_ke
 	return WSM_KEY_TYPE_WEP_DEFAULT;
 }
 
-static uint8_t fill_tkip_pair(struct hif_tkip_pairwise_key *msg, struct ieee80211_key_conf *key, u8 *peer_addr)
+static uint8_t fill_tkip_pair(struct hif_tkip_pairwise_key *msg,
+			      struct ieee80211_key_conf *key, u8 *peer_addr)
 {
 	uint8_t *keybuf = key->key;
 
-	WARN_ON(key->keylen != sizeof(msg->tkip_key_data) + sizeof(msg->tx_mic_key) + sizeof(msg->rx_mic_key));
+	WARN_ON(key->keylen != sizeof(msg->tkip_key_data)
+			       + sizeof(msg->tx_mic_key)
+			       + sizeof(msg->rx_mic_key));
 	memcpy(msg->tkip_key_data, keybuf, sizeof(msg->tkip_key_data));
 	keybuf += sizeof(msg->tkip_key_data);
 	memcpy(msg->tx_mic_key, keybuf, sizeof(msg->tx_mic_key));
@@ -64,24 +69,31 @@ static uint8_t fill_tkip_pair(struct hif_tkip_pairwise_key *msg, struct ieee8021
 	return WSM_KEY_TYPE_TKIP_PAIRWISE;
 }
 
-static uint8_t fill_tkip_group(struct hif_tkip_group_key *msg, struct ieee80211_key_conf *key, struct ieee80211_key_seq *seq, enum nl80211_iftype iftype)
+static uint8_t fill_tkip_group(struct hif_tkip_group_key *msg,
+			       struct ieee80211_key_conf *key,
+			       struct ieee80211_key_seq *seq,
+			       enum nl80211_iftype iftype)
 {
 	uint8_t *keybuf = key->key;
 
-	WARN_ON(key->keylen != sizeof(msg->tkip_key_data) + 2 * sizeof(msg->rx_mic_key));
+	WARN_ON(key->keylen != sizeof(msg->tkip_key_data)
+			       + 2 * sizeof(msg->rx_mic_key));
 	msg->key_id = key->keyidx;
 	memcpy(msg->rx_sequence_counter, &seq->tkip.iv16, sizeof(seq->tkip.iv16));
 	memcpy(msg->rx_sequence_counter + sizeof(uint16_t), &seq->tkip.iv32, sizeof(seq->tkip.iv32));
 	memcpy(msg->tkip_key_data, keybuf, sizeof(msg->tkip_key_data));
 	keybuf += sizeof(msg->tkip_key_data);
 	if (iftype == NL80211_IFTYPE_AP)
-		memcpy(msg->rx_mic_key, keybuf + 0, sizeof(msg->rx_mic_key)); // Use Tx MIC Key
+		// Use Tx MIC Key
+		memcpy(msg->rx_mic_key, keybuf + 0, sizeof(msg->rx_mic_key));
 	else
-		memcpy(msg->rx_mic_key, keybuf + 8, sizeof(msg->rx_mic_key)); // Use Rx MIC Key
+		// Use Rx MIC Key
+		memcpy(msg->rx_mic_key, keybuf + 8, sizeof(msg->rx_mic_key));
 	return WSM_KEY_TYPE_TKIP_GROUP;
 }
 
-static uint8_t fill_ccmp_pair(struct hif_aes_pairwise_key *msg, struct ieee80211_key_conf *key, u8 *peer_addr)
+static uint8_t fill_ccmp_pair(struct hif_aes_pairwise_key *msg,
+			      struct ieee80211_key_conf *key, u8 *peer_addr)
 {
 	WARN_ON(key->keylen != sizeof(msg->aes_key_data));
 	ether_addr_copy(msg->peer_address, peer_addr);
@@ -89,7 +101,9 @@ static uint8_t fill_ccmp_pair(struct hif_aes_pairwise_key *msg, struct ieee80211
 	return WSM_KEY_TYPE_AES_PAIRWISE;
 }
 
-static uint8_t fill_ccmp_group(struct hif_aes_group_key *msg, struct ieee80211_key_conf *key, struct ieee80211_key_seq *seq)
+static uint8_t fill_ccmp_group(struct hif_aes_group_key *msg,
+			       struct ieee80211_key_conf *key,
+			       struct ieee80211_key_seq *seq)
 {
 	WARN_ON(key->keylen != sizeof(msg->aes_key_data));
 	memcpy(msg->aes_key_data, key->key, key->keylen);
@@ -99,11 +113,13 @@ static uint8_t fill_ccmp_group(struct hif_aes_group_key *msg, struct ieee80211_k
 	return WSM_KEY_TYPE_AES_GROUP;
 }
 
-static uint8_t fill_sms4_pair(struct hif_wapi_pairwise_key *msg, struct ieee80211_key_conf *key, u8 *peer_addr)
+static uint8_t fill_sms4_pair(struct hif_wapi_pairwise_key *msg,
+			      struct ieee80211_key_conf *key, u8 *peer_addr)
 {
 	uint8_t *keybuf = key->key;
 
-	WARN_ON(key->keylen != sizeof(msg->wapi_key_data) + sizeof(msg->mic_key_data));
+	WARN_ON(key->keylen != sizeof(msg->wapi_key_data)
+			       + sizeof(msg->mic_key_data));
 	ether_addr_copy(msg->peer_address, peer_addr);
 	memcpy(msg->wapi_key_data, keybuf, sizeof(msg->wapi_key_data));
 	keybuf += sizeof(msg->wapi_key_data);
@@ -112,11 +128,13 @@ static uint8_t fill_sms4_pair(struct hif_wapi_pairwise_key *msg, struct ieee8021
 	return WSM_KEY_TYPE_WAPI_PAIRWISE;
 }
 
-static uint8_t fill_sms4_group(struct hif_wapi_group_key *msg, struct ieee80211_key_conf *key)
+static uint8_t fill_sms4_group(struct hif_wapi_group_key *msg,
+			       struct ieee80211_key_conf *key)
 {
 	uint8_t *keybuf = key->key;
 
-	WARN_ON(key->keylen != sizeof(msg->wapi_key_data) + sizeof(msg->mic_key_data));
+	WARN_ON(key->keylen != sizeof(msg->wapi_key_data)
+			       + sizeof(msg->mic_key_data));
 	memcpy(msg->wapi_key_data, keybuf, sizeof(msg->wapi_key_data));
 	keybuf += sizeof(msg->wapi_key_data);
 	memcpy(msg->mic_key_data, keybuf, sizeof(msg->mic_key_data));
@@ -124,7 +142,9 @@ static uint8_t fill_sms4_group(struct hif_wapi_group_key *msg, struct ieee80211_
 	return WSM_KEY_TYPE_WAPI_GROUP;
 }
 
-static uint8_t fill_aes_cmac_group(struct hif_igtk_group_key *msg, struct ieee80211_key_conf *key, struct ieee80211_key_seq *seq)
+static uint8_t fill_aes_cmac_group(struct hif_igtk_group_key *msg,
+				   struct ieee80211_key_conf *key,
+				   struct ieee80211_key_seq *seq)
 {
 	WARN_ON(key->keylen != sizeof(msg->igtk_key_data));
 	memcpy(msg->igtk_key_data, key->key, key->keylen);
@@ -134,7 +154,8 @@ static uint8_t fill_aes_cmac_group(struct hif_igtk_group_key *msg, struct ieee80
 	return WSM_KEY_TYPE_IGTK_GROUP;
 }
 
-static int wfx_add_key(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct ieee80211_key_conf *key)
+static int wfx_add_key(struct wfx_vif *wvif, struct ieee80211_sta *sta,
+		       struct ieee80211_key_conf *key)
 {
 	int ret;
 	struct hif_req_add_key *k;
@@ -208,8 +229,8 @@ static int wfx_remove_key(struct wfx_vif *wvif, struct ieee80211_key_conf *key)
 }
 
 int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
-		   struct ieee80211_vif *vif, struct ieee80211_sta *sta,
-		   struct ieee80211_key_conf *key)
+		struct ieee80211_vif *vif, struct ieee80211_sta *sta,
+		struct ieee80211_key_conf *key)
 {
 	int ret = -EOPNOTSUPP;
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
