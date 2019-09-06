@@ -29,11 +29,10 @@ static int wfx_get_hw_rate(struct wfx_dev *wdev, const struct ieee80211_tx_rate 
 			return -1;
 		}
 		return rate->idx + 14;
-	} else {
-		// WFx only support 2GHz, else band information should be
-		// retreived from ieee80211_tx_info
-		return wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->bitrates[rate->idx].hw_value;
 	}
+	// WFx only support 2GHz, else band information should be retreived
+	// from ieee80211_tx_info
+	return wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->bitrates[rate->idx].hw_value;
 }
 
 /* TX policy cache implementation */
