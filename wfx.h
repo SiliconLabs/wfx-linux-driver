@@ -61,53 +61,43 @@ static inline u8 ieee80211_get_tid(struct ieee80211_hdr *hdr)
 struct hwbus_ops;
 
 struct wfx_dev {
-	struct wfx_platform_data	pdata;
-	struct device			*dev;
-	struct ieee80211_hw		*hw;
-	struct ieee80211_vif		*vif[2];
-	struct mac_address		addresses[2];
+	struct wfx_platform_data pdata;
+	struct device		*dev;
+	struct ieee80211_hw	*hw;
+	struct ieee80211_vif	*vif[2];
+	struct mac_address	addresses[2];
 
-	/* Statistics */
-	struct ieee80211_low_level_stats stats;
+	const struct hwbus_ops	*hwbus_ops;
+	void			*hwbus_priv;
+	struct wfx_hif		hif;
+	struct sl_context	sl;
 
-	/* Hardware interface */
-	const struct hwbus_ops		*hwbus_ops;
-	void				*hwbus_priv;
-	struct wfx_hif			hif;
-	struct sl_context		sl;
+	struct mutex		conf_mutex;
 
-
-	/* Mutex for device configuration */
-	struct mutex			conf_mutex;
-
-	struct wfx_queue		tx_queue[4];
+	struct wfx_queue	tx_queue[4];
 	struct wfx_queue_stats	tx_queue_stats;
-	int				tx_burst_idx;
+	int			tx_burst_idx;
 
-	/* Radio data */
-	int output_power;
+	int			output_power;
 
-	int				chip_frozen;
+	int			chip_frozen;
 
 	/* Keep wfx200 awake (WUP = 1) 1 second after each scan to avoid
 	 * FW issue with sleeping/waking up.
 	 */
-	atomic_t			scan_in_progress;
+	atomic_t		scan_in_progress;
 
-	/* Keys are global to chip */
 	u32			key_map;
 	struct hif_req_add_key	keys[MAX_KEY_ENTRIES];
 
-	/* WSM */
-	struct wsm_cmd			wsm_cmd;
-	struct completion		firmware_ready;
-	struct hif_ind_startup		wsm_caps;
-	u8				keyset;
-	atomic_t			tx_lock;
+	struct wsm_cmd		wsm_cmd;
+	struct completion	firmware_ready;
+	struct hif_ind_startup	wsm_caps;
+	u8			keyset;
+	atomic_t		tx_lock;
 
-	/* For debugfs 'rx_stats' file */
-	struct hif_rx_stats rx_stats;
-	struct mutex rx_stats_lock;
+	struct hif_rx_stats	rx_stats;
+	struct mutex		rx_stats_lock;
 };
 
 struct wfx_vif {
@@ -143,14 +133,14 @@ struct wfx_vif {
 	s8			wep_default_key_id;
 	struct sk_buff		*wep_pending_skb;
 
-	enum wfx_state	state;
+	enum wfx_state		state;
 
 	struct wfx_scan		scan;
 	struct wfx_ht_info	ht_info;
 	struct wsm_edca_params	edca;
 	struct wfx_link_entry	link_id_db[WFX_MAX_STA_IN_AP_MODE];
-	struct wfx_grp_addr_table	multicast_filter;
-	struct tx_policy_cache		tx_policy_cache;
+	struct wfx_grp_addr_table multicast_filter;
+	struct tx_policy_cache	tx_policy_cache;
 
 	struct work_struct	tx_policy_upload_work;
 	struct work_struct	unjoin_work;
@@ -169,9 +159,9 @@ struct wfx_vif {
 	struct timer_list	mcast_timeout;
 
 	/* API */
-	struct hif_req_set_pm_mode		powersave_mode;
-	struct hif_req_set_bss_params	bss_params;
-	struct hif_mib_set_uapsd_information	uapsd_info;
+	struct hif_req_set_pm_mode powersave_mode;
+	struct hif_req_set_bss_params bss_params;
+	struct hif_mib_set_uapsd_information uapsd_info;
 
 	/* spinlock/mutex */
 	struct mutex		bss_loss_lock;
