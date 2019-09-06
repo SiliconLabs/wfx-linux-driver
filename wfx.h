@@ -256,11 +256,6 @@ static inline int wvif_count(struct wfx_dev *wdev)
 	return ret;
 }
 
-struct wfx_sta_priv {
-	int link_id;
-	int vif_id;
-};
-
 static inline void memreverse(uint8_t *src, uint8_t length)
 {
 	uint8_t *lo = src;

@@ -33,6 +33,11 @@ struct wfx_grp_addr_table {
 	u8 address_list[8][ETH_ALEN];
 };
 
+struct wfx_sta_priv {
+	int link_id;
+	int vif_id;
+};
+
 // mac80211 interface
 int wfx_start(struct ieee80211_hw *hw);
 void wfx_stop(struct ieee80211_hw *hw);
