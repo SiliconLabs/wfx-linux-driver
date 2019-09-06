@@ -64,7 +64,6 @@ static inline int wfx_sl_init(struct wfx_dev *wdev)
 
 static inline void wfx_sl_deinit(struct wfx_dev *wdev)
 {
-	return;
 }
 
 #endif /* CONFIG_WFX_SECURE_LINK */

@@ -84,8 +84,9 @@ static inline struct wfx_tx_priv *wfx_skb_tx_priv(struct sk_buff *skb)
 static inline struct hif_req_tx *wfx_skb_txreq(struct sk_buff *skb)
 {
 	struct hif_msg *hdr = (struct hif_msg *) skb->data;
-	return (struct hif_req_tx *) hdr->body;
+	struct hif_req_tx *txreq = (struct hif_req_tx *) hdr->body;
 
+	return txreq;
 }
 
 #endif /* WFX_DATA_TX_H */

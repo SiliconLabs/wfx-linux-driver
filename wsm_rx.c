@@ -300,7 +300,7 @@ static int wsm_exception_indication(struct wfx_dev *wdev, struct hif_msg *hdr, v
 
 static const struct {
 	int msg_id;
-	int (*handler)(struct wfx_dev *, struct hif_msg *, void *);
+	int (*handler)(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf);
 } wsm_handlers[] = {
 	/* Confirmations */
 	{ WSM_HI_TX_CNF_ID,              wsm_tx_confirm },

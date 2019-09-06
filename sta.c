@@ -767,9 +767,8 @@ static int __wfx_flush(struct wfx_dev *wdev, bool drop)
 		if (!drop && ret <= 0) {
 			ret = -ETIMEDOUT;
 			break;
-		} else {
-			ret = 0;
 		}
+		ret = 0;
 
 		wsm_tx_lock_flush(wdev);
 		if (!wfx_tx_queues_is_empty(wdev)) {
@@ -1503,8 +1502,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 					sta = ieee80211_find_sta(vif, info->bssid);
 				if (sta) {
 					wvif->ht_info.ht_cap = sta->ht_cap;
-					wvif->bss_params.operational_rate_set =
-						wfx_rate_mask_to_wsm(wdev, sta->supp_rates[wvif->channel->band]);
+					wvif->bss_params.operational_rate_set = wfx_rate_mask_to_wsm(wdev, sta->supp_rates[wvif->channel->band]);
 					wvif->ht_info.operation_mode = info->ht_operation_mode;
 				} else {
 					memset(&wvif->ht_info, 0, sizeof(wvif->ht_info));

@@ -73,7 +73,7 @@ void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif)
 		}
 		if (!done) {
 			wsm_tx_unlock(wdev);
-			msleep(1);
+			msleep(20);
 		}
 	} while (!done);
 }

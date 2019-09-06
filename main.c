@@ -43,7 +43,7 @@ static int gpio_wakeup = -2;
 module_param(gpio_wakeup, int, 0644);
 MODULE_PARM_DESC(gpio_wakeup, "gpio number for wakeup. -1 for none.");
 
-static char *slk_key = NULL;
+static char *slk_key;
 module_param(slk_key, charp, 0600);
 MODULE_PARM_DESC(slk_key, "Secret key for secure link (expect 64 hexdecimal digits)");
 

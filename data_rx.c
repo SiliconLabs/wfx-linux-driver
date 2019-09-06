@@ -213,6 +213,5 @@ void wfx_rx_cb(struct wfx_vif *wvif, struct hif_ind_rx *arg, struct sk_buff *skb
 
 drop:
 	dev_kfree_skb(skb);
-	return;
 }
 

@@ -124,7 +124,7 @@ static int wfx_counters_show(struct seq_file *seq, void *v)
 }
 DEFINE_SHOW_ATTRIBUTE(wfx_counters);
 
-static const char *channel_names[] = {
+static const char * const channel_names[] = {
 	[0] = "1M",
 	[1] = "2M",
 	[2] = "5.5M",
@@ -161,8 +161,8 @@ static int wfx_rx_stats_show(struct seq_file *seq, void *v)
 		st->is_ext_pwr_clk ? "yes" : "no");
 	seq_printf(seq, "Num. of frames: %d, PER (x10e4): %d, Throughput: %dKbps/s\n",
 		st->nb_rx_frame, st->per_total, st->throughput);
-	seq_printf(seq, "       Num. of      PER     RSSI      SNR      CFO\n");
-	seq_printf(seq, "        frames  (x10e4)    (dBm)     (dB)    (kHz)\n");
+	seq_puts(seq, "       Num. of      PER     RSSI      SNR      CFO\n");
+	seq_puts(seq, "        frames  (x10e4)    (dBm)     (dB)    (kHz)\n");
 	for (i = 0; i < ARRAY_SIZE(channel_names); i++) {
 		if (channel_names[i])
 			seq_printf(seq, "%5s %8d %8d %8d %8d %8d\n",
@@ -359,4 +359,3 @@ int wfx_debug_init(struct wfx_dev *wdev)
 
 	return 0;
 }
-
