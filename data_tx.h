@@ -13,17 +13,28 @@
 #include "api_wsm_cmd.h"
 #include "api_wsm_mib.h"
 
+// FIXME: use IEEE80211_NUM_TIDS
+#define WFX_MAX_TID               8
+
 struct wfx_tx_priv;
 struct wfx_dev;
 struct wfx_vif;
 
-struct wfx_tx_priv {
-	ktime_t xmit_timestamp;
-	struct ieee80211_key_conf *hw_key;
-	uint8_t link_id;
-	uint8_t raw_link_id;
-	uint8_t tid;
-} __packed;
+enum wfx_link_status {
+	WFX_LINK_OFF,
+	WFX_LINK_RESERVE,
+	WFX_LINK_SOFT,
+	WFX_LINK_HARD,
+};
+
+struct wfx_link_entry {
+	unsigned long		timestamp;
+	enum wfx_link_status	status;
+	uint8_t			mac[ETH_ALEN];
+	uint8_t			old_mac[ETH_ALEN];
+	uint8_t			buffered[WFX_MAX_TID];
+	struct sk_buff_head	rx_queue;
+};
 
 struct tx_policy {
 	struct list_head link;
@@ -40,6 +51,13 @@ struct tx_policy_cache {
 	spinlock_t lock;
 };
 
+struct wfx_tx_priv {
+	ktime_t xmit_timestamp;
+	struct ieee80211_key_conf *hw_key;
+	uint8_t link_id;
+	uint8_t raw_link_id;
+	uint8_t tid;
+} __packed;
 
 void tx_policy_init(struct wfx_vif *wvif);
 void tx_policy_upload_work(struct work_struct *work);
