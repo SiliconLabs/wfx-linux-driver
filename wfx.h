@@ -61,15 +61,6 @@ static inline u8 ieee80211_get_tid(struct ieee80211_hdr *hdr)
 #define WFX_MAX_TID               (8)
 
 /* Please keep order */
-enum wfx_state {
-	WFX_STATE_PASSIVE = 0,
-	WFX_STATE_PRE_STA,
-	WFX_STATE_STA,
-	WFX_STATE_IBSS,
-	WFX_STATE_AP,
-};
-
-/* Please keep order */
 enum wfx_link_status {
 	WFX_LINK_OFF,
 	WFX_LINK_RESERVE,

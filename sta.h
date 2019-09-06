@@ -16,6 +16,14 @@
 struct wfx_dev;
 struct wfx_vif;
 
+enum wfx_state {
+	WFX_STATE_PASSIVE = 0,
+	WFX_STATE_PRE_STA,
+	WFX_STATE_STA,
+	WFX_STATE_IBSS,
+	WFX_STATE_AP,
+};
+
 struct wfx_ht_info {
 	struct ieee80211_sta_ht_cap ht_cap;
 	enum nl80211_channel_type channel_type;
