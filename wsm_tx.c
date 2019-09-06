@@ -23,7 +23,7 @@ void init_wsm_cmd(struct wsm_cmd *wsm_cmd)
 	mutex_init(&wsm_cmd->key_renew_lock);
 }
 
-static void wfx_fill_header(struct hif_msg *hdr, int if_id, unsigned cmd, size_t size)
+static void wfx_fill_header(struct hif_msg *hdr, int if_id, unsigned int cmd, size_t size)
 {
 	if (if_id == -1)
 		if_id = 2;

@@ -48,7 +48,7 @@ size_t wfx_tx_queue_get_num_queued(struct wfx_queue *queue, u32 link_id_map);
 struct sk_buff *wfx_pending_get(struct wfx_dev *wdev, u32 packet_id);
 int wfx_pending_remove(struct wfx_dev *wdev, struct sk_buff *skb);
 int wfx_pending_requeue(struct wfx_dev *wdev, struct sk_buff *skb);
-unsigned wfx_pending_get_pkt_us_delay(struct wfx_dev *wdev, struct sk_buff *skb);
-void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms);
+unsigned int wfx_pending_get_pkt_us_delay(struct wfx_dev *wdev, struct sk_buff *skb);
+void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned int limit_ms);
 
 #endif /* WFX_QUEUE_H */

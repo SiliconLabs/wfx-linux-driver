@@ -104,7 +104,8 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 	}
 
 	for (i = 0; i < IEEE80211_TX_MAX_RATES; ++i) {
-		unsigned rateid, count;
+		int rateid;
+		uint8_t count;
 
 		if (rates[i].idx < 0)
 			break;

@@ -257,7 +257,7 @@ struct sk_buff *wfx_pending_get(struct wfx_dev *wdev, u32 packet_id)
 	return NULL;
 }
 
-void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
+void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned int limit_ms)
 {
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 	ktime_t now = ktime_get();
@@ -284,7 +284,7 @@ void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 	spin_unlock_bh(&stats->pending.lock);
 }
 
-unsigned wfx_pending_get_pkt_us_delay(struct wfx_dev *wdev, struct sk_buff *skb)
+unsigned int wfx_pending_get_pkt_us_delay(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	ktime_t now = ktime_get();
 	struct wfx_tx_priv *tx_priv = wfx_skb_tx_priv(skb);

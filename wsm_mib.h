@@ -25,8 +25,8 @@ static inline int wsm_set_output_power(struct wfx_vif *wvif, int power_level)
 }
 
 static inline int wsm_set_beacon_wakeup_period(struct wfx_vif *wvif,
-					       unsigned dtim_interval,
-					       unsigned listen_interval)
+					       unsigned int dtim_interval,
+					       unsigned int listen_interval)
 {
 	struct hif_mib_beacon_wake_up_period val = {
 		.wakeup_period_min = dtim_interval,

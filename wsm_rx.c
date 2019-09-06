@@ -479,7 +479,7 @@ static int wfx_get_prio_queue(struct wfx_vif *wvif,
 	static const int urgent = BIT(WFX_LINK_ID_AFTER_DTIM) |
 		BIT(WFX_LINK_ID_UAPSD);
 	struct hif_req_edca_queue_params *edca;
-	unsigned score, best = -1;
+	unsigned int score, best = -1;
 	int winner = -1;
 	int i;
 
