@@ -149,6 +149,7 @@ void wfx_scan_work(struct work_struct *work)
 	struct wsm_scan scan = {
 		.scan_req.scan_type.type = 0,    /* Foreground */
 	};
+	struct ieee80211_channel *first;
 	bool first_run = (wvif->scan.begin == wvif->scan.curr &&
 			  wvif->scan.begin != wvif->scan.end);
 	int i;
@@ -191,66 +192,65 @@ void wfx_scan_work(struct work_struct *work)
 		    !(wvif->powersave_mode.pm_mode.enter_psm))
 			wfx_set_pm(wvif, &wvif->powersave_mode);
 		return;
-	} else {
-		struct ieee80211_channel *first = *wvif->scan.curr;
-
-		for (it = wvif->scan.curr + 1, i = 1;
-		     it != wvif->scan.end && i < WSM_API_MAX_NB_CHANNELS;
-		     ++it, ++i) {
-			if ((*it)->band != first->band)
-				break;
-			if (((*it)->flags ^ first->flags) &
-					IEEE80211_CHAN_NO_IR)
-				break;
-			if (!(first->flags & IEEE80211_CHAN_NO_IR) &&
-			    (*it)->max_power != first->max_power)
-				break;
-		}
-		scan.scan_req.band = first->band;
-
-		if (wvif->scan.req->no_cck)
-			scan.scan_req.max_transmit_rate = API_RATE_INDEX_G_6MBPS;
-		else
-			scan.scan_req.max_transmit_rate = API_RATE_INDEX_B_1MBPS;
-		scan.scan_req.num_of_probe_requests =
-			(first->flags & IEEE80211_CHAN_NO_IR) ? 0 : 2;
-		scan.scan_req.num_of_ssi_ds = wvif->scan.n_ssids;
-		scan.ssids = &wvif->scan.ssids[0];
-		scan.scan_req.num_of_channels = it - wvif->scan.curr;
-		scan.scan_req.probe_delay = 100;
-		// FIXME: Check if FW can do active scan while joined.
-		if (wvif->state == WFX_STATE_STA) {
-			scan.scan_req.scan_type.type = 1;
-			scan.scan_req.scan_flags.fbg = 1;
-		}
-
-		scan.ch = kcalloc(scan.scan_req.num_of_channels, sizeof(u8), GFP_KERNEL);
-
-		if (!scan.ch) {
-			wvif->scan.status = -ENOMEM;
-			goto fail;
-		}
-		for (i = 0; i < scan.scan_req.num_of_channels; ++i)
-			scan.ch[i] = wvif->scan.curr[i]->hw_value;
-
-		if (wvif->scan.curr[0]->flags & IEEE80211_CHAN_NO_IR) {
-			scan.scan_req.min_channel_time = 50;
-			scan.scan_req.max_channel_time = 150;
-		} else {
-			scan.scan_req.min_channel_time = 10;
-			scan.scan_req.max_channel_time = 50;
-		}
-		if (!(first->flags & IEEE80211_CHAN_NO_IR) &&
-		    wvif->scan.output_power != first->max_power) {
-			wvif->scan.output_power = first->max_power;
-			wsm_set_output_power(wvif, wvif->scan.output_power * 10);
-		}
-		wvif->scan.status = wfx_scan_start(wvif, &scan);
-		kfree(scan.ch);
-		if (wvif->scan.status)
-			goto fail;
-		wvif->scan.curr = it;
 	}
+	first = *wvif->scan.curr;
+
+	for (it = wvif->scan.curr + 1, i = 1;
+	     it != wvif->scan.end && i < WSM_API_MAX_NB_CHANNELS;
+	     ++it, ++i) {
+		if ((*it)->band != first->band)
+			break;
+		if (((*it)->flags ^ first->flags) &
+				IEEE80211_CHAN_NO_IR)
+			break;
+		if (!(first->flags & IEEE80211_CHAN_NO_IR) &&
+		    (*it)->max_power != first->max_power)
+			break;
+	}
+	scan.scan_req.band = first->band;
+
+	if (wvif->scan.req->no_cck)
+		scan.scan_req.max_transmit_rate = API_RATE_INDEX_G_6MBPS;
+	else
+		scan.scan_req.max_transmit_rate = API_RATE_INDEX_B_1MBPS;
+	scan.scan_req.num_of_probe_requests =
+		(first->flags & IEEE80211_CHAN_NO_IR) ? 0 : 2;
+	scan.scan_req.num_of_ssi_ds = wvif->scan.n_ssids;
+	scan.ssids = &wvif->scan.ssids[0];
+	scan.scan_req.num_of_channels = it - wvif->scan.curr;
+	scan.scan_req.probe_delay = 100;
+	// FIXME: Check if FW can do active scan while joined.
+	if (wvif->state == WFX_STATE_STA) {
+		scan.scan_req.scan_type.type = 1;
+		scan.scan_req.scan_flags.fbg = 1;
+	}
+
+	scan.ch = kcalloc(scan.scan_req.num_of_channels, sizeof(u8), GFP_KERNEL);
+
+	if (!scan.ch) {
+		wvif->scan.status = -ENOMEM;
+		goto fail;
+	}
+	for (i = 0; i < scan.scan_req.num_of_channels; ++i)
+		scan.ch[i] = wvif->scan.curr[i]->hw_value;
+
+	if (wvif->scan.curr[0]->flags & IEEE80211_CHAN_NO_IR) {
+		scan.scan_req.min_channel_time = 50;
+		scan.scan_req.max_channel_time = 150;
+	} else {
+		scan.scan_req.min_channel_time = 10;
+		scan.scan_req.max_channel_time = 50;
+	}
+	if (!(first->flags & IEEE80211_CHAN_NO_IR) &&
+	    wvif->scan.output_power != first->max_power) {
+		wvif->scan.output_power = first->max_power;
+		wsm_set_output_power(wvif, wvif->scan.output_power * 10);
+	}
+	wvif->scan.status = wfx_scan_start(wvif, &scan);
+	kfree(scan.ch);
+	if (wvif->scan.status)
+		goto fail;
+	wvif->scan.curr = it;
 	mutex_unlock(&wvif->wdev->conf_mutex);
 	return;
 
