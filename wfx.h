@@ -44,9 +44,9 @@ static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
 #if (KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE)
 static inline u8 ieee80211_get_tid(struct ieee80211_hdr *hdr)
 {
-    u8 *qc = ieee80211_get_qos_ctl(hdr);
+	u8 *qc = ieee80211_get_qos_ctl(hdr);
 
-    return qc[0] & IEEE80211_QOS_CTL_TID_MASK;
+	return qc[0] & IEEE80211_QOS_CTL_TID_MASK;
 }
 #endif
 
