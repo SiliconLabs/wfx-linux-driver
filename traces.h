@@ -176,6 +176,7 @@ DECLARE_EVENT_CLASS(wsm_data,
 	),
 	TP_fast_assign(
 		int header_len;
+
 		__entry->tx_fill_level = tx_fill_level;
 		__entry->msg_len = wsm->len;
 		__entry->msg_id = wsm->id;

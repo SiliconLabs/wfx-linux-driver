@@ -43,9 +43,9 @@ static void tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 	int i;
 	size_t count;
 	struct wfx_dev *wdev = wvif->wdev;
+
 	BUG_ON(rates[0].idx < 0);
 	memset(policy, 0, sizeof(*policy));
-
 	for (i = 1; i < IEEE80211_TX_MAX_RATES; i++)
 		if (rates[i].idx < 0)
 			break;
@@ -145,6 +145,7 @@ static void tx_policy_use(struct tx_policy_cache *cache, struct tx_policy *entry
 static int tx_policy_release(struct tx_policy_cache *cache, struct tx_policy *entry)
 {
 	int ret = --entry->usage_count;
+
 	if (!ret)
 		list_move(&entry->link, &cache->free);
 	return ret;
@@ -354,8 +355,8 @@ void wfx_link_id_gc_work(struct work_struct *work)
 	wsm_tx_lock_flush(wvif->wdev);
 	spin_lock_bh(&wvif->ps_state_lock);
 	for (i = 0; i < WFX_MAX_STA_IN_AP_MODE; ++i) {
-		bool need_reset;
-		need_reset = false;
+		bool need_reset = false;
+
 		mask = BIT(i + 1);
 		if (wvif->link_id_db[i].status == WFX_LINK_RESERVE ||
 		    (wvif->link_id_db[i].status == WFX_LINK_HARD &&
