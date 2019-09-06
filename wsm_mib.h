@@ -13,7 +13,7 @@
 
 #include "wfx.h"
 #include "wsm_tx.h"
-#include "api_wsm_cmd.h"
+#include "api_wsm_mib.h"
 
 static inline int wsm_set_output_power(struct wfx_vif *wvif, int power_level)
 {

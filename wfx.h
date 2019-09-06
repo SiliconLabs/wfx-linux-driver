@@ -24,6 +24,7 @@
 #include "sta.h"
 #include "api_wsm_cmd.h"
 #include "wsm_tx.h"
+#include "api_wsm_mib.h"
 
 #if (KERNEL_VERSION(4, 7, 0) > LINUX_VERSION_CODE)
 #define nl80211_band ieee80211_band

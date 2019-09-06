@@ -11,6 +11,7 @@
 #include <linux/list.h>
 
 #include "api_wsm_cmd.h"
+#include "api_wsm_mib.h"
 
 struct wfx_tx_priv;
 struct wfx_dev;
