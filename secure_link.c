@@ -132,6 +132,9 @@ int wfx_sl_check_pubkey(struct wfx_dev *wdev, uint8_t *pubkey, uint8_t *mac)
 	if (ret)
 		goto end;
 
+	wdev->sl.rx_seqnum = 0;
+	wdev->sl.tx_seqnum = 0;
+	mbedtls_ccm_free(&wdev->sl.ccm_ctxt);
 	// Use the lower 16 bytes of the sha256 of the secret for AES key
 	ret = mbedtls_ccm_setkey(&wdev->sl.ccm_ctxt, MBEDTLS_CIPHER_ID_AES,
 			secret_digest, 16 * BITS_PER_BYTE);
@@ -147,10 +150,6 @@ static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 	size_t olen;
 	uint8_t mac[SHA512_DIGEST_SIZE];
 	uint8_t pubkey[API_HOST_PUB_KEY_SIZE + 2];
-
-	wdev->sl.rx_seqnum = 0;
-	wdev->sl.tx_seqnum = 0;
-	mbedtls_ccm_free(&wdev->sl.ccm_ctxt);
 
 	mbedtls_ecdh_init(&wdev->sl.edch_ctxt);
 	ret = mbedtls_ecdh_setup(&wdev->sl.edch_ctxt, MBEDTLS_ECP_DP_CURVE25519);
