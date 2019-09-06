@@ -173,15 +173,16 @@ static int wfx_sdio_probe(struct sdio_func *func,
 	if (!bus)
 		return -ENOMEM;
 
-	if (!np) {
+	if (np) {
+		if (!of_match_node(wfx_sdio_of_match, np)) {
+			dev_warn(&func->dev, "No compatible device found in DT");
+			return -ENODEV;
+		}
+		bus->of_irq = irq_of_parse_and_map(np, 0);
+	} else {
 		dev_warn(&func->dev, "Device is not declared in DT. Features will be limited.");
 		// FIXME: ignore VID/PID and only rely on device tree
 		// return -ENODEV;
-	} else if (!of_match_node(wfx_sdio_of_match, np)) {
-		dev_warn(&func->dev, "No compatible device found in DT");
-		return -ENODEV;
-	} else {
-		bus->of_irq = irq_of_parse_and_map(np, 0);
 	}
 
 	bus->func = func;
