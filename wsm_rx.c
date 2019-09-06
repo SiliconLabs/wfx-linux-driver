@@ -548,13 +548,6 @@ found:
 	return 0;
 }
 
-/**
- * It returns 1 if Tx data are found else 0.
- * data, tx_len and burst are only set if 1 is returned.
- * burst is the number of pending messages (including the current reported one then burst>=1)
- *   that are allowed to be sent in the same TxOp than the current reported message.
- *   But it does not guaranty that we have the time to send them all in the duration of the TxOp.
- */
 struct hif_msg *wsm_get_tx(struct wfx_dev *wdev)
 {
 	struct sk_buff *skb;
