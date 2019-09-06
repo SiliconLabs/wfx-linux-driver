@@ -458,22 +458,20 @@ static uint8_t wfx_tx_get_raw_link_id(struct wfx_vif *wvif, struct ieee80211_sta
 	const u8 *da = ieee80211_get_DA(hdr);
 	int ret;
 
-	if (sta_priv && sta_priv->link_id) {
+	if (sta_priv && sta_priv->link_id)
 		return sta_priv->link_id;
-	} else if (wvif->vif->type != NL80211_IFTYPE_AP) {
+	if (wvif->vif->type != NL80211_IFTYPE_AP)
 		return 0;
-	} else if (is_multicast_ether_addr(da)) {
+	if (is_multicast_ether_addr(da))
 		return 0;
-	} else {
-		ret = wfx_find_link_id(wvif, da);
-		if (!ret)
-			ret = wfx_alloc_link_id(wvif, da);
-		if (!ret) {
-			dev_err(wvif->wdev->dev, "No more link IDs available.\n");
-			return -ENOENT;
-		}
-		return ret;
+	ret = wfx_find_link_id(wvif, da);
+	if (!ret)
+		ret = wfx_alloc_link_id(wvif, da);
+	if (!ret) {
+		dev_err(wvif->wdev->dev, "No more link IDs available.\n");
+		return -ENOENT;
 	}
+	return ret;
 }
 
 static void wfx_tx_fixup_rates(struct ieee80211_tx_rate *rates)
