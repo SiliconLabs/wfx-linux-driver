@@ -25,4 +25,7 @@ struct hwbus_ops {
 	size_t (*align_size)(void *bus_priv, size_t size);
 };
 
+extern struct sdio_driver wfx_sdio_driver;
+extern struct spi_driver wfx_spi_driver;
+
 #endif /* WFX_HWBUS_H */

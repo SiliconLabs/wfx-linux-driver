@@ -486,8 +486,6 @@ void wfx_release(struct wfx_dev *wdev)
 	wfx_sl_deinit(wdev);
 }
 
-extern struct sdio_driver wfx_sdio_driver;
-extern struct spi_driver wfx_spi_driver;
 static int __init wfx_core_init(void)
 {
 	int ret = 0;
