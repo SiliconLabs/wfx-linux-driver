@@ -55,7 +55,6 @@ static inline u8 ieee80211_get_tid(struct ieee80211_hdr *hdr)
 	(n * sizeof(*(p)->member) + __must_be_array((p)->member) + sizeof(*(p)))
 #endif
 
-#define WSM_KEY_MAX_INDEX		(16)
 #define WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES	2
 
 /* Please keep order */
@@ -97,7 +96,7 @@ struct wfx_dev {
 
 	/* Keys are global to chip */
 	u32			key_map;
-	struct hif_req_add_key		keys[WSM_KEY_MAX_INDEX + 1];
+	struct hif_req_add_key	keys[MAX_KEY_ENTRIES];
 
 	/* WSM */
 	struct wsm_cmd			wsm_cmd;

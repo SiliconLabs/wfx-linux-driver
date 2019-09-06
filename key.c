@@ -17,7 +17,7 @@ static int wfx_alloc_key(struct wfx_dev *wdev)
 	int idx;
 
 	idx = ffs(~wdev->key_map) - 1;
-	if (idx < 0 || idx > WSM_KEY_MAX_INDEX)
+	if (idx < 0 || idx >= MAX_KEY_ENTRIES)
 		return -1;
 
 	wdev->key_map |= BIT(idx);
@@ -202,7 +202,7 @@ static int wfx_add_key(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct i
 
 static int wfx_remove_key(struct wfx_vif *wvif, struct ieee80211_key_conf *key)
 {
-	WARN(key->hw_key_idx > WSM_KEY_MAX_INDEX, "Corrupted hw_key_idx");
+	WARN(key->hw_key_idx >= MAX_KEY_ENTRIES, "Corrupted hw_key_idx");
 	wfx_free_key(wvif->wdev, key->hw_key_idx);
 	return wsm_remove_key(wvif->wdev, key->hw_key_idx);
 }
@@ -229,7 +229,7 @@ int wfx_upload_keys(struct wfx_vif *wvif)
 	struct hif_req_add_key *key;
 	struct wfx_dev *wdev = wvif->wdev;
 
-	for (i = 0; i < WSM_KEY_MAX_INDEX; i++) {
+	for (i = 0; i < ARRAY_SIZE(wdev->keys); i++) {
 		if (wdev->key_map & BIT(i)) {
 			key = &wdev->keys[i];
 			if (key->int_id == wvif->id)
