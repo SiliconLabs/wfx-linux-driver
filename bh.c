@@ -75,8 +75,14 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	hif = (struct hif_msg *) skb->data;
 	WARN(hif->encrypted & 0x1, "unsupported encryption type");
 	if (hif->encrypted == 0x2) {
-		if (wfx_sl_decode(wdev, (void *) hif))
-			goto err;
+		if (wfx_sl_decode(wdev, (void *) hif)) {
+			dev_kfree_skb(skb);
+			// If frame was a confirmation, expect trouble in next
+			// exchange. However, it is harmless to fail to decode
+			// an indication frame, so try to continue. Anyway,
+			// piggyback is probably correct.
+			return piggyback;
+		}
 		le16_to_cpus(hif->len);
 		computed_len = round_up(hif->len - sizeof(hif->len), 16)
 			       + sizeof(struct hif_sl_msg)
