@@ -1573,56 +1573,37 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 			schedule_work(&wvif->set_cts_work);
 	}
 
-	/* ERP Slottime */
-	if (changed & (BSS_CHANGED_ASSOC | BSS_CHANGED_ERP_SLOT)) {
-		u32 slot_time = info->use_short_slot ? 9 : 20;
-
-		wsm_slot_time(wvif, slot_time);
-	}
+	if (changed & (BSS_CHANGED_ASSOC | BSS_CHANGED_ERP_SLOT))
+		wsm_slot_time(wvif, info->use_short_slot ? 9 : 20);
 
 	if (changed & (BSS_CHANGED_ASSOC | BSS_CHANGED_CQM)) {
-		struct hif_mib_rcpi_rssi_threshold threshold = {
+		struct hif_mib_rcpi_rssi_threshold th = {
 			.rolling_average_count = 8,
+			.detection = 1,
 		};
 
 		wvif->cqm_rssi_thold = info->cqm_rssi_thold;
 
-		if (info->cqm_rssi_thold || info->cqm_rssi_hyst) {
-			/* FIXME It's not a correct way of setting threshold.
-			 * Upper and lower must be set equal here and adjusted
-			 * in callback. However current implementation is much
-			 * more reliable and stable.
-			 */
-			/* RSSI: signed Q8.0, RCPI: unsigned Q7.1
-			 * RSSI = RCPI / 2 - 110
-			 */
-			if (wvif->cqm_use_rssi) {
-				threshold.upper_threshold =
-					info->cqm_rssi_thold +
-					info->cqm_rssi_hyst;
-				threshold.lower_threshold =
-					info->cqm_rssi_thold;
-				threshold.rcpi_rssi = 1;
-			} else {
-				threshold.upper_threshold =
-					(info->cqm_rssi_thold +
-					 info->cqm_rssi_hyst +
-					 110) * 2;
-				threshold.lower_threshold =
-					(info->cqm_rssi_thold + 110) * 2;
-			}
-			threshold.detection = 1;
-		} else {
-			/* We have to enable dummy subscription to get correct
-			 * RSSI values.
-			 */
-			threshold.detection = 1;
-			threshold.upperthresh = 1;
-			threshold.lowerthresh = 1;
-			if (wvif->cqm_use_rssi)
-				threshold.rcpi_rssi = 1;
+		if (!info->cqm_rssi_thold && !info->cqm_rssi_hyst) {
+			th.upperthresh = 1;
+			th.lowerthresh = 1;
 		}
-		wsm_set_rcpi_rssi_threshold(wvif, &threshold);
+		/* FIXME It's not a correct way of setting threshold.
+		 * Upper and lower must be set equal here and adjusted
+		 * in callback. However current implementation is much
+		 * more reliable and stable.
+		 */
+		/* RSSI: signed Q8.0, RCPI: unsigned Q7.1
+		 * RSSI = RCPI / 2 - 110
+		 */
+		th.upper_threshold = info->cqm_rssi_thold + info->cqm_rssi_hyst;
+		th.lower_threshold = info->cqm_rssi_thold;
+		if (!wvif->cqm_use_rssi) {
+			th.rcpi_rssi = 1;
+			th.upper_threshold = (th.upper_threshold + 110) * 2;
+			th.lower_threshold = (th.lower_threshold + 110) * 2;
+		}
+		wsm_set_rcpi_rssi_threshold(wvif, &th);
 	}
 
 	if (changed & BSS_CHANGED_TXPOWER && info->txpower != wdev->output_power) {
