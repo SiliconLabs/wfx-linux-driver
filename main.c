@@ -244,7 +244,7 @@ int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len)
 			dev_dbg(wdev->dev, "Send PDS '%s}'", buf + start);
 			buf[i] = '}';
 			ret = hif_configuration(wdev, buf + start, i - start + 1);
-			if (ret == WSM_STATUS_FAILURE) {
+			if (ret == HIF_STATUS_FAILURE) {
 				dev_err(wdev->dev, "PDS bytes %d to %d: invalid data (unsupported options?)\n", start, i);
 				return -EINVAL;
 			}
@@ -416,7 +416,7 @@ int wfx_probe(struct wfx_dev *wdev)
 	}
 
 	// Current firmware does not support secure link with high throughput
-	if (wfx_is_secure_command(wdev, WSM_HI_TX_REQ_ID))
+	if (wfx_is_secure_command(wdev, HIF_REQ_ID_TX))
 		wdev->hw_caps.num_inp_ch_bufs = 2;
 
 	if (wdev->hw_caps.regul_sel_mode_info.region_sel_mode) {
@@ -436,9 +436,9 @@ int wfx_probe(struct wfx_dev *wdev)
 			desc_to_gpio(wdev->pdata.gpio_wakeup), wdev->pdata.file_pds);
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
 		control_reg_write(wdev, 0);
-		hif_set_operational_mode(wdev, WSM_OP_POWER_MODE_QUIESCENT);
+		hif_set_operational_mode(wdev, HIF_OP_POWER_MODE_QUIESCENT);
 	} else {
-		hif_set_operational_mode(wdev, WSM_OP_POWER_MODE_DOZE);
+		hif_set_operational_mode(wdev, HIF_OP_POWER_MODE_DOZE);
 	}
 
 	hif_use_multi_tx_conf(wdev, true);

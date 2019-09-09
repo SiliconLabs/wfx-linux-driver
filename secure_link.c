@@ -198,11 +198,11 @@ static void wfx_sl_init_cfg(struct wfx_dev *wdev)
 	DECLARE_BITMAP(sl_commands, 256);
 
 	bitmap_fill(sl_commands, 256);
-	clear_bit(HI_SET_SL_MAC_KEY_REQ_ID, sl_commands);
-	clear_bit(HI_SL_EXCHANGE_PUB_KEYS_REQ_ID, sl_commands);
-	clear_bit(HI_SL_EXCHANGE_PUB_KEYS_IND_ID, sl_commands);
-	clear_bit(HI_EXCEPTION_IND_ID, sl_commands);
-	clear_bit(HI_ERROR_IND_ID, sl_commands);
+	clear_bit(HIF_REQ_ID_SET_SL_MAC_KEY, sl_commands);
+	clear_bit(HIF_REQ_ID_SL_EXCHANGE_PUB_KEYS, sl_commands);
+	clear_bit(HIF_IND_ID_SL_EXCHANGE_PUB_KEYS, sl_commands);
+	clear_bit(HIF_IND_ID_EXCEPTION, sl_commands);
+	clear_bit(HIF_IND_ID_ERROR, sl_commands);
 	hif_sl_config(wdev, sl_commands);
 	bitmap_copy(wdev->sl.commands, sl_commands, 256);
 }
@@ -220,7 +220,7 @@ int wfx_sl_init(struct wfx_dev *wdev)
 		return -EIO;
 	}
 	if (link_mode == SEC_LINK_ENFORCED) {
-		bitmap_set(wdev->sl.commands, HI_SL_CONFIGURE_REQ_ID, 1);
+		bitmap_set(wdev->sl.commands, HIF_REQ_ID_SL_CONFIGURE, 1);
 		if (wfx_sl_key_exchange(wdev))
 			return -EIO;
 		wfx_sl_init_cfg(wdev);

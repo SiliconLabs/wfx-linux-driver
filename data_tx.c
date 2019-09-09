@@ -162,7 +162,7 @@ void tx_policy_init(struct wfx_vif *wvif)
 	INIT_LIST_HEAD(&cache->used);
 	INIT_LIST_HEAD(&cache->free);
 
-	for (i = 0; i < WSM_MIB_NUM_TX_RATE_RETRY_POLICIES; ++i)
+	for (i = 0; i < HIF_MIB_NUM_TX_RATE_RETRY_POLICIES; ++i)
 		list_add(&cache->cache[i].link, &cache->free);
 }
 
@@ -224,12 +224,12 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 	int i;
 	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
 	struct hif_mib_set_tx_rate_retry_policy *arg =
-		kzalloc(struct_size(arg, tx_rate_retry_policy, WSM_MIB_NUM_TX_RATE_RETRY_POLICIES), GFP_KERNEL);
+		kzalloc(struct_size(arg, tx_rate_retry_policy, HIF_MIB_NUM_TX_RATE_RETRY_POLICIES), GFP_KERNEL);
 	struct hif_mib_tx_rate_retry_policy *dst;
 
 	spin_lock_bh(&cache->lock);
 	/* Upload only modified entries. */
-	for (i = 0; i < WSM_MIB_NUM_TX_RATE_RETRY_POLICIES; ++i) {
+	for (i = 0; i < HIF_MIB_NUM_TX_RATE_RETRY_POLICIES; ++i) {
 		struct tx_policy *src = &cache->cache[i];
 
 		if (!src->uploaded && memzcmp(src->rates, sizeof(src->rates))) {
@@ -550,11 +550,11 @@ static struct hif_ht_tx_parameters wfx_tx_get_tx_parms(struct wfx_dev *wdev, str
 	struct hif_ht_tx_parameters ret = { };
 
 	if (!(rate->flags & IEEE80211_TX_RC_MCS))
-		ret.frame_format = WSM_FRAME_FORMAT_NON_HT;
+		ret.frame_format = HIF_FRAME_FORMAT_NON_HT;
 	else if (!(rate->flags & IEEE80211_TX_RC_GREEN_FIELD))
-		ret.frame_format = WSM_FRAME_FORMAT_MIXED_FORMAT_HT;
+		ret.frame_format = HIF_FRAME_FORMAT_MIXED_FORMAT_HT;
 	else
-		ret.frame_format = WSM_FRAME_FORMAT_GF_HT_11N;
+		ret.frame_format = HIF_FRAME_FORMAT_GF_HT_11N;
 	if (rate->flags & IEEE80211_TX_RC_SHORT_GI)
 		ret.short_gi = 1;
 	if (tx_info->flags & IEEE80211_TX_CTL_LDPC && wdev->pdata.support_ldpc)
@@ -622,7 +622,7 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 	memset(skb->data, 0, wmsg_len);
 	hif_msg = (struct hif_msg *) skb->data;
 	hif_msg->len = cpu_to_le16(skb->len);
-	hif_msg->id = cpu_to_le16(WSM_HI_TX_REQ_ID);
+	hif_msg->id = cpu_to_le16(HIF_REQ_ID_TX);
 	hif_msg->interface = wvif->id;
 	if (skb->len > wvif->wdev->hw_caps.size_inp_ch_buf) {
 		dev_warn(wvif->wdev->dev, "requested frame size (%d) is larger than maximum supported (%d)\n",
@@ -742,7 +742,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, struct hif_cnf_tx *arg)
 			tx_info->flags |= IEEE80211_TX_STAT_NOACK_TRANSMITTED;
 		else
 			tx_info->flags |= IEEE80211_TX_STAT_ACK;
-	} else if (arg->status == WSM_REQUEUE) {
+	} else if (arg->status == HIF_REQUEUE) {
 		/* "REQUEUE" means "implicit suspend" */
 		struct hif_ind_suspend_resume_tx suspend = {
 			.suspend_resume_flags.resume = 0,

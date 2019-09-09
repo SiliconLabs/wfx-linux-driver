@@ -33,38 +33,38 @@ struct hif_msg {
 } __packed;
 
 enum hif_general_requests_ids {
-	HI_CONFIGURATION_REQ_ID                         = 0x09,
-	HI_CONTROL_GPIO_REQ_ID                          = 0x26,
-	HI_SET_SL_MAC_KEY_REQ_ID                        = 0x27,
-	HI_SL_EXCHANGE_PUB_KEYS_REQ_ID                  = 0x28,
-	HI_SL_CONFIGURE_REQ_ID                          = 0x29,
-	HI_PREVENT_ROLLBACK_REQ_ID                      = 0x2a,
-	HI_PTA_SETTINGS_REQ_ID                          = 0x2b,
-	HI_PTA_PRIORITY_REQ_ID                          = 0x2c,
-	HI_PTA_STATE_REQ_ID                             = 0x2d,
-	HI_SHUT_DOWN_REQ_ID                             = 0x32,
+	HIF_REQ_ID_CONFIGURATION                         = 0x09,
+	HIF_REQ_ID_CONTROL_GPIO                          = 0x26,
+	HIF_REQ_ID_SET_SL_MAC_KEY                        = 0x27,
+	HIF_REQ_ID_SL_EXCHANGE_PUB_KEYS                  = 0x28,
+	HIF_REQ_ID_SL_CONFIGURE                          = 0x29,
+	HIF_REQ_ID_PREVENT_ROLLBACK                      = 0x2a,
+	HIF_REQ_ID_PTA_SETTINGS                          = 0x2b,
+	HIF_REQ_ID_PTA_PRIORITY                          = 0x2c,
+	HIF_REQ_ID_PTA_STATE                             = 0x2d,
+	HIF_REQ_ID_SHUT_DOWN                             = 0x32,
 };
 
 enum hif_general_confirmations_ids {
-	HI_CONFIGURATION_CNF_ID                         = 0x09,
-	HI_CONTROL_GPIO_CNF_ID                          = 0x26,
-	HI_SET_SL_MAC_KEY_CNF_ID                        = 0x27,
-	HI_SL_EXCHANGE_PUB_KEYS_CNF_ID                  = 0x28,
-	HI_SL_CONFIGURE_CNF_ID                          = 0x29,
-	HI_PREVENT_ROLLBACK_CNF_ID                      = 0x2a,
-	HI_PTA_SETTINGS_CNF_ID                          = 0x2b,
-	HI_PTA_PRIORITY_CNF_ID                          = 0x2c,
-	HI_PTA_STATE_CNF_ID                             = 0x2d,
-	HI_SHUT_DOWN_CNF_ID                             = 0x32,
+	HIF_CNF_ID_CONFIGURATION                         = 0x09,
+	HIF_CNF_ID_CONTROL_GPIO                          = 0x26,
+	HIF_CNF_ID_SET_SL_MAC_KEY                        = 0x27,
+	HIF_CNF_ID_SL_EXCHANGE_PUB_KEYS                  = 0x28,
+	HIF_CNF_ID_SL_CONFIGURE                          = 0x29,
+	HIF_CNF_ID_PREVENT_ROLLBACK                      = 0x2a,
+	HIF_CNF_ID_PTA_SETTINGS                          = 0x2b,
+	HIF_CNF_ID_PTA_PRIORITY                          = 0x2c,
+	HIF_CNF_ID_PTA_STATE                             = 0x2d,
+	HIF_CNF_ID_SHUT_DOWN                             = 0x32,
 };
 
 enum hif_general_indications_ids {
-	HI_EXCEPTION_IND_ID                             = 0xe0,
-	HI_STARTUP_IND_ID                               = 0xe1,
-	HI_WAKEUP_IND_ID                                = 0xe2,
-	HI_GENERIC_IND_ID                               = 0xe3,
-	HI_ERROR_IND_ID                                 = 0xe4,
-	HI_SL_EXCHANGE_PUB_KEYS_IND_ID                  = 0xe5
+	HIF_IND_ID_EXCEPTION                             = 0xe0,
+	HIF_IND_ID_STARTUP                               = 0xe1,
+	HIF_IND_ID_WAKEUP                                = 0xe2,
+	HIF_IND_ID_GENERIC                               = 0xe3,
+	HIF_IND_ID_ERROR                                 = 0xe4,
+	HIF_IND_ID_SL_EXCHANGE_PUB_KEYS                  = 0xe5
 };
 
 enum hif_hi_status {
@@ -111,9 +111,9 @@ enum hif_api_rate_index {
 
 
 enum hif_fw_type {
-	HI_FW_TYPE_ETF                             = 0x0,
-	HI_FW_TYPE_WFM                             = 0x1,
-	HI_FW_TYPE_WSM                             = 0x2
+	HIF_FW_TYPE_ETF                             = 0x0,
+	HIF_FW_TYPE_WFM                             = 0x1,
+	HIF_FW_TYPE_WSM                             = 0x2
 };
 
 struct hif_capabilities {
@@ -177,13 +177,13 @@ struct hif_cnf_configuration {
 } __packed;
 
 enum hif_gpio_mode {
-	HI_GPIO_MODE_D0                            = 0x0,
-	HI_GPIO_MODE_D1                            = 0x1,
-	HI_GPIO_MODE_OD0                           = 0x2,
-	HI_GPIO_MODE_OD1                           = 0x3,
-	HI_GPIO_MODE_TRISTATE                      = 0x4,
-	HI_GPIO_MODE_TOGGLE                        = 0x5,
-	HI_GPIO_MODE_READ                          = 0x6
+	HIF_GPIO_MODE_D0                            = 0x0,
+	HIF_GPIO_MODE_D1                            = 0x1,
+	HIF_GPIO_MODE_OD0                           = 0x2,
+	HIF_GPIO_MODE_OD1                           = 0x3,
+	HIF_GPIO_MODE_TRISTATE                      = 0x4,
+	HIF_GPIO_MODE_TOGGLE                        = 0x5,
+	HIF_GPIO_MODE_READ                          = 0x6
 };
 
 struct hif_req_control_gpio {
@@ -192,9 +192,9 @@ struct hif_req_control_gpio {
 } __packed;
 
 enum hif_gpio_error {
-	HI_GPIO_ERROR_0                            = 0x0,
-	HI_GPIO_ERROR_1                            = 0x1,
-	HI_GPIO_ERROR_2                            = 0x2
+	HIF_GPIO_ERROR_0                            = 0x0,
+	HIF_GPIO_ERROR_1                            = 0x1,
+	HIF_GPIO_ERROR_2                            = 0x2
 };
 
 struct hif_cnf_control_gpio {
@@ -203,9 +203,9 @@ struct hif_cnf_control_gpio {
 } __packed;
 
 enum hif_generic_indication_type {
-	HI_GENERIC_INDICATION_TYPE_RAW               = 0x0,
-	HI_GENERIC_INDICATION_TYPE_STRING            = 0x1,
-	HI_GENERIC_INDICATION_TYPE_RX_STATS          = 0x2
+	HIF_GENERIC_INDICATION_TYPE_RAW               = 0x0,
+	HIF_GENERIC_INDICATION_TYPE_STRING            = 0x1,
+	HIF_GENERIC_INDICATION_TYPE_RX_STATS          = 0x2
 };
 
 struct hif_rx_stats {
@@ -235,25 +235,25 @@ struct hif_ind_generic {
 } __packed;
 
 
-#define HI_EXCEPTION_DATA_SIZE            124
+#define HIF_EXCEPTION_DATA_SIZE            124
 
 struct hif_ind_exception {
-	uint8_t    data[HI_EXCEPTION_DATA_SIZE];
+	uint8_t    data[HIF_EXCEPTION_DATA_SIZE];
 } __packed;
 
 
 enum hif_error {
-	WSM_HI_ERROR_FIRMWARE_ROLLBACK             = 0x0,
-	WSM_HI_ERROR_FIRMWARE_DEBUG_ENABLED        = 0x1,
-	WSM_HI_ERROR_OUTDATED_SESSION_KEY          = 0x2,
-	WSM_HI_ERROR_INVALID_SESSION_KEY           = 0x3,
-	WSM_HI_ERROR_OOR_VOLTAGE                   = 0x4,
-	WSM_HI_ERROR_PDS_VERSION                   = 0x5,
-	WSM_HI_ERROR_OOR_TEMPERATURE               = 0x6,
-	WSM_HI_ERROR_REQ_DURING_KEY_EXCHANGE       = 0x7,
-	WSM_HI_ERROR_MULTI_TX_CNF_SECURELINK       = 0x8,
-	WSM_HI_ERROR_SECURELINK_OVERFLOW           = 0x9,
-	WSM_HI_ERROR_SECURELINK_DECRYPTION         = 0xa
+	HIF_ERROR_FIRMWARE_ROLLBACK             = 0x0,
+	HIF_ERROR_FIRMWARE_DEBUG_ENABLED        = 0x1,
+	HIF_ERROR_OUTDATED_SESSION_KEY          = 0x2,
+	HIF_ERROR_INVALID_SESSION_KEY           = 0x3,
+	HIF_ERROR_OOR_VOLTAGE                   = 0x4,
+	HIF_ERROR_PDS_VERSION                   = 0x5,
+	HIF_ERROR_OOR_TEMPERATURE               = 0x6,
+	HIF_ERROR_REQ_DURING_KEY_EXCHANGE       = 0x7,
+	HIF_ERROR_MULTI_TX_CNF_SECURELINK       = 0x8,
+	HIF_ERROR_SECURELINK_OVERFLOW           = 0x9,
+	HIF_ERROR_SECURELINK_DECRYPTION         = 0xa
 };
 
 struct hif_ind_error {
@@ -312,8 +312,8 @@ struct hif_cnf_set_sl_mac_key {
 #define API_HOST_PUB_KEY_MAC_SIZE                       64
 
 enum hif_sl_session_key_alg {
-	HI_SL_CURVE25519                                = 0x01,
-	HI_SL_KDF                                       = 0x02
+	HIF_SL_CURVE25519                                = 0x01,
+	HIF_SL_KDF                                       = 0x02
 };
 
 struct hif_req_sl_exchange_pub_keys {
@@ -406,11 +406,11 @@ struct hif_cnf_pta_settings {
 } __packed;
 
 enum hif_pta_priority {
-	HI_PTA_PRIORITY_COEX_MAXIMIZED = 0x00000562,
-	HI_PTA_PRIORITY_COEX_HIGH      = 0x00000462,
-	HI_PTA_PRIORITY_BALANCED       = 0x00001461,
-	HI_PTA_PRIORITY_WLAN_HIGH      = 0x00001851,
-	HI_PTA_PRIORITY_WLAN_MAXIMIZED = 0x00001A51
+	HIF_PTA_PRIORITY_COEX_MAXIMIZED = 0x00000562,
+	HIF_PTA_PRIORITY_COEX_HIGH      = 0x00000462,
+	HIF_PTA_PRIORITY_BALANCED       = 0x00001461,
+	HIF_PTA_PRIORITY_WLAN_HIGH      = 0x00001851,
+	HIF_PTA_PRIORITY_WLAN_MAXIMIZED = 0x00001A51
 };
 
 struct hif_req_pta_priority {

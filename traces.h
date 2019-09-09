@@ -95,19 +95,19 @@
 #undef hif_ind_name
 #undef ghif_cnf_name
 #undef ghif_ind_name
-#define hif_cnf_name(msg) TRACE_DEFINE_ENUM(WSM_HI_##msg##_CNF_ID);
-#define hif_ind_name(msg) TRACE_DEFINE_ENUM(WSM_HI_##msg##_IND_ID);
-#define ghif_cnf_name(msg) TRACE_DEFINE_ENUM(HI_##msg##_CNF_ID);
-#define ghif_ind_name(msg) TRACE_DEFINE_ENUM(HI_##msg##_IND_ID);
+#define hif_cnf_name(msg) TRACE_DEFINE_ENUM(HIF_CNF_ID_##msg);
+#define hif_ind_name(msg) TRACE_DEFINE_ENUM(HIF_IND_ID_##msg);
+#define ghif_cnf_name(msg) TRACE_DEFINE_ENUM(HIF_CNF_ID_##msg);
+#define ghif_ind_name(msg) TRACE_DEFINE_ENUM(HIF_IND_ID_##msg);
 hif_msg_list_enum
 #undef hif_cnf_name
 #undef hif_ind_name
 #undef ghif_cnf_name
 #undef ghif_ind_name
-#define hif_cnf_name(msg) { WSM_HI_##msg##_CNF_ID, #msg },
-#define hif_ind_name(msg) { WSM_HI_##msg##_IND_ID, #msg },
-#define ghif_cnf_name(msg) { HI_##msg##_CNF_ID, #msg },
-#define ghif_ind_name(msg) { HI_##msg##_IND_ID, #msg },
+#define hif_cnf_name(msg) { HIF_CNF_ID_##msg, #msg },
+#define hif_ind_name(msg) { HIF_IND_ID_##msg, #msg },
+#define ghif_cnf_name(msg) { HIF_CNF_ID_##msg, #msg },
+#define ghif_ind_name(msg) { HIF_IND_ID_##msg, #msg },
 #define hif_msg_list hif_msg_list_enum { -1, NULL }
 
 #define _hif_mib_list                                \
@@ -157,10 +157,10 @@ hif_msg_list_enum
 #define hif_mib_list_enum _hif_mib_list
 
 #undef hif_mib_name
-#define hif_mib_name(mib) TRACE_DEFINE_ENUM(WSM_MIB_ID_##mib);
+#define hif_mib_name(mib) TRACE_DEFINE_ENUM(HIF_MIB_ID_##mib);
 hif_mib_list_enum
 #undef hif_mib_name
-#define hif_mib_name(mib) { WSM_MIB_ID_##mib, #mib },
+#define hif_mib_name(mib) { HIF_MIB_ID_##mib, #mib },
 #define hif_mib_list hif_mib_list_enum { -1, NULL }
 
 DECLARE_EVENT_CLASS(hif_data,
@@ -188,7 +188,7 @@ DECLARE_EVENT_CLASS(hif_data,
 		else
 			__entry->msg_type = "REQ";
 		if (!is_recv &&
-		    (__entry->msg_id == WSM_HI_READ_MIB_REQ_ID || __entry->msg_id == WSM_HI_WRITE_MIB_REQ_ID)) {
+		    (__entry->msg_id == HIF_REQ_ID_READ_MIB || __entry->msg_id == HIF_REQ_ID_WRITE_MIB)) {
 			__entry->mib = le16_to_cpup((u16 *) hif->body);
 			header_len = 4;
 		} else {
@@ -382,7 +382,7 @@ TRACE_EVENT(tx_stats,
 			__entry->flags |= 0x10;
 		if (tx_cnf->status)
 			__entry->flags |= 0x20;
-		if (tx_cnf->status == WSM_REQUEUE)
+		if (tx_cnf->status == HIF_REQUEUE)
 			__entry->flags |= 0x40;
 	),
 	TP_printk("packet ID: %08x, rate policy: %s %d|%d %d|%d %d|%d %d|%d -> %d attempt, Delays media/queue/total: %4dus/%4dus/%4dus",

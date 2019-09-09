@@ -50,7 +50,7 @@ static int hif_generic_confirm(struct wfx_dev *wdev, struct hif_msg *hif, void *
 	} else {
 		wdev->hif_ctxt.buf_send = NULL;
 		mutex_unlock(&wdev->hif_ctxt.lock);
-		if (cmd != HI_SL_EXCHANGE_PUB_KEYS_REQ_ID)
+		if (cmd != HIF_REQ_ID_SL_EXCHANGE_PUB_KEYS)
 			mutex_unlock(&wdev->hif_ctxt.key_renew_lock);
 	}
 	return status;
@@ -221,22 +221,22 @@ static int hif_error_indication(struct wfx_dev *wdev, struct hif_msg *hif, void 
 	u32 *pStatus = (u32 *) body->data;
 
 	switch (body->type) {
-	case WSM_HI_ERROR_FIRMWARE_ROLLBACK:
+	case HIF_ERROR_FIRMWARE_ROLLBACK:
 		dev_err(wdev->dev, "asynchronous error: firmware rollback error %d\n", *pRollback);
 		break;
-	case WSM_HI_ERROR_FIRMWARE_DEBUG_ENABLED:
+	case HIF_ERROR_FIRMWARE_DEBUG_ENABLED:
 		dev_err(wdev->dev, "asynchronous error: firmware debug feature enabled\n");
 		break;
-	case WSM_HI_ERROR_OUTDATED_SESSION_KEY:
+	case HIF_ERROR_OUTDATED_SESSION_KEY:
 		dev_err(wdev->dev, "asynchronous error: secure link outdated key: %#.8x\n", *pStatus);
 		break;
-	case WSM_HI_ERROR_INVALID_SESSION_KEY:
+	case HIF_ERROR_INVALID_SESSION_KEY:
 		dev_err(wdev->dev, "asynchronous error: invalid session key\n");
 		break;
-	case WSM_HI_ERROR_OOR_VOLTAGE:
+	case HIF_ERROR_OOR_VOLTAGE:
 		dev_err(wdev->dev, "asynchronous error: out-of-range overvoltage: %#.8x\n", *pStatus);
 		break;
-	case WSM_HI_ERROR_PDS_VERSION:
+	case HIF_ERROR_PDS_VERSION:
 		dev_err(wdev->dev, "asynchronous error: wrong PDS payload or version: %#.8x\n", *pStatus);
 		break;
 	default:
@@ -251,12 +251,12 @@ static int hif_generic_indication(struct wfx_dev *wdev, struct hif_msg *hif, voi
 	struct hif_ind_generic *body = buf;
 
 	switch (body->indication_type) {
-	case HI_GENERIC_INDICATION_TYPE_RAW:
+	case HIF_GENERIC_INDICATION_TYPE_RAW:
 		return 0;
-	case HI_GENERIC_INDICATION_TYPE_STRING:
+	case HIF_GENERIC_INDICATION_TYPE_STRING:
 		dev_info(wdev->dev, "firmware says: %s", (char *) body->indication_data.raw_data);
 		return 0;
-	case HI_GENERIC_INDICATION_TYPE_RX_STATS:
+	case HIF_GENERIC_INDICATION_TYPE_RX_STATS:
 		mutex_lock(&wdev->rx_stats_lock);
 		// Older firmware send a generic indication beside RxStats
 		if (!wfx_api_older_than(wdev, 1, 4))
@@ -285,22 +285,22 @@ static const struct {
 	int (*handler)(struct wfx_dev *wdev, struct hif_msg *hif, void *buf);
 } hif_handlers[] = {
 	/* Confirmations */
-	{ WSM_HI_TX_CNF_ID,              hif_tx_confirm },
-	{ WSM_HI_MULTI_TRANSMIT_CNF_ID,  hif_multi_tx_confirm },
+	{ HIF_CNF_ID_TX,              hif_tx_confirm },
+	{ HIF_CNF_ID_MULTI_TRANSMIT,  hif_multi_tx_confirm },
 	/* Indications */
-	{ WSM_HI_EVENT_IND_ID,           hif_event_indication },
-	{ WSM_HI_SET_PM_MODE_CMPL_IND_ID, hif_pm_mode_complete_indication },
-	{ WSM_HI_JOIN_COMPLETE_IND_ID,   hif_join_complete_indication },
-	{ WSM_HI_SCAN_CMPL_IND_ID,       hif_scan_complete_indication },
-	{ WSM_HI_SUSPEND_RESUME_TX_IND_ID, hif_suspend_resume_indication },
-	{ HI_ERROR_IND_ID,               hif_error_indication },
-	{ HI_STARTUP_IND_ID,             hif_startup_indication },
-	{ HI_WAKEUP_IND_ID,              hif_wakeup_indication },
-	{ HI_GENERIC_IND_ID,             hif_generic_indication },
-	{ HI_EXCEPTION_IND_ID,           hif_exception_indication },
-	{ HI_SL_EXCHANGE_PUB_KEYS_IND_ID, hif_keys_indication },
+	{ HIF_IND_ID_EVENT,           hif_event_indication },
+	{ HIF_IND_ID_SET_PM_MODE_CMPL, hif_pm_mode_complete_indication },
+	{ HIF_IND_ID_JOIN_COMPLETE,   hif_join_complete_indication },
+	{ HIF_IND_ID_SCAN_CMPL,       hif_scan_complete_indication },
+	{ HIF_IND_ID_SUSPEND_RESUME_TX, hif_suspend_resume_indication },
+	{ HIF_IND_ID_ERROR,               hif_error_indication },
+	{ HIF_IND_ID_STARTUP,             hif_startup_indication },
+	{ HIF_IND_ID_WAKEUP,              hif_wakeup_indication },
+	{ HIF_IND_ID_GENERIC,             hif_generic_indication },
+	{ HIF_IND_ID_EXCEPTION,           hif_exception_indication },
+	{ HIF_IND_ID_SL_EXCHANGE_PUB_KEYS, hif_keys_indication },
 	// FIXME: allocate skb_p from hif_receive_indication and make it generic
-	//{ WSM_HI_RX_IND_ID,            hif_receive_indication },
+	//{ HIF_IND_ID_RX,            hif_receive_indication },
 };
 
 void hif_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
@@ -309,7 +309,7 @@ void hif_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
 	struct hif_msg *hif = (struct hif_msg *) skb->data;
 	int hif_id = hif->id;
 
-	if (hif_id == WSM_HI_RX_IND_ID) {
+	if (hif_id == HIF_IND_ID_RX) {
 		// hif_receive_indication take care of skb lifetime
 		hif_receive_indication(wdev, hif, hif->body, skb);
 		return;

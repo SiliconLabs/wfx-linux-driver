@@ -38,7 +38,7 @@ static uint8_t fill_wep_pair(struct hif_wep_pairwise_key *msg,
 	msg->key_length = key->keylen;
 	memcpy(msg->key_data, key->key, key->keylen);
 	ether_addr_copy(msg->peer_address, peer_addr);
-	return WSM_KEY_TYPE_WEP_PAIRWISE;
+	return HIF_KEY_TYPE_WEP_PAIRWISE;
 }
 
 static uint8_t fill_wep_group(struct hif_wep_group_key *msg,
@@ -48,7 +48,7 @@ static uint8_t fill_wep_group(struct hif_wep_group_key *msg,
 	msg->key_id = key->keyidx;
 	msg->key_length = key->keylen;
 	memcpy(msg->key_data, key->key, key->keylen);
-	return WSM_KEY_TYPE_WEP_DEFAULT;
+	return HIF_KEY_TYPE_WEP_DEFAULT;
 }
 
 static uint8_t fill_tkip_pair(struct hif_tkip_pairwise_key *msg,
@@ -65,7 +65,7 @@ static uint8_t fill_tkip_pair(struct hif_tkip_pairwise_key *msg,
 	keybuf += sizeof(msg->tx_mic_key);
 	memcpy(msg->rx_mic_key, keybuf, sizeof(msg->rx_mic_key));
 	ether_addr_copy(msg->peer_address, peer_addr);
-	return WSM_KEY_TYPE_TKIP_PAIRWISE;
+	return HIF_KEY_TYPE_TKIP_PAIRWISE;
 }
 
 static uint8_t fill_tkip_group(struct hif_tkip_group_key *msg,
@@ -88,7 +88,7 @@ static uint8_t fill_tkip_group(struct hif_tkip_group_key *msg,
 	else
 		// Use Rx MIC Key
 		memcpy(msg->rx_mic_key, keybuf + 8, sizeof(msg->rx_mic_key));
-	return WSM_KEY_TYPE_TKIP_GROUP;
+	return HIF_KEY_TYPE_TKIP_GROUP;
 }
 
 static uint8_t fill_ccmp_pair(struct hif_aes_pairwise_key *msg,
@@ -97,7 +97,7 @@ static uint8_t fill_ccmp_pair(struct hif_aes_pairwise_key *msg,
 	WARN_ON(key->keylen != sizeof(msg->aes_key_data));
 	ether_addr_copy(msg->peer_address, peer_addr);
 	memcpy(msg->aes_key_data, key->key, key->keylen);
-	return WSM_KEY_TYPE_AES_PAIRWISE;
+	return HIF_KEY_TYPE_AES_PAIRWISE;
 }
 
 static uint8_t fill_ccmp_group(struct hif_aes_group_key *msg,
@@ -109,7 +109,7 @@ static uint8_t fill_ccmp_group(struct hif_aes_group_key *msg,
 	memcpy(msg->rx_sequence_counter, seq->ccmp.pn, sizeof(seq->ccmp.pn));
 	memreverse(msg->rx_sequence_counter, sizeof(seq->ccmp.pn));
 	msg->key_id = key->keyidx;
-	return WSM_KEY_TYPE_AES_GROUP;
+	return HIF_KEY_TYPE_AES_GROUP;
 }
 
 static uint8_t fill_sms4_pair(struct hif_wapi_pairwise_key *msg,
@@ -124,7 +124,7 @@ static uint8_t fill_sms4_pair(struct hif_wapi_pairwise_key *msg,
 	keybuf += sizeof(msg->wapi_key_data);
 	memcpy(msg->mic_key_data, keybuf, sizeof(msg->mic_key_data));
 	msg->key_id = key->keyidx;
-	return WSM_KEY_TYPE_WAPI_PAIRWISE;
+	return HIF_KEY_TYPE_WAPI_PAIRWISE;
 }
 
 static uint8_t fill_sms4_group(struct hif_wapi_group_key *msg,
@@ -138,7 +138,7 @@ static uint8_t fill_sms4_group(struct hif_wapi_group_key *msg,
 	keybuf += sizeof(msg->wapi_key_data);
 	memcpy(msg->mic_key_data, keybuf, sizeof(msg->mic_key_data));
 	msg->key_id = key->keyidx;
-	return WSM_KEY_TYPE_WAPI_GROUP;
+	return HIF_KEY_TYPE_WAPI_GROUP;
 }
 
 static uint8_t fill_aes_cmac_group(struct hif_igtk_group_key *msg,
@@ -150,7 +150,7 @@ static uint8_t fill_aes_cmac_group(struct hif_igtk_group_key *msg,
 	memcpy(msg->ipn, seq->aes_cmac.pn, sizeof(seq->aes_cmac.pn));
 	memreverse(msg->ipn, sizeof(seq->aes_cmac.pn));
 	msg->key_id = key->keyidx;
-	return WSM_KEY_TYPE_IGTK_GROUP;
+	return HIF_KEY_TYPE_IGTK_GROUP;
 }
 
 static int wfx_add_key(struct wfx_vif *wvif, struct ieee80211_sta *sta,
@@ -201,7 +201,7 @@ static int wfx_add_key(struct wfx_vif *wvif, struct ieee80211_sta *sta,
 #if KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE && \
     KERNEL_VERSION(4, 9, 63) > LINUX_VERSION_CODE && \
     KERNEL_VERSION(4, 4, 99) > LINUX_VERSION_CODE
-		if (ret == HI_INVALID_PARAMETER) {
+		if (ret == HIF_INVALID_PARAMETER) {
 			// Use a patched kernel in order to solve this error
 			dev_warn(wdev->dev, "chip prevents re-installation of same key\n");
 			dev_warn(wdev->dev, "your kernel is not patched to protect against KRACK attack\n");

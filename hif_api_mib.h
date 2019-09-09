@@ -10,65 +10,65 @@
 
 #include "hif_api_general.h"
 
-#define WSM_API_IPV4_ADDRESS_SIZE                       4
-#define WSM_API_IPV6_ADDRESS_SIZE                       16
+#define HIF_API_IPV4_ADDRESS_SIZE                       4
+#define HIF_API_IPV6_ADDRESS_SIZE                       16
 
 enum hif_mib_ids {
-	WSM_MIB_ID_GL_OPERATIONAL_POWER_MODE       = 0x2000,
-	WSM_MIB_ID_GL_BLOCK_ACK_INFO               = 0x2001,
-	WSM_MIB_ID_GL_SET_MULTI_MSG                = 0x2002,
-	WSM_MIB_ID_CCA_CONFIG                      = 0x2003,
-	WSM_MIB_ID_ETHERTYPE_DATAFRAME_CONDITION   = 0x2010,
-	WSM_MIB_ID_PORT_DATAFRAME_CONDITION        = 0x2011,
-	WSM_MIB_ID_MAGIC_DATAFRAME_CONDITION       = 0x2012,
-	WSM_MIB_ID_MAC_ADDR_DATAFRAME_CONDITION    = 0x2013,
-	WSM_MIB_ID_IPV4_ADDR_DATAFRAME_CONDITION   = 0x2014,
-	WSM_MIB_ID_IPV6_ADDR_DATAFRAME_CONDITION   = 0x2015,
-	WSM_MIB_ID_UC_MC_BC_DATAFRAME_CONDITION    = 0x2016,
-	WSM_MIB_ID_CONFIG_DATA_FILTER              = 0x2017,
-	WSM_MIB_ID_SET_DATA_FILTERING              = 0x2018,
-	WSM_MIB_ID_ARP_IP_ADDRESSES_TABLE          = 0x2019,
-	WSM_MIB_ID_NS_IP_ADDRESSES_TABLE           = 0x201A,
-	WSM_MIB_ID_RX_FILTER                       = 0x201B,
-	WSM_MIB_ID_BEACON_FILTER_TABLE             = 0x201C,
-	WSM_MIB_ID_BEACON_FILTER_ENABLE            = 0x201D,
-	WSM_MIB_ID_GRP_SEQ_COUNTER                 = 0x2030,
-	WSM_MIB_ID_TSF_COUNTER                     = 0x2031,
-	WSM_MIB_ID_STATISTICS_TABLE                = 0x2032,
-	WSM_MIB_ID_COUNTERS_TABLE                  = 0x2033,
-	WSM_MIB_ID_MAX_TX_POWER_LEVEL              = 0x2034,
-	WSM_MIB_ID_EXTENDED_COUNTERS_TABLE         = 0x2035,
-	WSM_MIB_ID_DOT11_MAC_ADDRESS               = 0x2040,
-	WSM_MIB_ID_DOT11_MAX_TRANSMIT_MSDU_LIFETIME = 0x2041,
-	WSM_MIB_ID_DOT11_MAX_RECEIVE_LIFETIME      = 0x2042,
-	WSM_MIB_ID_DOT11_WEP_DEFAULT_KEY_ID        = 0x2043,
-	WSM_MIB_ID_DOT11_RTS_THRESHOLD             = 0x2044,
-	WSM_MIB_ID_SLOT_TIME                       = 0x2045,
-	WSM_MIB_ID_CURRENT_TX_POWER_LEVEL          = 0x2046,
-	WSM_MIB_ID_NON_ERP_PROTECTION              = 0x2047,
-	WSM_MIB_ID_TEMPLATE_FRAME                  = 0x2048,
-	WSM_MIB_ID_BEACON_WAKEUP_PERIOD            = 0x2049,
-	WSM_MIB_ID_RCPI_RSSI_THRESHOLD             = 0x204A,
-	WSM_MIB_ID_BLOCK_ACK_POLICY                = 0x204B,
-	WSM_MIB_ID_OVERRIDE_INTERNAL_TX_RATE       = 0x204C,
-	WSM_MIB_ID_SET_ASSOCIATION_MODE            = 0x204D,
-	WSM_MIB_ID_SET_UAPSD_INFORMATION           = 0x204E,
-	WSM_MIB_ID_SET_TX_RATE_RETRY_POLICY        = 0x204F,
-	WSM_MIB_ID_PROTECTED_MGMT_POLICY           = 0x2050,
-	WSM_MIB_ID_SET_HT_PROTECTION               = 0x2051,
-	WSM_MIB_ID_KEEP_ALIVE_PERIOD               = 0x2052,
-	WSM_MIB_ID_ARP_KEEP_ALIVE_PERIOD           = 0x2053,
-	WSM_MIB_ID_INACTIVITY_TIMER                = 0x2054,
-	WSM_MIB_ID_INTERFACE_PROTECTION            = 0x2055,
-	WSM_MIB_ID_BEACON_STATS                    = 0x2056,
+	HIF_MIB_ID_GL_OPERATIONAL_POWER_MODE       = 0x2000,
+	HIF_MIB_ID_GL_BLOCK_ACK_INFO               = 0x2001,
+	HIF_MIB_ID_GL_SET_MULTI_MSG                = 0x2002,
+	HIF_MIB_ID_CCA_CONFIG                      = 0x2003,
+	HIF_MIB_ID_ETHERTYPE_DATAFRAME_CONDITION   = 0x2010,
+	HIF_MIB_ID_PORT_DATAFRAME_CONDITION        = 0x2011,
+	HIF_MIB_ID_MAGIC_DATAFRAME_CONDITION       = 0x2012,
+	HIF_MIB_ID_MAC_ADDR_DATAFRAME_CONDITION    = 0x2013,
+	HIF_MIB_ID_IPV4_ADDR_DATAFRAME_CONDITION   = 0x2014,
+	HIF_MIB_ID_IPV6_ADDR_DATAFRAME_CONDITION   = 0x2015,
+	HIF_MIB_ID_UC_MC_BC_DATAFRAME_CONDITION    = 0x2016,
+	HIF_MIB_ID_CONFIG_DATA_FILTER              = 0x2017,
+	HIF_MIB_ID_SET_DATA_FILTERING              = 0x2018,
+	HIF_MIB_ID_ARP_IP_ADDRESSES_TABLE          = 0x2019,
+	HIF_MIB_ID_NS_IP_ADDRESSES_TABLE           = 0x201A,
+	HIF_MIB_ID_RX_FILTER                       = 0x201B,
+	HIF_MIB_ID_BEACON_FILTER_TABLE             = 0x201C,
+	HIF_MIB_ID_BEACON_FILTER_ENABLE            = 0x201D,
+	HIF_MIB_ID_GRP_SEQ_COUNTER                 = 0x2030,
+	HIF_MIB_ID_TSF_COUNTER                     = 0x2031,
+	HIF_MIB_ID_STATISTICS_TABLE                = 0x2032,
+	HIF_MIB_ID_COUNTERS_TABLE                  = 0x2033,
+	HIF_MIB_ID_MAX_TX_POWER_LEVEL              = 0x2034,
+	HIF_MIB_ID_EXTENDED_COUNTERS_TABLE         = 0x2035,
+	HIF_MIB_ID_DOT11_MAC_ADDRESS               = 0x2040,
+	HIF_MIB_ID_DOT11_MAX_TRANSMIT_MSDU_LIFETIME = 0x2041,
+	HIF_MIB_ID_DOT11_MAX_RECEIVE_LIFETIME      = 0x2042,
+	HIF_MIB_ID_DOT11_WEP_DEFAULT_KEY_ID        = 0x2043,
+	HIF_MIB_ID_DOT11_RTS_THRESHOLD             = 0x2044,
+	HIF_MIB_ID_SLOT_TIME                       = 0x2045,
+	HIF_MIB_ID_CURRENT_TX_POWER_LEVEL          = 0x2046,
+	HIF_MIB_ID_NON_ERP_PROTECTION              = 0x2047,
+	HIF_MIB_ID_TEMPLATE_FRAME                  = 0x2048,
+	HIF_MIB_ID_BEACON_WAKEUP_PERIOD            = 0x2049,
+	HIF_MIB_ID_RCPI_RSSI_THRESHOLD             = 0x204A,
+	HIF_MIB_ID_BLOCK_ACK_POLICY                = 0x204B,
+	HIF_MIB_ID_OVERRIDE_INTERNAL_TX_RATE       = 0x204C,
+	HIF_MIB_ID_SET_ASSOCIATION_MODE            = 0x204D,
+	HIF_MIB_ID_SET_UAPSD_INFORMATION           = 0x204E,
+	HIF_MIB_ID_SET_TX_RATE_RETRY_POLICY        = 0x204F,
+	HIF_MIB_ID_PROTECTED_MGMT_POLICY           = 0x2050,
+	HIF_MIB_ID_SET_HT_PROTECTION               = 0x2051,
+	HIF_MIB_ID_KEEP_ALIVE_PERIOD               = 0x2052,
+	HIF_MIB_ID_ARP_KEEP_ALIVE_PERIOD           = 0x2053,
+	HIF_MIB_ID_INACTIVITY_TIMER                = 0x2054,
+	HIF_MIB_ID_INTERFACE_PROTECTION            = 0x2055,
+	HIF_MIB_ID_BEACON_STATS                    = 0x2056,
 };
 
-#define WSM_OP_POWER_MODE_MASK                     0xf
+#define HIF_OP_POWER_MODE_MASK                     0xf
 
 enum hif_op_power_mode {
-	WSM_OP_POWER_MODE_ACTIVE                   = 0x0,
-	WSM_OP_POWER_MODE_DOZE                     = 0x1,
-	WSM_OP_POWER_MODE_QUIESCENT                = 0x2
+	HIF_OP_POWER_MODE_ACTIVE                   = 0x0,
+	HIF_OP_POWER_MODE_DOZE                     = 0x1,
+	HIF_OP_POWER_MODE_QUIESCENT                = 0x2
 };
 
 struct hif_mib_gl_operational_power_mode {
@@ -92,8 +92,8 @@ struct hif_mib_gl_set_multi_msg {
 } __packed;
 
 enum hif_cca_thr_mode {
-	WSM_CCA_THR_MODE_RELATIVE = 0x0,
-	WSM_CCA_THR_MODE_ABSOLUTE = 0x1
+	HIF_CCA_THR_MODE_RELATIVE = 0x0,
+	HIF_CCA_THR_MODE_ABSOLUTE = 0x1
 };
 
 struct hif_mib_gl_cca_config {
@@ -120,15 +120,15 @@ struct hif_mib_ethertype_data_frame_condition {
 } __packed;
 
 enum hif_udp_tcp_protocol {
-	WSM_PROTOCOL_UDP                       = 0x0,
-	WSM_PROTOCOL_TCP                       = 0x1,
-	WSM_PROTOCOL_BOTH_UDP_TCP              = 0x2
+	HIF_PROTOCOL_UDP                       = 0x0,
+	HIF_PROTOCOL_TCP                       = 0x1,
+	HIF_PROTOCOL_BOTH_UDP_TCP              = 0x2
 };
 
 enum hif_which_port {
-	WSM_PORT_DST                           = 0x0,
-	WSM_PORT_SRC                           = 0x1,
-	WSM_PORT_SRC_OR_DST                    = 0x2
+	HIF_PORT_DST                           = 0x0,
+	HIF_PORT_SRC                           = 0x1,
+	HIF_PORT_SRC_OR_DST                    = 0x2
 };
 
 struct hif_mib_ports_data_frame_condition {
@@ -140,20 +140,20 @@ struct hif_mib_ports_data_frame_condition {
 	uint8_t    reserved2[2];
 } __packed;
 
-#define WSM_API_MAGIC_PATTERN_SIZE                 32
+#define HIF_API_MAGIC_PATTERN_SIZE                 32
 
 struct hif_mib_magic_data_frame_condition {
 	uint8_t    condition_idx;
 	uint8_t    offset;
 	uint8_t    magic_pattern_length;
 	uint8_t    reserved;
-	uint8_t    magic_pattern[WSM_API_MAGIC_PATTERN_SIZE];
+	uint8_t    magic_pattern[HIF_API_MAGIC_PATTERN_SIZE];
 } __packed;
 
 enum hif_mac_addr_type {
-	WSM_MAC_ADDR_A1                            = 0x0,
-	WSM_MAC_ADDR_A2                            = 0x1,
-	WSM_MAC_ADDR_A3                            = 0x2
+	HIF_MAC_ADDR_A1                            = 0x0,
+	HIF_MAC_ADDR_A2                            = 0x1,
+	HIF_MAC_ADDR_A3                            = 0x2
 };
 
 struct hif_mib_mac_addr_data_frame_condition {
@@ -163,22 +163,22 @@ struct hif_mib_mac_addr_data_frame_condition {
 } __packed;
 
 enum hif_ip_addr_mode {
-	WSM_IP_ADDR_SRC                            = 0x0,
-	WSM_IP_ADDR_DST                            = 0x1
+	HIF_IP_ADDR_SRC                            = 0x0,
+	HIF_IP_ADDR_DST                            = 0x1
 };
 
 struct hif_mib_ipv4_addr_data_frame_condition {
 	uint8_t    condition_idx;
 	uint8_t    address_mode;
 	uint8_t    reserved[2];
-	uint8_t    i_pv4_address[WSM_API_IPV4_ADDRESS_SIZE];
+	uint8_t    i_pv4_address[HIF_API_IPV4_ADDRESS_SIZE];
 } __packed;
 
 struct hif_mib_ipv6_addr_data_frame_condition {
 	uint8_t    condition_idx;
 	uint8_t    address_mode;
 	uint8_t    reserved[2];
-	uint8_t    i_pv6_address[WSM_API_IPV6_ADDRESS_SIZE];
+	uint8_t    i_pv6_address[HIF_API_IPV6_ADDRESS_SIZE];
 } __packed;
 
 union hif_addr_type {
@@ -218,23 +218,23 @@ struct hif_mib_set_data_filtering {
 } __packed;
 
 enum hif_arp_ns_frame_treatment {
-	WSM_ARP_NS_FILTERING_DISABLE                  = 0x0,
-	WSM_ARP_NS_FILTERING_ENABLE                   = 0x1,
-	WSM_ARP_NS_REPLY_ENABLE                       = 0x2
+	HIF_ARP_NS_FILTERING_DISABLE                  = 0x0,
+	HIF_ARP_NS_FILTERING_ENABLE                   = 0x1,
+	HIF_ARP_NS_REPLY_ENABLE                       = 0x2
 };
 
 struct hif_mib_arp_ip_addr_table {
 	uint8_t    condition_idx;
 	uint8_t    arp_enable;
 	uint8_t    reserved[2];
-	uint8_t    ipv4_address[WSM_API_IPV4_ADDRESS_SIZE];
+	uint8_t    ipv4_address[HIF_API_IPV4_ADDRESS_SIZE];
 } __packed;
 
 struct hif_mib_ns_ip_addr_table {
 	uint8_t    condition_idx;
 	uint8_t    ns_enable;
 	uint8_t    reserved[2];
-	uint8_t    ipv6_address[WSM_API_IPV6_ADDRESS_SIZE];
+	uint8_t    ipv6_address[HIF_API_IPV6_ADDRESS_SIZE];
 } __packed;
 
 struct hif_mib_rx_filter {
@@ -247,8 +247,8 @@ struct hif_mib_rx_filter {
 	uint8_t    reserved4[3];
 } __packed;
 
-#define WSM_API_OUI_SIZE                                3
-#define WSM_API_MATCH_DATA_SIZE                         3
+#define HIF_API_OUI_SIZE                                3
+#define HIF_API_MATCH_DATA_SIZE                         3
 
 struct hif_ie_table_entry {
 	uint8_t    ie_id;
@@ -257,8 +257,8 @@ struct hif_ie_table_entry {
 	uint8_t    has_appeared:1;
 	uint8_t    reserved:1;
 	uint8_t    num_match_data:4;
-	uint8_t    oui[WSM_API_OUI_SIZE];
-	uint8_t    match_data[WSM_API_MATCH_DATA_SIZE];
+	uint8_t    oui[HIF_API_OUI_SIZE];
+	uint8_t    match_data[HIF_API_MATCH_DATA_SIZE];
 } __packed;
 
 struct hif_mib_bcn_filter_table {
@@ -267,9 +267,9 @@ struct hif_mib_bcn_filter_table {
 } __packed;
 
 enum hif_beacon_filter {
-	WSM_BEACON_FILTER_DISABLE                  = 0x0,
-	WSM_BEACON_FILTER_ENABLE                   = 0x1,
-	WSM_BEACON_FILTER_AUTO_ERP                 = 0x2
+	HIF_BEACON_FILTER_DISABLE                  = 0x0,
+	HIF_BEACON_FILTER_ENABLE                   = 0x1,
+	HIF_BEACON_FILTER_AUTO_ERP                 = 0x2
 };
 
 struct hif_mib_bcn_filter_enable {
@@ -396,29 +396,29 @@ struct hif_mib_non_erp_protection {
 } __packed;
 
 enum hif_tx_mode {
-	WSM_TX_MODE_MIXED                        = 0x0,
-	WSM_TX_MODE_GREENFIELD                   = 0x1
+	HIF_TX_MODE_MIXED                        = 0x0,
+	HIF_TX_MODE_GREENFIELD                   = 0x1
 };
 
 enum hif_tmplt {
-	WSM_TMPLT_PRBREQ                           = 0x0,
-	WSM_TMPLT_BCN                              = 0x1,
-	WSM_TMPLT_NULL                             = 0x2,
-	WSM_TMPLT_QOSNUL                           = 0x3,
-	WSM_TMPLT_PSPOLL                           = 0x4,
-	WSM_TMPLT_PRBRES                           = 0x5,
-	WSM_TMPLT_ARP                              = 0x6,
-	WSM_TMPLT_NA                               = 0x7
+	HIF_TMPLT_PRBREQ                           = 0x0,
+	HIF_TMPLT_BCN                              = 0x1,
+	HIF_TMPLT_NULL                             = 0x2,
+	HIF_TMPLT_QOSNUL                           = 0x3,
+	HIF_TMPLT_PSPOLL                           = 0x4,
+	HIF_TMPLT_PRBRES                           = 0x5,
+	HIF_TMPLT_ARP                              = 0x6,
+	HIF_TMPLT_NA                               = 0x7
 };
 
-#define WSM_API_MAX_TEMPLATE_FRAME_SIZE                              700
+#define HIF_API_MAX_TEMPLATE_FRAME_SIZE                              700
 
 struct hif_mib_template_frame {
 	uint8_t    frame_type;
 	uint8_t    init_rate:7;
 	uint8_t    mode:1;
 	uint16_t   frame_length;
-	uint8_t    frame[WSM_API_MAX_TEMPLATE_FRAME_SIZE];
+	uint8_t    frame[HIF_API_MAX_TEMPLATE_FRAME_SIZE];
 } __packed;
 
 struct hif_mib_beacon_wake_up_period {
@@ -456,14 +456,14 @@ struct hif_mib_override_int_rate {
 } __packed;
 
 enum hif_mpdu_start_spacing {
-	WSM_MPDU_START_SPACING_NO_RESTRIC          = 0x0,
-	WSM_MPDU_START_SPACING_QUARTER             = 0x1,
-	WSM_MPDU_START_SPACING_HALF                = 0x2,
-	WSM_MPDU_START_SPACING_ONE                 = 0x3,
-	WSM_MPDU_START_SPACING_TWO                 = 0x4,
-	WSM_MPDU_START_SPACING_FOUR                = 0x5,
-	WSM_MPDU_START_SPACING_EIGHT               = 0x6,
-	WSM_MPDU_START_SPACING_SIXTEEN             = 0x7
+	HIF_MPDU_START_SPACING_NO_RESTRIC          = 0x0,
+	HIF_MPDU_START_SPACING_QUARTER             = 0x1,
+	HIF_MPDU_START_SPACING_HALF                = 0x2,
+	HIF_MPDU_START_SPACING_ONE                 = 0x3,
+	HIF_MPDU_START_SPACING_TWO                 = 0x4,
+	HIF_MPDU_START_SPACING_FOUR                = 0x5,
+	HIF_MPDU_START_SPACING_EIGHT               = 0x6,
+	HIF_MPDU_START_SPACING_SIXTEEN             = 0x7
 };
 
 struct hif_mib_set_association_mode {
@@ -507,7 +507,7 @@ struct hif_mib_tx_rate_retry_policy {
 	uint8_t    rates[12];
 } __packed;
 
-#define WSM_MIB_NUM_TX_RATE_RETRY_POLICIES    16
+#define HIF_MIB_NUM_TX_RATE_RETRY_POLICIES    16
 
 struct hif_mib_set_tx_rate_retry_policy {
 	uint8_t    num_tx_rate_policies;
@@ -538,8 +538,8 @@ struct hif_mib_arp_keep_alive_period {
 	uint16_t   arp_keep_alive_period;
 	uint8_t    encr_type;
 	uint8_t    reserved;
-	uint8_t    sender_ipv4_address[WSM_API_IPV4_ADDRESS_SIZE];
-	uint8_t    target_ipv4_address[WSM_API_IPV4_ADDRESS_SIZE];
+	uint8_t    sender_ipv4_address[HIF_API_IPV4_ADDRESS_SIZE];
+	uint8_t    target_ipv4_address[HIF_API_IPV4_ADDRESS_SIZE];
 } __packed;
 
 struct hif_mib_inactivity_timer {

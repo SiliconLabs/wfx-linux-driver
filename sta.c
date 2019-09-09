@@ -17,7 +17,7 @@
 #include "hif_tx_mib.h"
 
 #define TXOP_UNIT 32
-#define WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES 2
+#define HIF_MAX_ARP_IP_ADDRTABLE_ENTRIES 2
 
 static u32 wfx_rate_mask_to_hw(struct wfx_dev *wdev, u32 rates)
 {
@@ -182,7 +182,7 @@ static int wfx_set_multicast_filter(struct wfx_vif *wvif,
 	// A1 Address match on list
 	for (i = 0; i < fp->num_addresses; i++) {
 		filter_addr_val.condition_idx = i;
-		filter_addr_val.address_type = WSM_MAC_ADDR_A1;
+		filter_addr_val.address_type = HIF_MAC_ADDR_A1;
 		ether_addr_copy(filter_addr_val.mac_address, fp->address_list[i]);
 		ret = hif_set_mac_addr_condition(wvif, &filter_addr_val);
 		if (ret)
@@ -251,11 +251,11 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 		bf_ctrl.bcn_count = 1;
 		bf_tbl->num_of_info_elmts = 0;
 	} else if (!is_sta) {
-		bf_ctrl.enable = WSM_BEACON_FILTER_ENABLE | WSM_BEACON_FILTER_AUTO_ERP;
+		bf_ctrl.enable = HIF_BEACON_FILTER_ENABLE | HIF_BEACON_FILTER_AUTO_ERP;
 		bf_ctrl.bcn_count = 0;
 		bf_tbl->num_of_info_elmts = 2;
 	} else {
-		bf_ctrl.enable = WSM_BEACON_FILTER_ENABLE;
+		bf_ctrl.enable = HIF_BEACON_FILTER_ENABLE;
 		bf_ctrl.bcn_count = 0;
 		bf_tbl->num_of_info_elmts = 3;
 	}
@@ -499,7 +499,7 @@ void wfx_event_handler_work(struct work_struct *work)
 
 	list_for_each_entry(event, &list, link) {
 		switch (event->evt.event_id) {
-		case WSM_EVENT_IND_BSSLOST:
+		case HIF_EVENT_IND_BSSLOST:
 			cancel_work_sync(&wvif->unjoin_work);
 			if (!down_trylock(&wvif->scan.lock)) {
 				wfx_cqm_bssloss_sm(wvif, 1, 0, 0);
@@ -513,14 +513,14 @@ void wfx_event_handler_work(struct work_struct *work)
 				schedule_delayed_work(&wvif->bss_loss_work, 5 * HZ);
 			}
 			break;
-		case WSM_EVENT_IND_BSSREGAINED:
+		case HIF_EVENT_IND_BSSREGAINED:
 			wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
 			cancel_work_sync(&wvif->unjoin_work);
 			break;
-		case WSM_EVENT_IND_RCPI_RSSI:
+		case HIF_EVENT_IND_RCPI_RSSI:
 			wfx_event_report_rssi(wvif, event->evt.event_data.rcpi_rssi);
 			break;
-		case WSM_EVENT_IND_PS_MODE_ERROR:
+		case HIF_EVENT_IND_PS_MODE_ERROR:
 			dev_warn(wvif->wdev->dev, "error while processing power save request\n");
 			break;
 		default:
@@ -640,8 +640,8 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
 	struct cfg80211_bss *bss = NULL;
 	struct hif_req_join join = {
-		.mode = conf->ibss_joined ? WSM_MODE_IBSS : WSM_MODE_BSS,
-		.preamble_type = conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
+		.mode = conf->ibss_joined ? HIF_MODE_IBSS : HIF_MODE_BSS,
+		.preamble_type = conf->use_short_preamble ? HIF_PREAMBLE_SHORT : HIF_PREAMBLE_LONG,
 		.probe_for_join = 1,
 		.atim_window = 0,
 		.basic_rate_set = wfx_rate_mask_to_hw(wvif->wdev, conf->basic_rates),
@@ -947,7 +947,7 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 		.channel_number = wvif->channel->hw_value,
 		.beacon_interval = conf->beacon_int,
 		.dtim_period = conf->dtim_period,
-		.preamble_type = conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
+		.preamble_type = conf->use_short_preamble ? HIF_PREAMBLE_SHORT : HIF_PREAMBLE_LONG,
 		.basic_rate_set = wfx_rate_mask_to_hw(wvif->wdev, conf->basic_rates),
 	};
 
@@ -1013,7 +1013,7 @@ static int wfx_upload_beacon(struct wfx_vif *wvif)
 		return -ENOMEM;
 
 	p = (struct hif_mib_template_frame *) skb_push(skb, 4);
-	p->frame_type = WSM_TMPLT_BCN;
+	p->frame_type = HIF_TMPLT_BCN;
 	p->init_rate = API_RATE_INDEX_B_1MBPS; /* 1Mbps DSSS */
 	p->frame_length = cpu_to_le16(skb->len - 4);
 
@@ -1030,7 +1030,7 @@ static int wfx_upload_beacon(struct wfx_vif *wvif)
 	mgmt->frame_control =
 		cpu_to_le16(IEEE80211_FTYPE_MGMT | IEEE80211_STYPE_PROBE_RESP);
 
-	p->frame_type = WSM_TMPLT_PRBRES;
+	p->frame_type = HIF_TMPLT_PRBRES;
 
 	ret = hif_set_template_frame(wvif, p);
 	wfx_fwd_probe_req(wvif, false);
@@ -1094,7 +1094,7 @@ static void wfx_join_finalize(struct wfx_vif *wvif, struct ieee80211_bss_conf *i
 	association_mode.mode = 1;
 	association_mode.rateset = 1;
 	association_mode.spacing = 1;
-	association_mode.preamble_type = info->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG;
+	association_mode.preamble_type = info->use_short_preamble ? HIF_PREAMBLE_SHORT : HIF_PREAMBLE_LONG;
 	association_mode.basic_rate_set = cpu_to_le32(wfx_rate_mask_to_hw(wvif->wdev, info->basic_rates));
 	association_mode.mixed_or_greenfield_type = wfx_ht_greenfield(&wvif->ht_info);
 	association_mode.mpdu_start_spacing = wfx_ht_ampdu_density(&wvif->ht_info);
@@ -1137,17 +1137,17 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 		struct hif_mib_arp_ip_addr_table filter = { };
 
 		nb_arp_addr = info->arp_addr_cnt;
-		if (nb_arp_addr <= 0 || nb_arp_addr > WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES)
+		if (nb_arp_addr <= 0 || nb_arp_addr > HIF_MAX_ARP_IP_ADDRTABLE_ENTRIES)
 			nb_arp_addr = 0;
 
-		for (i = 0; i < WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES; i++) {
+		for (i = 0; i < HIF_MAX_ARP_IP_ADDRTABLE_ENTRIES; i++) {
 			filter.condition_idx = i;
 			if (i < nb_arp_addr) {
 				// Caution: type of arp_addr_list[i] is __be32
 				memcpy(filter.ipv4_address, &info->arp_addr_list[i], sizeof(filter.ipv4_address));
-				filter.arp_enable = WSM_ARP_NS_FILTERING_ENABLE;
+				filter.arp_enable = HIF_ARP_NS_FILTERING_ENABLE;
 			} else {
-				filter.arp_enable = WSM_ARP_NS_FILTERING_DISABLE;
+				filter.arp_enable = HIF_ARP_NS_FILTERING_DISABLE;
 			}
 			hif_set_arp_ipv4_filter(wvif, &filter);
 		}
@@ -1473,28 +1473,28 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	// Keep struct hif_req_edca_queue_params blank?
 	struct hif_req_edca_queue_params default_edca_params[] = {
 		[IEEE80211_AC_VO] = {
-			.queue_id = WSM_QUEUE_ID_VOICE,
+			.queue_id = HIF_QUEUE_ID_VOICE,
 			.aifsn = 2,
 			.cw_min = 3,
 			.cw_max = 7,
 			.tx_op_limit = TXOP_UNIT * 47,
 		},
 		[IEEE80211_AC_VI] = {
-			.queue_id = WSM_QUEUE_ID_VIDEO,
+			.queue_id = HIF_QUEUE_ID_VIDEO,
 			.aifsn = 2,
 			.cw_min = 7,
 			.cw_max = 15,
 			.tx_op_limit = TXOP_UNIT * 94,
 		},
 		[IEEE80211_AC_BE] = {
-			.queue_id = WSM_QUEUE_ID_BESTEFFORT,
+			.queue_id = HIF_QUEUE_ID_BESTEFFORT,
 			.aifsn = 3,
 			.cw_min = 15,
 			.cw_max = 1023,
 			.tx_op_limit = TXOP_UNIT * 0,
 		},
 		[IEEE80211_AC_BK] = {
-			.queue_id = WSM_QUEUE_ID_BACKGROUND,
+			.queue_id = HIF_QUEUE_ID_BACKGROUND,
 			.aifsn = 7,
 			.cw_min = 15,
 			.cw_max = 1023,
@@ -1503,8 +1503,8 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	};
 
 	if (wfx_api_older_than(wvif->wdev, 2, 0)) {
-		default_edca_params[IEEE80211_AC_BE].queue_id = WSM_QUEUE_ID_BACKGROUND;
-		default_edca_params[IEEE80211_AC_BK].queue_id = WSM_QUEUE_ID_BESTEFFORT;
+		default_edca_params[IEEE80211_AC_BE].queue_id = HIF_QUEUE_ID_BACKGROUND;
+		default_edca_params[IEEE80211_AC_BK].queue_id = HIF_QUEUE_ID_BESTEFFORT;
 	}
 	/* Spin lock */
 	spin_lock_init(&wvif->ps_state_lock);

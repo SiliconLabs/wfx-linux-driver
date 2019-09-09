@@ -395,7 +395,7 @@ static bool hif_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 			mutex_lock(&wvif->bss_loss_lock);
 			if (wvif->bss_loss_state) {
 				wvif->bss_loss_confirm_id = req->packet_id;
-				req->queue_id.queue_id = WSM_QUEUE_ID_VOICE;
+				req->queue_id.queue_id = HIF_QUEUE_ID_VOICE;
 			}
 			mutex_unlock(&wvif->bss_loss_lock);
 		} else if (ieee80211_has_protected(frame->frame_control) &&

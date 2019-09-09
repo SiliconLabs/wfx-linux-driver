@@ -83,7 +83,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	if (req->n_ssids == 1 && !req->ssids[0].ssid_len)
 		req->n_ssids = 0;
 
-	if (req->n_ssids > WSM_API_MAX_NB_SSIDS)
+	if (req->n_ssids > HIF_API_MAX_NB_SSIDS)
 		return -EINVAL;
 
 #if (KERNEL_VERSION(3, 19, 0) > LINUX_VERSION_CODE)
@@ -100,7 +100,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	mutex_lock(&wdev->conf_mutex);
 
 	p = (struct hif_mib_template_frame *)skb_push(skb, 4);
-	p->frame_type = WSM_TMPLT_PRBREQ;
+	p->frame_type = HIF_TMPLT_PRBREQ;
 	p->frame_length = cpu_to_le16(skb->len - 4);
 	ret = hif_set_template_frame(wvif, p);
 	skb_pull(skb, 4);
@@ -195,7 +195,7 @@ void wfx_scan_work(struct work_struct *work)
 	first = *wvif->scan.curr;
 
 	for (it = wvif->scan.curr + 1, i = 1;
-	     it != wvif->scan.end && i < WSM_API_MAX_NB_CHANNELS;
+	     it != wvif->scan.end && i < HIF_API_MAX_NB_CHANNELS;
 	     ++it, ++i) {
 		if ((*it)->band != first->band)
 			break;

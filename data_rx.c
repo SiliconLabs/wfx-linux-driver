@@ -58,20 +58,20 @@ static int wfx_drop_encrypt_data(struct wfx_dev *wdev, struct hif_ind_rx *arg, s
 	 * IV/ICV lengths. Even defineas are not exposed.
 	 */
 	switch (arg->rx_flags.encryp) {
-	case WSM_RI_FLAGS_WEP_ENCRYPTED:
+	case HIF_RI_FLAGS_WEP_ENCRYPTED:
 		iv_len = 4 /* WEP_IV_LEN */;
 		icv_len = 4 /* WEP_ICV_LEN */;
 		break;
-	case WSM_RI_FLAGS_TKIP_ENCRYPTED:
+	case HIF_RI_FLAGS_TKIP_ENCRYPTED:
 		iv_len = 8 /* TKIP_IV_LEN */;
 		icv_len = 4 /* TKIP_ICV_LEN */
 			+ 8 /*MICHAEL_MIC_LEN*/;
 		break;
-	case WSM_RI_FLAGS_AES_ENCRYPTED:
+	case HIF_RI_FLAGS_AES_ENCRYPTED:
 		iv_len = 8 /* CCMP_HDR_LEN */;
 		icv_len = 8 /* CCMP_MIC_LEN */;
 		break;
-	case WSM_RI_FLAGS_WAPI_ENCRYPTED:
+	case HIF_RI_FLAGS_WAPI_ENCRYPTED:
 		iv_len = 18 /* WAPI_HDR_LEN */;
 		icv_len = 16 /* WAPI_MIC_LEN */;
 		break;
@@ -82,7 +82,7 @@ static int wfx_drop_encrypt_data(struct wfx_dev *wdev, struct hif_ind_rx *arg, s
 	}
 
 	/* Firmware strips ICV in case of MIC failure. */
-	if (arg->status == WSM_STATUS_MICFAILURE)
+	if (arg->status == HIF_STATUS_MICFAILURE)
 		icv_len = 0;
 
 	if (skb->len < hdrlen + iv_len + icv_len) {
@@ -122,7 +122,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, struct hif_ind_rx *arg, struct sk_buff *skb
 			early_data = true;
 	}
 
-	if (arg->status == WSM_STATUS_MICFAILURE)
+	if (arg->status == HIF_STATUS_MICFAILURE)
 		hdr->flag |= RX_FLAG_MMIC_ERROR;
 	else if (arg->status)
 		goto drop;
@@ -162,7 +162,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, struct hif_ind_rx *arg, struct sk_buff *skb
 		if (wfx_drop_encrypt_data(wvif->wdev, arg, skb))
 			goto drop;
 		hdr->flag |= RX_FLAG_DECRYPTED | RX_FLAG_IV_STRIPPED;
-		if (arg->rx_flags.encryp == WSM_RI_FLAGS_TKIP_ENCRYPTED)
+		if (arg->rx_flags.encryp == HIF_RI_FLAGS_TKIP_ENCRYPTED)
 			hdr->flag |= RX_FLAG_MMIC_STRIPPED;
 	}
 

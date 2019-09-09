@@ -94,7 +94,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 
 	if (!(hif->id & HIF_ID_IS_INDICATION)) {
 		(*is_cnf)++;
-		if (hif->id == WSM_HI_MULTI_TRANSMIT_CNF_ID)
+		if (hif->id == HIF_CNF_ID_MULTI_TRANSMIT)
 			release_count = le32_to_cpu(((struct hif_cnf_multi_transmit *) hif->body)->num_tx_confs);
 		else
 			release_count = 1;
@@ -105,7 +105,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	}
 	_trace_hif_recv(hif, wdev->hif.tx_buffers_used);
 
-	if (hif->id != HI_EXCEPTION_IND_ID && hif->id != HI_ERROR_IND_ID) {
+	if (hif->id != HIF_IND_ID_EXCEPTION && hif->id != HIF_IND_ID_ERROR) {
 		if (hif->seqnum != wdev->hif.rx_seqnum)
 			dev_warn(wdev->dev, "wrong message sequence: %d != %d\n",
 				 hif->seqnum, wdev->hif.rx_seqnum);
