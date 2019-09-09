@@ -132,7 +132,7 @@ struct wfx_vif {
 
 	struct wfx_scan		scan;
 	struct wfx_ht_info	ht_info;
-	struct wsm_edca_params	edca;
+	struct wfx_edca_params	edca;
 	struct wfx_link_entry	link_id_db[WFX_MAX_STA_IN_AP_MODE];
 	struct wfx_grp_addr_table multicast_filter;
 	struct tx_policy_cache	tx_policy_cache;

@@ -107,11 +107,11 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request, void *reply, siz
 	if (ret < 0)
 		dev_err(wdev->dev,
 			"WSM request %s%s%s (%#.2x) on vif %d returned error %d\n",
-			get_wsm_name(cmd), mib_sep, mib_name, cmd, vif, ret);
+			get_hif_name(cmd), mib_sep, mib_name, cmd, vif, ret);
 	if (ret > 0)
 		dev_warn(wdev->dev,
 			 "WSM request %s%s%s (%#.2x) on vif %d returned status %d\n",
-			 get_wsm_name(cmd), mib_sep, mib_name, cmd, vif, ret);
+			 get_hif_name(cmd), mib_sep, mib_name, cmd, vif, ret);
 
 	if (cmd != HI_SL_EXCHANGE_PUB_KEYS_REQ_ID)
 		mutex_unlock(&wdev->hif_ctxt.key_renew_lock);
@@ -212,7 +212,7 @@ int hif_write_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id, void *val, size_
 	return ret;
 }
 
-int hif_scan(struct wfx_vif *wvif, const struct wsm_scan *arg)
+int hif_scan(struct wfx_vif *wvif, const struct wfx_scan_params *arg)
 {
 	int ret, i;
 	struct hif_msg *hif;

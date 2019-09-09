@@ -60,7 +60,7 @@ static const char *get_symbol(unsigned long val,
 	return "unknown";
 }
 
-const char *get_wsm_name(unsigned long id)
+const char *get_hif_name(unsigned long id)
 {
 	return get_symbol(id, wsm_msg_print_map);
 }

@@ -19,7 +19,7 @@
 #define TXOP_UNIT 32
 #define WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES 2
 
-static u32 wfx_rate_mask_to_wsm(struct wfx_dev *wdev, u32 rates)
+static u32 wfx_rate_mask_to_hw(struct wfx_dev *wdev, u32 rates)
 {
 	int i;
 	u32 ret = 0;
@@ -39,7 +39,7 @@ static u32 wfx_rate_mask_to_wsm(struct wfx_dev *wdev, u32 rates)
 
 static void __wfx_free_event_queue(struct list_head *list)
 {
-	struct wfx_wsm_event *event, *tmp;
+	struct wfx_hif_event *event, *tmp;
 
 	list_for_each_entry_safe(event, tmp, list, link) {
 		list_del(&event->link);
@@ -115,7 +115,7 @@ end:
 }
 
 static int wfx_set_uapsd_param(struct wfx_vif *wvif,
-			   const struct wsm_edca_params *arg)
+			   const struct wfx_edca_params *arg)
 {
 	int ret;
 
@@ -489,7 +489,7 @@ void wfx_event_handler_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
 		container_of(work, struct wfx_vif, event_handler_work);
-	struct wfx_wsm_event *event;
+	struct wfx_hif_event *event;
 
 	LIST_HEAD(list);
 
@@ -644,7 +644,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 		.preamble_type = conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
 		.probe_for_join = 1,
 		.atim_window = 0,
-		.basic_rate_set = wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
+		.basic_rate_set = wfx_rate_mask_to_hw(wvif->wdev, conf->basic_rates),
 	};
 
 	if (wvif->channel->flags & IEEE80211_CHAN_NO_IR)
@@ -948,7 +948,7 @@ static int wfx_start_ap(struct wfx_vif *wvif)
 		.beacon_interval = conf->beacon_int,
 		.dtim_period = conf->dtim_period,
 		.preamble_type = conf->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG,
-		.basic_rate_set = wfx_rate_mask_to_wsm(wvif->wdev, conf->basic_rates),
+		.basic_rate_set = wfx_rate_mask_to_hw(wvif->wdev, conf->basic_rates),
 	};
 
 	memset(start.ssid, 0, sizeof(start.ssid));
@@ -1076,7 +1076,7 @@ static void wfx_join_finalize(struct wfx_vif *wvif, struct ieee80211_bss_conf *i
 	if (sta) {
 		wvif->ht_info.ht_cap = sta->ht_cap;
 		wvif->bss_params.operational_rate_set =
-			wfx_rate_mask_to_wsm(wvif->wdev, sta->supp_rates[wvif->channel->band]);
+			wfx_rate_mask_to_hw(wvif->wdev, sta->supp_rates[wvif->channel->band]);
 		wvif->ht_info.operation_mode = info->ht_operation_mode;
 	} else {
 		memset(&wvif->ht_info, 0, sizeof(wvif->ht_info));
@@ -1095,7 +1095,7 @@ static void wfx_join_finalize(struct wfx_vif *wvif, struct ieee80211_bss_conf *i
 	association_mode.rateset = 1;
 	association_mode.spacing = 1;
 	association_mode.preamble_type = info->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG;
-	association_mode.basic_rate_set = cpu_to_le32(wfx_rate_mask_to_wsm(wvif->wdev, info->basic_rates));
+	association_mode.basic_rate_set = cpu_to_le32(wfx_rate_mask_to_hw(wvif->wdev, info->basic_rates));
 	association_mode.mixed_or_greenfield_type = wfx_ht_greenfield(&wvif->ht_info);
 	association_mode.mpdu_start_spacing = wfx_ht_ampdu_density(&wvif->ht_info);
 

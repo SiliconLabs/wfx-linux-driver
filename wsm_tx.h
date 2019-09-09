@@ -15,7 +15,7 @@
 struct wfx_dev;
 struct wfx_vif;
 
-struct wsm_scan {
+struct wfx_scan_params {
 	struct hif_req_start_scan scan_req;
 	struct hif_ssid_def *ssids;
 	uint8_t *ch;
@@ -44,7 +44,7 @@ int hif_read_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id,
 		 void *buf, size_t buf_size);
 int hif_write_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id,
 		  void *buf, size_t buf_size);
-int hif_scan(struct wfx_vif *wvif, const struct wsm_scan *arg);
+int hif_scan(struct wfx_vif *wvif, const struct wfx_scan_params *arg);
 int hif_stop_scan(struct wfx_vif *wvif);
 int hif_join(struct wfx_vif *wvif, const struct hif_req_join *arg);
 int hif_set_pm(struct wfx_vif *wvif, const struct hif_req_set_pm_mode *arg);

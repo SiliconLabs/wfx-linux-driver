@@ -149,7 +149,7 @@ static int hif_event_indication(struct wfx_dev *wdev, struct hif_msg *hif, void 
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hif->interface);
 	struct hif_ind_event *body = buf;
-	struct wfx_wsm_event *event;
+	struct wfx_hif_event *event;
 	int first;
 
 	WARN_ON(!wvif);
@@ -283,7 +283,7 @@ static int hif_exception_indication(struct wfx_dev *wdev, struct hif_msg *hif, v
 static const struct {
 	int msg_id;
 	int (*handler)(struct wfx_dev *wdev, struct hif_msg *hif, void *buf);
-} wsm_handlers[] = {
+} hif_handlers[] = {
 	/* Confirmations */
 	{ WSM_HI_TX_CNF_ID,              hif_tx_confirm },
 	{ WSM_HI_MULTI_TRANSMIT_CNF_ID,  hif_multi_tx_confirm },
@@ -307,9 +307,9 @@ void hif_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	int i;
 	struct hif_msg *hif = (struct hif_msg *) skb->data;
-	int wsm_id = hif->id;
+	int hif_id = hif->id;
 
-	if (wsm_id == WSM_HI_RX_IND_ID) {
+	if (hif_id == WSM_HI_RX_IND_ID) {
 		// hif_receive_indication take care of skb lifetime
 		hif_receive_indication(wdev, hif, hif->body, skb);
 		return;
@@ -317,18 +317,19 @@ void hif_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
 	// Note: mutex_is_lock cause an implicit memory barrier that protect
 	// buf_send
 	if (mutex_is_locked(&wdev->hif_ctxt.lock)
-	    && wdev->hif_ctxt.buf_send && wdev->hif_ctxt.buf_send->id == wsm_id) {
+	    && wdev->hif_ctxt.buf_send
+	    && wdev->hif_ctxt.buf_send->id == hif_id) {
 		hif_generic_confirm(wdev, hif, hif->body);
 		goto free;
 	}
-	for (i = 0; i < ARRAY_SIZE(wsm_handlers); i++) {
-		if (wsm_handlers[i].msg_id == wsm_id) {
-			if (wsm_handlers[i].handler)
-				wsm_handlers[i].handler(wdev, hif, hif->body);
+	for (i = 0; i < ARRAY_SIZE(hif_handlers); i++) {
+		if (hif_handlers[i].msg_id == hif_id) {
+			if (hif_handlers[i].handler)
+				hif_handlers[i].handler(wdev, hif, hif->body);
 			goto free;
 		}
 	}
-	dev_err(wdev->dev, "Unsupported hif ID %02x\n", wsm_id);
+	dev_err(wdev->dev, "Unsupported hif ID %02x\n", hif_id);
 free:
 	dev_kfree_skb(skb);
 }

@@ -38,7 +38,7 @@ static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
 	}
 }
 
-static int wfx_scan_start(struct wfx_vif *wvif, struct wsm_scan *scan)
+static int wfx_scan_start(struct wfx_vif *wvif, struct wfx_scan_params *scan)
 {
 	int ret;
 	int tmo = 500;
@@ -145,7 +145,7 @@ void wfx_scan_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif = container_of(work, struct wfx_vif, scan.work);
 	struct ieee80211_channel **it;
-	struct wsm_scan scan = {
+	struct wfx_scan_params scan = {
 		.scan_req.scan_type.type = 0,    /* Foreground */
 	};
 	struct ieee80211_channel *first;

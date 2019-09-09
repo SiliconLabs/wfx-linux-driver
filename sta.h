@@ -30,12 +30,12 @@ struct wfx_ht_info {
 	uint16_t operation_mode;
 };
 
-struct wfx_wsm_event {
+struct wfx_hif_event {
 	struct list_head link;
 	struct hif_ind_event evt;
 };
 
-struct wsm_edca_params {
+struct wfx_edca_params {
 	/* NOTE: index is a linux queue id. */
 	struct hif_req_edca_queue_params params[IEEE80211_NUM_ACS];
 	bool uapsd_enable[IEEE80211_NUM_ACS];
