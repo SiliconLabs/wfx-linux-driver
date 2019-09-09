@@ -97,11 +97,11 @@ static int wsm_startup_indication(struct wfx_dev *wdev, struct hif_msg *hdr, voi
 		dev_err(wdev->dev, "Received invalid startup indication");
 		return -EINVAL;
 	}
-	memcpy(&wdev->wsm_caps, body, sizeof(struct hif_ind_startup));
-	le32_to_cpus(&wdev->wsm_caps.status);
-	le16_to_cpus(&wdev->wsm_caps.hardware_id);
-	le16_to_cpus(&wdev->wsm_caps.num_inp_ch_bufs);
-	le16_to_cpus(&wdev->wsm_caps.size_inp_ch_buf);
+	memcpy(&wdev->hw_caps, body, sizeof(struct hif_ind_startup));
+	le32_to_cpus(&wdev->hw_caps.status);
+	le16_to_cpus(&wdev->hw_caps.hardware_id);
+	le16_to_cpus(&wdev->hw_caps.num_inp_ch_bufs);
+	le16_to_cpus(&wdev->hw_caps.size_inp_ch_buf);
 
 	complete(&wdev->firmware_ready);
 	return 0;

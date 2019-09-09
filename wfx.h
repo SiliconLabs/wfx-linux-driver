@@ -87,7 +87,7 @@ struct wfx_dev {
 
 	struct wfx_hif_ctxt	hif_ctxt;
 	struct completion	firmware_ready;
-	struct hif_ind_startup	wsm_caps;
+	struct hif_ind_startup	hw_caps;
 	u8			keyset;
 	atomic_t		tx_lock;
 

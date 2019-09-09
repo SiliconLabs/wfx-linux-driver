@@ -209,7 +209,7 @@ static void wfx_sl_init_cfg(struct wfx_dev *wdev)
 
 int wfx_sl_init(struct wfx_dev *wdev)
 {
-	int link_mode = wdev->wsm_caps.capabilities.link_mode;
+	int link_mode = wdev->hw_caps.capabilities.link_mode;
 
 	INIT_WORK(&wdev->sl.key_renew_work, wfx_sl_renew_key);
 	init_completion(&wdev->sl.key_renew_done);
