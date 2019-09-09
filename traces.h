@@ -51,119 +51,119 @@
  *          #define list_for_print_symbolic list_names { -1, NULL }
  */
 
-#define _wsm_msg_list                          \
-	wsm_msg_cnf_name(ADD_KEY)              \
-	wsm_msg_cnf_name(BEACON_TRANSMIT)      \
-	wsm_msg_cnf_name(EDCA_QUEUE_PARAMS)    \
-	wsm_msg_cnf_name(JOIN)                 \
-	wsm_msg_cnf_name(MAP_LINK)             \
-	wsm_msg_cnf_name(READ_MIB)             \
-	wsm_msg_cnf_name(REMOVE_KEY)           \
-	wsm_msg_cnf_name(RESET)                \
-	wsm_msg_cnf_name(SET_BSS_PARAMS)       \
-	wsm_msg_cnf_name(SET_PM_MODE)          \
-	wsm_msg_cnf_name(START)                \
-	wsm_msg_cnf_name(START_SCAN)           \
-	wsm_msg_cnf_name(STOP_SCAN)            \
-	wsm_msg_cnf_name(TX)                   \
-	wsm_msg_cnf_name(MULTI_TRANSMIT)       \
-	wsm_msg_cnf_name(UPDATE_IE)            \
-	wsm_msg_cnf_name(WRITE_MIB)            \
-	wsm_msg_ind_name(EVENT)                \
-	wsm_msg_ind_name(JOIN_COMPLETE)        \
-	wsm_msg_ind_name(RX)                   \
-	wsm_msg_ind_name(SCAN_CMPL)            \
-	wsm_msg_ind_name(SET_PM_MODE_CMPL)     \
-	wsm_msg_ind_name(SUSPEND_RESUME_TX)    \
-	low_msg_cnf_name(CONFIGURATION)        \
-	low_msg_cnf_name(CONTROL_GPIO)         \
-	low_msg_cnf_name(PREVENT_ROLLBACK)     \
-	low_msg_cnf_name(SET_SL_MAC_KEY)       \
-	low_msg_cnf_name(SL_CONFIGURE)         \
-	low_msg_cnf_name(SL_EXCHANGE_PUB_KEYS) \
-	low_msg_cnf_name(SHUT_DOWN)            \
-	low_msg_ind_name(SL_EXCHANGE_PUB_KEYS) \
-	low_msg_ind_name(ERROR)                \
-	low_msg_ind_name(EXCEPTION)            \
-	low_msg_ind_name(GENERIC)              \
-	low_msg_ind_name(WAKEUP)               \
-	low_msg_ind_name(STARTUP)
+#define _hif_msg_list                       \
+	hif_cnf_name(ADD_KEY)               \
+	hif_cnf_name(BEACON_TRANSMIT)       \
+	hif_cnf_name(EDCA_QUEUE_PARAMS)     \
+	hif_cnf_name(JOIN)                  \
+	hif_cnf_name(MAP_LINK)              \
+	hif_cnf_name(READ_MIB)              \
+	hif_cnf_name(REMOVE_KEY)            \
+	hif_cnf_name(RESET)                 \
+	hif_cnf_name(SET_BSS_PARAMS)        \
+	hif_cnf_name(SET_PM_MODE)           \
+	hif_cnf_name(START)                 \
+	hif_cnf_name(START_SCAN)            \
+	hif_cnf_name(STOP_SCAN)             \
+	hif_cnf_name(TX)                    \
+	hif_cnf_name(MULTI_TRANSMIT)        \
+	hif_cnf_name(UPDATE_IE)             \
+	hif_cnf_name(WRITE_MIB)             \
+	hif_ind_name(EVENT)                 \
+	hif_ind_name(JOIN_COMPLETE)         \
+	hif_ind_name(RX)                    \
+	hif_ind_name(SCAN_CMPL)             \
+	hif_ind_name(SET_PM_MODE_CMPL)      \
+	hif_ind_name(SUSPEND_RESUME_TX)     \
+	ghif_cnf_name(CONFIGURATION)        \
+	ghif_cnf_name(CONTROL_GPIO)         \
+	ghif_cnf_name(PREVENT_ROLLBACK)     \
+	ghif_cnf_name(SET_SL_MAC_KEY)       \
+	ghif_cnf_name(SL_CONFIGURE)         \
+	ghif_cnf_name(SL_EXCHANGE_PUB_KEYS) \
+	ghif_cnf_name(SHUT_DOWN)            \
+	ghif_ind_name(SL_EXCHANGE_PUB_KEYS) \
+	ghif_ind_name(ERROR)                \
+	ghif_ind_name(EXCEPTION)            \
+	ghif_ind_name(GENERIC)              \
+	ghif_ind_name(WAKEUP)               \
+	ghif_ind_name(STARTUP)
 
-#define wsm_msg_list_enum _wsm_msg_list
+#define hif_msg_list_enum _hif_msg_list
 
-#undef wsm_msg_cnf_name
-#undef wsm_msg_ind_name
-#undef low_msg_cnf_name
-#undef low_msg_ind_name
-#define wsm_msg_cnf_name(msg) TRACE_DEFINE_ENUM(WSM_HI_##msg##_CNF_ID);
-#define wsm_msg_ind_name(msg) TRACE_DEFINE_ENUM(WSM_HI_##msg##_IND_ID);
-#define low_msg_cnf_name(msg) TRACE_DEFINE_ENUM(HI_##msg##_CNF_ID);
-#define low_msg_ind_name(msg) TRACE_DEFINE_ENUM(HI_##msg##_IND_ID);
-wsm_msg_list_enum
-#undef wsm_msg_cnf_name
-#undef wsm_msg_ind_name
-#undef low_msg_cnf_name
-#undef low_msg_ind_name
-#define wsm_msg_cnf_name(msg) { WSM_HI_##msg##_CNF_ID, #msg },
-#define wsm_msg_ind_name(msg) { WSM_HI_##msg##_IND_ID, #msg },
-#define low_msg_cnf_name(msg) { HI_##msg##_CNF_ID, #msg },
-#define low_msg_ind_name(msg) { HI_##msg##_IND_ID, #msg },
-#define wsm_msg_list wsm_msg_list_enum { -1, NULL }
+#undef hif_cnf_name
+#undef hif_ind_name
+#undef ghif_cnf_name
+#undef ghif_ind_name
+#define hif_cnf_name(msg) TRACE_DEFINE_ENUM(WSM_HI_##msg##_CNF_ID);
+#define hif_ind_name(msg) TRACE_DEFINE_ENUM(WSM_HI_##msg##_IND_ID);
+#define ghif_cnf_name(msg) TRACE_DEFINE_ENUM(HI_##msg##_CNF_ID);
+#define ghif_ind_name(msg) TRACE_DEFINE_ENUM(HI_##msg##_IND_ID);
+hif_msg_list_enum
+#undef hif_cnf_name
+#undef hif_ind_name
+#undef ghif_cnf_name
+#undef ghif_ind_name
+#define hif_cnf_name(msg) { WSM_HI_##msg##_CNF_ID, #msg },
+#define hif_ind_name(msg) { WSM_HI_##msg##_IND_ID, #msg },
+#define ghif_cnf_name(msg) { HI_##msg##_CNF_ID, #msg },
+#define ghif_ind_name(msg) { HI_##msg##_IND_ID, #msg },
+#define hif_msg_list hif_msg_list_enum { -1, NULL }
 
-#define _wsm_mib_list                                \
-	wsm_mib_name(ARP_IP_ADDRESSES_TABLE)         \
-	wsm_mib_name(ARP_KEEP_ALIVE_PERIOD)          \
-	wsm_mib_name(BEACON_FILTER_ENABLE)           \
-	wsm_mib_name(BEACON_FILTER_TABLE)            \
-	wsm_mib_name(BEACON_WAKEUP_PERIOD)           \
-	wsm_mib_name(BLOCK_ACK_POLICY)               \
-	wsm_mib_name(CONFIG_DATA_FILTER)             \
-	wsm_mib_name(COUNTERS_TABLE)                 \
-	wsm_mib_name(CURRENT_TX_POWER_LEVEL)         \
-	wsm_mib_name(DOT11_MAC_ADDRESS)              \
-	wsm_mib_name(DOT11_MAX_RECEIVE_LIFETIME)     \
-	wsm_mib_name(DOT11_MAX_TRANSMIT_MSDU_LIFETIME) \
-	wsm_mib_name(DOT11_RTS_THRESHOLD)            \
-	wsm_mib_name(DOT11_WEP_DEFAULT_KEY_ID)       \
-	wsm_mib_name(GL_BLOCK_ACK_INFO)              \
-	wsm_mib_name(GL_OPERATIONAL_POWER_MODE)      \
-	wsm_mib_name(GL_SET_MULTI_MSG)               \
-	wsm_mib_name(INACTIVITY_TIMER)               \
-	wsm_mib_name(INTERFACE_PROTECTION)           \
-	wsm_mib_name(IPV4_ADDR_DATAFRAME_CONDITION)  \
-	wsm_mib_name(IPV6_ADDR_DATAFRAME_CONDITION)  \
-	wsm_mib_name(KEEP_ALIVE_PERIOD)              \
-	wsm_mib_name(MAC_ADDR_DATAFRAME_CONDITION)   \
-	wsm_mib_name(NON_ERP_PROTECTION)             \
-	wsm_mib_name(NS_IP_ADDRESSES_TABLE)          \
-	wsm_mib_name(OVERRIDE_INTERNAL_TX_RATE)      \
-	wsm_mib_name(PROTECTED_MGMT_POLICY)          \
-	wsm_mib_name(RX_FILTER)                      \
-	wsm_mib_name(RCPI_RSSI_THRESHOLD)            \
-	wsm_mib_name(SET_ASSOCIATION_MODE)           \
-	wsm_mib_name(SET_DATA_FILTERING)             \
-	wsm_mib_name(ETHERTYPE_DATAFRAME_CONDITION)  \
-	wsm_mib_name(SET_HT_PROTECTION)              \
-	wsm_mib_name(MAGIC_DATAFRAME_CONDITION)      \
-	wsm_mib_name(SET_TX_RATE_RETRY_POLICY)       \
-	wsm_mib_name(SET_UAPSD_INFORMATION)          \
-	wsm_mib_name(PORT_DATAFRAME_CONDITION)       \
-	wsm_mib_name(SLOT_TIME)                      \
-	wsm_mib_name(STATISTICS_TABLE)               \
-	wsm_mib_name(TEMPLATE_FRAME)                 \
-	wsm_mib_name(TSF_COUNTER)                    \
-	wsm_mib_name(UC_MC_BC_DATAFRAME_CONDITION)
+#define _hif_mib_list                                \
+	hif_mib_name(ARP_IP_ADDRESSES_TABLE)         \
+	hif_mib_name(ARP_KEEP_ALIVE_PERIOD)          \
+	hif_mib_name(BEACON_FILTER_ENABLE)           \
+	hif_mib_name(BEACON_FILTER_TABLE)            \
+	hif_mib_name(BEACON_WAKEUP_PERIOD)           \
+	hif_mib_name(BLOCK_ACK_POLICY)               \
+	hif_mib_name(CONFIG_DATA_FILTER)             \
+	hif_mib_name(COUNTERS_TABLE)                 \
+	hif_mib_name(CURRENT_TX_POWER_LEVEL)         \
+	hif_mib_name(DOT11_MAC_ADDRESS)              \
+	hif_mib_name(DOT11_MAX_RECEIVE_LIFETIME)     \
+	hif_mib_name(DOT11_MAX_TRANSMIT_MSDU_LIFETIME) \
+	hif_mib_name(DOT11_RTS_THRESHOLD)            \
+	hif_mib_name(DOT11_WEP_DEFAULT_KEY_ID)       \
+	hif_mib_name(GL_BLOCK_ACK_INFO)              \
+	hif_mib_name(GL_OPERATIONAL_POWER_MODE)      \
+	hif_mib_name(GL_SET_MULTI_MSG)               \
+	hif_mib_name(INACTIVITY_TIMER)               \
+	hif_mib_name(INTERFACE_PROTECTION)           \
+	hif_mib_name(IPV4_ADDR_DATAFRAME_CONDITION)  \
+	hif_mib_name(IPV6_ADDR_DATAFRAME_CONDITION)  \
+	hif_mib_name(KEEP_ALIVE_PERIOD)              \
+	hif_mib_name(MAC_ADDR_DATAFRAME_CONDITION)   \
+	hif_mib_name(NON_ERP_PROTECTION)             \
+	hif_mib_name(NS_IP_ADDRESSES_TABLE)          \
+	hif_mib_name(OVERRIDE_INTERNAL_TX_RATE)      \
+	hif_mib_name(PROTECTED_MGMT_POLICY)          \
+	hif_mib_name(RX_FILTER)                      \
+	hif_mib_name(RCPI_RSSI_THRESHOLD)            \
+	hif_mib_name(SET_ASSOCIATION_MODE)           \
+	hif_mib_name(SET_DATA_FILTERING)             \
+	hif_mib_name(ETHERTYPE_DATAFRAME_CONDITION)  \
+	hif_mib_name(SET_HT_PROTECTION)              \
+	hif_mib_name(MAGIC_DATAFRAME_CONDITION)      \
+	hif_mib_name(SET_TX_RATE_RETRY_POLICY)       \
+	hif_mib_name(SET_UAPSD_INFORMATION)          \
+	hif_mib_name(PORT_DATAFRAME_CONDITION)       \
+	hif_mib_name(SLOT_TIME)                      \
+	hif_mib_name(STATISTICS_TABLE)               \
+	hif_mib_name(TEMPLATE_FRAME)                 \
+	hif_mib_name(TSF_COUNTER)                    \
+	hif_mib_name(UC_MC_BC_DATAFRAME_CONDITION)
 
-#define wsm_mib_list_enum _wsm_mib_list
+#define hif_mib_list_enum _hif_mib_list
 
-#undef wsm_mib_name
-#define wsm_mib_name(mib) TRACE_DEFINE_ENUM(WSM_MIB_ID_##mib);
-wsm_mib_list_enum
-#undef wsm_mib_name
-#define wsm_mib_name(mib) { WSM_MIB_ID_##mib, #mib },
-#define wsm_mib_list wsm_mib_list_enum { -1, NULL }
+#undef hif_mib_name
+#define hif_mib_name(mib) TRACE_DEFINE_ENUM(WSM_MIB_ID_##mib);
+hif_mib_list_enum
+#undef hif_mib_name
+#define hif_mib_name(mib) { WSM_MIB_ID_##mib, #mib },
+#define hif_mib_list hif_mib_list_enum { -1, NULL }
 
-DECLARE_EVENT_CLASS(wsm_data,
+DECLARE_EVENT_CLASS(hif_data,
 	TP_PROTO(struct hif_msg *hif, int tx_fill_level, bool is_recv),
 	TP_ARGS(hif, tx_fill_level, is_recv),
 	TP_STRUCT__entry(
@@ -202,20 +202,20 @@ DECLARE_EVENT_CLASS(wsm_data,
 	TP_printk("%d:%d:%s_%s%s%s: %s%s (%d bytes)",
 		__entry->tx_fill_level,
 		__entry->if_id,
-		__print_symbolic(__entry->msg_id, wsm_msg_list),
+		__print_symbolic(__entry->msg_id, hif_msg_list),
 		__entry->msg_type,
 		__entry->mib != -1 ? "/" : "",
-		__entry->mib != -1 ? __print_symbolic(__entry->mib, wsm_mib_list) : "",
+		__entry->mib != -1 ? __print_symbolic(__entry->mib, hif_mib_list) : "",
 		__print_hex(__entry->buf, __entry->buf_len),
 		__entry->msg_len > sizeof(__entry->buf) ? " ..." : "",
 		__entry->msg_len
 	)
 );
-DEFINE_EVENT(wsm_data, hif_send,
+DEFINE_EVENT(hif_data, hif_send,
 	TP_PROTO(struct hif_msg *hif, int tx_fill_level, bool is_recv),
 	TP_ARGS(hif, tx_fill_level, is_recv));
 #define _trace_hif_send(hif, tx_fill_level) trace_hif_send(hif, tx_fill_level, false)
-DEFINE_EVENT(wsm_data, hif_recv,
+DEFINE_EVENT(hif_data, hif_recv,
 	TP_PROTO(struct hif_msg *hif, int tx_fill_level, bool is_recv),
 	TP_ARGS(hif, tx_fill_level, is_recv));
 #define _trace_hif_recv(hif, tx_fill_level) trace_hif_recv(hif, tx_fill_level, true)

@@ -35,12 +35,12 @@ static const struct file_operations __name ## _fops = {			\
 #define CREATE_TRACE_POINTS
 #include "traces.h"
 
-static const struct trace_print_flags wsm_msg_print_map[] = {
-	wsm_msg_list,
+static const struct trace_print_flags hif_msg_print_map[] = {
+	hif_msg_list,
 };
 
-static const struct trace_print_flags wsm_mib_print_map[] = {
-	wsm_mib_list,
+static const struct trace_print_flags hif_mib_print_map[] = {
+	hif_mib_list,
 };
 
 static const struct trace_print_flags wfx_reg_print_map[] = {
@@ -62,12 +62,12 @@ static const char *get_symbol(unsigned long val,
 
 const char *get_hif_name(unsigned long id)
 {
-	return get_symbol(id, wsm_msg_print_map);
+	return get_symbol(id, hif_msg_print_map);
 }
 
 const char *get_mib_name(unsigned long id)
 {
-	return get_symbol(id, wsm_mib_print_map);
+	return get_symbol(id, hif_mib_print_map);
 }
 
 const char *get_reg_name(unsigned long id)
