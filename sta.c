@@ -19,24 +19,6 @@
 
 #define TXOP_UNIT			32
 
-static int __wfx_flush(struct wfx_dev *wdev, bool drop);
-
-static void wfx_unjoin_work(struct work_struct *work);
-static void wfx_bss_params_work(struct work_struct *work);
-static void wfx_bss_loss_work(struct work_struct *work);
-static void wfx_event_handler_work(struct work_struct *work);
-static void wfx_update_filtering_work(struct work_struct *work);
-static void wfx_set_beacon_wakeup_period_work(struct work_struct *work);
-static void wfx_set_tim_work(struct work_struct *work);
-static void wfx_set_cts_work(struct work_struct *work);
-static void wfx_multicast_start_work(struct work_struct *work);
-static void wfx_multicast_stop_work(struct work_struct *work);
-#if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
-static void wfx_mcast_timeout(unsigned long arg);
-#else
-static void wfx_mcast_timeout(struct timer_list *t);
-#endif
-
 static u32 wfx_rate_mask_to_wsm(struct wfx_dev *wdev, u32 rates)
 {
 	int i;
@@ -132,26 +114,6 @@ end:
 	mutex_unlock(&wvif->bss_loss_lock);
 }
 
-int wfx_start(struct ieee80211_hw *hw)
-{
-	return 0;
-}
-
-/*This should stop WFx driver when receive a critical error.
- * It must turn off frame reception
- */
-void wfx_stop(struct ieee80211_hw *hw)
-{
-	struct wfx_dev *wdev = hw->priv;
-
-	wsm_tx_lock_flush(wdev);
-	mutex_lock(&wdev->conf_mutex);
-	wfx_tx_queues_clear(wdev);
-	mutex_unlock(&wdev->conf_mutex);
-	wsm_tx_unlock(wdev);
-	WARN(atomic_read(&wdev->tx_lock), "tx_lock is locked");
-}
-
 static int wfx_set_uapsd_param(struct wfx_vif *wvif,
 			   const struct wsm_edca_params *arg)
 {
@@ -190,315 +152,6 @@ static int wfx_set_uapsd_param(struct wfx_vif *wvif,
 	wvif->uapsd_info.auto_trigger_step = 0;
 
 	ret = wsm_set_uapsd_info(wvif, &wvif->uapsd_info);
-	return ret;
-}
-
-static int wfx_vif_setup(struct wfx_vif *wvif)
-{
-	int i;
-	// FIXME: parameters are set by kernel juste after interface_add.
-	// Keep struct hif_req_edca_queue_params blank?
-	struct hif_req_edca_queue_params default_edca_params[] = {
-		[IEEE80211_AC_VO] = {
-			.queue_id = WSM_QUEUE_ID_VOICE,
-			.aifsn = 2,
-			.cw_min = 3,
-			.cw_max = 7,
-			.tx_op_limit = TXOP_UNIT * 47,
-		},
-		[IEEE80211_AC_VI] = {
-			.queue_id = WSM_QUEUE_ID_VIDEO,
-			.aifsn = 2,
-			.cw_min = 7,
-			.cw_max = 15,
-			.tx_op_limit = TXOP_UNIT * 94,
-		},
-		[IEEE80211_AC_BE] = {
-			.queue_id = WSM_QUEUE_ID_BESTEFFORT,
-			.aifsn = 3,
-			.cw_min = 15,
-			.cw_max = 1023,
-			.tx_op_limit = TXOP_UNIT * 0,
-		},
-		[IEEE80211_AC_BK] = {
-			.queue_id = WSM_QUEUE_ID_BACKGROUND,
-			.aifsn = 7,
-			.cw_min = 15,
-			.cw_max = 1023,
-			.tx_op_limit = TXOP_UNIT * 0,
-		},
-	};
-
-	if (wfx_api_older_than(wvif->wdev, 2, 0)) {
-		default_edca_params[IEEE80211_AC_BE].queue_id = WSM_QUEUE_ID_BACKGROUND;
-		default_edca_params[IEEE80211_AC_BK].queue_id = WSM_QUEUE_ID_BESTEFFORT;
-	}
-	/* Spin lock */
-	spin_lock_init(&wvif->ps_state_lock);
-	spin_lock_init(&wvif->event_queue_lock);
-	mutex_init(&wvif->bss_loss_lock);
-	/* STA Work*/
-	INIT_LIST_HEAD(&wvif->event_queue);
-	INIT_WORK(&wvif->event_handler_work, wfx_event_handler_work);
-	INIT_WORK(&wvif->unjoin_work, wfx_unjoin_work);
-	INIT_WORK(&wvif->wep_key_work, wfx_wep_key_work);
-	INIT_WORK(&wvif->bss_params_work, wfx_bss_params_work);
-	INIT_WORK(&wvif->set_beacon_wakeup_period_work, wfx_set_beacon_wakeup_period_work);
-	INIT_DELAYED_WORK(&wvif->bss_loss_work, wfx_bss_loss_work);
-	INIT_WORK(&wvif->tx_policy_upload_work, tx_policy_upload_work);
-
-	/* AP Work */
-	INIT_WORK(&wvif->link_id_work, wfx_link_id_work);
-	INIT_DELAYED_WORK(&wvif->link_id_gc_work, wfx_link_id_gc_work);
-	INIT_WORK(&wvif->update_filtering_work, wfx_update_filtering_work);
-
-	/* Optional */
-	INIT_WORK(&wvif->set_tim_work, wfx_set_tim_work);
-	INIT_WORK(&wvif->set_cts_work, wfx_set_cts_work);
-
-	INIT_WORK(&wvif->multicast_start_work, wfx_multicast_start_work);
-	INIT_WORK(&wvif->multicast_stop_work, wfx_multicast_stop_work);
-#if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
-	setup_timer(&wvif->mcast_timeout, wfx_mcast_timeout, (unsigned long) wvif);
-#else
-	timer_setup(&wvif->mcast_timeout, wfx_mcast_timeout, 0);
-#endif
-
-	/* About scan */
-	sema_init(&wvif->scan.lock, 1);
-	INIT_WORK(&wvif->scan.work, wfx_scan_work);
-	INIT_DELAYED_WORK(&wvif->scan.timeout, wfx_scan_timeout);
-	init_completion(&wvif->set_pm_mode_complete);
-	complete(&wvif->set_pm_mode_complete);
-
-	BUG_ON(ARRAY_SIZE(default_edca_params) != ARRAY_SIZE(wvif->edca.params));
-	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
-		memcpy(&wvif->edca.params[i], &default_edca_params[i], sizeof(default_edca_params[i]));
-		wvif->edca.uapsd_enable[i] = false;
-	}
-	wvif->setbssparams_done = false;
-	wvif->wep_default_key_id = -1;
-
-	return 0;
-}
-
-int wfx_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
-{
-	int i;
-	struct wfx_dev *wdev = hw->priv;
-	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
-
-	vif->driver_flags |= IEEE80211_VIF_BEACON_FILTER |
-#if (KERNEL_VERSION(3, 19, 0) <= LINUX_VERSION_CODE)
-			     IEEE80211_VIF_SUPPORTS_UAPSD |
-#endif
-			     IEEE80211_VIF_SUPPORTS_CQM_RSSI;
-
-	mutex_lock(&wdev->conf_mutex);
-
-	switch (vif->type) {
-	case NL80211_IFTYPE_STATION:
-	case NL80211_IFTYPE_ADHOC:
-	case NL80211_IFTYPE_AP:
-		break;
-	default:
-		mutex_unlock(&wdev->conf_mutex);
-		return -EOPNOTSUPP;
-	}
-
-	for (i = 0; i < ARRAY_SIZE(wdev->vif); i++) {
-		if (!wdev->vif[i]) {
-			wdev->vif[i] = vif;
-			wvif->id = i;
-			break;
-		}
-	}
-	if (i == ARRAY_SIZE(wdev->vif)) {
-		mutex_unlock(&wdev->conf_mutex);
-		return -EOPNOTSUPP;
-	}
-	wvif->vif = vif;
-	wvif->wdev = wdev;
-	wvif->vif->type = vif->type;
-	wfx_vif_setup(wvif);
-	mutex_unlock(&wdev->conf_mutex);
-	wsm_set_macaddr(wvif, vif->addr);
-	for (i = 0; i < IEEE80211_NUM_ACS; i++)
-		wsm_set_edca_queue_params(wvif, &wvif->edca.params[i]);
-	wfx_set_uapsd_param(wvif, &wvif->edca);
-	tx_policy_init(wvif);
-	wvif = NULL;
-	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
-		// Combo mode does not support Block Acks. We can re-enable them
-		if (wvif_count(wdev) == 1)
-			wsm_set_block_ack_policy(wvif, 0xFF, 0xFF);
-		else
-			wsm_set_block_ack_policy(wvif, 0x00, 0x00);
-		// Combo force powersave mode. We can re-enable it now
-		wfx_set_pm(wvif, &wvif->powersave_mode);
-	}
-	return 0;
-}
-
-void wfx_remove_interface(struct ieee80211_hw *hw,
-			  struct ieee80211_vif *vif)
-{
-	struct wfx_dev *wdev = hw->priv;
-	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
-	int i;
-
-	// If scan is in progress, stop it
-	while (down_trylock(&wvif->scan.lock))
-		schedule();
-	up(&wvif->scan.lock);
-	wait_for_completion_timeout(&wvif->set_pm_mode_complete, msecs_to_jiffies(300));
-
-	mutex_lock(&wdev->conf_mutex);
-	switch (wvif->state) {
-	case WFX_STATE_PRE_STA:
-	case WFX_STATE_STA:
-	case WFX_STATE_IBSS:
-		wsm_tx_lock_flush(wdev);
-		if (!schedule_work(&wvif->unjoin_work))
-			wsm_tx_unlock(wdev);
-		break;
-	case WFX_STATE_AP:
-		for (i = 0; wvif->link_id_map; ++i) {
-			if (wvif->link_id_map & BIT(i)) {
-				wfx_unmap_link(wvif, i);
-				wvif->link_id_map &= ~BIT(i);
-			}
-		}
-		memset(wvif->link_id_db, 0, sizeof(wvif->link_id_db));
-		wvif->sta_asleep_mask = 0;
-		wvif->enable_beacon = false;
-		wvif->tx_multicast = false;
-		wvif->aid0_bit_set = false;
-		wvif->buffered_multicasts = false;
-		wvif->pspoll_mask = 0;
-		/* reset.link_id = 0; */
-		wsm_reset(wvif, false);
-		break;
-	default:
-		break;
-	}
-
-	wvif->state = WFX_STATE_PASSIVE;
-	wfx_tx_queues_wait_empty_vif(wvif);
-	wsm_tx_unlock(wdev);
-
-	/* FIXME: In add to reset MAC address, try to reset interface */
-	wsm_set_macaddr(wvif, NULL);
-
-	cancel_delayed_work_sync(&wvif->scan.timeout);
-
-	wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
-	cancel_work_sync(&wvif->unjoin_work);
-	cancel_delayed_work_sync(&wvif->link_id_gc_work);
-	del_timer_sync(&wvif->mcast_timeout);
-	wfx_free_event_queue(wvif);
-
-	wdev->vif[wvif->id] = NULL;
-	wvif->vif = NULL;
-
-	mutex_unlock(&wdev->conf_mutex);
-	wvif = NULL;
-	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
-		// Combo mode does not support Block Acks. We can re-enable them
-		if (wvif_count(wdev) == 1)
-			wsm_set_block_ack_policy(wvif, 0xFF, 0xFF);
-		else
-			wsm_set_block_ack_policy(wvif, 0x00, 0x00);
-		// Combo force powersave mode. We can re-enable it now
-		wfx_set_pm(wvif, &wvif->powersave_mode);
-	}
-}
-
-int wfx_add_chanctx(struct ieee80211_hw *hw,
-		    struct ieee80211_chanctx_conf *conf)
-{
-	return 0;
-}
-
-void wfx_remove_chanctx(struct ieee80211_hw *hw,
-			struct ieee80211_chanctx_conf *conf)
-{
-}
-
-void wfx_change_chanctx(struct ieee80211_hw *hw,
-			struct ieee80211_chanctx_conf *conf,
-			u32 changed)
-{
-}
-
-int wfx_assign_vif_chanctx(struct ieee80211_hw *hw,
-			   struct ieee80211_vif *vif,
-			   struct ieee80211_chanctx_conf *conf)
-{
-	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
-	struct ieee80211_channel *ch = conf->def.chan;
-
-	WARN(wvif->channel, "Channel overwrite");
-	wvif->channel = ch;
-	wvif->ht_info.channel_type = cfg80211_get_chandef_type(&conf->def);
-
-	return 0;
-}
-
-void wfx_unassign_vif_chanctx(struct ieee80211_hw *hw,
-		struct ieee80211_vif *vif,
-		struct ieee80211_chanctx_conf *conf)
-{
-	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
-	struct ieee80211_channel *ch = conf->def.chan;
-
-	WARN(wvif->channel != ch, "Channel mismatch");
-	wvif->channel = NULL;
-}
-
-int wfx_config(struct ieee80211_hw *hw, u32 changed)
-{
-	int ret = 0;
-	struct wfx_dev *wdev = hw->priv;
-	struct ieee80211_conf *conf = &hw->conf;
-	struct wfx_vif *wvif;
-
-
-	// FIXME: Interface id should not been hardcoded
-	wvif = wdev_to_wvif(wdev, 0);
-	if (!wvif) {
-		WARN(1, "Interface 0 does not exist anymore");
-		return 0;
-	}
-
-	down(&wvif->scan.lock);
-	mutex_lock(&wdev->conf_mutex);
-	if (changed & IEEE80211_CONF_CHANGE_POWER) {
-		wdev->output_power = conf->power_level;
-		wsm_set_output_power(wvif, wdev->output_power * 10);
-	}
-
-	if (changed & IEEE80211_CONF_CHANGE_PS) {
-		wvif = NULL;
-		while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
-			memset(&wvif->powersave_mode, 0, sizeof(wvif->powersave_mode));
-			if (conf->flags & IEEE80211_CONF_PS) {
-				wvif->powersave_mode.pm_mode.enter_psm = 1;
-				if (conf->dynamic_ps_timeout > 0) {
-					wvif->powersave_mode.pm_mode.fast_psm = 1;
-					// Firmware does not support more than 128ms
-					wvif->powersave_mode.fast_psm_idle_period =
-						min(conf->dynamic_ps_timeout * 2, 255);
-				}
-			}
-			if (wvif->state == WFX_STATE_STA && wvif->bss_params.aid)
-				wfx_set_pm(wvif, &wvif->powersave_mode);
-		}
-		wvif = wdev_to_wvif(wdev, 0);
-	}
-
-	mutex_unlock(&wdev->conf_mutex);
-	up(&wvif->scan.lock);
 	return ret;
 }
 
@@ -1718,5 +1371,329 @@ void wfx_suspend_resume(struct wfx_vif *wvif,
 		if (arg->suspend_resume_flags.resume)
 			wfx_bh_request_tx(wvif->wdev);
 	}
+}
+
+int wfx_add_chanctx(struct ieee80211_hw *hw,
+		    struct ieee80211_chanctx_conf *conf)
+{
+	return 0;
+}
+
+void wfx_remove_chanctx(struct ieee80211_hw *hw,
+			struct ieee80211_chanctx_conf *conf)
+{
+}
+
+void wfx_change_chanctx(struct ieee80211_hw *hw,
+			struct ieee80211_chanctx_conf *conf,
+			u32 changed)
+{
+}
+
+int wfx_assign_vif_chanctx(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+			   struct ieee80211_chanctx_conf *conf)
+{
+	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
+	struct ieee80211_channel *ch = conf->def.chan;
+
+	WARN(wvif->channel, "Channel overwrite");
+	wvif->channel = ch;
+	wvif->ht_info.channel_type = cfg80211_get_chandef_type(&conf->def);
+
+	return 0;
+}
+
+void wfx_unassign_vif_chanctx(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+			      struct ieee80211_chanctx_conf *conf)
+{
+	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
+	struct ieee80211_channel *ch = conf->def.chan;
+
+	WARN(wvif->channel != ch, "Channel mismatch");
+	wvif->channel = NULL;
+}
+
+int wfx_config(struct ieee80211_hw *hw, u32 changed)
+{
+	int ret = 0;
+	struct wfx_dev *wdev = hw->priv;
+	struct ieee80211_conf *conf = &hw->conf;
+	struct wfx_vif *wvif;
+
+
+	// FIXME: Interface id should not been hardcoded
+	wvif = wdev_to_wvif(wdev, 0);
+	if (!wvif) {
+		WARN(1, "Interface 0 does not exist anymore");
+		return 0;
+	}
+
+	down(&wvif->scan.lock);
+	mutex_lock(&wdev->conf_mutex);
+	if (changed & IEEE80211_CONF_CHANGE_POWER) {
+		wdev->output_power = conf->power_level;
+		wsm_set_output_power(wvif, wdev->output_power * 10);
+	}
+
+	if (changed & IEEE80211_CONF_CHANGE_PS) {
+		wvif = NULL;
+		while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
+			memset(&wvif->powersave_mode, 0, sizeof(wvif->powersave_mode));
+			if (conf->flags & IEEE80211_CONF_PS) {
+				wvif->powersave_mode.pm_mode.enter_psm = 1;
+				if (conf->dynamic_ps_timeout > 0) {
+					wvif->powersave_mode.pm_mode.fast_psm = 1;
+					// Firmware does not support more than 128ms
+					wvif->powersave_mode.fast_psm_idle_period =
+						min(conf->dynamic_ps_timeout * 2, 255);
+				}
+			}
+			if (wvif->state == WFX_STATE_STA && wvif->bss_params.aid)
+				wfx_set_pm(wvif, &wvif->powersave_mode);
+		}
+		wvif = wdev_to_wvif(wdev, 0);
+	}
+
+	mutex_unlock(&wdev->conf_mutex);
+	up(&wvif->scan.lock);
+	return ret;
+}
+
+static int wfx_vif_setup(struct wfx_vif *wvif)
+{
+	int i;
+	// FIXME: parameters are set by kernel juste after interface_add.
+	// Keep struct hif_req_edca_queue_params blank?
+	struct hif_req_edca_queue_params default_edca_params[] = {
+		[IEEE80211_AC_VO] = {
+			.queue_id = WSM_QUEUE_ID_VOICE,
+			.aifsn = 2,
+			.cw_min = 3,
+			.cw_max = 7,
+			.tx_op_limit = TXOP_UNIT * 47,
+		},
+		[IEEE80211_AC_VI] = {
+			.queue_id = WSM_QUEUE_ID_VIDEO,
+			.aifsn = 2,
+			.cw_min = 7,
+			.cw_max = 15,
+			.tx_op_limit = TXOP_UNIT * 94,
+		},
+		[IEEE80211_AC_BE] = {
+			.queue_id = WSM_QUEUE_ID_BESTEFFORT,
+			.aifsn = 3,
+			.cw_min = 15,
+			.cw_max = 1023,
+			.tx_op_limit = TXOP_UNIT * 0,
+		},
+		[IEEE80211_AC_BK] = {
+			.queue_id = WSM_QUEUE_ID_BACKGROUND,
+			.aifsn = 7,
+			.cw_min = 15,
+			.cw_max = 1023,
+			.tx_op_limit = TXOP_UNIT * 0,
+		},
+	};
+
+	if (wfx_api_older_than(wvif->wdev, 2, 0)) {
+		default_edca_params[IEEE80211_AC_BE].queue_id = WSM_QUEUE_ID_BACKGROUND;
+		default_edca_params[IEEE80211_AC_BK].queue_id = WSM_QUEUE_ID_BESTEFFORT;
+	}
+	/* Spin lock */
+	spin_lock_init(&wvif->ps_state_lock);
+	spin_lock_init(&wvif->event_queue_lock);
+	mutex_init(&wvif->bss_loss_lock);
+	/* STA Work*/
+	INIT_LIST_HEAD(&wvif->event_queue);
+	INIT_WORK(&wvif->event_handler_work, wfx_event_handler_work);
+	INIT_WORK(&wvif->unjoin_work, wfx_unjoin_work);
+	INIT_WORK(&wvif->wep_key_work, wfx_wep_key_work);
+	INIT_WORK(&wvif->bss_params_work, wfx_bss_params_work);
+	INIT_WORK(&wvif->set_beacon_wakeup_period_work, wfx_set_beacon_wakeup_period_work);
+	INIT_DELAYED_WORK(&wvif->bss_loss_work, wfx_bss_loss_work);
+	INIT_WORK(&wvif->tx_policy_upload_work, tx_policy_upload_work);
+
+	/* AP Work */
+	INIT_WORK(&wvif->link_id_work, wfx_link_id_work);
+	INIT_DELAYED_WORK(&wvif->link_id_gc_work, wfx_link_id_gc_work);
+	INIT_WORK(&wvif->update_filtering_work, wfx_update_filtering_work);
+
+	/* Optional */
+	INIT_WORK(&wvif->set_tim_work, wfx_set_tim_work);
+	INIT_WORK(&wvif->set_cts_work, wfx_set_cts_work);
+
+	INIT_WORK(&wvif->multicast_start_work, wfx_multicast_start_work);
+	INIT_WORK(&wvif->multicast_stop_work, wfx_multicast_stop_work);
+#if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
+	setup_timer(&wvif->mcast_timeout, wfx_mcast_timeout, (unsigned long) wvif);
+#else
+	timer_setup(&wvif->mcast_timeout, wfx_mcast_timeout, 0);
+#endif
+
+	/* About scan */
+	sema_init(&wvif->scan.lock, 1);
+	INIT_WORK(&wvif->scan.work, wfx_scan_work);
+	INIT_DELAYED_WORK(&wvif->scan.timeout, wfx_scan_timeout);
+	init_completion(&wvif->set_pm_mode_complete);
+	complete(&wvif->set_pm_mode_complete);
+
+	BUG_ON(ARRAY_SIZE(default_edca_params) != ARRAY_SIZE(wvif->edca.params));
+	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
+		memcpy(&wvif->edca.params[i], &default_edca_params[i], sizeof(default_edca_params[i]));
+		wvif->edca.uapsd_enable[i] = false;
+	}
+	wvif->setbssparams_done = false;
+	wvif->wep_default_key_id = -1;
+
+	return 0;
+}
+
+int wfx_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
+{
+	int i;
+	struct wfx_dev *wdev = hw->priv;
+	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
+
+	vif->driver_flags |= IEEE80211_VIF_BEACON_FILTER |
+#if (KERNEL_VERSION(3, 19, 0) <= LINUX_VERSION_CODE)
+			     IEEE80211_VIF_SUPPORTS_UAPSD |
+#endif
+			     IEEE80211_VIF_SUPPORTS_CQM_RSSI;
+
+	mutex_lock(&wdev->conf_mutex);
+
+	switch (vif->type) {
+	case NL80211_IFTYPE_STATION:
+	case NL80211_IFTYPE_ADHOC:
+	case NL80211_IFTYPE_AP:
+		break;
+	default:
+		mutex_unlock(&wdev->conf_mutex);
+		return -EOPNOTSUPP;
+	}
+
+	for (i = 0; i < ARRAY_SIZE(wdev->vif); i++) {
+		if (!wdev->vif[i]) {
+			wdev->vif[i] = vif;
+			wvif->id = i;
+			break;
+		}
+	}
+	if (i == ARRAY_SIZE(wdev->vif)) {
+		mutex_unlock(&wdev->conf_mutex);
+		return -EOPNOTSUPP;
+	}
+	wvif->vif = vif;
+	wvif->wdev = wdev;
+	wvif->vif->type = vif->type;
+	wfx_vif_setup(wvif);
+	mutex_unlock(&wdev->conf_mutex);
+	wsm_set_macaddr(wvif, vif->addr);
+	for (i = 0; i < IEEE80211_NUM_ACS; i++)
+		wsm_set_edca_queue_params(wvif, &wvif->edca.params[i]);
+	wfx_set_uapsd_param(wvif, &wvif->edca);
+	tx_policy_init(wvif);
+	wvif = NULL;
+	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
+		// Combo mode does not support Block Acks. We can re-enable them
+		if (wvif_count(wdev) == 1)
+			wsm_set_block_ack_policy(wvif, 0xFF, 0xFF);
+		else
+			wsm_set_block_ack_policy(wvif, 0x00, 0x00);
+		// Combo force powersave mode. We can re-enable it now
+		wfx_set_pm(wvif, &wvif->powersave_mode);
+	}
+	return 0;
+}
+
+void wfx_remove_interface(struct ieee80211_hw *hw,
+			  struct ieee80211_vif *vif)
+{
+	struct wfx_dev *wdev = hw->priv;
+	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
+	int i;
+
+	// If scan is in progress, stop it
+	while (down_trylock(&wvif->scan.lock))
+		schedule();
+	up(&wvif->scan.lock);
+	wait_for_completion_timeout(&wvif->set_pm_mode_complete, msecs_to_jiffies(300));
+
+	mutex_lock(&wdev->conf_mutex);
+	switch (wvif->state) {
+	case WFX_STATE_PRE_STA:
+	case WFX_STATE_STA:
+	case WFX_STATE_IBSS:
+		wsm_tx_lock_flush(wdev);
+		if (!schedule_work(&wvif->unjoin_work))
+			wsm_tx_unlock(wdev);
+		break;
+	case WFX_STATE_AP:
+		for (i = 0; wvif->link_id_map; ++i) {
+			if (wvif->link_id_map & BIT(i)) {
+				wfx_unmap_link(wvif, i);
+				wvif->link_id_map &= ~BIT(i);
+			}
+		}
+		memset(wvif->link_id_db, 0, sizeof(wvif->link_id_db));
+		wvif->sta_asleep_mask = 0;
+		wvif->enable_beacon = false;
+		wvif->tx_multicast = false;
+		wvif->aid0_bit_set = false;
+		wvif->buffered_multicasts = false;
+		wvif->pspoll_mask = 0;
+		/* reset.link_id = 0; */
+		wsm_reset(wvif, false);
+		break;
+	default:
+		break;
+	}
+
+	wvif->state = WFX_STATE_PASSIVE;
+	wfx_tx_queues_wait_empty_vif(wvif);
+	wsm_tx_unlock(wdev);
+
+	/* FIXME: In add to reset MAC address, try to reset interface */
+	wsm_set_macaddr(wvif, NULL);
+
+	cancel_delayed_work_sync(&wvif->scan.timeout);
+
+	wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
+	cancel_work_sync(&wvif->unjoin_work);
+	cancel_delayed_work_sync(&wvif->link_id_gc_work);
+	del_timer_sync(&wvif->mcast_timeout);
+	wfx_free_event_queue(wvif);
+
+	wdev->vif[wvif->id] = NULL;
+	wvif->vif = NULL;
+
+	mutex_unlock(&wdev->conf_mutex);
+	wvif = NULL;
+	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
+		// Combo mode does not support Block Acks. We can re-enable them
+		if (wvif_count(wdev) == 1)
+			wsm_set_block_ack_policy(wvif, 0xFF, 0xFF);
+		else
+			wsm_set_block_ack_policy(wvif, 0x00, 0x00);
+		// Combo force powersave mode. We can re-enable it now
+		wfx_set_pm(wvif, &wvif->powersave_mode);
+	}
+}
+
+int wfx_start(struct ieee80211_hw *hw)
+{
+	return 0;
+}
+
+void wfx_stop(struct ieee80211_hw *hw)
+{
+	struct wfx_dev *wdev = hw->priv;
+
+	wsm_tx_lock_flush(wdev);
+	mutex_lock(&wdev->conf_mutex);
+	wfx_tx_queues_clear(wdev);
+	mutex_unlock(&wdev->conf_mutex);
+	wsm_tx_unlock(wdev);
+	WARN(atomic_read(&wdev->tx_lock), "tx_lock is locked");
 }
 
