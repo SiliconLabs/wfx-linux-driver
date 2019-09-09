@@ -11,7 +11,7 @@
 #include <linux/version.h>
 #include <net/mac80211.h>
 
-#include "api_wsm_cmd.h"
+#include "hif_api_cmd.h"
 
 struct wfx_dev;
 struct wfx_vif;

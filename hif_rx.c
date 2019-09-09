@@ -9,8 +9,8 @@
 #include <linux/skbuff.h>
 #include <linux/etherdevice.h>
 
-#include "wsm_rx.h"
-#include "wsm_mib.h"
+#include "hif_rx.h"
+#include "hif_tx_mib.h"
 #include "wfx.h"
 #include "bh.h"
 #include "data_rx.h"

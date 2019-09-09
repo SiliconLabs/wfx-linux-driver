@@ -10,7 +10,7 @@
 
 #include <linux/skbuff.h>
 
-#include "api_wsm_cmd.h"
+#include "hif_api_cmd.h"
 
 #define WFX_MAX_STA_IN_AP_MODE    14
 #define WFX_LINK_ID_AFTER_DTIM    (WFX_MAX_STA_IN_AP_MODE + 1)

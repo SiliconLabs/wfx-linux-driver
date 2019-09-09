@@ -13,8 +13,8 @@
 #include "bh.h"
 #include "key.h"
 #include "debug.h"
-#include "wsm_tx.h"
-#include "wsm_mib.h"
+#include "hif_tx.h"
+#include "hif_tx_mib.h"
 
 #define TXOP_UNIT 32
 #define WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES 2

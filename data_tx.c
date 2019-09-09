@@ -9,7 +9,7 @@
 
 #include "data_tx.h"
 #include "wfx.h"
-#include "wsm_mib.h"
+#include "hif_tx_mib.h"
 #include "bh.h"
 #include "sta.h"
 #include "debug.h"

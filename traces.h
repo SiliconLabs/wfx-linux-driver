@@ -14,7 +14,7 @@
 #include <linux/tracepoint.h>
 #include <linux/version.h>
 
-#include "api_wsm_cmd.h"
+#include "hif_api_cmd.h"
 #include "bus.h"
 
 #if (KERNEL_VERSION(4, 1, 0) > LINUX_VERSION_CODE)

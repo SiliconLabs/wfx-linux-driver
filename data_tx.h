@@ -11,8 +11,8 @@
 #include <linux/list.h>
 #include <net/mac80211.h>
 
-#include "api_wsm_cmd.h"
-#include "api_wsm_mib.h"
+#include "hif_api_cmd.h"
+#include "hif_api_mib.h"
 
 // FIXME: use IEEE80211_NUM_TIDS
 #define WFX_MAX_TID               8

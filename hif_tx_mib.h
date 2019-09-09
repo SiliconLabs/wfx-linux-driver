@@ -6,14 +6,14 @@
  * Copyright (c) 2010, ST-Ericsson
  * Copyright (C) 2010, ST-Ericsson SA
  */
-#ifndef WFX_WSM_MIB_H
-#define WFX_WSM_MIB_H
+#ifndef WFX_HIF_TX_MIB_H
+#define WFX_HIF_TX_MIB_H
 
 #include <linux/etherdevice.h>
 
 #include "wfx.h"
-#include "wsm_tx.h"
-#include "api_wsm_mib.h"
+#include "hif_tx.h"
+#include "hif_api_mib.h"
 
 static inline int hif_set_output_power(struct wfx_vif *wvif, int power_level)
 {
@@ -276,4 +276,4 @@ static inline int hif_rts_threshold(struct wfx_vif *wvif, int val)
 			     WSM_MIB_ID_DOT11_RTS_THRESHOLD, &arg, sizeof(arg));
 }
 
-#endif /* WFX_WSM_MIB_H */
+#endif

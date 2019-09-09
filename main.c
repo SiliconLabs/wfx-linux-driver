@@ -21,7 +21,7 @@
 #include <linux/firmware.h>
 
 #include "wfx_version.h"
-#include "api_wsm_cmd.h"
+#include "hif_api_cmd.h"
 #include "wfx.h"
 #include "fwio.h"
 #include "hwio.h"
@@ -29,7 +29,7 @@
 #include "sta.h"
 #include "key.h"
 #include "debug.h"
-#include "wsm_mib.h"
+#include "hif_tx_mib.h"
 #include "secure_link.h"
 
 #define WFX_PDS_MAX_SIZE 1500

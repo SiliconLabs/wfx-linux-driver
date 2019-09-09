@@ -39,8 +39,8 @@ wfx-y := \
 		data_tx.o \
 		main.o \
 		queue.o \
-		wsm_tx.o \
-		wsm_rx.o \
+		hif_tx.o \
+		hif_rx.o \
 		key.o \
 		sta.o \
 		scan.o \

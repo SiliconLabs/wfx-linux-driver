@@ -7,10 +7,10 @@
  * Copyright (c) 2010, ST-Ericsson
  * Copyright (C) 2010, ST-Ericsson SA
  */
-#ifndef WFX_WSM_TX_H
-#define WFX_WSM_TX_H
+#ifndef WFX_HIF_TX_H
+#define WFX_HIF_TX_H
 
-#include "api_wsm_cmd.h"
+#include "hif_api_cmd.h"
 
 struct wfx_dev;
 struct wfx_vif;
@@ -64,4 +64,4 @@ int hif_sl_config(struct wfx_dev *wdev, const unsigned long *bitmap);
 int hif_sl_send_pub_keys(struct wfx_dev *wdev,
 			 const uint8_t *pubkey, const uint8_t *pubkey_hmac);
 
-#endif /* WFX_WSM_TX_H */
+#endif

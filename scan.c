@@ -10,7 +10,7 @@
 #include "scan.h"
 #include "wfx.h"
 #include "sta.h"
-#include "wsm_mib.h"
+#include "hif_tx_mib.h"
 
 static void __ieee80211_scan_completed_compat(struct ieee80211_hw *hw, bool aborted)
 {

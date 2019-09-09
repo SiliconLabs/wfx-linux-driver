@@ -8,7 +8,7 @@
 #include <net/mac80211.h>
 
 #include "wfx.h"
-#include "wsm_mib.h"
+#include "hif_tx_mib.h"
 #include "key.h"
 
 static int wfx_alloc_key(struct wfx_dev *wdev)
