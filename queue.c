@@ -36,7 +36,7 @@ void wfx_tx_flush(struct wfx_dev *wdev)
 	if (wdev->chip_frozen)
 		return;
 
-	mutex_lock(&wdev->wsm_cmd.lock);
+	mutex_lock(&wdev->hif_ctxt.lock);
 	ret = wait_event_timeout(wdev->hif.tx_buffers_empty,
 				 !wdev->hif.tx_buffers_used,
 				 msecs_to_jiffies(3000));
@@ -46,7 +46,7 @@ void wfx_tx_flush(struct wfx_dev *wdev)
 		// FIXME: drop pending frames here
 		wdev->chip_frozen = 1;
 	}
-	mutex_unlock(&wdev->wsm_cmd.lock);
+	mutex_unlock(&wdev->hif_ctxt.lock);
 }
 
 void wfx_tx_lock_flush(struct wfx_dev *wdev)

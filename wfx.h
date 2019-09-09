@@ -85,7 +85,7 @@ struct wfx_dev {
 	u32			key_map;
 	struct hif_req_add_key	keys[MAX_KEY_ENTRIES];
 
-	struct wsm_cmd		wsm_cmd;
+	struct wfx_hif_ctxt	hif_ctxt;
 	struct completion	firmware_ready;
 	struct hif_ind_startup	wsm_caps;
 	u8			keyset;

@@ -187,9 +187,9 @@ static void wfx_sl_renew_key(struct work_struct *work)
 	struct wfx_dev *wdev = container_of(work, struct wfx_dev, sl.key_renew_work);
 
 	wfx_tx_lock_flush(wdev);
-	mutex_lock(&wdev->wsm_cmd.key_renew_lock);
+	mutex_lock(&wdev->hif_ctxt.key_renew_lock);
 	wfx_sl_key_exchange(wdev);
-	mutex_unlock(&wdev->wsm_cmd.key_renew_lock);
+	mutex_unlock(&wdev->hif_ctxt.key_renew_lock);
 	wfx_tx_unlock(wdev);
 }
 

@@ -344,7 +344,7 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	wdev->pdata.support_ldpc = false;
 
 	init_completion(&wdev->firmware_ready);
-	init_wsm_cmd(&wdev->wsm_cmd);
+	wfx_init_hif_ctxt(&wdev->hif_ctxt);
 	mutex_init(&wdev->conf_mutex);
 	mutex_init(&wdev->rx_stats_lock);
 

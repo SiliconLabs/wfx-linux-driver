@@ -21,7 +21,7 @@ struct wsm_scan {
 	uint8_t *ch;
 };
 
-struct wsm_cmd {
+struct wfx_hif_ctxt {
 	struct mutex      lock;
 	struct mutex      key_renew_lock;
 	struct completion ready;
@@ -33,7 +33,7 @@ struct wsm_cmd {
 	int               ret;
 };
 
-void init_wsm_cmd(struct wsm_cmd *wsm_cmd);
+void wfx_init_hif_ctxt(struct wfx_hif_ctxt *wfx_hif_ctxt);
 int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request,
 		 void *reply, size_t reply_len, bool async);
 
