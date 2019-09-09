@@ -14,7 +14,7 @@
 #include <linux/of.h>
 
 #include "wfx.h"
-#include "hwbus.h"
+#include "bus.h"
 #include "hwio.h"
 #include "main.h"
 #include "bh.h"

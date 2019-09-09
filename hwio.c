@@ -9,7 +9,7 @@
 
 #include "hwio.h"
 #include "wfx.h"
-#include "hwbus.h"
+#include "bus.h"
 #include "traces.h"
 
 /*

@@ -45,8 +45,8 @@ wfx-y := \
 		sta.o \
 		scan.o \
 		debug.o
-wfx-$(CONFIG_SPI) += wfx_spi.o
-wfx-$(subst m,y,$(CONFIG_MMC)) += wfx_sdio.o
+wfx-$(CONFIG_SPI) += bus_spi.o
+wfx-$(subst m,y,$(CONFIG_MMC)) += bus_sdio.o
 wfx-$(CONFIG_WFX_SECURE_LINK) += \
 	secure_link.o \
 	mbedtls/library/aes.o \

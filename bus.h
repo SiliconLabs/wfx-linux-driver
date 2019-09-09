@@ -5,8 +5,8 @@
  * Copyright (c) 2017-2018, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
-#ifndef WFX_HWBUS_H
-#define WFX_HWBUS_H
+#ifndef WFX_BUS_H
+#define WFX_BUS_H
 
 #define WFX_REG_CONFIG        0x0
 #define WFX_REG_CONTROL       0x1
@@ -28,4 +28,4 @@ struct hwbus_ops {
 extern struct sdio_driver wfx_sdio_driver;
 extern struct spi_driver wfx_spi_driver;
 
-#endif /* WFX_HWBUS_H */
+#endif

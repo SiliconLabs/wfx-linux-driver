@@ -14,7 +14,7 @@
 #include <linux/gpio/consumer.h>
 
 #include "api_general.h"
-#include "hwbus.h"
+#include "bus.h"
 
 struct wfx_dev;
 

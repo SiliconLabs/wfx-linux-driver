@@ -15,7 +15,7 @@
 #include <linux/version.h>
 
 #include "api_wsm_cmd.h"
-#include "hwbus.h"
+#include "bus.h"
 
 #if (KERNEL_VERSION(4, 1, 0) > LINUX_VERSION_CODE)
 #define TRACE_DEFINE_ENUM(a)
