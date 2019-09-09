@@ -221,22 +221,22 @@ static int hif_error_indication(struct wfx_dev *wdev, struct hif_msg *hif, void 
 	u32 *pStatus = (u32 *) body->data;
 
 	switch (body->type) {
-	case  WSM_HI_ERROR_FIRMWARE_ROLLBACK:
+	case WSM_HI_ERROR_FIRMWARE_ROLLBACK:
 		dev_err(wdev->dev, "asynchronous error: firmware rollback error %d\n", *pRollback);
 		break;
-	case  WSM_HI_ERROR_FIRMWARE_DEBUG_ENABLED:
+	case WSM_HI_ERROR_FIRMWARE_DEBUG_ENABLED:
 		dev_err(wdev->dev, "asynchronous error: firmware debug feature enabled\n");
 		break;
-	case  WSM_HI_ERROR_OUTDATED_SESSION_KEY:
+	case WSM_HI_ERROR_OUTDATED_SESSION_KEY:
 		dev_err(wdev->dev, "asynchronous error: secure link outdated key: %#.8x\n", *pStatus);
 		break;
 	case WSM_HI_ERROR_INVALID_SESSION_KEY:
 		dev_err(wdev->dev, "asynchronous error: invalid session key\n");
 		break;
-	case  WSM_HI_ERROR_OOR_VOLTAGE:
+	case WSM_HI_ERROR_OOR_VOLTAGE:
 		dev_err(wdev->dev, "asynchronous error: out-of-range overvoltage: %#.8x\n", *pStatus);
 		break;
-	case  WSM_HI_ERROR_PDS_VERSION:
+	case WSM_HI_ERROR_PDS_VERSION:
 		dev_err(wdev->dev, "asynchronous error: wrong PDS payload or version: %#.8x\n", *pStatus);
 		break;
 	default:
@@ -251,7 +251,7 @@ static int hif_generic_indication(struct wfx_dev *wdev, struct hif_msg *hif, voi
 	struct hif_ind_generic *body = buf;
 
 	switch (body->indication_type) {
-	case  HI_GENERIC_INDICATION_TYPE_RAW:
+	case HI_GENERIC_INDICATION_TYPE_RAW:
 		return 0;
 	case HI_GENERIC_INDICATION_TYPE_STRING:
 		dev_info(wdev->dev, "firmware says: %s", (char *) body->indication_data.raw_data);
