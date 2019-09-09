@@ -99,14 +99,6 @@ int wfx_unmap_link(struct wfx_vif *wvif, int sta_id)
 	return wsm_map_link(wvif, mac_addr, 1, sta_id);
 }
 
-int wsm_fwd_probe_req(struct wfx_vif *wvif, bool enable)
-{
-	wvif->filter_probe_resp = enable;
-	return wsm_set_rx_filter(wvif, wvif->filter_bssid,
-				 wvif->filter_probe_resp);
-}
-
-
 static int wsm_startup_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
 	struct hif_ind_startup *body = buf;
