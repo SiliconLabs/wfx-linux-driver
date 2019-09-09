@@ -26,12 +26,6 @@
 #include "wsm_tx.h"
 #include "api_wsm_mib.h"
 
-#if (KERNEL_VERSION(4, 7, 0) > LINUX_VERSION_CODE)
-#define nl80211_band ieee80211_band
-#define NL80211_BAND_2GHZ IEEE80211_BAND_2GHZ
-#define NUM_NL80211_BANDS IEEE80211_NUM_BANDS
-#endif
-
 #if (KERNEL_VERSION(4, 2, 0) > LINUX_VERSION_CODE)
 static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
 				     enum ieee80211_hw_flags flg)
@@ -39,6 +33,12 @@ static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
 	hw->flags |= flg;
 }
 #define ieee80211_hw_set(hw, flg)	_ieee80211_hw_set(hw, IEEE80211_HW_##flg)
+#endif
+
+#if (KERNEL_VERSION(4, 7, 0) > LINUX_VERSION_CODE)
+#define nl80211_band ieee80211_band
+#define NL80211_BAND_2GHZ IEEE80211_BAND_2GHZ
+#define NUM_NL80211_BANDS IEEE80211_NUM_BANDS
 #endif
 
 #if (KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE)
