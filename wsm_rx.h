@@ -13,9 +13,6 @@
 #include "api_wsm_cmd.h"
 
 struct wfx_dev;
-struct wfx_vif;
-
-int wfx_unmap_link(struct wfx_vif *wvif, int link_id);
 
 void wsm_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb);
 struct hif_msg *wsm_get_tx(struct wfx_dev *wdev);

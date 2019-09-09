@@ -89,16 +89,6 @@ static int wsm_multi_tx_confirm(struct wfx_dev *wdev, struct hif_msg *hdr, void 
 	return 0;
 }
 
-int wfx_unmap_link(struct wfx_vif *wvif, int sta_id)
-{
-	u8 *mac_addr = NULL;
-
-	if (sta_id)
-		mac_addr = wvif->link_id_db[sta_id - 1].old_mac;
-
-	return wsm_map_link(wvif, mac_addr, 1, sta_id);
-}
-
 static int wsm_startup_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 {
 	struct hif_ind_startup *body = buf;

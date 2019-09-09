@@ -67,6 +67,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 void wfx_tx_confirm_cb(struct wfx_vif *wvif, struct hif_cnf_tx *arg);
 void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb);
 
+int wfx_unmap_link(struct wfx_vif *wvif, int link_id);
 void wfx_link_id_work(struct work_struct *work);
 void wfx_link_id_gc_work(struct work_struct *work);
 int wfx_find_link_id(struct wfx_vif *wvif, const u8 *mac);

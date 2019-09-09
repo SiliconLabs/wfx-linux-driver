@@ -340,6 +340,16 @@ static int wfx_map_link(struct wfx_vif *wvif, struct wfx_link_entry *link_entry,
 	return ret;
 }
 
+int wfx_unmap_link(struct wfx_vif *wvif, int sta_id)
+{
+	u8 *mac_addr = NULL;
+
+	if (sta_id)
+		mac_addr = wvif->link_id_db[sta_id - 1].old_mac;
+
+	return wsm_map_link(wvif, mac_addr, 1, sta_id);
+}
+
 void wfx_link_id_gc_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
