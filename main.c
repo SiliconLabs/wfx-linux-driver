@@ -396,7 +396,11 @@ int wfx_probe(struct wfx_dev *wdev)
 		 wdev->wsm_caps.firmware_minor, wdev->wsm_caps.firmware_build,
 		 wdev->wsm_caps.api_version_major, wdev->wsm_caps.api_version_minor,
 		 wdev->keyset, *((u32 *) &wdev->wsm_caps.capabilities));
-	strncpy(wdev->hw->wiphy->fw_version, wdev->wsm_caps.firmware_label, sizeof(wdev->hw->wiphy->fw_version));
+	snprintf(wdev->hw->wiphy->fw_version, sizeof(wdev->hw->wiphy->fw_version),
+		 "%d.%d.%d",
+		 wdev->wsm_caps.firmware_major,
+		 wdev->wsm_caps.firmware_minor,
+		 wdev->wsm_caps.firmware_build);
 
 	if (wfx_api_older_than(wdev, 1, 0)) {
 		dev_err(wdev->dev, "Unsupported firmware API version (expect 1 while firmware returns %d)\n",
