@@ -1401,6 +1401,64 @@ static int wfx_ht_ampdu_density(const struct wfx_ht_info *ht_info)
 	return ht_info->ht_cap.ampdu_density;
 }
 
+static void wfx_join_finalize(struct wfx_vif *wvif, struct ieee80211_bss_conf *info)
+{
+	struct ieee80211_sta *sta = NULL;
+	struct hif_mib_set_association_mode association_mode = { };
+
+	if (info->dtim_period)
+		wvif->dtim_period = info->dtim_period;
+	wvif->beacon_int = info->beacon_int;
+
+	rcu_read_lock();
+	if (info->bssid && !info->ibss_joined)
+		sta = ieee80211_find_sta(wvif->vif, info->bssid);
+	if (sta) {
+		wvif->ht_info.ht_cap = sta->ht_cap;
+		wvif->bss_params.operational_rate_set =
+			wfx_rate_mask_to_wsm(wvif->wdev, sta->supp_rates[wvif->channel->band]);
+		wvif->ht_info.operation_mode = info->ht_operation_mode;
+	} else {
+		memset(&wvif->ht_info, 0, sizeof(wvif->ht_info));
+		wvif->bss_params.operational_rate_set = -1;
+	}
+	rcu_read_unlock();
+
+	/* Non Greenfield stations present */
+	if (wvif->ht_info.operation_mode & IEEE80211_HT_OP_MODE_NON_GF_STA_PRSNT)
+		wsm_dual_cts_protection(wvif, true);
+	else
+		wsm_dual_cts_protection(wvif, false);
+
+	association_mode.preambtype_use = 1;
+	association_mode.mode = 1;
+	association_mode.rateset = 1;
+	association_mode.spacing = 1;
+	association_mode.preamble_type = info->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG;
+	association_mode.basic_rate_set = cpu_to_le32(wfx_rate_mask_to_wsm(wvif->wdev, info->basic_rates));
+	association_mode.mixed_or_greenfield_type = wfx_ht_greenfield(&wvif->ht_info);
+	association_mode.mpdu_start_spacing = wfx_ht_ampdu_density(&wvif->ht_info);
+
+	wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
+	cancel_work_sync(&wvif->unjoin_work);
+
+	wvif->bss_params.beacon_lost_count = 20;
+	wvif->bss_params.aid = info->aid;
+
+	if (wvif->dtim_period < 1)
+		wvif->dtim_period = 1;
+
+	wsm_set_association_mode(wvif, &association_mode);
+
+	if (!info->ibss_joined) {
+		wsm_keep_alive_period(wvif, 30 /* sec */);
+		wsm_set_bss_params(wvif, &wvif->bss_params);
+		wvif->setbssparams_done = true;
+		wfx_set_beacon_wakeup_period_work(&wvif->set_beacon_wakeup_period_work);
+		wfx_set_pm(wvif, &wvif->powersave_mode);
+	}
+}
+
 void wfx_bss_info_changed(struct ieee80211_hw *hw,
 			     struct ieee80211_vif *vif,
 			     struct ieee80211_bss_conf *info,
@@ -1489,65 +1547,10 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 				do_join = true;
 			}
 
-			if (info->assoc || info->ibss_joined) {
-				struct ieee80211_sta *sta = NULL;
-				struct hif_mib_set_association_mode association_mode = { };
-
-				if (info->dtim_period)
-					wvif->dtim_period = info->dtim_period;
-				wvif->beacon_int = info->beacon_int;
-
-				rcu_read_lock();
-
-				if (info->bssid && !info->ibss_joined)
-					sta = ieee80211_find_sta(vif, info->bssid);
-				if (sta) {
-					wvif->ht_info.ht_cap = sta->ht_cap;
-					wvif->bss_params.operational_rate_set = wfx_rate_mask_to_wsm(wdev, sta->supp_rates[wvif->channel->band]);
-					wvif->ht_info.operation_mode = info->ht_operation_mode;
-				} else {
-					memset(&wvif->ht_info, 0, sizeof(wvif->ht_info));
-					wvif->bss_params.operational_rate_set = -1;
-				}
-				rcu_read_unlock();
-
-				/* Non Greenfield stations present */
-				if (wvif->ht_info.operation_mode & IEEE80211_HT_OP_MODE_NON_GF_STA_PRSNT)
-					wsm_dual_cts_protection(wvif, true);
-				else
-					wsm_dual_cts_protection(wvif, false);
-
-				association_mode.preambtype_use = 1;
-				association_mode.mode = 1;
-				association_mode.rateset = 1;
-				association_mode.spacing = 1;
-				association_mode.preamble_type = info->use_short_preamble ? WSM_PREAMBLE_SHORT : WSM_PREAMBLE_LONG;
-				association_mode.basic_rate_set = cpu_to_le32(wfx_rate_mask_to_wsm(wdev, info->basic_rates));
-				association_mode.mixed_or_greenfield_type = wfx_ht_greenfield(&wvif->ht_info);
-				association_mode.mpdu_start_spacing = wfx_ht_ampdu_density(&wvif->ht_info);
-
-				wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
-				cancel_work_sync(&wvif->unjoin_work);
-
-				wvif->bss_params.beacon_lost_count = 20;
-				wvif->bss_params.aid = info->aid;
-
-				if (wvif->dtim_period < 1)
-					wvif->dtim_period = 1;
-
-				wsm_set_association_mode(wvif, &association_mode);
-
-				if (!info->ibss_joined) {
-					wsm_keep_alive_period(wvif, 30 /* sec */);
-					wsm_set_bss_params(wvif, &wvif->bss_params);
-					wvif->setbssparams_done = true;
-					wfx_set_beacon_wakeup_period_work(&wvif->set_beacon_wakeup_period_work);
-					wfx_set_pm(wvif, &wvif->powersave_mode);
-				}
-			} else {
-				memset(&wvif->bss_params, 0,
-				       sizeof(wvif->bss_params));
-			}
+			if (info->assoc || info->ibss_joined)
+				wfx_join_finalize(wvif, info);
+			else
+				memset(&wvif->bss_params, 0, sizeof(wvif->bss_params));
 		}
 	}
 
