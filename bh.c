@@ -49,7 +49,7 @@ static void device_release(struct wfx_dev *wdev)
 static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 {
 	struct sk_buff *skb;
-	struct hif_msg *wsm;
+	struct hif_msg *hif;
 	size_t alloc_len;
 	size_t computed_len;
 	int release_count;
@@ -71,31 +71,31 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	piggyback = le16_to_cpup((u16 *) (skb->data + alloc_len - 2));
 	_trace_piggyback(piggyback, false);
 
-	wsm = (struct hif_msg *) skb->data;
-	WARN(wsm->encrypted & 0x1, "unsupported encryption type");
-	if (wsm->encrypted == 0x2) {
-		if (wfx_sl_decode(wdev, (void *) wsm))
+	hif = (struct hif_msg *) skb->data;
+	WARN(hif->encrypted & 0x1, "unsupported encryption type");
+	if (hif->encrypted == 0x2) {
+		if (wfx_sl_decode(wdev, (void *) hif))
 			goto err;
-		le16_to_cpus(wsm->len);
-		computed_len = round_up(wsm->len - sizeof(wsm->len), 16)
+		le16_to_cpus(hif->len);
+		computed_len = round_up(hif->len - sizeof(hif->len), 16)
 			       + sizeof(struct hif_sl_msg)
 			       + sizeof(struct hif_sl_tag);
 	} else {
-		le16_to_cpus(wsm->len);
-		computed_len = round_up(wsm->len, 2);
+		le16_to_cpus(hif->len);
+		computed_len = round_up(hif->len, 2);
 	}
 	if (computed_len != read_len) {
 		dev_err(wdev->dev, "inconsistent message length: %zu != %zu\n",
 			computed_len, read_len);
-		print_hex_dump(KERN_INFO, "wsm: ", DUMP_PREFIX_OFFSET, 16, 1,
-			       wsm, read_len, true);
+		print_hex_dump(KERN_INFO, "hif: ", DUMP_PREFIX_OFFSET, 16, 1,
+			       hif, read_len, true);
 		goto err;
 	}
 
-	if (!(wsm->id & HIF_ID_IS_INDICATION)) {
+	if (!(hif->id & HIF_ID_IS_INDICATION)) {
 		(*is_cnf)++;
-		if (wsm->id == WSM_HI_MULTI_TRANSMIT_CNF_ID)
-			release_count = le32_to_cpu(((struct hif_cnf_multi_transmit *) wsm->body)->num_tx_confs);
+		if (hif->id == WSM_HI_MULTI_TRANSMIT_CNF_ID)
+			release_count = le32_to_cpu(((struct hif_cnf_multi_transmit *) hif->body)->num_tx_confs);
 		else
 			release_count = 1;
 		WARN(wdev->hif.tx_buffers_used < release_count, "corrupted buffer counter");
@@ -103,16 +103,16 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 		if (!wdev->hif.tx_buffers_used)
 			wake_up(&wdev->hif.tx_buffers_empty);
 	}
-	_trace_hif_recv(wsm, wdev->hif.tx_buffers_used);
+	_trace_hif_recv(hif, wdev->hif.tx_buffers_used);
 
-	if (wsm->id != HI_EXCEPTION_IND_ID && wsm->id != HI_ERROR_IND_ID) {
-		if (wsm->seqnum != wdev->hif.rx_seqnum)
+	if (hif->id != HI_EXCEPTION_IND_ID && hif->id != HI_ERROR_IND_ID) {
+		if (hif->seqnum != wdev->hif.rx_seqnum)
 			dev_warn(wdev->dev, "wrong message sequence: %d != %d\n",
-				 wsm->seqnum, wdev->hif.rx_seqnum);
-		wdev->hif.rx_seqnum = (wsm->seqnum + 1) % (HIF_COUNTER_MAX + 1);
+				 hif->seqnum, wdev->hif.rx_seqnum);
+		wdev->hif.rx_seqnum = (hif->seqnum + 1) % (HIF_COUNTER_MAX + 1);
 	}
 
-	skb_put(skb, wsm->len);
+	skb_put(skb, hif->len);
 	// wfx_handle_rx takes care on SKB livetime
 	wsm_handle_rx(wdev, skb);
 
@@ -157,20 +157,20 @@ static int bh_work_rx(struct wfx_dev *wdev, int max_msg, int *num_cnf)
 	return i;
 }
 
-static void tx_helper(struct wfx_dev *wdev, struct hif_msg *wsm)
+static void tx_helper(struct wfx_dev *wdev, struct hif_msg *hif)
 {
 	int ret;
 	void *data;
 	bool is_encrypted = false;
-	size_t len = le16_to_cpu(wsm->len);
+	size_t len = le16_to_cpu(hif->len);
 
-	BUG_ON(len < sizeof(*wsm));
+	BUG_ON(len < sizeof(*hif));
 
-	wsm->seqnum = wdev->hif.tx_seqnum;
+	hif->seqnum = wdev->hif.tx_seqnum;
 	wdev->hif.tx_seqnum = (wdev->hif.tx_seqnum + 1) % (HIF_COUNTER_MAX + 1);
 
-	if (wfx_is_secure_command(wdev, wsm->id)) {
-		len = round_up(len - sizeof(wsm->len), 16) + sizeof(wsm->len)
+	if (wfx_is_secure_command(wdev, hif->id)) {
+		len = round_up(len - sizeof(hif->len), 16) + sizeof(hif->len)
 		      + sizeof(struct hif_sl_msg_hdr) + sizeof(struct hif_sl_tag);
 		// AES support encryption in-place. However, mac80211 access to
 		// 802.11 header after frame was sent (to get MAC addresses).
@@ -179,11 +179,11 @@ static void tx_helper(struct wfx_dev *wdev, struct hif_msg *wsm)
 		if (!data)
 			goto end;
 		is_encrypted = true;
-		ret = wfx_sl_encode(wdev, wsm, data);
+		ret = wfx_sl_encode(wdev, hif, data);
 		if (ret)
 			goto end;
 	} else {
-		data = wsm;
+		data = hif;
 	}
 	WARN(len > wdev->hw_caps.size_inp_ch_buf,
 	     "%s: request exceed WFx capability: %zu > %d", __func__,
@@ -194,7 +194,7 @@ static void tx_helper(struct wfx_dev *wdev, struct hif_msg *wsm)
 		goto end;
 
 	wdev->hif.tx_buffers_used++;
-	_trace_hif_send(wsm, wdev->hif.tx_buffers_used);
+	_trace_hif_send(hif, wdev->hif.tx_buffers_used);
 end:
 	if (is_encrypted)
 		kfree(data);
@@ -202,22 +202,22 @@ end:
 
 static int bh_work_tx(struct wfx_dev *wdev, int max_msg)
 {
-	struct hif_msg *wsm;
+	struct hif_msg *hif;
 	int i;
 
 	for (i = 0; i < max_msg; i++) {
-		wsm = NULL;
+		hif = NULL;
 		if (wdev->hif.tx_buffers_used < wdev->hw_caps.num_inp_ch_bufs) {
 			if (try_wait_for_completion(&wdev->hif_ctxt.ready)) {
 				WARN(!mutex_is_locked(&wdev->hif_ctxt.lock), "data locking error");
-				wsm = wdev->hif_ctxt.buf_send;
+				hif = wdev->hif_ctxt.buf_send;
 			} else {
-				wsm = wfx_tx_queues_get(wdev);
+				hif = wfx_tx_queues_get(wdev);
 			}
 		}
-		if (!wsm)
+		if (!hif)
 			return i;
-		tx_helper(wdev, wsm);
+		tx_helper(wdev, hif);
 	}
 	return i;
 }

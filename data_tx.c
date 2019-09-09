@@ -588,7 +588,7 @@ static int wfx_tx_get_icv_len(struct ieee80211_key_conf *hw_key)
 static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct sk_buff *skb)
 {
 	struct hif_msg *hif_msg;
-	struct hif_req_tx *wsm;
+	struct hif_req_tx *req;
 	struct wfx_tx_priv *tx_priv;
 	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
 	struct ieee80211_key_conf *hw_key = tx_info->control.hw_key;
@@ -632,14 +632,14 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta, struct 
 	}
 
 	// Fill tx request
-	wsm = (struct hif_req_tx *) hif_msg->body;
-	wsm->packet_id = queue_id << 16 | IEEE80211_SEQ_TO_SN(le16_to_cpu(hdr->seq_ctrl));
-	wsm->data_flags.fc_offset = offset;
-	wsm->queue_id.peer_sta_id = tx_priv->raw_link_id;
-	// Queue index are inverted between WSM and Linux
-	wsm->queue_id.queue_id = 3 - queue_id;
-	wsm->ht_tx_parameters = wfx_tx_get_tx_parms(wvif->wdev, tx_info);
-	wsm->tx_flags.retry_policy_index = wfx_tx_get_rate_id(wvif, tx_info);
+	req = (struct hif_req_tx *) hif_msg->body;
+	req->packet_id = queue_id << 16 | IEEE80211_SEQ_TO_SN(le16_to_cpu(hdr->seq_ctrl));
+	req->data_flags.fc_offset = offset;
+	req->queue_id.peer_sta_id = tx_priv->raw_link_id;
+	// Queue index are inverted between firmware and Linux
+	req->queue_id.queue_id = 3 - queue_id;
+	req->ht_tx_parameters = wfx_tx_get_tx_parms(wvif->wdev, tx_info);
+	req->tx_flags.retry_policy_index = wfx_tx_get_rate_id(wvif, tx_info);
 
 	// Auxilliary operations
 	wfx_tx_manage_pm(wvif, hdr, tx_priv, sta);
@@ -687,9 +687,9 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, struct hif_cnf_tx *arg)
 	int i;
 	int tx_count;
 	struct sk_buff *skb;
+	struct ieee80211_tx_rate *rate;
 	struct ieee80211_tx_info *tx_info;
 	const struct wfx_tx_priv *tx_priv;
-	struct ieee80211_tx_rate *rate;
 
 	skb = wfx_pending_get(wvif->wdev, arg->packet_id);
 	if (!skb) {
@@ -760,12 +760,12 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, struct hif_cnf_tx *arg)
 }
 
 static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
-				   struct hif_req_tx *wsm)
+				   struct hif_req_tx *req)
 {
 	struct ieee80211_sta *sta;
 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *) skb->data;
 	int tid = wfx_tx_get_tid(hdr);
-	int raw_link_id = wsm->queue_id.peer_sta_id;
+	int raw_link_id = req->queue_id.peer_sta_id;
 	u8 *buffered;
 
 	if (raw_link_id && tid < WFX_MAX_TID) {
@@ -788,15 +788,15 @@ static void wfx_notify_buffered_tx(struct wfx_vif *wvif, struct sk_buff *skb,
 
 void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb)
 {
-	struct hif_msg *hdr = (struct hif_msg *) skb->data;
-	struct hif_req_tx *wsm = (struct hif_req_tx *) hdr->body;
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
-	unsigned int offset = sizeof(struct hif_req_tx) + sizeof(struct hif_msg) + wsm->data_flags.fc_offset;
+	struct hif_msg *hif = (struct hif_msg *) skb->data;
+	struct hif_req_tx *req = (struct hif_req_tx *) hif->body;
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hif->interface);
+	unsigned int offset = sizeof(struct hif_req_tx) + sizeof(struct hif_msg) + req->data_flags.fc_offset;
 
 	WARN_ON(!wvif);
 	skb_pull(skb, offset);
-	wfx_notify_buffered_tx(wvif, skb, wsm);
-	tx_policy_put(wvif, wsm->tx_flags.retry_policy_index);
+	wfx_notify_buffered_tx(wvif, skb, req);
+	tx_policy_put(wvif, req->tx_flags.retry_policy_index);
 	ieee80211_tx_status(wdev->hw, skb);
 }
 

@@ -92,7 +92,7 @@ void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif)
 	struct wfx_queue *queue;
 	struct sk_buff *item;
 	struct wfx_dev *wdev = wvif->wdev;
-	struct hif_msg *hdr;
+	struct hif_msg *hif;
 
 	if (wvif->wdev->chip_frozen) {
 		wfx_tx_lock_flush(wdev);
@@ -107,8 +107,8 @@ void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif)
 			queue = &wdev->tx_queue[i];
 			spin_lock_bh(&queue->queue.lock);
 			skb_queue_walk(&queue->queue, item) {
-				hdr = (struct hif_msg *) item->data;
-				if (hdr->interface == wvif->id)
+				hif = (struct hif_msg *) item->data;
+				if (hif->interface == wvif->id)
 					done = false;
 			}
 			spin_unlock_bh(&queue->queue.lock);
@@ -283,13 +283,13 @@ int wfx_pending_remove(struct wfx_dev *wdev, struct sk_buff *skb)
 struct sk_buff *wfx_pending_get(struct wfx_dev *wdev, u32 packet_id)
 {
 	struct sk_buff *skb;
-	struct hif_req_tx *wsm;
+	struct hif_req_tx *req;
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 
 	spin_lock_bh(&stats->pending.lock);
 	skb_queue_walk(&stats->pending, skb) {
-		wsm = wfx_skb_txreq(skb);
-		if (wsm->packet_id == packet_id) {
+		req = wfx_skb_txreq(skb);
+		if (req->packet_id == packet_id) {
 			spin_unlock_bh(&stats->pending.lock);
 			return skb;
 		}
@@ -304,14 +304,14 @@ void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned int limit_ms)
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 	ktime_t now = ktime_get();
 	struct wfx_tx_priv *tx_priv;
-	struct hif_req_tx *wsm;
+	struct hif_req_tx *req;
 	struct sk_buff *skb;
 	bool first = true;
 
 	spin_lock_bh(&stats->pending.lock);
 	skb_queue_walk(&stats->pending, skb) {
 		tx_priv = wfx_skb_tx_priv(skb);
-		wsm = wfx_skb_txreq(skb);
+		req = wfx_skb_txreq(skb);
 		if (ktime_after(now, ktime_add_ms(tx_priv->xmit_timestamp, limit_ms))) {
 			if (first) {
 				dev_info(wdev->dev, "frames stuck in firmware since %dms or more:\n",
@@ -319,7 +319,7 @@ void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned int limit_ms)
 				first = false;
 			}
 			dev_info(wdev->dev, "   id %08x sent %lldms ago\n",
-				 wsm->packet_id,
+				 req->packet_id,
 				 ktime_ms_delta(now, tx_priv->xmit_timestamp));
 		}
 	}
@@ -355,8 +355,8 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 {
 	bool handled = false;
 	struct wfx_tx_priv *tx_priv = wfx_skb_tx_priv(skb);
-	struct hif_req_tx *wsm = wfx_skb_txreq(skb);
-	struct ieee80211_hdr *frame = (struct ieee80211_hdr *) (wsm->frame + wsm->data_flags.fc_offset);
+	struct hif_req_tx *req = wfx_skb_txreq(skb);
+	struct ieee80211_hdr *frame = (struct ieee80211_hdr *) (req->frame + req->data_flags.fc_offset);
 
 	enum {
 		do_probe,
@@ -394,8 +394,8 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 		if (ieee80211_is_nullfunc(frame->frame_control)) {
 			mutex_lock(&wvif->bss_loss_lock);
 			if (wvif->bss_loss_state) {
-				wvif->bss_loss_confirm_id = wsm->packet_id;
-				wsm->queue_id.queue_id = WSM_QUEUE_ID_VOICE;
+				wvif->bss_loss_confirm_id = req->packet_id;
+				req->queue_id.queue_id = WSM_QUEUE_ID_VOICE;
 			}
 			mutex_unlock(&wvif->bss_loss_lock);
 		} else if (ieee80211_has_protected(frame->frame_control) &&
@@ -509,8 +509,8 @@ found:
 struct hif_msg *wfx_tx_queues_get(struct wfx_dev *wdev)
 {
 	struct sk_buff *skb;
-	struct hif_msg *hdr = NULL;
-	struct hif_req_tx *wsm = NULL;
+	struct hif_msg *hif = NULL;
+	struct hif_req_tx *req = NULL;
 	struct wfx_queue *queue = NULL;
 	struct wfx_queue *vif_queue = NULL;
 	u32 tx_allowed_mask = 0;
@@ -526,7 +526,7 @@ struct hif_msg *wfx_tx_queues_get(struct wfx_dev *wdev)
 	for (;;) {
 		int ret = -ENOENT;
 		int queue_num;
-		struct ieee80211_hdr *hdr80211;
+		struct ieee80211_hdr *hdr;
 
 		if (atomic_read(&wdev->tx_lock))
 			return NULL;
@@ -572,8 +572,8 @@ struct hif_msg *wfx_tx_queues_get(struct wfx_dev *wdev)
 		if (!skb)
 			continue;
 		tx_priv = wfx_skb_tx_priv(skb);
-		hdr = (struct hif_msg *) skb->data;
-		wvif = wdev_to_wvif(wdev, hdr->interface);
+		hif = (struct hif_msg *) skb->data;
+		wvif = wdev_to_wvif(wdev, hif->interface);
 		WARN_ON(!wvif);
 
 		if (wsm_handle_tx_data(wvif, skb, queue))
@@ -598,11 +598,11 @@ struct hif_msg *wfx_tx_queues_get(struct wfx_dev *wdev)
 		 *  to inform PS STAs
 		 */
 		if (more) {
-			wsm = (struct hif_req_tx *) hdr->body;
-			hdr80211 = (struct ieee80211_hdr *) (wsm->frame + wsm->data_flags.fc_offset);
-			hdr80211->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
+			req = (struct hif_req_tx *) hif->body;
+			hdr = (struct ieee80211_hdr *) (req->frame + req->data_flags.fc_offset);
+			hdr->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
 		}
-		return hdr;
+		return hif;
 	}
 }
 

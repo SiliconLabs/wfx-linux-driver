@@ -17,12 +17,12 @@
 #include "secure_link.h"
 #include "sta.h"
 
-static int wsm_generic_confirm(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
+static int wsm_generic_confirm(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
 	// All confirm messages start with status
 	int status = le32_to_cpu(*((__le32 *) buf));
-	int cmd = hdr->id;
-	int len = hdr->len - 4; // drop header
+	int cmd = hif->id;
+	int len = hif->len - 4; // drop header
 
 	WARN(!mutex_is_locked(&wdev->hif_ctxt.lock), "data locking error");
 
@@ -56,10 +56,10 @@ static int wsm_generic_confirm(struct wfx_dev *wdev, struct hif_msg *hdr, void *
 	return status;
 }
 
-static int wsm_tx_confirm(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
+static int wsm_tx_confirm(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
 	struct hif_cnf_tx *body = buf;
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hif->interface);
 
 	WARN_ON(!wvif);
 	if (!wvif)
@@ -69,11 +69,11 @@ static int wsm_tx_confirm(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
 	return 0;
 }
 
-static int wsm_multi_tx_confirm(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
+static int wsm_multi_tx_confirm(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
 	struct hif_cnf_multi_transmit *body = buf;
 	struct hif_cnf_tx *buf_loc = (struct hif_cnf_tx *) &body->tx_conf_payload;
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hif->interface);
 	int count = body->num_tx_confs;
 	int i;
 
@@ -89,7 +89,7 @@ static int wsm_multi_tx_confirm(struct wfx_dev *wdev, struct hif_msg *hdr, void 
 	return 0;
 }
 
-static int wsm_startup_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
+static int wsm_startup_indication(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
 	struct hif_ind_startup *body = buf;
 
@@ -107,7 +107,7 @@ static int wsm_startup_indication(struct wfx_dev *wdev, struct hif_msg *hdr, voi
 	return 0;
 }
 
-static int wsm_wakeup_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
+static int wsm_wakeup_indication(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
 	if (!wdev->pdata.gpio_wakeup
 	    || !gpiod_get_value(wdev->pdata.gpio_wakeup)) {
@@ -117,7 +117,7 @@ static int wsm_wakeup_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void
 	return 0;
 }
 
-static int wsm_keys_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
+static int wsm_keys_indication(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
 	struct hif_ind_sl_exchange_pub_keys *body = buf;
 
@@ -130,13 +130,13 @@ static int wsm_keys_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *
 	return 0;
 }
 
-static int wsm_receive_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf, struct sk_buff *skb)
+static int wsm_receive_indication(struct wfx_dev *wdev, struct hif_msg *hif, void *buf, struct sk_buff *skb)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hif->interface);
 	struct hif_ind_rx *body = buf;
 
 	if (!wvif) {
-		dev_warn(wdev->dev, "ignore rx data for non existant vif %d\n", hdr->interface);
+		dev_warn(wdev->dev, "ignore rx data for non existant vif %d\n", hif->interface);
 		return 0;
 	}
 	skb_pull(skb, sizeof(struct hif_msg) + sizeof(struct hif_ind_rx));
@@ -145,9 +145,9 @@ static int wsm_receive_indication(struct wfx_dev *wdev, struct hif_msg *hdr, voi
 	return 0;
 }
 
-static int wsm_event_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
+static int wsm_event_indication(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hif->interface);
 	struct hif_ind_event *body = buf;
 	struct wfx_wsm_event *event;
 	int first;
@@ -172,9 +172,9 @@ static int wsm_event_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void 
 	return 0;
 }
 
-static int wsm_pm_mode_complete_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
+static int wsm_pm_mode_complete_indication(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hif->interface);
 
 	WARN_ON(!wvif);
 	complete(&wvif->set_pm_mode_complete);
@@ -182,9 +182,9 @@ static int wsm_pm_mode_complete_indication(struct wfx_dev *wdev, struct hif_msg 
 	return 0;
 }
 
-static int wsm_scan_complete_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
+static int wsm_scan_complete_indication(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hif->interface);
 	struct hif_ind_scan_cmpl *body = buf;
 
 	WARN_ON(!wvif);
@@ -193,9 +193,9 @@ static int wsm_scan_complete_indication(struct wfx_dev *wdev, struct hif_msg *hd
 	return 0;
 }
 
-static int wsm_join_complete_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
+static int wsm_join_complete_indication(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hif->interface);
 
 	WARN_ON(!wvif);
 	dev_warn(wdev->dev, "unattended JoinCompleteInd\n");
@@ -203,9 +203,9 @@ static int wsm_join_complete_indication(struct wfx_dev *wdev, struct hif_msg *hd
 	return 0;
 }
 
-static int wsm_suspend_resume_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
+static int wsm_suspend_resume_indication(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hdr->interface);
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, hif->interface);
 	struct hif_ind_suspend_resume_tx *body = buf;
 
 	WARN_ON(!wvif);
@@ -214,7 +214,7 @@ static int wsm_suspend_resume_indication(struct wfx_dev *wdev, struct hif_msg *h
 	return 0;
 }
 
-static int wsm_error_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
+static int wsm_error_indication(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
 	struct hif_ind_error *body = buf;
 	u8 *pRollback = (u8 *) body->data;
@@ -246,7 +246,7 @@ static int wsm_error_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void 
 	return 0;
 }
 
-static int wsm_generic_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
+static int wsm_generic_indication(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
 	struct hif_ind_generic *body = buf;
 
@@ -270,9 +270,9 @@ static int wsm_generic_indication(struct wfx_dev *wdev, struct hif_msg *hdr, voi
 	}
 }
 
-static int wsm_exception_indication(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf)
+static int wsm_exception_indication(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
-	size_t len = hdr->len - 4; // drop header
+	size_t len = hif->len - 4; // drop header
 	dev_err(wdev->dev, "Firmware exception.\n");
 	print_hex_dump_bytes("Dump: ", DUMP_PREFIX_NONE, buf, len);
 	wdev->chip_frozen = 1;
@@ -282,7 +282,7 @@ static int wsm_exception_indication(struct wfx_dev *wdev, struct hif_msg *hdr, v
 
 static const struct {
 	int msg_id;
-	int (*handler)(struct wfx_dev *wdev, struct hif_msg *hdr, void *buf);
+	int (*handler)(struct wfx_dev *wdev, struct hif_msg *hif, void *buf);
 } wsm_handlers[] = {
 	/* Confirmations */
 	{ WSM_HI_TX_CNF_ID,              wsm_tx_confirm },
@@ -306,29 +306,29 @@ static const struct {
 void wsm_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	int i;
-	struct hif_msg *wsm = (struct hif_msg *) skb->data;
-	int wsm_id = wsm->id;
+	struct hif_msg *hif = (struct hif_msg *) skb->data;
+	int wsm_id = hif->id;
 
 	if (wsm_id == WSM_HI_RX_IND_ID) {
 		// wsm_receive_indication take care of skb lifetime
-		wsm_receive_indication(wdev, wsm, wsm->body, skb);
+		wsm_receive_indication(wdev, hif, hif->body, skb);
 		return;
 	}
 	// Note: mutex_is_lock cause an implicit memory barrier that protect
 	// buf_send
 	if (mutex_is_locked(&wdev->hif_ctxt.lock)
 	    && wdev->hif_ctxt.buf_send && wdev->hif_ctxt.buf_send->id == wsm_id) {
-		wsm_generic_confirm(wdev, wsm, wsm->body);
+		wsm_generic_confirm(wdev, hif, hif->body);
 		goto free;
 	}
 	for (i = 0; i < ARRAY_SIZE(wsm_handlers); i++) {
 		if (wsm_handlers[i].msg_id == wsm_id) {
 			if (wsm_handlers[i].handler)
-				wsm_handlers[i].handler(wdev, wsm, wsm->body);
+				wsm_handlers[i].handler(wdev, hif, hif->body);
 			goto free;
 		}
 	}
-	dev_err(wdev->dev, "Unsupported WSM ID %02x\n", wsm_id);
+	dev_err(wdev->dev, "Unsupported hif ID %02x\n", wsm_id);
 free:
 	dev_kfree_skb(skb);
 }

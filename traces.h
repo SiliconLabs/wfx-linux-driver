@@ -164,8 +164,8 @@ wsm_mib_list_enum
 #define wsm_mib_list wsm_mib_list_enum { -1, NULL }
 
 DECLARE_EVENT_CLASS(wsm_data,
-	TP_PROTO(struct hif_msg *wsm, int tx_fill_level, bool is_recv),
-	TP_ARGS(wsm, tx_fill_level, is_recv),
+	TP_PROTO(struct hif_msg *hif, int tx_fill_level, bool is_recv),
+	TP_ARGS(hif, tx_fill_level, is_recv),
 	TP_STRUCT__entry(
 		__field(int, tx_fill_level)
 		__field(int, msg_id)
@@ -180,16 +180,16 @@ DECLARE_EVENT_CLASS(wsm_data,
 		int header_len;
 
 		__entry->tx_fill_level = tx_fill_level;
-		__entry->msg_len = wsm->len;
-		__entry->msg_id = wsm->id;
-		__entry->if_id = wsm->interface;
+		__entry->msg_len = hif->len;
+		__entry->msg_id = hif->id;
+		__entry->if_id = hif->interface;
 		if (is_recv)
 			__entry->msg_type = __entry->msg_id & 0x80 ? "IND" : "CNF";
 		else
 			__entry->msg_type = "REQ";
 		if (!is_recv &&
 		    (__entry->msg_id == WSM_HI_READ_MIB_REQ_ID || __entry->msg_id == WSM_HI_WRITE_MIB_REQ_ID)) {
-			__entry->mib = le16_to_cpup((u16 *) wsm->body);
+			__entry->mib = le16_to_cpup((u16 *) hif->body);
 			header_len = 4;
 		} else {
 			__entry->mib = -1;
@@ -197,7 +197,7 @@ DECLARE_EVENT_CLASS(wsm_data,
 		}
 		__entry->buf_len = min_t(int, __entry->msg_len, sizeof(__entry->buf))
 				   - sizeof(struct hif_msg) - header_len;
-		memcpy(__entry->buf, wsm->body + header_len, __entry->buf_len);
+		memcpy(__entry->buf, hif->body + header_len, __entry->buf_len);
 	),
 	TP_printk("%d:%d:%s_%s%s%s: %s%s (%d bytes)",
 		__entry->tx_fill_level,
@@ -212,13 +212,13 @@ DECLARE_EVENT_CLASS(wsm_data,
 	)
 );
 DEFINE_EVENT(wsm_data, hif_send,
-	TP_PROTO(struct hif_msg *wsm, int tx_fill_level, bool is_recv),
-	TP_ARGS(wsm, tx_fill_level, is_recv));
-#define _trace_hif_send(wsm, tx_fill_level) trace_hif_send(wsm, tx_fill_level, false)
+	TP_PROTO(struct hif_msg *hif, int tx_fill_level, bool is_recv),
+	TP_ARGS(hif, tx_fill_level, is_recv));
+#define _trace_hif_send(hif, tx_fill_level) trace_hif_send(hif, tx_fill_level, false)
 DEFINE_EVENT(wsm_data, hif_recv,
-	TP_PROTO(struct hif_msg *wsm, int tx_fill_level, bool is_recv),
-	TP_ARGS(wsm, tx_fill_level, is_recv));
-#define _trace_hif_recv(wsm, tx_fill_level) trace_hif_recv(wsm, tx_fill_level, true)
+	TP_PROTO(struct hif_msg *hif, int tx_fill_level, bool is_recv),
+	TP_ARGS(hif, tx_fill_level, is_recv));
+#define _trace_hif_recv(hif, tx_fill_level) trace_hif_recv(hif, tx_fill_level, true)
 
 #define wfx_reg_list_enum                                 \
 	wfx_reg_name(WFX_REG_CONFIG,       "CONFIG")      \
