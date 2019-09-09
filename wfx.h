@@ -55,9 +55,6 @@ static inline u8 ieee80211_get_tid(struct ieee80211_hdr *hdr)
 	(n * sizeof(*(p)->member) + __must_be_array((p)->member) + sizeof(*(p)))
 #endif
 
-#define WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES	2
-
-/* Please keep order */
 struct hwbus_ops;
 
 struct wfx_dev {

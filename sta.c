@@ -17,7 +17,8 @@
 #include "wsm_tx.h"
 #include "wsm_mib.h"
 
-#define TXOP_UNIT			32
+#define TXOP_UNIT 32
+#define WSM_MAX_ARP_IP_ADDRTABLE_ENTRIES 2
 
 static u32 wfx_rate_mask_to_wsm(struct wfx_dev *wdev, u32 rates)
 {
