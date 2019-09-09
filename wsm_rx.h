@@ -15,6 +15,5 @@
 struct wfx_dev;
 
 void wsm_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb);
-struct hif_msg *wsm_get_tx(struct wfx_dev *wdev);
 
 #endif /* WFX_WSM_RX_H */

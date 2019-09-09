@@ -350,3 +350,260 @@ bool wfx_tx_queues_is_empty(struct wfx_dev *wdev)
 	}
 	return ret;
 }
+
+static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
+			       struct wfx_queue *queue)
+{
+	bool handled = false;
+	struct wfx_tx_priv *tx_priv = wfx_skb_tx_priv(skb);
+	struct hif_req_tx *wsm = wfx_skb_txreq(skb);
+	struct ieee80211_hdr *frame = (struct ieee80211_hdr *) (wsm->frame + wsm->data_flags.fc_offset);
+
+	enum {
+		do_probe,
+		do_drop,
+		do_wep,
+		do_tx,
+	} action = do_tx;
+
+	switch (wvif->vif->type) {
+	case NL80211_IFTYPE_STATION:
+		if (wvif->state < WFX_STATE_PRE_STA)
+			action = do_drop;
+		break;
+	case NL80211_IFTYPE_AP:
+		if (!wvif->state) {
+			action = do_drop;
+		} else if (!(BIT(tx_priv->raw_link_id) &
+		      (BIT(0) | wvif->link_id_map))) {
+			dev_warn(wvif->wdev->dev,
+				   "A frame with expired link id is dropped.\n");
+			action = do_drop;
+		}
+		break;
+	case NL80211_IFTYPE_ADHOC:
+		if (wvif->state != WFX_STATE_IBSS)
+			action = do_drop;
+		break;
+	case NL80211_IFTYPE_MONITOR:
+	default:
+		action = do_drop;
+		break;
+	}
+
+	if (action == do_tx) {
+		if (ieee80211_is_nullfunc(frame->frame_control)) {
+			mutex_lock(&wvif->bss_loss_lock);
+			if (wvif->bss_loss_state) {
+				wvif->bss_loss_confirm_id = wsm->packet_id;
+				wsm->queue_id.queue_id = WSM_QUEUE_ID_VOICE;
+			}
+			mutex_unlock(&wvif->bss_loss_lock);
+		} else if (ieee80211_has_protected(frame->frame_control) &&
+			   tx_priv->hw_key &&
+			   tx_priv->hw_key->keyidx != wvif->wep_default_key_id &&
+			   (tx_priv->hw_key->cipher == WLAN_CIPHER_SUITE_WEP40 ||
+			    tx_priv->hw_key->cipher == WLAN_CIPHER_SUITE_WEP104)) {
+			action = do_wep;
+		}
+	}
+
+	switch (action) {
+	case do_drop:
+		BUG_ON(wfx_pending_remove(wvif->wdev, skb));
+		handled = true;
+		break;
+	case do_wep:
+		wsm_tx_lock(wvif->wdev);
+		wvif->wep_default_key_id = tx_priv->hw_key->keyidx;
+		wvif->wep_pending_skb = skb;
+		if (!schedule_work(&wvif->wep_key_work))
+			wsm_tx_unlock(wvif->wdev);
+		handled = true;
+		break;
+	case do_tx:
+		break;
+	default:
+		/* Do nothing */
+		break;
+	}
+	return handled;
+}
+
+static int wfx_get_prio_queue(struct wfx_vif *wvif,
+				 u32 tx_allowed_mask, int *total)
+{
+	static const int urgent = BIT(WFX_LINK_ID_AFTER_DTIM) |
+		BIT(WFX_LINK_ID_UAPSD);
+	struct hif_req_edca_queue_params *edca;
+	unsigned int score, best = -1;
+	int winner = -1;
+	int i;
+
+	/* search for a winner using edca params */
+	for (i = 0; i < IEEE80211_NUM_ACS; ++i) {
+		int queued;
+
+		edca = &wvif->edca.params[i];
+		queued = wfx_tx_queue_get_num_queued(&wvif->wdev->tx_queue[i],
+				tx_allowed_mask);
+		if (!queued)
+			continue;
+		*total += queued;
+		score = ((edca->aifsn + edca->cw_min) << 16) +
+			((edca->cw_max - edca->cw_min) *
+			 (get_random_int() & 0xFFFF));
+		if (score < best && (winner < 0 || i != 3)) {
+			best = score;
+			winner = i;
+		}
+	}
+
+	/* override winner if bursting */
+	if (winner >= 0 && wvif->wdev->tx_burst_idx >= 0 &&
+	    winner != wvif->wdev->tx_burst_idx &&
+	    !wfx_tx_queue_get_num_queued(&wvif->wdev->tx_queue[winner], tx_allowed_mask & urgent) &&
+	    wfx_tx_queue_get_num_queued(&wvif->wdev->tx_queue[wvif->wdev->tx_burst_idx], tx_allowed_mask))
+		winner = wvif->wdev->tx_burst_idx;
+
+	return winner;
+}
+
+static int wsm_get_tx_queue_and_mask(struct wfx_vif *wvif,
+				     struct wfx_queue **queue_p,
+				     u32 *tx_allowed_mask_p,
+				     bool *more)
+{
+	int idx;
+	u32 tx_allowed_mask;
+	int total = 0;
+
+	/* Search for a queue with multicast frames buffered */
+	if (wvif->tx_multicast) {
+		tx_allowed_mask = BIT(WFX_LINK_ID_AFTER_DTIM);
+		idx = wfx_get_prio_queue(wvif, tx_allowed_mask, &total);
+		if (idx >= 0) {
+			*more = total > 1;
+			goto found;
+		}
+	}
+
+	/* Search for unicast traffic */
+	tx_allowed_mask = ~wvif->sta_asleep_mask;
+	tx_allowed_mask |= BIT(WFX_LINK_ID_UAPSD);
+	if (wvif->sta_asleep_mask) {
+		tx_allowed_mask |= wvif->pspoll_mask;
+		tx_allowed_mask &= ~BIT(WFX_LINK_ID_AFTER_DTIM);
+	} else {
+		tx_allowed_mask |= BIT(WFX_LINK_ID_AFTER_DTIM);
+	}
+	idx = wfx_get_prio_queue(wvif, tx_allowed_mask, &total);
+	if (idx < 0)
+		return -ENOENT;
+
+found:
+	*queue_p = &wvif->wdev->tx_queue[idx];
+	*tx_allowed_mask_p = tx_allowed_mask;
+	return 0;
+}
+
+struct hif_msg *wsm_get_tx(struct wfx_dev *wdev)
+{
+	struct sk_buff *skb;
+	struct hif_msg *hdr = NULL;
+	struct hif_req_tx *wsm = NULL;
+	struct wfx_queue *queue = NULL;
+	struct wfx_queue *vif_queue = NULL;
+	u32 tx_allowed_mask = 0;
+	u32 vif_tx_allowed_mask = 0;
+	const struct wfx_tx_priv *tx_priv = NULL;
+	struct wfx_vif *wvif;
+	/* More is used only for broadcasts. */
+	bool more = false;
+	bool vif_more = false;
+	int not_found;
+	int burst;
+
+	for (;;) {
+		int ret = -ENOENT;
+		int queue_num;
+		struct ieee80211_hdr *hdr80211;
+
+		if (atomic_read(&wdev->tx_lock))
+			return NULL;
+
+		wvif = NULL;
+		while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
+			spin_lock_bh(&wvif->ps_state_lock);
+
+			not_found = wsm_get_tx_queue_and_mask(wvif, &vif_queue, &vif_tx_allowed_mask, &vif_more);
+
+			if (wvif->buffered_multicasts && (not_found || !vif_more) &&
+					(wvif->tx_multicast || !wvif->sta_asleep_mask)) {
+				wvif->buffered_multicasts = false;
+				if (wvif->tx_multicast) {
+					wvif->tx_multicast = false;
+					schedule_work(&wvif->multicast_stop_work);
+				}
+			}
+
+			spin_unlock_bh(&wvif->ps_state_lock);
+
+			if (vif_more) {
+				more = 1;
+				tx_allowed_mask = vif_tx_allowed_mask;
+				queue = vif_queue;
+				ret = 0;
+				break;
+			} else if (!not_found) {
+				if (queue && queue != vif_queue)
+					dev_info(wdev->dev, "Vifs disagree about queue priority");
+				tx_allowed_mask |= vif_tx_allowed_mask;
+				queue = vif_queue;
+				ret = 0;
+			}
+		}
+
+		if (ret)
+			return 0;
+
+		queue_num = queue - wdev->tx_queue;
+
+		skb = wfx_tx_queue_get(wdev, queue, tx_allowed_mask);
+		if (!skb)
+			continue;
+		tx_priv = wfx_skb_tx_priv(skb);
+		hdr = (struct hif_msg *) skb->data;
+		wvif = wdev_to_wvif(wdev, hdr->interface);
+		WARN_ON(!wvif);
+
+		if (wsm_handle_tx_data(wvif, skb, queue))
+			continue;  /* Handled by WSM */
+
+		wvif->pspoll_mask &= ~BIT(tx_priv->raw_link_id);
+
+		/* allow bursting if txop is set */
+		if (wvif->edca.params[queue_num].tx_op_limit)
+			burst = (int)wfx_tx_queue_get_num_queued(queue, tx_allowed_mask) + 1;
+		else
+			burst = 1;
+
+		/* store index of bursting queue */
+		if (burst > 1)
+			wdev->tx_burst_idx = queue_num;
+		else
+			wdev->tx_burst_idx = -1;
+
+		/* more buffered multicast/broadcast frames
+		 *  ==> set MoreData flag in IEEE 802.11 header
+		 *  to inform PS STAs
+		 */
+		if (more) {
+			wsm = (struct hif_req_tx *) hdr->body;
+			hdr80211 = (struct ieee80211_hdr *) (wsm->frame + wsm->data_flags.fc_offset);
+			hdr80211->frame_control |= cpu_to_le16(IEEE80211_FCTL_MOREDATA);
+		}
+		return hdr;
+	}
+}
+
