@@ -20,9 +20,4 @@ int wfx_unmap_link(struct wfx_vif *wvif, int link_id);
 void wsm_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb);
 struct hif_msg *wsm_get_tx(struct wfx_dev *wdev);
 
-void wsm_tx_lock(struct wfx_dev *wdev);
-void wsm_tx_unlock(struct wfx_dev *wdev);
-void wsm_tx_flush(struct wfx_dev *wdev);
-void wsm_tx_lock_flush(struct wfx_dev *wdev);
-
 #endif /* WFX_WSM_RX_H */

@@ -33,6 +33,11 @@ struct wfx_queue_stats {
 	wait_queue_head_t	wait_link_id_empty;
 };
 
+void wsm_tx_lock(struct wfx_dev *wdev);
+void wsm_tx_unlock(struct wfx_dev *wdev);
+void wsm_tx_flush(struct wfx_dev *wdev);
+void wsm_tx_lock_flush(struct wfx_dev *wdev);
+
 void wfx_tx_queues_init(struct wfx_dev *wdev);
 void wfx_tx_queues_deinit(struct wfx_dev *wdev);
 void wfx_tx_queues_lock(struct wfx_dev *wdev);

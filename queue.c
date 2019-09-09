@@ -13,6 +13,49 @@
 #include "wsm_rx.h"
 #include "data_tx.h"
 
+void wsm_tx_lock(struct wfx_dev *wdev)
+{
+	atomic_inc(&wdev->tx_lock);
+}
+
+void wsm_tx_unlock(struct wfx_dev *wdev)
+{
+	int tx_lock = atomic_dec_return(&wdev->tx_lock);
+
+	WARN(tx_lock < 0, "inconsistent tx_lock value");
+	if (!tx_lock)
+		wfx_bh_request_tx(wdev);
+}
+
+void wsm_tx_flush(struct wfx_dev *wdev)
+{
+	int ret;
+
+	WARN(!atomic_read(&wdev->tx_lock), "tx_lock is not locked");
+
+	// Do not wait for any reply if chip is frozen
+	if (wdev->chip_frozen)
+		return;
+
+	mutex_lock(&wdev->wsm_cmd.lock);
+	ret = wait_event_timeout(wdev->hif.tx_buffers_empty,
+				 !wdev->hif.tx_buffers_used,
+				 msecs_to_jiffies(3000));
+	if (!ret) {
+		dev_warn(wdev->dev, "cannot flush tx buffers (%d still busy)\n", wdev->hif.tx_buffers_used);
+		wfx_pending_dump_old_frames(wdev, 3000);
+		// FIXME: drop pending frames here
+		wdev->chip_frozen = 1;
+	}
+	mutex_unlock(&wdev->wsm_cmd.lock);
+}
+
+void wsm_tx_lock_flush(struct wfx_dev *wdev)
+{
+	wsm_tx_lock(wdev);
+	wsm_tx_flush(wdev);
+}
+
 void wfx_tx_queues_lock(struct wfx_dev *wdev)
 {
 	int i;
