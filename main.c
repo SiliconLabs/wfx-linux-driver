@@ -38,10 +38,6 @@ MODULE_DESCRIPTION("Silicon Labs 802.11 Wireless LAN driver for WFx");
 MODULE_AUTHOR("Jérôme Pouiller <jerome.pouiller@silabs.com>");
 MODULE_LICENSE("GPL");
 MODULE_VERSION(WFX_LABEL);
-// Legacy
-MODULE_ALIAS("wfx-core");
-MODULE_ALIAS("wfx-wlan-spi");
-MODULE_ALIAS("wfx-wlan-sdio");
 
 static int gpio_wakeup = -2;
 module_param(gpio_wakeup, int, 0644);

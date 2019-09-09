@@ -314,10 +314,9 @@ static int wfx_spi_disconnect(struct spi_device *func)
 }
 
 /*
- * For dynamic driver binding, kernel does use OF to match driver. It only use
- * modalias and modalias is a copy of 'compatible' DT node with vendor
+ * For dynamic driver binding, kernel does not use OF to match driver. It only
+ * use modalias and modalias is a copy of 'compatible' DT node with vendor
  * stripped.
- * FIXME: should we also declare 'wfx-spi' here and remove of_device_id?
  */
 static const struct spi_device_id wfx_spi_id[] = {
 	{ "wfx-spi", 0 },
@@ -328,7 +327,6 @@ MODULE_DEVICE_TABLE(spi, wfx_spi_id);
 #ifdef CONFIG_OF
 static const struct of_device_id wfx_spi_of_match[] = {
 	{ .compatible = "silabs,wfx-spi" },
-	{ .compatible = "siliconlabs,wfx-wlan-spi" }, // Legacy
 	{ },
 };
 MODULE_DEVICE_TABLE(of, wfx_spi_of_match);
