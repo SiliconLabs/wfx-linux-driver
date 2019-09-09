@@ -52,7 +52,7 @@ static int wfx_scan_start(struct wfx_vif *wvif, struct wsm_scan *scan)
 	atomic_set(&wvif->wdev->scan_in_progress, 1);
 
 	schedule_delayed_work(&wvif->scan.timeout, msecs_to_jiffies(tmo));
-	ret = wsm_scan(wvif, scan);
+	ret = hif_scan(wvif, scan);
 	if (ret) {
 		wfx_scan_failed_cb(wvif);
 		atomic_set(&wvif->scan.in_progress, 0);
@@ -102,7 +102,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 	p = (struct hif_mib_template_frame *)skb_push(skb, 4);
 	p->frame_type = WSM_TMPLT_PRBREQ;
 	p->frame_length = cpu_to_le16(skb->len - 4);
-	ret = wsm_set_template_frame(wvif, p);
+	ret = hif_set_template_frame(wvif, p);
 	skb_pull(skb, 4);
 
 	if (!ret)
@@ -168,7 +168,7 @@ void wfx_scan_work(struct work_struct *work)
 
 	if (!wvif->scan.req || wvif->scan.curr == wvif->scan.end) {
 		if (wvif->scan.output_power != wvif->wdev->output_power)
-			wsm_set_output_power(wvif, wvif->wdev->output_power * 10);
+			hif_set_output_power(wvif, wvif->wdev->output_power * 10);
 
 		if (wvif->scan.status < 0)
 			dev_warn(wvif->wdev->dev,
@@ -243,7 +243,7 @@ void wfx_scan_work(struct work_struct *work)
 	if (!(first->flags & IEEE80211_CHAN_NO_IR) &&
 	    wvif->scan.output_power != first->max_power) {
 		wvif->scan.output_power = first->max_power;
-		wsm_set_output_power(wvif, wvif->scan.output_power * 10);
+		hif_set_output_power(wvif, wvif->scan.output_power * 10);
 	}
 	wvif->scan.status = wfx_scan_start(wvif, &scan);
 	kfree(scan.ch);
@@ -296,7 +296,7 @@ void wfx_scan_timeout(struct work_struct *work)
 				   "Timeout waiting for scan complete notification.\n");
 			wvif->scan.status = -ETIMEDOUT;
 			wvif->scan.curr = wvif->scan.end;
-			wsm_stop_scan(wvif);
+			hif_stop_scan(wvif);
 		}
 		wfx_scan_complete(wvif);
 	}

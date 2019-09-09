@@ -166,7 +166,7 @@ static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 	ret = wfx_sl_get_pubkey_mac(wdev, pubkey + 2, mac);
 	if (ret)
 		goto err;
-	ret = wsm_sl_send_pub_keys(wdev, pubkey + 2, mac);
+	ret = hif_sl_send_pub_keys(wdev, pubkey + 2, mac);
 	if (ret)
 		goto err;
 	if (!wait_for_completion_timeout(&wdev->sl.key_renew_done, msecs_to_jiffies(500)))
@@ -203,7 +203,7 @@ static void wfx_sl_init_cfg(struct wfx_dev *wdev)
 	clear_bit(HI_SL_EXCHANGE_PUB_KEYS_IND_ID, sl_commands);
 	clear_bit(HI_EXCEPTION_IND_ID, sl_commands);
 	clear_bit(HI_ERROR_IND_ID, sl_commands);
-	wsm_sl_config(wdev, sl_commands);
+	hif_sl_config(wdev, sl_commands);
 	bitmap_copy(wdev->sl.commands, sl_commands, 256);
 }
 
@@ -225,7 +225,7 @@ int wfx_sl_init(struct wfx_dev *wdev)
 			return -EIO;
 		wfx_sl_init_cfg(wdev);
 	} else if (link_mode == SEC_LINK_EVAL) {
-		if (wsm_sl_set_mac_key(wdev, wdev->pdata.slk_key, SL_MAC_KEY_DEST_RAM))
+		if (hif_sl_set_mac_key(wdev, wdev->pdata.slk_key, SL_MAC_KEY_DEST_RAM))
 			return -EIO;
 		if (wfx_sl_key_exchange(wdev))
 			return -EIO;

@@ -350,7 +350,7 @@ bool wfx_tx_queues_is_empty(struct wfx_dev *wdev)
 	return ret;
 }
 
-static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
+static bool hif_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 			       struct wfx_queue *queue)
 {
 	bool handled = false;
@@ -576,7 +576,7 @@ struct hif_msg *wfx_tx_queues_get(struct wfx_dev *wdev)
 		wvif = wdev_to_wvif(wdev, hif->interface);
 		WARN_ON(!wvif);
 
-		if (wsm_handle_tx_data(wvif, skb, queue))
+		if (hif_handle_tx_data(wvif, skb, queue))
 			continue;  /* Handled by WSM */
 
 		wvif->pspoll_mask &= ~BIT(tx_priv->raw_link_id);

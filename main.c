@@ -243,7 +243,7 @@ int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len)
 			buf[i] = 0;
 			dev_dbg(wdev->dev, "Send PDS '%s}'", buf + start);
 			buf[i] = '}';
-			ret = wsm_configuration(wdev, buf + start, i - start + 1);
+			ret = hif_configuration(wdev, buf + start, i - start + 1);
 			if (ret == WSM_STATUS_FAILURE) {
 				dev_err(wdev->dev, "PDS bytes %d to %d: invalid data (unsupported options?)\n", start, i);
 				return -EINVAL;
@@ -436,12 +436,12 @@ int wfx_probe(struct wfx_dev *wdev)
 			desc_to_gpio(wdev->pdata.gpio_wakeup), wdev->pdata.file_pds);
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 1);
 		control_reg_write(wdev, 0);
-		wsm_set_operational_mode(wdev, WSM_OP_POWER_MODE_QUIESCENT);
+		hif_set_operational_mode(wdev, WSM_OP_POWER_MODE_QUIESCENT);
 	} else {
-		wsm_set_operational_mode(wdev, WSM_OP_POWER_MODE_DOZE);
+		hif_set_operational_mode(wdev, WSM_OP_POWER_MODE_DOZE);
 	}
 
-	wsm_use_multi_tx_conf(wdev, true);
+	hif_use_multi_tx_conf(wdev, true);
 
 	for (i = 0; i < ARRAY_SIZE(wdev->addresses); i++) {
 		eth_zero_addr(wdev->addresses[i].addr);
@@ -481,7 +481,7 @@ err2:
 void wfx_release(struct wfx_dev *wdev)
 {
 	ieee80211_unregister_hw(wdev->hw);
-	wsm_shutdown(wdev);
+	hif_shutdown(wdev);
 	wfx_bh_unregister(wdev);
 	wfx_sl_deinit(wdev);
 }

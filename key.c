@@ -196,7 +196,7 @@ static int wfx_add_key(struct wfx_vif *wvif, struct ieee80211_sta *sta,
 		wfx_free_key(wdev, idx);
 		return -EOPNOTSUPP;
 	}
-	ret = wsm_add_key(wdev, k);
+	ret = hif_add_key(wdev, k);
 	if (ret) {
 #if KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE && \
     KERNEL_VERSION(4, 9, 63) > LINUX_VERSION_CODE && \
@@ -224,7 +224,7 @@ static int wfx_remove_key(struct wfx_vif *wvif, struct ieee80211_key_conf *key)
 {
 	WARN(key->hw_key_idx >= MAX_KEY_ENTRIES, "Corrupted hw_key_idx");
 	wfx_free_key(wvif->wdev, key->hw_key_idx);
-	return wsm_remove_key(wvif->wdev, key->hw_key_idx);
+	return hif_remove_key(wvif->wdev, key->hw_key_idx);
 }
 
 int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd,
@@ -253,7 +253,7 @@ int wfx_upload_keys(struct wfx_vif *wvif)
 		if (wdev->key_map & BIT(i)) {
 			key = &wdev->keys[i];
 			if (key->int_id == wvif->id)
-				wsm_add_key(wdev, key);
+				hif_add_key(wdev, key);
 		}
 	}
 	return 0;
@@ -264,7 +264,7 @@ void wfx_wep_key_work(struct work_struct *work)
 	struct wfx_vif *wvif = container_of(work, struct wfx_vif, wep_key_work);
 
 	wfx_tx_flush(wvif->wdev);
-	wsm_wep_default_key_id(wvif, wvif->wep_default_key_id);
+	hif_wep_default_key_id(wvif, wvif->wep_default_key_id);
 	wfx_pending_requeue(wvif->wdev, wvif->wep_pending_skb);
 	wvif->wep_pending_skb = NULL;
 	wfx_tx_unlock(wvif->wdev);
