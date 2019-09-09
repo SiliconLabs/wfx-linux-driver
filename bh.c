@@ -212,7 +212,7 @@ static int bh_work_tx(struct wfx_dev *wdev, int max_msg)
 				WARN(!mutex_is_locked(&wdev->wsm_cmd.lock), "data locking error");
 				wsm = wdev->wsm_cmd.buf_send;
 			} else {
-				wsm = wsm_get_tx(wdev);
+				wsm = wfx_tx_queues_get(wdev);
 			}
 		}
 		if (!wsm)

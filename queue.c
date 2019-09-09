@@ -469,7 +469,7 @@ static int wfx_get_prio_queue(struct wfx_vif *wvif,
 	return winner;
 }
 
-static int wsm_get_tx_queue_and_mask(struct wfx_vif *wvif,
+static int wfx_tx_queue_mask_get(struct wfx_vif *wvif,
 				     struct wfx_queue **queue_p,
 				     u32 *tx_allowed_mask_p,
 				     bool *more)
@@ -507,7 +507,7 @@ found:
 	return 0;
 }
 
-struct hif_msg *wsm_get_tx(struct wfx_dev *wdev)
+struct hif_msg *wfx_tx_queues_get(struct wfx_dev *wdev)
 {
 	struct sk_buff *skb;
 	struct hif_msg *hdr = NULL;
@@ -536,7 +536,7 @@ struct hif_msg *wsm_get_tx(struct wfx_dev *wdev)
 		while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
 			spin_lock_bh(&wvif->ps_state_lock);
 
-			not_found = wsm_get_tx_queue_and_mask(wvif, &vif_queue, &vif_tx_allowed_mask, &vif_more);
+			not_found = wfx_tx_queue_mask_get(wvif, &vif_queue, &vif_tx_allowed_mask, &vif_more);
 
 			if (wvif->buffered_multicasts && (not_found || !vif_more) &&
 					(wvif->tx_multicast || !wvif->sta_asleep_mask)) {

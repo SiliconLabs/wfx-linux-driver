@@ -45,7 +45,7 @@ void wfx_tx_queues_unlock(struct wfx_dev *wdev);
 void wfx_tx_queues_clear(struct wfx_dev *wdev);
 bool wfx_tx_queues_is_empty(struct wfx_dev *wdev);
 void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif);
-struct hif_msg *wsm_get_tx(struct wfx_dev *wdev);
+struct hif_msg *wfx_tx_queues_get(struct wfx_dev *wdev);
 
 void wfx_tx_queue_put(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_buff *skb);
 size_t wfx_tx_queue_get_num_queued(struct wfx_queue *queue, u32 link_id_map);
