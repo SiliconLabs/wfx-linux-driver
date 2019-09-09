@@ -680,7 +680,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	return;
 
 drop:
-	ieee80211_tx_status(wdev->hw, skb);
+	ieee80211_tx_status_irqsafe(wdev->hw, skb);
 }
 
 void wfx_tx_confirm_cb(struct wfx_vif *wvif, struct hif_cnf_tx *arg)
@@ -798,7 +798,7 @@ void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb)
 	skb_pull(skb, offset);
 	wfx_notify_buffered_tx(wvif, skb, req);
 	tx_policy_put(wvif, req->tx_flags.retry_policy_index);
-	ieee80211_tx_status(wdev->hw, skb);
+	ieee80211_tx_status_irqsafe(wdev->hw, skb);
 }
 
 
