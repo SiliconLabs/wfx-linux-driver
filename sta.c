@@ -13,7 +13,6 @@
 #include "bh.h"
 #include "key.h"
 #include "debug.h"
-#include "wsm_rx.h"
 #include "wsm_tx.h"
 #include "wsm_mib.h"
 

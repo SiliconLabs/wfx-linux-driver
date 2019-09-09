@@ -10,7 +10,6 @@
 
 #include "data_rx.h"
 #include "wfx.h"
-#include "wsm_rx.h"
 #include "bh.h"
 #include "sta.h"
 

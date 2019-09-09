@@ -10,9 +10,8 @@
 #ifndef WFX_WSM_RX_H
 #define WFX_WSM_RX_H
 
-#include "api_wsm_cmd.h"
-
 struct wfx_dev;
+struct sk_buff;
 
 void wsm_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb);
 

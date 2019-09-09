@@ -13,6 +13,7 @@
 
 #include "wfx.h"
 #include "hwbus.h"
+#include "hwio.h"
 #include "main.h"
 #include "bh.h"
 

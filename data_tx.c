@@ -10,7 +10,6 @@
 #include "data_tx.h"
 #include "wfx.h"
 #include "wsm_mib.h"
-#include "wsm_rx.h"
 #include "bh.h"
 #include "sta.h"
 #include "debug.h"

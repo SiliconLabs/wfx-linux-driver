@@ -9,6 +9,7 @@
 #define WFX_DATA_TX_H
 
 #include <linux/list.h>
+#include <net/mac80211.h>
 
 #include "api_wsm_cmd.h"
 #include "api_wsm_mib.h"

@@ -22,9 +22,7 @@
 #include "scan.h"
 #include "secure_link.h"
 #include "sta.h"
-#include "api_wsm_cmd.h"
 #include "wsm_tx.h"
-#include "api_wsm_mib.h"
 
 #if (KERNEL_VERSION(4, 2, 0) > LINUX_VERSION_CODE)
 static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,

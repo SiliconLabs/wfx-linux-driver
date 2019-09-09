@@ -12,7 +12,6 @@
 #include <mbedtls/sha512.h>
 
 #include "wfx.h"
-#include "wsm_rx.h"
 #include "secure_link.h"
 
 static int mbedtls_random(void *data, unsigned char *output, size_t len)

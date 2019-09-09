@@ -13,6 +13,7 @@
 #include <linux/device.h>
 #include <linux/gpio/consumer.h>
 
+#include "api_general.h"
 #include "hwbus.h"
 
 struct wfx_dev;

@@ -12,6 +12,8 @@
 #define _WFX_TRACE_H
 
 #include <linux/tracepoint.h>
+#include <linux/version.h>
+
 #include "api_wsm_cmd.h"
 #include "hwbus.h"
 

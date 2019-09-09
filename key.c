@@ -9,7 +9,6 @@
 
 #include "wfx.h"
 #include "wsm_mib.h"
-#include "wsm_rx.h"
 #include "key.h"
 
 static int wfx_alloc_key(struct wfx_dev *wdev)
