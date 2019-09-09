@@ -69,45 +69,37 @@
 	hif_cnf_name(MULTI_TRANSMIT)        \
 	hif_cnf_name(UPDATE_IE)             \
 	hif_cnf_name(WRITE_MIB)             \
+	hif_cnf_name(CONFIGURATION)         \
+	hif_cnf_name(CONTROL_GPIO)          \
+	hif_cnf_name(PREVENT_ROLLBACK)      \
+	hif_cnf_name(SET_SL_MAC_KEY)        \
+	hif_cnf_name(SL_CONFIGURE)          \
+	hif_cnf_name(SL_EXCHANGE_PUB_KEYS)  \
+	hif_cnf_name(SHUT_DOWN)             \
 	hif_ind_name(EVENT)                 \
 	hif_ind_name(JOIN_COMPLETE)         \
 	hif_ind_name(RX)                    \
 	hif_ind_name(SCAN_CMPL)             \
 	hif_ind_name(SET_PM_MODE_CMPL)      \
 	hif_ind_name(SUSPEND_RESUME_TX)     \
-	ghif_cnf_name(CONFIGURATION)        \
-	ghif_cnf_name(CONTROL_GPIO)         \
-	ghif_cnf_name(PREVENT_ROLLBACK)     \
-	ghif_cnf_name(SET_SL_MAC_KEY)       \
-	ghif_cnf_name(SL_CONFIGURE)         \
-	ghif_cnf_name(SL_EXCHANGE_PUB_KEYS) \
-	ghif_cnf_name(SHUT_DOWN)            \
-	ghif_ind_name(SL_EXCHANGE_PUB_KEYS) \
-	ghif_ind_name(ERROR)                \
-	ghif_ind_name(EXCEPTION)            \
-	ghif_ind_name(GENERIC)              \
-	ghif_ind_name(WAKEUP)               \
-	ghif_ind_name(STARTUP)
+	hif_ind_name(SL_EXCHANGE_PUB_KEYS)  \
+	hif_ind_name(ERROR)                 \
+	hif_ind_name(EXCEPTION)             \
+	hif_ind_name(GENERIC)               \
+	hif_ind_name(WAKEUP)                \
+	hif_ind_name(STARTUP)
 
 #define hif_msg_list_enum _hif_msg_list
 
 #undef hif_cnf_name
 #undef hif_ind_name
-#undef ghif_cnf_name
-#undef ghif_ind_name
 #define hif_cnf_name(msg) TRACE_DEFINE_ENUM(HIF_CNF_ID_##msg);
 #define hif_ind_name(msg) TRACE_DEFINE_ENUM(HIF_IND_ID_##msg);
-#define ghif_cnf_name(msg) TRACE_DEFINE_ENUM(HIF_CNF_ID_##msg);
-#define ghif_ind_name(msg) TRACE_DEFINE_ENUM(HIF_IND_ID_##msg);
 hif_msg_list_enum
 #undef hif_cnf_name
 #undef hif_ind_name
-#undef ghif_cnf_name
-#undef ghif_ind_name
 #define hif_cnf_name(msg) { HIF_CNF_ID_##msg, #msg },
 #define hif_ind_name(msg) { HIF_IND_ID_##msg, #msg },
-#define ghif_cnf_name(msg) { HIF_CNF_ID_##msg, #msg },
-#define ghif_ind_name(msg) { HIF_IND_ID_##msg, #msg },
 #define hif_msg_list hif_msg_list_enum { -1, NULL }
 
 #define _hif_mib_list                                \
