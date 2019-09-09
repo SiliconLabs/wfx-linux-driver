@@ -802,6 +802,29 @@ void wfx_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 
 /* WSM callbacks */
 
+static void wfx_event_report_rssi(struct wfx_vif *wvif, uint8_t raw_rcpi_rssi)
+{
+	/* RSSI: signed Q8.0, RCPI: unsigned Q7.1
+	 * RSSI = RCPI / 2 - 110
+	 */
+	int rcpi_rssi;
+	int cqm_evt;
+
+	if (wvif->cqm_use_rssi)
+		rcpi_rssi = (int8_t) raw_rcpi_rssi;
+	else
+		rcpi_rssi = raw_rcpi_rssi / 2 - 110;
+	if (rcpi_rssi <= wvif->cqm_rssi_thold)
+		cqm_evt = NL80211_CQM_RSSI_THRESHOLD_EVENT_LOW;
+	else
+		cqm_evt = NL80211_CQM_RSSI_THRESHOLD_EVENT_HIGH;
+#if (KERNEL_VERSION(4, 11, 0) > LINUX_VERSION_CODE)
+	ieee80211_cqm_rssi_notify(wvif->vif, cqm_evt, GFP_KERNEL);
+#else
+	ieee80211_cqm_rssi_notify(wvif->vif, cqm_evt, rcpi_rssi, GFP_KERNEL);
+#endif
+}
+
 void wfx_event_handler_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
@@ -835,30 +858,8 @@ void wfx_event_handler_work(struct work_struct *work)
 			cancel_work_sync(&wvif->unjoin_work);
 			break;
 		case WSM_EVENT_IND_RCPI_RSSI:
-		{
-			/* RSSI: signed Q8.0, RCPI: unsigned Q7.1
-			 * RSSI = RCPI / 2 - 110
-			 */
-			int rcpi_rssi;
-			int cqm_evt;
-
-			if (wvif->cqm_use_rssi)
-				rcpi_rssi = (int8_t) event->evt.event_data.rcpi_rssi;
-			else
-				rcpi_rssi = (event->evt.event_data.rcpi_rssi / 2) - 110;
-			if (rcpi_rssi <= wvif->cqm_rssi_thold)
-				cqm_evt = NL80211_CQM_RSSI_THRESHOLD_EVENT_LOW;
-			else
-				cqm_evt = NL80211_CQM_RSSI_THRESHOLD_EVENT_HIGH;
-#if (KERNEL_VERSION(4, 11, 0) > LINUX_VERSION_CODE)
-			ieee80211_cqm_rssi_notify(wvif->vif, cqm_evt,
-						  GFP_KERNEL);
-#else
-			ieee80211_cqm_rssi_notify(wvif->vif, cqm_evt, rcpi_rssi,
-						  GFP_KERNEL);
-#endif
+			wfx_event_report_rssi(wvif, event->evt.event_data.rcpi_rssi);
 			break;
-		}
 		case WSM_EVENT_IND_PS_MODE_ERROR:
 			dev_warn(wvif->wdev->dev, "error while processing power save request\n");
 			break;
