@@ -12,12 +12,12 @@
 #include "wfx.h"
 #include "data_tx.h"
 
-void wsm_tx_lock(struct wfx_dev *wdev)
+void wfx_tx_lock(struct wfx_dev *wdev)
 {
 	atomic_inc(&wdev->tx_lock);
 }
 
-void wsm_tx_unlock(struct wfx_dev *wdev)
+void wfx_tx_unlock(struct wfx_dev *wdev)
 {
 	int tx_lock = atomic_dec_return(&wdev->tx_lock);
 
@@ -26,7 +26,7 @@ void wsm_tx_unlock(struct wfx_dev *wdev)
 		wfx_bh_request_tx(wdev);
 }
 
-void wsm_tx_flush(struct wfx_dev *wdev)
+void wfx_tx_flush(struct wfx_dev *wdev)
 {
 	int ret;
 
@@ -49,10 +49,10 @@ void wsm_tx_flush(struct wfx_dev *wdev)
 	mutex_unlock(&wdev->wsm_cmd.lock);
 }
 
-void wsm_tx_lock_flush(struct wfx_dev *wdev)
+void wfx_tx_lock_flush(struct wfx_dev *wdev)
 {
-	wsm_tx_lock(wdev);
-	wsm_tx_flush(wdev);
+	wfx_tx_lock(wdev);
+	wfx_tx_flush(wdev);
 }
 
 void wfx_tx_queues_lock(struct wfx_dev *wdev)
@@ -95,14 +95,14 @@ void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif)
 	struct hif_msg *hdr;
 
 	if (wvif->wdev->chip_frozen) {
-		wsm_tx_lock_flush(wdev);
+		wfx_tx_lock_flush(wdev);
 		wfx_tx_queues_clear(wdev);
 		return;
 	}
 
 	do {
 		done = true;
-		wsm_tx_lock_flush(wdev);
+		wfx_tx_lock_flush(wdev);
 		for (i = 0; i < IEEE80211_NUM_ACS && done; ++i) {
 			queue = &wdev->tx_queue[i];
 			spin_lock_bh(&queue->queue.lock);
@@ -114,7 +114,7 @@ void wfx_tx_queues_wait_empty_vif(struct wfx_vif *wvif)
 			spin_unlock_bh(&queue->queue.lock);
 		}
 		if (!done) {
-			wsm_tx_unlock(wdev);
+			wfx_tx_unlock(wdev);
 			msleep(20);
 		}
 	} while (!done);
@@ -413,11 +413,11 @@ static bool wsm_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 		handled = true;
 		break;
 	case do_wep:
-		wsm_tx_lock(wvif->wdev);
+		wfx_tx_lock(wvif->wdev);
 		wvif->wep_default_key_id = tx_priv->hw_key->keyidx;
 		wvif->wep_pending_skb = skb;
 		if (!schedule_work(&wvif->wep_key_work))
-			wsm_tx_unlock(wvif->wdev);
+			wfx_tx_unlock(wvif->wdev);
 		handled = true;
 		break;
 	case do_tx:

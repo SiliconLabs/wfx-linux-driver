@@ -430,10 +430,10 @@ static int __wfx_flush(struct wfx_dev *wdev, bool drop)
 		}
 		ret = 0;
 
-		wsm_tx_lock_flush(wdev);
+		wfx_tx_lock_flush(wdev);
 		if (!wfx_tx_queues_is_empty(wdev)) {
 			/* Highly unlikely: WSM requeued frames. */
-			wsm_tx_unlock(wdev);
+			wfx_tx_unlock(wdev);
 			continue;
 		}
 		break;
@@ -457,7 +457,7 @@ void wfx_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 
 	// FIXME: only flush requested vif
 	if (!__wfx_flush(wdev, drop))
-		wsm_tx_unlock(wdev);
+		wfx_tx_unlock(wdev);
 }
 
 /* WSM callbacks */
@@ -581,7 +581,7 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 	wvif->state = WFX_STATE_PASSIVE;
 
 	/* Unjoin is a reset. */
-	wsm_tx_flush(wvif->wdev);
+	wfx_tx_flush(wvif->wdev);
 	wsm_keep_alive_period(wvif, 0);
 	wsm_reset(wvif, false);
 	wsm_set_output_power(wvif, wvif->wdev->output_power * 10);
@@ -664,7 +664,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 #endif
 
 	if (!bss && !conf->ibss_joined) {
-		wsm_tx_unlock(wvif->wdev);
+		wfx_tx_unlock(wvif->wdev);
 		return;
 	}
 
@@ -674,7 +674,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	 * bail out if it is in progress.
 	 */
 	if (atomic_read(&wvif->scan.in_progress)) {
-		wsm_tx_unlock(wvif->wdev);
+		wfx_tx_unlock(wvif->wdev);
 		goto done_put;
 	}
 
@@ -706,7 +706,7 @@ static void wfx_do_join(struct wfx_vif *wvif)
 		rcu_read_unlock();
 	}
 
-	wsm_tx_flush(wvif->wdev);
+	wfx_tx_flush(wvif->wdev);
 
 	if (wvif_count(wvif->wdev) <= 1)
 		wsm_set_block_ack_policy(wvif, 0xFF, 0xFF);
@@ -720,14 +720,14 @@ static void wfx_do_join(struct wfx_vif *wvif)
 		wvif->join_complete_status = -1;
 		/* Tx lock still held, unjoin will clear it. */
 		if (!schedule_work(&wvif->unjoin_work))
-			wsm_tx_unlock(wvif->wdev);
+			wfx_tx_unlock(wvif->wdev);
 	} else {
 		wvif->join_complete_status = 0;
 		if (wvif->vif->type == NL80211_IFTYPE_ADHOC)
 			wvif->state = WFX_STATE_IBSS;
 		else
 			wvif->state = WFX_STATE_PRE_STA;
-		wsm_tx_unlock(wvif->wdev);
+		wfx_tx_unlock(wvif->wdev);
 
 		/* Upload keys */
 		wfx_upload_keys(wvif);
@@ -753,7 +753,7 @@ void wfx_unjoin_work(struct work_struct *work)
 	struct wfx_vif *wvif = container_of(work, struct wfx_vif, unjoin_work);
 
 	wfx_do_unjoin(wvif);
-	wsm_tx_unlock(wvif->wdev);
+	wfx_tx_unlock(wvif->wdev);
 }
 
 int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
@@ -802,9 +802,9 @@ int wfx_sta_remove(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	spin_lock_bh(&wvif->ps_state_lock);
 	entry->status = WFX_LINK_RESERVE;
 	entry->timestamp = jiffies;
-	wsm_tx_lock(wdev);
+	wfx_tx_lock(wdev);
 	if (!schedule_work(&wvif->link_id_work))
-		wsm_tx_unlock(wdev);
+		wfx_tx_unlock(wdev);
 	spin_unlock_bh(&wvif->ps_state_lock);
 	flush_work(&wvif->link_id_work);
 	return 0;
@@ -879,7 +879,7 @@ static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
 				       &tim_offset, &tim_length);
 	if (!skb) {
 		if (!__wfx_flush(wvif->wdev, true))
-			wsm_tx_unlock(wvif->wdev);
+			wfx_tx_unlock(wvif->wdev);
 		return -ENOENT;
 	}
 	tim_ptr = skb->data + tim_offset;
@@ -983,12 +983,12 @@ static int wfx_update_beaconing(struct wfx_vif *wvif)
 		/* TODO: check if changed channel, band */
 		if (wvif->state != WFX_STATE_AP ||
 		    wvif->beacon_int != conf->beacon_int) {
-			wsm_tx_lock_flush(wvif->wdev);
+			wfx_tx_lock_flush(wvif->wdev);
 			if (wvif->state != WFX_STATE_PASSIVE)
 				wsm_reset(wvif, false);
 			wvif->state = WFX_STATE_PASSIVE;
 			wfx_start_ap(wvif);
-			wsm_tx_unlock(wvif->wdev);
+			wfx_tx_unlock(wvif->wdev);
 		} else {
 		}
 	}
@@ -1170,17 +1170,17 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 
 	/* assoc/disassoc, or maybe AID changed */
 	if (changed & BSS_CHANGED_ASSOC) {
-		wsm_tx_lock_flush(wdev);
+		wfx_tx_lock_flush(wdev);
 		wvif->wep_default_key_id = -1;
-		wsm_tx_unlock(wdev);
+		wfx_tx_unlock(wdev);
 	}
 
 	if (changed & BSS_CHANGED_ASSOC && !info->assoc &&
 	    (wvif->state == WFX_STATE_STA || wvif->state == WFX_STATE_IBSS)) {
 		/* Shedule unjoin work */
-		wsm_tx_lock(wdev);
+		wfx_tx_lock(wdev);
 		if (!schedule_work(&wvif->unjoin_work))
-			wsm_tx_unlock(wdev);
+			wfx_tx_unlock(wdev);
 	} else {
 		if (changed & BSS_CHANGED_BEACON_INT) {
 			if (info->ibss_joined)
@@ -1274,7 +1274,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 	mutex_unlock(&wdev->conf_mutex);
 
 	if (do_join) {
-		wsm_tx_lock_flush(wdev);
+		wfx_tx_lock_flush(wdev);
 		wfx_do_join(wvif); /* Will unlock it for us */
 	}
 }
@@ -1286,11 +1286,11 @@ void wfx_multicast_start_work(struct work_struct *work)
 
 	cancel_work_sync(&wvif->multicast_stop_work);
 	if (!wvif->aid0_bit_set) {
-		wsm_tx_lock_flush(wvif->wdev);
+		wfx_tx_lock_flush(wvif->wdev);
 		wfx_set_tim_impl(wvif, true);
 		wvif->aid0_bit_set = true;
 		mod_timer(&wvif->mcast_timeout, jiffies + tmo);
-		wsm_tx_unlock(wvif->wdev);
+		wfx_tx_unlock(wvif->wdev);
 	}
 }
 
@@ -1300,10 +1300,10 @@ void wfx_multicast_stop_work(struct work_struct *work)
 
 	if (wvif->aid0_bit_set) {
 		del_timer_sync(&wvif->mcast_timeout);
-		wsm_tx_lock_flush(wvif->wdev);
+		wfx_tx_lock_flush(wvif->wdev);
 		wvif->aid0_bit_set = false;
 		wfx_set_tim_impl(wvif, false);
-		wsm_tx_unlock(wvif->wdev);
+		wfx_tx_unlock(wvif->wdev);
 	}
 }
 
@@ -1631,9 +1631,9 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 	case WFX_STATE_PRE_STA:
 	case WFX_STATE_STA:
 	case WFX_STATE_IBSS:
-		wsm_tx_lock_flush(wdev);
+		wfx_tx_lock_flush(wdev);
 		if (!schedule_work(&wvif->unjoin_work))
-			wsm_tx_unlock(wdev);
+			wfx_tx_unlock(wdev);
 		break;
 	case WFX_STATE_AP:
 		for (i = 0; wvif->link_id_map; ++i) {
@@ -1658,7 +1658,7 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 
 	wvif->state = WFX_STATE_PASSIVE;
 	wfx_tx_queues_wait_empty_vif(wvif);
-	wsm_tx_unlock(wdev);
+	wfx_tx_unlock(wdev);
 
 	/* FIXME: In add to reset MAC address, try to reset interface */
 	wsm_set_macaddr(wvif, NULL);
@@ -1696,11 +1696,11 @@ void wfx_stop(struct ieee80211_hw *hw)
 {
 	struct wfx_dev *wdev = hw->priv;
 
-	wsm_tx_lock_flush(wdev);
+	wfx_tx_lock_flush(wdev);
 	mutex_lock(&wdev->conf_mutex);
 	wfx_tx_queues_clear(wdev);
 	mutex_unlock(&wdev->conf_mutex);
-	wsm_tx_unlock(wdev);
+	wfx_tx_unlock(wdev);
 	WARN(atomic_read(&wdev->tx_lock), "tx_lock is locked");
 }
 

@@ -30,7 +30,7 @@ static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
 	if (wvif->delayed_unjoin) {
 		wvif->delayed_unjoin = false;
 		if (!schedule_work(&wvif->unjoin_work))
-			wsm_tx_unlock(wvif->wdev);
+			wfx_tx_unlock(wvif->wdev);
 	} else if (wvif->delayed_link_loss) {
 		dev_dbg(wvif->wdev->dev, "[CQM] Requeue BSS loss.\n");
 		wvif->delayed_link_loss = 0;
@@ -114,7 +114,7 @@ int wfx_hw_scan(struct ieee80211_hw *hw,
 		return ret;
 	}
 
-	wsm_tx_lock_flush(wdev);
+	wfx_tx_lock_flush(wdev);
 
 	BUG_ON(wvif->scan.req);
 	wvif->scan.req = req;
@@ -183,7 +183,7 @@ void wfx_scan_work(struct work_struct *work)
 
 		wvif->scan.req = NULL;
 		wfx_scan_restart_delayed(wvif);
-		wsm_tx_unlock(wvif->wdev);
+		wfx_tx_unlock(wvif->wdev);
 		mutex_unlock(&wvif->wdev->conf_mutex);
 		__ieee80211_scan_completed_compat(wvif->wdev->hw, wvif->scan.status ? 1 : 0);
 		up(&wvif->scan.lock);
