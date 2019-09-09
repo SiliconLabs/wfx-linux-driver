@@ -369,20 +369,20 @@ Disable traces with:
 
 It can be more convenient to follow higher level HIF messages:
 
-    $ echo 1 | tee /sys/kernel/debug/tracing/events/wfx/wsm_*/enable
+    $ echo 1 | tee /sys/kernel/debug/tracing/events/wfx/hif_*/enable
     $ cat /sys/kernel/debug/tracing/trace_pipe
-    kworker/2:0H-23    [002] .... 429125.079556: wsm_send: 40:WRITE_MIB_REQ/TEMPLATE_FRAME: 00 00 c4 00...
-    kworker/2:0H-23    [002] .... 429125.079636: wsm_recv: 32:WRITE_MIB_CNF: 00 00 00 00 (8 bytes)
-    kworker/2:0H-23    [002] .... 429125.079834: wsm_send: 48:WRITE_MIB_REQ/RX_FILTER: 08 00 00 00 40 00 00 00 (16 bytes)
-    kworker/2:0H-23    [002] .... 429125.079915: wsm_recv: 40:WRITE_MIB_CNF: 00 00 00 00 (8 bytes)
-    kworker/2:0H-23    [002] .... 429125.080412: wsm_send: 56:START_SCAN_REQ: 00 00 02 00 00 00 00 00 02...
+    kworker/2:0H-23    [002] .... 429125.079556: hif_send: 40:WRITE_MIB_REQ/TEMPLATE_FRAME: 00 00 c4 00...
+    kworker/2:0H-23    [002] .... 429125.079636: hif_recv: 32:WRITE_MIB_CNF: 00 00 00 00 (8 bytes)
+    kworker/2:0H-23    [002] .... 429125.079834: hif_send: 48:WRITE_MIB_REQ/RX_FILTER: 08 00 00 00 40 00 00 00 (16 bytes)
+    kworker/2:0H-23    [002] .... 429125.079915: hif_recv: 40:WRITE_MIB_CNF: 00 00 00 00 (8 bytes)
+    kworker/2:0H-23    [002] .... 429125.080412: hif_send: 56:START_SCAN_REQ: 00 00 02 00 00 00 00 00 02...
     <Ctrl+C>
 
 It is possible to filter events (see section 4 and 5 of
 [`Documentation/trace/events.txt`][7]). For example, to remove Tx request, Tx
 confirmation and Rx indication from results, you can do:
 
-    $ echo 'msg_id != 4 && msg_id != 0x84' | tee /sys/kernel/debug/tracing/events/wfx/wsm_*/filter
+    $ echo 'msg_id != 4 && msg_id != 0x84' | tee /sys/kernel/debug/tracing/events/wfx/hif_*/filter
 
 It can also be convenient to trace IRQs associated to the WFx chip. We will
 trace all IRQs and add a filter to only show IRQs related to WFx:
@@ -391,10 +391,10 @@ trace all IRQs and add a filter to only show IRQs related to WFx:
     $ echo 1 > /sys/kernel/debug/tracing/events/irq/irq_handler_entry/enable
     $ cat /sys/kernel/debug/tracing/trace_pipe
           <idle>-0     [000] d.h. 429585.854353: irq_handler_entry: irq=167 name=wfx
-    kworker/2:0H-23    [002] .... 429585.854353: wsm_send: 16:START_SCAN_REQ: 00 00 02 00 00 00 00 00 02...
-    kworker/2:0H-23    [002] .... 429585.854413: wsm_recv: 8:START_SCAN_CNF: 00 00 00 00 (8 bytes)
+    kworker/2:0H-23    [002] .... 429585.854353: hif_send: 16:START_SCAN_REQ: 00 00 02 00 00 00 00 00 02...
+    kworker/2:0H-23    [002] .... 429585.854413: hif_recv: 8:START_SCAN_CNF: 00 00 00 00 (8 bytes)
           <idle>-0     [000] d.h. 429585.859621: irq_handler_entry: irq=167 name=wfx
-    kworker/2:0H-23    [002] .... 429585.859942: wsm_recv: 20:RX_IND: 00 00 00 00 01 00 00 6c 80 00 04 00...
+    kworker/2:0H-23    [002] .... 429585.859942: hif_recv: 20:RX_IND: 00 00 00 00 01 00 00 6c 80 00 04 00...
 
 Another example would be to also trace wake-up gpio:
 
@@ -405,8 +405,8 @@ Another example would be to also trace wake-up gpio:
            <...>-1172  [000] d.h2   342.743710: irq_handler_entry: irq=182 name=wfx
             spi0-182   [000] d.h3   342.745488: irq_handler_entry: irq=182 name=wfx
     kworker/3:0H-21    [003] ...1   342.749736: gpio_value: 12 set 0
-    kworker/2:0H-23    [002] ....   342.854353: wsm_send: 16:START_SCAN_REQ: 00 00 02 00 00 00 00 00 02...
-    kworker/2:0H-23    [002] ....   342.854413: wsm_recv: 8:START_SCAN_CNF: 00 00 00 00 (8 bytes)
+    kworker/2:0H-23    [002] ....   342.854353: hif_send: 16:START_SCAN_REQ: 00 00 02 00 00 00 00 00 02...
+    kworker/2:0H-23    [002] ....   342.854413: hif_recv: 8:START_SCAN_CNF: 00 00 00 00 (8 bytes)
 
 It is also possible to trace requests from mac80211 stack to WFx driver:
 
@@ -414,15 +414,15 @@ It is also possible to trace requests from mac80211 stack to WFx driver:
     $ cat /sys/kernel/debug/tracing/trace_pipe
     wpa_supplicant-156 [002] .... 429945.348883: drv_hw_scan: phy0 vif:wlan0(2)
      ksoftirqd/0-9     [000] d.H. 429945.349256: irq_handler_entry: irq=167 name=wfx
-    kworker/2:0H-23    [002] .... 429945.349360: wsm_send: 48:WRITE_MIB_REQ/TEMPLATE_FRAME: 00 09 c4 00 40...
-    kworker/2:0H-23    [002] .... 429945.349425: wsm_recv: 16:WRITE_MIB_CNF: 00 00 00 00 (8 bytes)
+    kworker/2:0H-23    [002] .... 429945.349360: hif_send: 48:WRITE_MIB_REQ/TEMPLATE_FRAME: 00 09 c4 00 40...
+    kworker/2:0H-23    [002] .... 429945.349425: hif_recv: 16:WRITE_MIB_CNF: 00 00 00 00 (8 bytes)
             sshd-5400  [000] d.h. 429945.349595: irq_handler_entry: irq=167 name=wfx
-    kworker/2:0H-23    [002] .... 429945.349596: wsm_send: 56:WRITE_MIB_REQ/RX_FILTER: 08 00 00 00 40 00 00...
-    kworker/2:0H-23    [002] .... 429945.349637: wsm_recv: 24:WRITE_MIB_CNF: 00 00 00 00 (8 bytes)
+    kworker/2:0H-23    [002] .... 429945.349596: hif_send: 56:WRITE_MIB_REQ/RX_FILTER: 08 00 00 00 40 00 00...
+    kworker/2:0H-23    [002] .... 429945.349637: hif_recv: 24:WRITE_MIB_CNF: 00 00 00 00 (8 bytes)
     wpa_supplicant-156 [002] .... 429945.349752: drv_return_int: phy0 - 0
-    kworker/2:0H-23    [002] .... 429945.349867: wsm_send: 0:START_SCAN_REQ: 00 00 02 00 00 00 00 00 02 64...
+    kworker/2:0H-23    [002] .... 429945.349867: hif_send: 0:START_SCAN_REQ: 00 00 02 00 00 00 00 00 02 64...
           <idle>-0     [000] d.h. 429945.701657: irq_handler_entry: irq=167 name=wfx
-    kworker/2:0H-23    [002] .... 429945.701732: wsm_recv: 8:SCAN_CMPL_IND: 00 00 00 00 00 0d 00 00 (12 bytes)
+    kworker/2:0H-23    [002] .... 429945.701732: hif_recv: 8:SCAN_CMPL_IND: 00 00 00 00 00 0d 00 00 (12 bytes)
     wpa_supplicant-156 [002] .... 429945.702647: drv_get_survey: phy0 idx:0
     wpa_supplicant-156 [002] .... 429945.702664: drv_return_int: phy0 - -95
 
@@ -431,7 +431,7 @@ solution is to defer probing, setup traces and finally request probe manually:
 
     $ echo 0 > /sys/bus/spi/drivers_autoprobe
     $ modprobe wfx
-    $ echo 1 | tee /sys/kernel/debug/tracing/events/wfx/wsm_*/enable
+    $ echo 1 | tee /sys/kernel/debug/tracing/events/wfx/hif_*/enable
     $ cat /sys/kernel/debug/tracing/trace_pipe &
     $ echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/bind
 
@@ -440,7 +440,7 @@ solution is to defer probing, setup traces and finally request probe manually:
 An alternative (less intrusive?) that does not imply driver reload is:
 
     $ echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/unbind
-    $ echo 1 | tee /sys/kernel/debug/tracing/events/wfx/wsm_*/enable
+    $ echo 1 | tee /sys/kernel/debug/tracing/events/wfx/hif_*/enable
     $ cat /sys/kernel/debug/tracing/trace_pipe &
     $ echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/bind
 

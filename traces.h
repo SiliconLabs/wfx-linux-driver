@@ -211,14 +211,14 @@ DECLARE_EVENT_CLASS(wsm_data,
 		__entry->msg_len
 	)
 );
-DEFINE_EVENT(wsm_data, wsm_send,
+DEFINE_EVENT(wsm_data, hif_send,
 	TP_PROTO(struct hif_msg *wsm, int tx_fill_level, bool is_recv),
 	TP_ARGS(wsm, tx_fill_level, is_recv));
-#define _trace_wsm_send(wsm, tx_fill_level) trace_wsm_send(wsm, tx_fill_level, false)
-DEFINE_EVENT(wsm_data, wsm_recv,
+#define _trace_hif_send(wsm, tx_fill_level) trace_hif_send(wsm, tx_fill_level, false)
+DEFINE_EVENT(wsm_data, hif_recv,
 	TP_PROTO(struct hif_msg *wsm, int tx_fill_level, bool is_recv),
 	TP_ARGS(wsm, tx_fill_level, is_recv));
-#define _trace_wsm_recv(wsm, tx_fill_level) trace_wsm_recv(wsm, tx_fill_level, true)
+#define _trace_hif_recv(wsm, tx_fill_level) trace_hif_recv(wsm, tx_fill_level, true)
 
 #define wfx_reg_list_enum                                 \
 	wfx_reg_name(WFX_REG_CONFIG,       "CONFIG")      \

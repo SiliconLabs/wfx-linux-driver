@@ -103,7 +103,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 		if (!wdev->hif.tx_buffers_used)
 			wake_up(&wdev->hif.tx_buffers_empty);
 	}
-	_trace_wsm_recv(wsm, wdev->hif.tx_buffers_used);
+	_trace_hif_recv(wsm, wdev->hif.tx_buffers_used);
 
 	if (wsm->id != HI_EXCEPTION_IND_ID && wsm->id != HI_ERROR_IND_ID) {
 		if (wsm->seqnum != wdev->hif.rx_seqnum)
@@ -194,7 +194,7 @@ static void tx_helper(struct wfx_dev *wdev, struct hif_msg *wsm)
 		goto end;
 
 	wdev->hif.tx_buffers_used++;
-	_trace_wsm_send(wsm, wdev->hif.tx_buffers_used);
+	_trace_hif_send(wsm, wdev->hif.tx_buffers_used);
 end:
 	if (is_encrypted)
 		kfree(data);
