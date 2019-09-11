@@ -558,8 +558,6 @@ static struct hif_ht_tx_parameters wfx_tx_get_tx_parms(struct wfx_dev *wdev, str
 		ret.frame_format = HIF_FRAME_FORMAT_GF_HT_11N;
 	if (rate->flags & IEEE80211_TX_RC_SHORT_GI)
 		ret.short_gi = 1;
-	if (tx_info->flags & IEEE80211_TX_CTL_LDPC && wdev->pdata.support_ldpc)
-		ret.fec_coding = 1;
 	if (tx_info->flags & IEEE80211_TX_CTL_STBC)
 		ret.stbc = 0; // FIXME: Not yet supported by firmware?
 	return ret;

@@ -24,7 +24,6 @@ struct wfx_platform_data {
 	const char *file_pds;
 	unsigned char slk_key[API_KEY_VALUE_SIZE];
 	struct gpio_desc *gpio_wakeup;
-	bool support_ldpc;
 	/*
 	 * if true HIF D_out is sampled on the rising edge of the clock
 	 * (intended to be used in 50Mhz SDIO)

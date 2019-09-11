@@ -343,8 +343,6 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	of_property_read_string(dev->of_node, "config-file", &wdev->pdata.file_pds);
 	wdev->pdata.gpio_wakeup = wfx_get_gpio(dev, gpio_wakeup, "wakeup");
 	wfx_fill_sl_key(dev, &wdev->pdata);
-	// LDPC support was not yet tested
-	wdev->pdata.support_ldpc = false;
 
 	mutex_init(&wdev->conf_mutex);
 	mutex_init(&wdev->rx_stats_lock);
