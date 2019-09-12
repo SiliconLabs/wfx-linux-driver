@@ -447,10 +447,10 @@ static void wfx_tx_manage_pm(struct wfx_vif *wvif, struct ieee80211_hdr *hdr,
 		wvif->pspoll_mask &= mask;
 	}
 
-	if (tx_priv->link_id == WFX_LINK_ID_AFTER_DTIM && !wvif->buffered_multicasts) {
-		wvif->buffered_multicasts = true;
+	if (tx_priv->link_id == WFX_LINK_ID_AFTER_DTIM && !wvif->mcast_buffered) {
+		wvif->mcast_buffered = true;
 		if (wvif->sta_asleep_mask)
-			schedule_work(&wvif->multicast_start_work);
+			schedule_work(&wvif->mcast_start_work);
 	}
 
 	if (tx_priv->raw_link_id) {

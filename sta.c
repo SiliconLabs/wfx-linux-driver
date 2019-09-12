@@ -162,7 +162,7 @@ int wfx_fwd_probe_req(struct wfx_vif *wvif, bool enable)
 				 wvif->filter_probe_resp);
 }
 
-static int wfx_set_multicast_filter(struct wfx_vif *wvif,
+static int wfx_set_mcast_filter(struct wfx_vif *wvif,
 				    struct wfx_grp_addr_table *fp)
 {
 	int i, ret;
@@ -266,7 +266,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	if (!ret)
 		ret = hif_beacon_filter_control(wvif, bf_ctrl.enable, bf_ctrl.bcn_count);
 	if (!ret)
-		ret = wfx_set_multicast_filter(wvif, &wvif->multicast_filter);
+		ret = wfx_set_mcast_filter(wvif, &wvif->mcast_filter);
 	if (ret)
 		dev_err(wvif->wdev->dev, "Update filtering failed: %d.\n", ret);
 	kfree(bf_tbl);
@@ -288,17 +288,17 @@ u64 wfx_prepare_multicast(struct ieee80211_hw *hw, struct netdev_hw_addr_list *m
 	int count = netdev_hw_addr_list_count(mc_list);
 
 	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
-		memset(&wvif->multicast_filter, 0x00, sizeof(wvif->multicast_filter));
-		if (!count || count > ARRAY_SIZE(wvif->multicast_filter.address_list))
+		memset(&wvif->mcast_filter, 0x00, sizeof(wvif->mcast_filter));
+		if (!count || count > ARRAY_SIZE(wvif->mcast_filter.address_list))
 			continue;
 
 		i = 0;
 		netdev_hw_addr_list_for_each(ha, mc_list) {
-			ether_addr_copy(wvif->multicast_filter.address_list[i], ha->addr);
+			ether_addr_copy(wvif->mcast_filter.address_list[i], ha->addr);
 			i++;
 		}
-		wvif->multicast_filter.enable = 1;
-		wvif->multicast_filter.num_addresses = count;
+		wvif->mcast_filter.enable = 1;
+		wvif->mcast_filter.num_addresses = count;
 	}
 
 	return 0;
@@ -830,8 +830,8 @@ static void wfx_ps_notify(struct wfx_vif *wvif, enum sta_notify_cmd notify_cmd,
 	switch (notify_cmd) {
 	case STA_NOTIFY_SLEEP:
 		if (!prev) {
-			if (wvif->buffered_multicasts && !wvif->sta_asleep_mask)
-				schedule_work(&wvif->multicast_start_work);
+			if (wvif->mcast_buffered && !wvif->sta_asleep_mask)
+				schedule_work(&wvif->mcast_start_work);
 			wvif->sta_asleep_mask |= bit;
 		}
 		break;
@@ -840,7 +840,7 @@ static void wfx_ps_notify(struct wfx_vif *wvif, enum sta_notify_cmd notify_cmd,
 			wvif->sta_asleep_mask &= ~bit;
 			wvif->pspoll_mask &= ~bit;
 			if (link_id && !wvif->sta_asleep_mask)
-				schedule_work(&wvif->multicast_stop_work);
+				schedule_work(&wvif->mcast_stop_work);
 			wfx_bh_request_tx(wvif->wdev);
 		}
 		break;
@@ -1270,12 +1270,12 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 	}
 }
 
-void wfx_multicast_start_work(struct work_struct *work)
+static void wfx_mcast_start_work(struct work_struct *work)
 {
-	struct wfx_vif *wvif = container_of(work, struct wfx_vif, multicast_start_work);
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, mcast_start_work);
 	long tmo = wvif->dtim_period * TU_TO_JIFFIES(wvif->beacon_int + 20);
 
-	cancel_work_sync(&wvif->multicast_stop_work);
+	cancel_work_sync(&wvif->mcast_stop_work);
 	if (!wvif->aid0_bit_set) {
 		wfx_tx_lock_flush(wvif->wdev);
 		wfx_set_tim_impl(wvif, true);
@@ -1285,9 +1285,9 @@ void wfx_multicast_start_work(struct work_struct *work)
 	}
 }
 
-void wfx_multicast_stop_work(struct work_struct *work)
+static void wfx_mcast_stop_work(struct work_struct *work)
 {
-	struct wfx_vif *wvif = container_of(work, struct wfx_vif, multicast_stop_work);
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, mcast_stop_work);
 
 	if (wvif->aid0_bit_set) {
 		del_timer_sync(&wvif->mcast_timeout);
@@ -1299,18 +1299,18 @@ void wfx_multicast_stop_work(struct work_struct *work)
 }
 
 #if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
-void wfx_mcast_timeout(unsigned long arg)
+static void wfx_mcast_timeout(unsigned long arg)
 {
 	struct wfx_vif *wvif = (struct wfx_vif *)arg;
 #else
-void wfx_mcast_timeout(struct timer_list *t)
+static void wfx_mcast_timeout(struct timer_list *t)
 {
 	struct wfx_vif *wvif = from_timer(wvif, t, mcast_timeout);
 #endif
 	dev_warn(wvif->wdev->dev, "Multicast delivery timeout.\n");
 	spin_lock_bh(&wvif->ps_state_lock);
-	wvif->tx_multicast = wvif->aid0_bit_set && wvif->buffered_multicasts;
-	if (wvif->tx_multicast)
+	wvif->mcast_tx = wvif->aid0_bit_set && wvif->mcast_buffered;
+	if (wvif->mcast_tx)
 		wfx_bh_request_tx(wvif->wdev);
 	spin_unlock_bh(&wvif->ps_state_lock);
 }
@@ -1352,10 +1352,10 @@ void wfx_suspend_resume(struct wfx_vif *wvif,
 
 		spin_lock_bh(&wvif->ps_state_lock);
 		if (!arg->suspend_resume_flags.resume)
-			wvif->tx_multicast = false;
+			wvif->mcast_tx = false;
 		else
-			wvif->tx_multicast = wvif->aid0_bit_set && wvif->buffered_multicasts;
-		if (wvif->tx_multicast) {
+			wvif->mcast_tx = wvif->aid0_bit_set && wvif->mcast_buffered;
+		if (wvif->mcast_tx) {
 			cancel_tmo = true;
 			wfx_bh_request_tx(wvif->wdev);
 		}
@@ -1519,9 +1519,9 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	/* Optional */
 	INIT_WORK(&wvif->set_tim_work, wfx_set_tim_work);
 	INIT_WORK(&wvif->set_cts_work, wfx_set_cts_work);
-
-	INIT_WORK(&wvif->multicast_start_work, wfx_multicast_start_work);
-	INIT_WORK(&wvif->multicast_stop_work, wfx_multicast_stop_work);
+	
+	INIT_WORK(&wvif->mcast_start_work, wfx_mcast_start_work);
+	INIT_WORK(&wvif->mcast_stop_work, wfx_mcast_stop_work);
 #if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
 	setup_timer(&wvif->mcast_timeout, wfx_mcast_timeout, (unsigned long) wvif);
 #else
@@ -1636,9 +1636,9 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 		memset(wvif->link_id_db, 0, sizeof(wvif->link_id_db));
 		wvif->sta_asleep_mask = 0;
 		wvif->enable_beacon = false;
-		wvif->tx_multicast = false;
+		wvif->mcast_tx = false;
 		wvif->aid0_bit_set = false;
-		wvif->buffered_multicasts = false;
+		wvif->mcast_buffered = false;
 		wvif->pspoll_mask = 0;
 		/* reset.link_id = 0; */
 		hif_reset(wvif, false);

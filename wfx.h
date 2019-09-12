@@ -115,9 +115,6 @@ struct wfx_vif {
 
 	bool			enable_beacon;
 	bool			setbssparams_done;
-	bool			buffered_multicasts;
-	bool			tx_multicast;
-	bool			aid0_bit_set;
 	bool			delayed_unjoin;
 	bool			disable_beacon_filter;
 	bool			cqm_use_rssi;
@@ -134,7 +131,6 @@ struct wfx_vif {
 	struct wfx_ht_info	ht_info;
 	struct wfx_edca_params	edca;
 	struct wfx_link_entry	link_id_db[WFX_MAX_STA_IN_AP_MODE];
-	struct wfx_grp_addr_table multicast_filter;
 	struct tx_policy_cache	tx_policy_cache;
 
 	struct work_struct	tx_policy_upload_work;
@@ -149,8 +145,13 @@ struct wfx_vif {
 	struct work_struct	set_cts_work;
 	struct work_struct	link_id_work;
 	struct delayed_work	link_id_gc_work;
-	struct work_struct	multicast_start_work;
-	struct work_struct	multicast_stop_work;
+
+	bool			aid0_bit_set;
+	bool			mcast_tx;
+	bool			mcast_buffered;
+	struct wfx_grp_addr_table mcast_filter;
+	struct work_struct	mcast_start_work;
+	struct work_struct	mcast_stop_work;
 	struct timer_list	mcast_timeout;
 
 	/* API */

@@ -478,7 +478,7 @@ static int wfx_tx_queue_mask_get(struct wfx_vif *wvif,
 	int total = 0;
 
 	/* Search for a queue with multicast frames buffered */
-	if (wvif->tx_multicast) {
+	if (wvif->mcast_tx) {
 		tx_allowed_mask = BIT(WFX_LINK_ID_AFTER_DTIM);
 		idx = wfx_get_prio_queue(wvif, tx_allowed_mask, &total);
 		if (idx >= 0) {
@@ -537,12 +537,12 @@ struct hif_msg *wfx_tx_queues_get(struct wfx_dev *wdev)
 
 			not_found = wfx_tx_queue_mask_get(wvif, &vif_queue, &vif_tx_allowed_mask, &vif_more);
 
-			if (wvif->buffered_multicasts && (not_found || !vif_more) &&
-					(wvif->tx_multicast || !wvif->sta_asleep_mask)) {
-				wvif->buffered_multicasts = false;
-				if (wvif->tx_multicast) {
-					wvif->tx_multicast = false;
-					schedule_work(&wvif->multicast_stop_work);
+			if (wvif->mcast_buffered && (not_found || !vif_more) &&
+					(wvif->mcast_tx || !wvif->sta_asleep_mask)) {
+				wvif->mcast_buffered = false;
+				if (wvif->mcast_tx) {
+					wvif->mcast_tx = false;
+					schedule_work(&wvif->mcast_stop_work);
 				}
 			}
 
