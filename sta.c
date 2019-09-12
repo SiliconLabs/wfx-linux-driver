@@ -1458,9 +1458,11 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 	return ret;
 }
 
-static int wfx_vif_setup(struct wfx_vif *wvif)
+int wfx_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 {
 	int i;
+	struct wfx_dev *wdev = hw->priv;
+	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 	// FIXME: parameters are set by kernel juste after interface_add.
 	// Keep struct hif_req_edca_queue_params blank?
 	struct hif_req_edca_queue_params default_edca_params[] = {
@@ -1494,63 +1496,10 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 		},
 	};
 
-	if (wfx_api_older_than(wvif->wdev, 2, 0)) {
+	if (wfx_api_older_than(wdev, 2, 0)) {
 		default_edca_params[IEEE80211_AC_BE].queue_id = HIF_QUEUE_ID_BACKGROUND;
 		default_edca_params[IEEE80211_AC_BK].queue_id = HIF_QUEUE_ID_BESTEFFORT;
 	}
-	/* Spin lock */
-	spin_lock_init(&wvif->ps_state_lock);
-	spin_lock_init(&wvif->event_queue_lock);
-	mutex_init(&wvif->bss_loss_lock);
-	/* STA Work*/
-	INIT_LIST_HEAD(&wvif->event_queue);
-	INIT_WORK(&wvif->event_handler_work, wfx_event_handler_work);
-	INIT_WORK(&wvif->unjoin_work, wfx_unjoin_work);
-	INIT_WORK(&wvif->wep_key_work, wfx_wep_key_work);
-	INIT_WORK(&wvif->bss_params_work, wfx_bss_params_work);
-	INIT_WORK(&wvif->set_beacon_wakeup_period_work, wfx_set_beacon_wakeup_period_work);
-	INIT_DELAYED_WORK(&wvif->bss_loss_work, wfx_bss_loss_work);
-
-	/* AP Work */
-	INIT_WORK(&wvif->link_id_work, wfx_link_id_work);
-	INIT_DELAYED_WORK(&wvif->link_id_gc_work, wfx_link_id_gc_work);
-	INIT_WORK(&wvif->update_filtering_work, wfx_update_filtering_work);
-
-	/* Optional */
-	INIT_WORK(&wvif->set_tim_work, wfx_set_tim_work);
-	INIT_WORK(&wvif->set_cts_work, wfx_set_cts_work);
-	
-	INIT_WORK(&wvif->mcast_start_work, wfx_mcast_start_work);
-	INIT_WORK(&wvif->mcast_stop_work, wfx_mcast_stop_work);
-#if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
-	setup_timer(&wvif->mcast_timeout, wfx_mcast_timeout, (unsigned long) wvif);
-#else
-	timer_setup(&wvif->mcast_timeout, wfx_mcast_timeout, 0);
-#endif
-
-	/* About scan */
-	sema_init(&wvif->scan.lock, 1);
-	INIT_WORK(&wvif->scan.work, wfx_scan_work);
-	INIT_DELAYED_WORK(&wvif->scan.timeout, wfx_scan_timeout);
-	init_completion(&wvif->set_pm_mode_complete);
-	complete(&wvif->set_pm_mode_complete);
-
-	BUG_ON(ARRAY_SIZE(default_edca_params) != ARRAY_SIZE(wvif->edca.params));
-	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
-		memcpy(&wvif->edca.params[i], &default_edca_params[i], sizeof(default_edca_params[i]));
-		wvif->edca.uapsd_enable[i] = false;
-	}
-	wvif->setbssparams_done = false;
-	wvif->wep_default_key_id = -1;
-
-	return 0;
-}
-
-int wfx_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
-{
-	int i;
-	struct wfx_dev *wdev = hw->priv;
-	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 
 	vif->driver_flags |= IEEE80211_VIF_BEACON_FILTER |
 #if (KERNEL_VERSION(3, 19, 0) <= LINUX_VERSION_CODE)
@@ -1583,13 +1532,54 @@ int wfx_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 	}
 	wvif->vif = vif;
 	wvif->wdev = wdev;
-	wvif->vif->type = vif->type;
-	wfx_vif_setup(wvif);
+
+	spin_lock_init(&wvif->event_queue_lock);
+	mutex_init(&wvif->bss_loss_lock);
+	/* STA Work*/
+	INIT_LIST_HEAD(&wvif->event_queue);
+	INIT_WORK(&wvif->event_handler_work, wfx_event_handler_work);
+	INIT_WORK(&wvif->unjoin_work, wfx_unjoin_work);
+	INIT_WORK(&wvif->wep_key_work, wfx_wep_key_work);
+	INIT_WORK(&wvif->bss_params_work, wfx_bss_params_work);
+	INIT_WORK(&wvif->set_beacon_wakeup_period_work, wfx_set_beacon_wakeup_period_work);
+	INIT_DELAYED_WORK(&wvif->bss_loss_work, wfx_bss_loss_work);
+
+	INIT_WORK(&wvif->link_id_work, wfx_link_id_work);
+	INIT_DELAYED_WORK(&wvif->link_id_gc_work, wfx_link_id_gc_work);
+	INIT_WORK(&wvif->update_filtering_work, wfx_update_filtering_work);
+
+	INIT_WORK(&wvif->set_tim_work, wfx_set_tim_work);
+	INIT_WORK(&wvif->set_cts_work, wfx_set_cts_work);
+
+	INIT_WORK(&wvif->mcast_start_work, wfx_mcast_start_work);
+	INIT_WORK(&wvif->mcast_stop_work, wfx_mcast_stop_work);
+#if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
+	setup_timer(&wvif->mcast_timeout, wfx_mcast_timeout, (unsigned long) wvif);
+#else
+	timer_setup(&wvif->mcast_timeout, wfx_mcast_timeout, 0);
+#endif
+
+	sema_init(&wvif->scan.lock, 1);
+	INIT_WORK(&wvif->scan.work, wfx_scan_work);
+	INIT_DELAYED_WORK(&wvif->scan.timeout, wfx_scan_timeout);
+
+	spin_lock_init(&wvif->ps_state_lock);
+	init_completion(&wvif->set_pm_mode_complete);
+	complete(&wvif->set_pm_mode_complete);
+
+	wvif->setbssparams_done = false;
+	wvif->wep_default_key_id = -1;
 	mutex_unlock(&wdev->conf_mutex);
+
 	hif_set_macaddr(wvif, vif->addr);
-	for (i = 0; i < IEEE80211_NUM_ACS; i++)
+	BUG_ON(ARRAY_SIZE(default_edca_params) != ARRAY_SIZE(wvif->edca.params));
+	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
+		memcpy(&wvif->edca.params[i], &default_edca_params[i], sizeof(default_edca_params[i]));
+		wvif->edca.uapsd_enable[i] = false;
 		hif_set_edca_queue_params(wvif, &wvif->edca.params[i]);
+	}
 	wfx_set_uapsd_param(wvif, &wvif->edca);
+
 	tx_policy_init(wvif);
 	wvif = NULL;
 	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
