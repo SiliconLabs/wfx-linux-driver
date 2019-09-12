@@ -264,16 +264,22 @@ void wfx_pending_dump_old_frames(struct wfx_dev *wdev, unsigned limit_ms)
 	struct wfx_tx_priv *tx_priv;
 	struct hif_req_tx *wsm;
 	struct sk_buff *skb;
+	bool first = true;
 
-	dev_info(wdev->dev, "Frames stuck in firmware since %dms or more:\n", limit_ms);
 	spin_lock_bh(&stats->pending.lock);
 	skb_queue_walk(&stats->pending, skb) {
 		tx_priv = wfx_skb_tx_priv(skb);
 		wsm = wfx_skb_txreq(skb);
-		if (ktime_after(now, ktime_add_ms(tx_priv->xmit_timestamp, limit_ms)))
-			dev_info(wdev->dev, "   id %08x sent %lldms ago",
-					wsm->packet_id,
-					ktime_ms_delta(now, tx_priv->xmit_timestamp));
+		if (ktime_after(now, ktime_add_ms(tx_priv->xmit_timestamp, limit_ms))) {
+			if (first) {
+				dev_info(wdev->dev, "frames stuck in firmware since %dms or more:\n",
+					 limit_ms);
+				first = false;
+			}
+			dev_info(wdev->dev, "   id %08x sent %lldms ago\n",
+				 wsm->packet_id,
+				 ktime_ms_delta(now, tx_priv->xmit_timestamp));
+		}
 	}
 	spin_unlock_bh(&stats->pending.lock);
 }
