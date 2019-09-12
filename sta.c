@@ -812,108 +812,6 @@ int wfx_sta_remove(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	return 0;
 }
 
-static void wfx_ps_notify(struct wfx_vif *wvif, enum sta_notify_cmd notify_cmd,
-			  int link_id)
-{
-	u32 bit, prev;
-
-	spin_lock_bh(&wvif->ps_state_lock);
-	/* Zero link id means "for all link IDs" */
-	if (link_id) {
-		bit = BIT(link_id);
-	} else if (notify_cmd != STA_NOTIFY_AWAKE) {
-		dev_warn(wvif->wdev->dev, "wfx_sta_notify: unsupported notify command");
-		bit = 0;
-	} else {
-		bit = wvif->link_id_map;
-	}
-	prev = wvif->sta_asleep_mask & bit;
-
-	switch (notify_cmd) {
-	case STA_NOTIFY_SLEEP:
-		if (!prev) {
-			if (wvif->mcast_buffered && !wvif->sta_asleep_mask)
-				schedule_work(&wvif->mcast_start_work);
-			wvif->sta_asleep_mask |= bit;
-		}
-		break;
-	case STA_NOTIFY_AWAKE:
-		if (prev) {
-			wvif->sta_asleep_mask &= ~bit;
-			wvif->pspoll_mask &= ~bit;
-			if (link_id && !wvif->sta_asleep_mask)
-				schedule_work(&wvif->mcast_stop_work);
-			wfx_bh_request_tx(wvif->wdev);
-		}
-		break;
-	}
-	spin_unlock_bh(&wvif->ps_state_lock);
-}
-
-void wfx_sta_notify(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		    enum sta_notify_cmd notify_cmd, struct ieee80211_sta *sta)
-{
-	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
-	struct wfx_sta_priv *sta_priv = (struct wfx_sta_priv *) &sta->drv_priv;
-
-	wfx_ps_notify(wvif, notify_cmd, sta_priv->link_id);
-}
-
-static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
-{
-	struct sk_buff *skb;
-	struct hif_ie_flags target_frame = {
-		.beacon = 1,
-	};
-	u16 tim_offset, tim_length;
-	u8 *tim_ptr;
-
-	skb = ieee80211_beacon_get_tim(wvif->wdev->hw, wvif->vif,
-				       &tim_offset, &tim_length);
-	if (!skb) {
-		if (!__wfx_flush(wvif->wdev, true))
-			wfx_tx_unlock(wvif->wdev);
-		return -ENOENT;
-	}
-	tim_ptr = skb->data + tim_offset;
-
-	if (tim_offset && tim_length >= 6) {
-		/* Ignore DTIM count from mac80211:
-		 * firmware handles DTIM internally.
-		 */
-		tim_ptr[2] = 0;
-
-		/* Set/reset aid0 bit */
-		if (aid0_bit_set)
-			tim_ptr[4] |= 1;
-		else
-			tim_ptr[4] &= ~1;
-	}
-
-	hif_update_ie(wvif, &target_frame, tim_ptr, tim_length);
-	dev_kfree_skb(skb);
-
-	return 0;
-}
-
-void wfx_set_tim_work(struct work_struct *work)
-{
-	struct wfx_vif *wvif = container_of(work, struct wfx_vif, set_tim_work);
-
-	wfx_set_tim_impl(wvif, wvif->aid0_bit_set);
-}
-
-int wfx_set_tim(struct ieee80211_hw *hw, struct ieee80211_sta *sta,
-			   bool set)
-{
-	struct wfx_dev *wdev = hw->priv;
-	struct wfx_sta_priv *sta_dev = (struct wfx_sta_priv *) &sta->drv_priv;
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, sta_dev->vif_id);
-
-	schedule_work(&wvif->set_tim_work);
-	return 0;
-}
-
 void wfx_set_cts_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif = container_of(work, struct wfx_vif, set_cts_work);
@@ -1270,6 +1168,107 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 		wfx_tx_lock_flush(wdev);
 		wfx_do_join(wvif); /* Will unlock it for us */
 	}
+}
+
+static void wfx_ps_notify(struct wfx_vif *wvif, enum sta_notify_cmd notify_cmd,
+			  int link_id)
+{
+	u32 bit, prev;
+
+	spin_lock_bh(&wvif->ps_state_lock);
+	/* Zero link id means "for all link IDs" */
+	if (link_id) {
+		bit = BIT(link_id);
+	} else if (notify_cmd != STA_NOTIFY_AWAKE) {
+		dev_warn(wvif->wdev->dev, "unsupported notify command\n");
+		bit = 0;
+	} else {
+		bit = wvif->link_id_map;
+	}
+	prev = wvif->sta_asleep_mask & bit;
+
+	switch (notify_cmd) {
+	case STA_NOTIFY_SLEEP:
+		if (!prev) {
+			if (wvif->mcast_buffered && !wvif->sta_asleep_mask)
+				schedule_work(&wvif->mcast_start_work);
+			wvif->sta_asleep_mask |= bit;
+		}
+		break;
+	case STA_NOTIFY_AWAKE:
+		if (prev) {
+			wvif->sta_asleep_mask &= ~bit;
+			wvif->pspoll_mask &= ~bit;
+			if (link_id && !wvif->sta_asleep_mask)
+				schedule_work(&wvif->mcast_stop_work);
+			wfx_bh_request_tx(wvif->wdev);
+		}
+		break;
+	}
+	spin_unlock_bh(&wvif->ps_state_lock);
+}
+
+void wfx_sta_notify(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+		    enum sta_notify_cmd notify_cmd, struct ieee80211_sta *sta)
+{
+	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
+	struct wfx_sta_priv *sta_priv = (struct wfx_sta_priv *) &sta->drv_priv;
+
+	wfx_ps_notify(wvif, notify_cmd, sta_priv->link_id);
+}
+
+static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
+{
+	struct sk_buff *skb;
+	struct hif_ie_flags target_frame = {
+		.beacon = 1,
+	};
+	u16 tim_offset, tim_length;
+	u8 *tim_ptr;
+
+	skb = ieee80211_beacon_get_tim(wvif->wdev->hw, wvif->vif,
+				       &tim_offset, &tim_length);
+	if (!skb) {
+		if (!__wfx_flush(wvif->wdev, true))
+			wfx_tx_unlock(wvif->wdev);
+		return -ENOENT;
+	}
+	tim_ptr = skb->data + tim_offset;
+
+	if (tim_offset && tim_length >= 6) {
+		/* Ignore DTIM count from mac80211:
+		 * firmware handles DTIM internally.
+		 */
+		tim_ptr[2] = 0;
+
+		/* Set/reset aid0 bit */
+		if (aid0_bit_set)
+			tim_ptr[4] |= 1;
+		else
+			tim_ptr[4] &= ~1;
+	}
+
+	hif_update_ie(wvif, &target_frame, tim_ptr, tim_length);
+	dev_kfree_skb(skb);
+
+	return 0;
+}
+
+void wfx_set_tim_work(struct work_struct *work)
+{
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif, set_tim_work);
+
+	wfx_set_tim_impl(wvif, wvif->aid0_bit_set);
+}
+
+int wfx_set_tim(struct ieee80211_hw *hw, struct ieee80211_sta *sta, bool set)
+{
+	struct wfx_dev *wdev = hw->priv;
+	struct wfx_sta_priv *sta_dev = (struct wfx_sta_priv *) &sta->drv_priv;
+	struct wfx_vif *wvif = wdev_to_wvif(wdev, sta_dev->vif_id);
+
+	schedule_work(&wvif->set_tim_work);
+	return 0;
 }
 
 static void wfx_mcast_start_work(struct work_struct *work)
