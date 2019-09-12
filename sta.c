@@ -270,7 +270,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	if (!ret)
 		ret = wfx_set_mcast_filter(wvif, &wvif->mcast_filter);
 	if (ret)
-		dev_err(wvif->wdev->dev, "Update filtering failed: %d.\n", ret);
+		dev_err(wvif->wdev->dev, "update filtering failed: %d\n", ret);
 	kfree(bf_tbl);
 }
 
@@ -526,7 +526,7 @@ void wfx_event_handler_work(struct work_struct *work)
 			dev_warn(wvif->wdev->dev, "error while processing power save request\n");
 			break;
 		default:
-			dev_warn(wvif->wdev->dev, "Unhandled event indication: %.2x\n", event->evt.event_id);
+			dev_warn(wvif->wdev->dev, "unhandled event indication: %.2x\n", event->evt.event_id);
 			break;
 		}
 	}
@@ -564,7 +564,7 @@ static void wfx_do_unjoin(struct wfx_vif *wvif)
 
 	if (atomic_read(&wvif->scan.in_progress)) {
 		if (wvif->delayed_unjoin)
-			dev_dbg(wvif->wdev->dev, "Delayed unjoin is already scheduled.\n");
+			dev_dbg(wvif->wdev->dev, "delayed unjoin is already scheduled\n");
 		else
 			wvif->delayed_unjoin = true;
 		goto done;
@@ -773,7 +773,7 @@ int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	sta_priv->vif_id = wvif->id;
 	sta_priv->link_id = wfx_find_link_id(wvif, sta->addr);
 	if (!sta_priv->link_id) {
-		dev_info(wdev->dev, "[AP] No more link IDs available.\n");
+		dev_warn(wdev->dev, "mo more link-id available\n");
 		return -ENOENT;
 	}
 
@@ -1308,7 +1308,7 @@ static void wfx_mcast_timeout(struct timer_list *t)
 {
 	struct wfx_vif *wvif = from_timer(wvif, t, mcast_timeout);
 #endif
-	dev_warn(wvif->wdev->dev, "Multicast delivery timeout.\n");
+	dev_warn(wvif->wdev->dev, "multicast delivery timeout\n");
 	spin_lock_bh(&wvif->ps_state_lock);
 	wvif->mcast_tx = wvif->aid0_bit_set && wvif->mcast_buffered;
 	if (wvif->mcast_tx)
@@ -1396,7 +1396,7 @@ int wfx_assign_vif_chanctx(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 	struct ieee80211_channel *ch = conf->def.chan;
 
-	WARN(wvif->channel, "Channel overwrite");
+	WARN(wvif->channel, "channel overwrite");
 	wvif->channel = ch;
 	wvif->ht_info.channel_type = cfg80211_get_chandef_type(&conf->def);
 
@@ -1409,7 +1409,7 @@ void wfx_unassign_vif_chanctx(struct ieee80211_hw *hw, struct ieee80211_vif *vif
 	struct wfx_vif *wvif = (struct wfx_vif *) vif->drv_priv;
 	struct ieee80211_channel *ch = conf->def.chan;
 
-	WARN(wvif->channel != ch, "Channel mismatch");
+	WARN(wvif->channel != ch, "channel mismatch");
 	wvif->channel = NULL;
 }
 
@@ -1424,7 +1424,7 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 	// FIXME: Interface id should not been hardcoded
 	wvif = wdev_to_wvif(wdev, 0);
 	if (!wvif) {
-		WARN(1, "Interface 0 does not exist anymore");
+		WARN(1, "interface 0 does not exist anymore");
 		return 0;
 	}
 

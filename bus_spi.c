@@ -249,12 +249,12 @@ static int wfx_spi_probe(struct spi_device *func)
 	if (ret)
 		return ret;
 	// Trace below is also displayed by spi_setup() if compiled with DEBUG
-	dev_dbg(&func->dev, "SPI params: CS=%d, mode=%d bits/word=%d speed=%d",
+	dev_dbg(&func->dev, "SPI params: CS=%d, mode=%d bits/word=%d speed=%d\n",
 		func->chip_select, func->mode, func->bits_per_word, func->max_speed_hz);
 	if (func->bits_per_word != 16 && func->bits_per_word != 8)
 		dev_warn(&func->dev, "unusual bits/word value: %d\n", func->bits_per_word);
 	if (func->max_speed_hz > 49000000)
-		dev_warn(&func->dev, "%dHz is a very high speed", func->max_speed_hz);
+		dev_warn(&func->dev, "%dHz is a very high speed\n", func->max_speed_hz);
 
 	bus = devm_kzalloc(&func->dev, sizeof(*bus), GFP_KERNEL);
 	if (!bus)
@@ -266,7 +266,7 @@ static int wfx_spi_probe(struct spi_device *func)
 
 	bus->gpio_reset = wfx_get_gpio(&func->dev, gpio_reset, "reset");
 	if (!bus->gpio_reset) {
-		dev_warn(&func->dev, "try to load firmware anyway");
+		dev_warn(&func->dev, "try to load firmware anyway\n");
 	} else {
 		gpiod_set_value(bus->gpio_reset, 0);
 		udelay(100);

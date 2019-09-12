@@ -203,7 +203,7 @@ void wfx_tx_queue_put(struct wfx_dev *wdev, struct wfx_queue *queue, struct sk_b
 	struct wfx_queue_stats *stats = &wdev->tx_queue_stats;
 	struct wfx_tx_priv *tx_priv = wfx_skb_tx_priv(skb);
 
-	WARN(tx_priv->link_id >= ARRAY_SIZE(stats->link_map_cache), "Invalid link_id value");
+	WARN(tx_priv->link_id >= ARRAY_SIZE(stats->link_map_cache), "invalid link-id value");
 	spin_lock_bh(&queue->queue.lock);
 	__skb_queue_tail(&queue->queue, skb);
 
@@ -374,10 +374,8 @@ static bool hif_handle_tx_data(struct wfx_vif *wvif, struct sk_buff *skb,
 	case NL80211_IFTYPE_AP:
 		if (!wvif->state) {
 			action = do_drop;
-		} else if (!(BIT(tx_priv->raw_link_id) &
-		      (BIT(0) | wvif->link_id_map))) {
-			dev_warn(wvif->wdev->dev,
-				   "A frame with expired link id is dropped.\n");
+		} else if (!(BIT(tx_priv->raw_link_id) & (BIT(0) | wvif->link_id_map))) {
+			dev_warn(wvif->wdev->dev, "a frame with expired link-id is dropped\n");
 			action = do_drop;
 		}
 		break;
@@ -557,7 +555,7 @@ struct hif_msg *wfx_tx_queues_get(struct wfx_dev *wdev)
 				break;
 			} else if (!not_found) {
 				if (queue && queue != vif_queue)
-					dev_info(wdev->dev, "Vifs disagree about queue priority");
+					dev_info(wdev->dev, "vifs disagree about queue priority\n");
 				tx_allowed_mask |= vif_tx_allowed_mask;
 				queue = vif_queue;
 				ret = 0;

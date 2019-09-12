@@ -77,7 +77,7 @@ static int wfx_drop_encrypt_data(struct wfx_dev *wdev, struct hif_ind_rx *arg, s
 		icv_len = 16 /* WAPI_MIC_LEN */;
 		break;
 	default:
-		dev_err(wdev->dev, "Unknown encryption type %d\n",
+		dev_err(wdev->dev, "unknown encryption type %d\n",
 			 arg->rx_flags.encryp);
 		return -EIO;
 	}
@@ -87,7 +87,7 @@ static int wfx_drop_encrypt_data(struct wfx_dev *wdev, struct hif_ind_rx *arg, s
 		icv_len = 0;
 
 	if (skb->len < hdrlen + iv_len + icv_len) {
-		dev_warn(wdev->dev, "Malformed SDU rx'ed. Size is lesser than crypto headers.\n");
+		dev_warn(wdev->dev, "malformed SDU received\n");
 		return -EIO;
 	}
 
@@ -129,7 +129,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, struct hif_ind_rx *arg, struct sk_buff *skb
 		goto drop;
 
 	if (skb->len < sizeof(struct ieee80211_pspoll)) {
-		dev_warn(wvif->wdev->dev, "Malformed SDU rx'ed. Size is lesser than IEEE header.\n");
+		dev_warn(wvif->wdev->dev, "malformed SDU received\n");
 		goto drop;
 	}
 

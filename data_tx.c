@@ -302,8 +302,7 @@ static int wfx_alloc_link_id(struct wfx_vif *wvif, const u8 *mac)
 		if (!schedule_work(&wvif->link_id_work))
 			wfx_tx_unlock(wvif->wdev);
 	} else {
-		dev_info(wvif->wdev->dev,
-			   "[AP] Early: no more link IDs available.\n");
+		dev_info(wvif->wdev->dev, "no more link-id available\n");
 	}
 	spin_unlock_bh(&wvif->ps_state_lock);
 	return ret;
@@ -481,7 +480,7 @@ static uint8_t wfx_tx_get_raw_link_id(struct wfx_vif *wvif, struct ieee80211_sta
 	if (!ret)
 		ret = wfx_alloc_link_id(wvif, da);
 	if (!ret) {
-		dev_err(wvif->wdev->dev, "No more link IDs available.\n");
+		dev_err(wvif->wdev->dev, "no more link-id available\n");
 		return -ENOENT;
 	}
 	return ret;
@@ -530,7 +529,7 @@ static uint8_t wfx_tx_get_rate_id(struct wfx_vif *wvif, struct ieee80211_tx_info
 	uint8_t rate_id;
 
 	rate_id = tx_policy_get(wvif, tx_info->driver_rates, &tx_policy_renew);
-	WARN(rate_id == WFX_INVALID_RATE_ID, "Enable to get a valid Tx policy");
+	WARN(rate_id == WFX_INVALID_RATE_ID, "unable to get a valid Tx policy");
 
 	if (tx_policy_renew) {
 		/* FIXME: It's not so optimal to stop TX queues every now and
@@ -695,7 +694,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, struct hif_cnf_tx *arg)
 
 	skb = wfx_pending_get(wvif->wdev, arg->packet_id);
 	if (!skb) {
-		dev_warn(wvif->wdev->dev, "Received unknown packet_id (%#.8x) from chip\n", arg->packet_id);
+		dev_warn(wvif->wdev->dev, "received unknown packet_id (%#.8x) from chip\n", arg->packet_id);
 		return;
 	}
 	tx_info = IEEE80211_SKB_CB(skb);

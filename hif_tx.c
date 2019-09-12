@@ -28,9 +28,9 @@ static void wfx_fill_header(struct hif_msg *hif, int if_id, unsigned int cmd, si
 	if (if_id == -1)
 		if_id = 2;
 
-	WARN(cmd > 0x3f, "Invalid WSM command %#.2x", cmd);
-	WARN(size > 0xFFF, "Requested buffer is too large: %zu bytes", size);
-	WARN(if_id > 0x3, "Invalid interface ID %d", if_id);
+	WARN(cmd > 0x3f, "invalid WSM command %#.2x", cmd);
+	WARN(size > 0xFFF, "requested buffer is too large: %zu bytes", size);
+	WARN(if_id > 0x3, "invalid interface ID %d", if_id);
 
 	hif->len = cpu_to_le16(size + 4);
 	hif->id = cmd;
@@ -82,13 +82,12 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request, void *reply, siz
 
 	ret = wait_for_completion_timeout(&wdev->hif_cmd.done, 1 * HZ);
 	if (!ret) {
-		dev_err(wdev->dev, "chip is abnormally long to answer");
+		dev_err(wdev->dev, "chip is abnormally long to answer\n");
 		reinit_completion(&wdev->hif_cmd.ready);
 		ret = wait_for_completion_timeout(&wdev->hif_cmd.done, 3 * HZ);
 	}
 	if (!ret) {
-		dev_err(wdev->dev, "chip did not answer");
-		dev_info(wdev->dev, "list of stuck frames:\n");
+		dev_err(wdev->dev, "chip did not answer\n");
 		wfx_pending_dump_old_frames(wdev, 3000);
 		wdev->chip_frozen = 1;
 		reinit_completion(&wdev->hif_cmd.done);
@@ -185,7 +184,7 @@ int hif_read_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id, void *val, size_t
 		ret = -EIO;
 	}
 	if (ret == -ENOMEM)
-		dev_err(wdev->dev, "Buffer is too small to receive %s (%zu < %d)\n",
+		dev_err(wdev->dev, "buffer is too small to receive %s (%zu < %d)\n",
 			get_mib_name(mib_id), val_len, reply->length);
 	if (!ret)
 		memcpy(val, &reply->mib_data, reply->length);
@@ -223,9 +222,9 @@ int hif_scan(struct wfx_vif *wvif, const struct wfx_scan_params *arg)
 	struct hif_req_start_scan *body = wfx_alloc_hif(buf_len, &hif);
 	u8 *ptr = (u8 *) body + sizeof(*body);
 
-	WARN(arg->scan_req.num_of_channels > HIF_API_MAX_NB_CHANNELS, "Invalid params");
-	WARN(arg->scan_req.num_of_ssi_ds > 2, "Invalid params");
-	WARN(arg->scan_req.band > 1, "Invalid params");
+	WARN(arg->scan_req.num_of_channels > HIF_API_MAX_NB_CHANNELS, "invalid params");
+	WARN(arg->scan_req.num_of_ssi_ds > 2, "invalid params");
+	WARN(arg->scan_req.band > 1, "invalid params");
 
 	// FIXME: This API is unnecessary complex, fixing NumOfChannels and
 	// adding a member SsidDef at end of struct hif_req_start_scan would
@@ -241,7 +240,7 @@ int hif_scan(struct wfx_vif *wvif, const struct wfx_scan_params *arg)
 	ptr += arg->scan_req.num_of_ssi_ds * sizeof(struct hif_ssid_def);
 	memcpy(ptr, arg->ch, arg->scan_req.num_of_channels * sizeof(u8));
 	ptr += arg->scan_req.num_of_channels * sizeof(u8);
-	WARN(buf_len != ptr - (u8 *) body, "Allocation size mismatch");
+	WARN(buf_len != ptr - (u8 *) body, "allocation size mismatch");
 	wfx_fill_header(hif, wvif->id, HIF_REQ_ID_START_SCAN, buf_len);
 	ret = wfx_cmd_send(wvif->wdev, hif, NULL, 0, false);
 	kfree(hif);

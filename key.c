@@ -223,7 +223,7 @@ static int wfx_add_key(struct wfx_vif *wvif, struct ieee80211_sta *sta,
 
 static int wfx_remove_key(struct wfx_vif *wvif, struct ieee80211_key_conf *key)
 {
-	WARN(key->hw_key_idx >= MAX_KEY_ENTRIES, "Corrupted hw_key_idx");
+	WARN(key->hw_key_idx >= MAX_KEY_ENTRIES, "corrupted hw_key_idx");
 	wfx_free_key(wvif->wdev, key->hw_key_idx);
 	return hif_remove_key(wvif->wdev, key->hw_key_idx);
 }

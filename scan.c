@@ -33,7 +33,6 @@ static void wfx_scan_restart_delayed(struct wfx_vif *wvif)
 		if (!schedule_work(&wvif->unjoin_work))
 			wfx_tx_unlock(wvif->wdev);
 	} else if (wvif->delayed_link_loss) {
-		dev_dbg(wvif->wdev->dev, "[CQM] Requeue BSS loss.\n");
 		wvif->delayed_link_loss = 0;
 		wfx_cqm_bssloss_sm(wvif, 1, 0, 0);
 	}
@@ -172,15 +171,11 @@ void wfx_scan_work(struct work_struct *work)
 			hif_set_output_power(wvif, wvif->wdev->output_power * 10);
 
 		if (wvif->scan.status < 0)
-			dev_warn(wvif->wdev->dev,
-				   "[SCAN] Scan failed (%d).\n",
-				   wvif->scan.status);
+			dev_warn(wvif->wdev->dev, "scan failed\n");
 		else if (wvif->scan.req)
-			dev_dbg(wvif->wdev->dev,
-				  "[SCAN] Scan completed.\n");
+			dev_dbg(wvif->wdev->dev, "scan completed\n");
 		else
-			dev_dbg(wvif->wdev->dev,
-				  "[SCAN] Scan canceled.\n");
+			dev_dbg(wvif->wdev->dev, "scan canceled\n");
 
 		wvif->scan.req = NULL;
 		wfx_scan_restart_delayed(wvif);
@@ -293,8 +288,7 @@ void wfx_scan_timeout(struct work_struct *work)
 		if (wvif->scan.status > 0) {
 			wvif->scan.status = 0;
 		} else if (!wvif->scan.status) {
-			dev_warn(wvif->wdev->dev,
-				   "Timeout waiting for scan complete notification.\n");
+			dev_warn(wvif->wdev->dev, "timeout waiting for scan complete notification\n");
 			wvif->scan.status = -ETIMEDOUT;
 			wvif->scan.curr = wvif->scan.end;
 			hif_stop_scan(wvif);

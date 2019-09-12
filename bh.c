@@ -147,13 +147,15 @@ static int bh_work_rx(struct wfx_dev *wdev, int max_msg, int *num_cnf)
 		if (piggyback < 0)
 			return i;
 		if (!(piggyback & CTRL_WLAN_READY))
-			dev_err(wdev->dev, "unexpected piggyback value: ready bit not set: %04x", piggyback);
+			dev_err(wdev->dev, "unexpected piggyback value: ready bit not set: %04x\n",
+				piggyback);
 	}
 	if (piggyback & CTRL_NEXT_LEN_MASK) {
 		ctrl_reg = atomic_xchg(&wdev->hif.ctrl_reg, piggyback);
 		complete(&wdev->hif.ctrl_ready);
 		if (ctrl_reg)
-			dev_err(wdev->dev, "unexpected IRQ happened: %04x/%04x", ctrl_reg, piggyback);
+			dev_err(wdev->dev, "unexpected IRQ happened: %04x/%04x\n",
+				ctrl_reg, piggyback);
 	}
 	return i;
 }
@@ -187,7 +189,7 @@ static void tx_helper(struct wfx_dev *wdev, struct hif_msg *hif)
 		data = hif;
 	}
 	WARN(len > wdev->hw_caps.size_inp_ch_buf,
-	     "%s: request exceed WFx capability: %zu > %d", __func__,
+	     "%s: request exceed WFx capability: %zu > %d\n", __func__,
 	     len, wdev->hw_caps.size_inp_ch_buf);
 	len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, len);
 	ret = wfx_data_write(wdev, data, len);
@@ -280,9 +282,11 @@ void wfx_bh_request_rx(struct wfx_dev *wdev)
 	queue_work(system_highpri_wq, &wdev->hif.bh);
 
 	if (!(cur & CTRL_NEXT_LEN_MASK))
-		dev_err(wdev->dev, "unexpected control register value: length field is 0: %04x", cur);
+		dev_err(wdev->dev, "unexpected control register value: length field is 0: %04x\n",
+			cur);
 	if (prev != 0)
-		dev_err(wdev->dev, "received IRQ but previous data was not (yet) read: %04x/%04x", prev, cur);
+		dev_err(wdev->dev, "received IRQ but previous data was not (yet) read: %04x/%04x\n",
+			prev, cur);
 }
 
 /*

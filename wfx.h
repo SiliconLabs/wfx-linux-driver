@@ -166,11 +166,11 @@ struct wfx_vif {
 static inline struct wfx_vif *wdev_to_wvif(struct wfx_dev *wdev, int vif_id)
 {
 	if (vif_id >= ARRAY_SIZE(wdev->vif)) {
-		dev_dbg(wdev->dev, "Requesting non-existent vif: %d\n", vif_id);
+		dev_dbg(wdev->dev, "requesting non-existent vif: %d\n", vif_id);
 		return NULL;
 	}
 	if (!wdev->vif[vif_id]) {
-		dev_dbg(wdev->dev, "Requesting non-allocated vif: %d\n", vif_id);
+		dev_dbg(wdev->dev, "requesting non-allocated vif: %d\n", vif_id);
 		return NULL;
 	}
 	return (struct wfx_vif *) wdev->vif[vif_id]->drv_priv;

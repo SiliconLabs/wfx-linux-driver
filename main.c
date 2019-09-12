@@ -49,7 +49,7 @@ MODULE_PARM_DESC(gpio_wakeup, "gpio number for wakeup. -1 for none.");
 
 static char *slk_key;
 module_param(slk_key, charp, 0600);
-MODULE_PARM_DESC(slk_key, "Secret key for secure link (expect 64 hexdecimal digits)");
+MODULE_PARM_DESC(slk_key, "secret key for secure link (expect 64 hexdecimal digits).");
 
 #define RATETAB_ENT(_rate, _rateid, _flags) { \
 	.bitrate  = (_rate),   \
@@ -187,12 +187,12 @@ struct gpio_desc *wfx_get_gpio(struct device *dev, int override, const char *lab
 	}
 	if (IS_ERR(ret) || !ret) {
 		if (!ret || PTR_ERR(ret) == -ENOENT)
-			dev_warn(dev, "gpio %s is not defined", label);
+			dev_warn(dev, "gpio %s is not defined\n", label);
 		else
-			dev_warn(dev, "error while requesting gpio %s", label);
+			dev_warn(dev, "error while requesting gpio %s\n", label);
 		ret = NULL;
 	} else {
-		dev_dbg(dev, "using gpio %d for %s", desc_to_gpio(ret), label);
+		dev_dbg(dev, "using gpio %d for %s\n", desc_to_gpio(ret), label);
 	}
 	return ret;
 }
@@ -231,7 +231,7 @@ int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len)
 	start = 0;
 	brace_level = 0;
 	if (buf[0] != '{') {
-		dev_err(wdev->dev, "Valid PDS start with '{'. Did you forget to compress it?");
+		dev_err(wdev->dev, "valid PDS start with '{'. Did you forget to compress it?\n");
 		return -EINVAL;
 	}
 	for (i = 1; i < len - 1; i++) {
@@ -245,7 +245,7 @@ int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len)
 				return -EFBIG;
 			buf[start] = '{';
 			buf[i] = 0;
-			dev_dbg(wdev->dev, "Send PDS '%s}'", buf + start);
+			dev_dbg(wdev->dev, "send PDS '%s}'\n", buf + start);
 			buf[i] = '}';
 			ret = hif_configuration(wdev, buf + start, i - start + 1);
 			if (ret == HIF_STATUS_FAILURE) {
@@ -275,7 +275,7 @@ static int wfx_send_pdata_pds(struct wfx_dev *wdev)
 
 	ret = request_firmware(&pds, wdev->pdata.file_pds, wdev->dev);
 	if (ret) {
-		dev_err(wdev->dev, "Can't load PDS file %s", wdev->pdata.file_pds);
+		dev_err(wdev->dev, "can't load PDS file %s\n", wdev->pdata.file_pds);
 		return ret;
 	}
 	tmp_buf = kmemdup(pds->data, pds->size, GFP_KERNEL);
@@ -392,10 +392,10 @@ int wfx_probe(struct wfx_dev *wdev)
 		goto err1;
 	}
 
-	// FIXME: fill wiphy::fw_version and wiphy::hw_version
-	dev_info(wdev->dev, "Firmware \"%s\" started. Version: %d.%d.%d API: %d.%d Keyset: %02X caps: 0x%.8X\n",
-		 wdev->hw_caps.firmware_label, wdev->hw_caps.firmware_major,
-		 wdev->hw_caps.firmware_minor, wdev->hw_caps.firmware_build,
+	// FIXME: fill wiphy::hw_version
+	dev_info(wdev->dev, "started firmware %d.%d.%d \"%s\" (API: %d.%d, keyset: %02X, caps: 0x%.8X)\n",
+		 wdev->hw_caps.firmware_major, wdev->hw_caps.firmware_minor,
+		 wdev->hw_caps.firmware_build, wdev->hw_caps.firmware_label,
 		 wdev->hw_caps.api_version_major, wdev->hw_caps.api_version_minor,
 		 wdev->keyset, *((u32 *) &wdev->hw_caps.capabilities));
 	snprintf(wdev->hw->wiphy->fw_version, sizeof(wdev->hw->wiphy->fw_version),
@@ -405,7 +405,7 @@ int wfx_probe(struct wfx_dev *wdev)
 		 wdev->hw_caps.firmware_build);
 
 	if (wfx_api_older_than(wdev, 1, 0)) {
-		dev_err(wdev->dev, "Unsupported firmware API version (expect 1 while firmware returns %d)\n",
+		dev_err(wdev->dev, "unsupported firmware API version (expect 1 while firmware returns %d)\n",
 			wdev->hw_caps.api_version_major);
 		err = -ENOTSUPP;
 		goto err1;
@@ -427,7 +427,7 @@ int wfx_probe(struct wfx_dev *wdev)
 		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[13].flags |= IEEE80211_CHAN_DISABLED;
 	}
 
-	dev_dbg(wdev->dev, "sending configuration file %s", wdev->pdata.file_pds);
+	dev_dbg(wdev->dev, "sending configuration file %s\n", wdev->pdata.file_pds);
 	err = wfx_send_pdata_pds(wdev);
 	if (err < 0)
 		goto err1;

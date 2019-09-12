@@ -39,8 +39,8 @@ static int wfx_sdio_copy_from_io(void *priv, unsigned int reg_id,
 	int ret;
 
 	BUG_ON(reg_id > 7);
-	WARN(((uintptr_t) dst) & 3, "Unaligned buffer size");
-	WARN(count & 3, "Unaligned buffer address");
+	WARN(((uintptr_t) dst) & 3, "unaligned buffer size");
+	WARN(count & 3, "unaligned buffer address");
 
 	/* Use queue mode buffers */
 	if (reg_id == WFX_REG_IN_OUT_QUEUE)
@@ -60,8 +60,8 @@ static int wfx_sdio_copy_to_io(void *priv, unsigned int reg_id,
 	int ret;
 
 	BUG_ON(reg_id > 7);
-	WARN(((uintptr_t) src) & 3, "Unaligned buffer size");
-	WARN(count & 3, "Unaligned buffer address");
+	WARN(((uintptr_t) src) & 3, "unaligned buffer size");
+	WARN(count & 3, "unaligned buffer address");
 
 	/* Use queue mode buffers */
 	if (reg_id == WFX_REG_IN_OUT_QUEUE)
@@ -166,7 +166,7 @@ static int wfx_sdio_probe(struct sdio_func *func,
 	int ret;
 
 	if (func->num != 1) {
-		dev_err(&func->dev, "SDIO function number is %d while it should always be 1 (unsupported chip?)", func->num);
+		dev_err(&func->dev, "SDIO function number is %d while it should always be 1 (unsupported chip?)\n", func->num);
 		return -ENODEV;
 	}
 
@@ -176,12 +176,12 @@ static int wfx_sdio_probe(struct sdio_func *func,
 
 	if (np) {
 		if (!of_match_node(wfx_sdio_of_match, np)) {
-			dev_warn(&func->dev, "No compatible device found in DT");
+			dev_warn(&func->dev, "no compatible device found in DT\n");
 			return -ENODEV;
 		}
 		bus->of_irq = irq_of_parse_and_map(np, 0);
 	} else {
-		dev_warn(&func->dev, "Device is not declared in DT. Features will be limited.");
+		dev_warn(&func->dev, "device is not declared in DT, features will be limited\n");
 		// FIXME: ignore VID/PID and only rely on device tree
 		// return -ENODEV;
 	}

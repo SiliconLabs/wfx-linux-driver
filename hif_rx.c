@@ -28,12 +28,12 @@ static int hif_generic_confirm(struct wfx_dev *wdev, struct hif_msg *hif, void *
 	WARN(!mutex_is_locked(&wdev->hif_cmd.lock), "data locking error");
 
 	if (!wdev->hif_cmd.buf_send) {
-		dev_warn(wdev->dev, "Unexpected confirmation: 0x%.2x\n", cmd);
+		dev_warn(wdev->dev, "unexpected confirmation: 0x%.2x\n", cmd);
 		return -EINVAL;
 	}
 
 	if (cmd != wdev->hif_cmd.buf_send->id) {
-		dev_warn(wdev->dev, "Chip response mismatch request: 0x%.2x vs 0x%.2x\n",
+		dev_warn(wdev->dev, "chip response mismatch request: 0x%.2x vs 0x%.2x\n",
 			 cmd, wdev->hif_cmd.buf_send->id);
 		return -EINVAL;
 	}
@@ -78,7 +78,7 @@ static int hif_multi_tx_confirm(struct wfx_dev *wdev, struct hif_msg *hif, void 
 	int count = body->num_tx_confs;
 	int i;
 
-	WARN(count <= 0, "Corrupted message");
+	WARN(count <= 0, "corrupted message");
 	WARN_ON(!wvif);
 	if (!wvif)
 		return -EFAULT;
@@ -95,7 +95,7 @@ static int hif_startup_indication(struct wfx_dev *wdev, struct hif_msg *hif, voi
 	struct hif_ind_startup *body = buf;
 
 	if (body->status || body->firmware_type > 4) {
-		dev_err(wdev->dev, "Received invalid startup indication");
+		dev_err(wdev->dev, "received invalid startup indication");
 		return -EINVAL;
 	}
 	memcpy(&wdev->hw_caps, body, sizeof(struct hif_ind_startup));
@@ -255,13 +255,13 @@ static int hif_generic_indication(struct wfx_dev *wdev, struct hif_msg *hif, voi
 	case HIF_GENERIC_INDICATION_TYPE_RAW:
 		return 0;
 	case HIF_GENERIC_INDICATION_TYPE_STRING:
-		dev_info(wdev->dev, "firmware says: %s", (char *) body->indication_data.raw_data);
+		dev_info(wdev->dev, "firmware says: %s\n", (char *) body->indication_data.raw_data);
 		return 0;
 	case HIF_GENERIC_INDICATION_TYPE_RX_STATS:
 		mutex_lock(&wdev->rx_stats_lock);
 		// Older firmware send a generic indication beside RxStats
 		if (!wfx_api_older_than(wdev, 1, 4))
-			dev_info(wdev->dev, "RX test ongoing. Temperature: %d°C\n", body->indication_data.rx_stats.current_temp);
+			dev_info(wdev->dev, "Rx test ongoing. Temperature: %d°C\n", body->indication_data.rx_stats.current_temp);
 		memcpy(&wdev->rx_stats, &body->indication_data.rx_stats, sizeof(wdev->rx_stats));
 		mutex_unlock(&wdev->rx_stats_lock);
 		return 0;
@@ -274,7 +274,7 @@ static int hif_generic_indication(struct wfx_dev *wdev, struct hif_msg *hif, voi
 static int hif_exception_indication(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {
 	size_t len = hif->len - 4; // drop header
-	dev_err(wdev->dev, "Firmware exception.\n");
+	dev_err(wdev->dev, "firmware exception\n");
 	print_hex_dump_bytes("Dump: ", DUMP_PREFIX_NONE, buf, len);
 	wdev->chip_frozen = 1;
 
@@ -330,7 +330,7 @@ void wfx_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
 			goto free;
 		}
 	}
-	dev_err(wdev->dev, "Unsupported hif ID %02x\n", hif_id);
+	dev_err(wdev->dev, "unsupported HIF ID %02x\n", hif_id);
 free:
 	dev_kfree_skb(skb);
 }
