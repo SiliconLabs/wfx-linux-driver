@@ -16,8 +16,6 @@
 #include "main.h"
 #include "bh.h"
 
-#define DETECT_INVALID_CTRL_ACCESS
-
 static const struct wfx_platform_data wfx_sdio_pdata = {
 	.file_fw = "wfm_wf200",
 	.file_pds = "wf200.pds",
@@ -31,22 +29,6 @@ struct wfx_sdio_priv {
 	u8 buf_id_rx;
 	int of_irq;
 };
-
-#ifdef DETECT_INVALID_CTRL_ACCESS
-static int wfx_sdio_read_ctrl_reg(struct wfx_sdio_priv *bus, u32 *dst)
-{
-	int ret, i;
-
-	for (i = 0, ret = -EIO; ret && i < 3; i++)
-		ret = sdio_memcpy_fromio(bus->func, dst, WFX_REG_CONTROL << 2, sizeof(u32));
-
-	if (ret)
-		return -ETIMEDOUT;
-	else if (i > 1)
-		dev_info(bus->core->dev, "success read after %d failures\n", i - 1);
-	return ret;
-}
-#endif
 
 static int wfx_sdio_copy_from_io(void *priv, unsigned int reg_id,
 				 void *dst, size_t count)
@@ -62,14 +44,7 @@ static int wfx_sdio_copy_from_io(void *priv, unsigned int reg_id,
 	/* Use queue mode buffers */
 	if (reg_id == WFX_REG_IN_OUT_QUEUE)
 		sdio_addr |= (bus->buf_id_rx + 1) << 7;
-#ifndef DETECT_INVALID_CTRL_ACCESS
 	ret = sdio_memcpy_fromio(bus->func, dst, sdio_addr, count);
-#else
-	if (reg_id == WFX_REG_CONTROL && count == sizeof(u32))
-		ret = wfx_sdio_read_ctrl_reg(bus, dst);
-	else
-		ret = sdio_memcpy_fromio(bus->func, dst, sdio_addr, count);
-#endif
 	if (!ret && reg_id == WFX_REG_IN_OUT_QUEUE)
 		bus->buf_id_rx = (bus->buf_id_rx + 1) % 4;
 

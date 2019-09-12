@@ -50,6 +50,7 @@ static const struct wfx_platform_data wfx_spi_pdata = {
  * no data acess was done since IRQ raising). In add, this function optimize it
  * by doing only one SPI request.
  */
+#if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
 static int wfx_spi_read_ctrl_reg(struct wfx_spi_priv *bus, u16 *dst)
 {
 	int i, ret = 0;
@@ -86,6 +87,7 @@ static int wfx_spi_read_ctrl_reg(struct wfx_spi_priv *bus, u16 *dst)
 	*dst = rx_buf[1];
 	return ret;
 }
+#endif
 
 /*
  * WFx chip read data 16bits at time and place them directly into (little
@@ -132,22 +134,10 @@ static int wfx_spi_copy_from_io(void *priv, unsigned int addr,
 	if (bus->need_swab)
 		swab16s(&regaddr);
 
-#ifndef DETECT_INVALID_CTRL_ACCESS
 	spi_message_init(&m);
 	spi_message_add_tail(&t_addr, &m);
 	spi_message_add_tail(&t_msg, &m);
 	ret = spi_sync(bus->func, &m);
-#else
-	if (addr == WFX_REG_CONTROL && count == sizeof(u32)) {
-		memset(dst, 0, count);
-		ret = wfx_spi_read_ctrl_reg(bus, dst);
-	} else {
-		spi_message_init(&m);
-		spi_message_add_tail(&t_addr, &m);
-		spi_message_add_tail(&t_msg, &m);
-		ret = spi_sync(bus->func, &m);
-	}
-#endif
 
 #if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
 	/* If last byte has not been overwritten, read ctrl_reg manually
