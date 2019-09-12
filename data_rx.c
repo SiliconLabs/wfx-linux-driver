@@ -153,10 +153,7 @@ void wfx_rx_cb(struct wfx_vif *wvif, struct hif_ind_rx *arg, struct sk_buff *skb
 		hdr->rate_idx = arg->rxed_rate;
 	}
 
-	if (!wvif->cqm_use_rssi)
-		hdr->signal = (int) (arg->rcpi_rssi / 2) - 110;
-	else
-		hdr->signal = arg->rcpi_rssi;
+	hdr->signal = (int) (arg->rcpi_rssi / 2) - 110;
 	hdr->antenna = 0;
 
 	if (arg->rx_flags.encryp) {

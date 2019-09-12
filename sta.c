@@ -472,10 +472,7 @@ static void wfx_event_report_rssi(struct wfx_vif *wvif, uint8_t raw_rcpi_rssi)
 	int rcpi_rssi;
 	int cqm_evt;
 
-	if (wvif->cqm_use_rssi)
-		rcpi_rssi = (int8_t) raw_rcpi_rssi;
-	else
-		rcpi_rssi = raw_rcpi_rssi / 2 - 110;
+	rcpi_rssi = raw_rcpi_rssi / 2 - 110;
 	if (rcpi_rssi <= wvif->cqm_rssi_thold)
 		cqm_evt = NL80211_CQM_RSSI_THRESHOLD_EVENT_LOW;
 	else
@@ -1148,13 +1145,11 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 		/* RSSI: signed Q8.0, RCPI: unsigned Q7.1
 		 * RSSI = RCPI / 2 - 110
 		 */
+		th.rcpi_rssi = 1;
 		th.upper_threshold = info->cqm_rssi_thold + info->cqm_rssi_hyst;
+		th.upper_threshold = (th.upper_threshold + 110) * 2;
 		th.lower_threshold = info->cqm_rssi_thold;
-		if (!wvif->cqm_use_rssi) {
-			th.rcpi_rssi = 1;
-			th.upper_threshold = (th.upper_threshold + 110) * 2;
-			th.lower_threshold = (th.lower_threshold + 110) * 2;
-		}
+		th.lower_threshold = (th.lower_threshold + 110) * 2;
 		hif_set_rcpi_rssi_threshold(wvif, &th);
 	}
 

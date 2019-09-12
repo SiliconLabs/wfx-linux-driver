@@ -139,7 +139,6 @@ struct wfx_vif {
 	struct work_struct	update_filtering_work;
 
 	u32			erp_info;
-	bool			cqm_use_rssi;
 	int			cqm_rssi_thold;
 	bool			setbssparams_done;
 	struct wfx_ht_info	ht_info;
