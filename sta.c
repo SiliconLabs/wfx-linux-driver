@@ -1518,7 +1518,6 @@ static int wfx_vif_setup(struct wfx_vif *wvif)
 	INIT_WORK(&wvif->bss_params_work, wfx_bss_params_work);
 	INIT_WORK(&wvif->set_beacon_wakeup_period_work, wfx_set_beacon_wakeup_period_work);
 	INIT_DELAYED_WORK(&wvif->bss_loss_work, wfx_bss_loss_work);
-	INIT_WORK(&wvif->tx_policy_upload_work, tx_policy_upload_work);
 
 	/* AP Work */
 	INIT_WORK(&wvif->link_id_work, wfx_link_id_work);

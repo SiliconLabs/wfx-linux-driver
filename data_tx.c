@@ -151,21 +151,6 @@ static int tx_policy_release(struct tx_policy_cache *cache, struct tx_policy *en
 	return ret;
 }
 
-void tx_policy_init(struct wfx_vif *wvif)
-{
-	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
-	int i;
-
-	memset(cache, 0, sizeof(*cache));
-
-	spin_lock_init(&cache->lock);
-	INIT_LIST_HEAD(&cache->used);
-	INIT_LIST_HEAD(&cache->free);
-
-	for (i = 0; i < HIF_MIB_NUM_TX_RATE_RETRY_POLICIES; ++i)
-		list_add(&cache->cache[i].link, &cache->free);
-}
-
 static int tx_policy_get(struct wfx_vif *wvif, struct ieee80211_tx_rate *rates,
 			 bool *renew)
 {
@@ -252,7 +237,7 @@ static int tx_policy_upload(struct wfx_vif *wvif)
 	return 0;
 }
 
-void tx_policy_upload_work(struct work_struct *work)
+static void tx_policy_upload_work(struct work_struct *work)
 {
 	struct wfx_vif *wvif =
 		container_of(work, struct wfx_vif, tx_policy_upload_work);
@@ -261,6 +246,22 @@ void tx_policy_upload_work(struct work_struct *work)
 
 	wfx_tx_unlock(wvif->wdev);
 	wfx_tx_queues_unlock(wvif->wdev);
+}
+
+void tx_policy_init(struct wfx_vif *wvif)
+{
+	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
+	int i;
+
+	memset(cache, 0, sizeof(*cache));
+
+	spin_lock_init(&cache->lock);
+	INIT_LIST_HEAD(&cache->used);
+	INIT_LIST_HEAD(&cache->free);
+	INIT_WORK(&wvif->tx_policy_upload_work, tx_policy_upload_work);
+
+	for (i = 0; i < HIF_MIB_NUM_TX_RATE_RETRY_POLICIES; ++i)
+		list_add(&cache->cache[i].link, &cache->free);
 }
 
 /* Link ID related functions */
