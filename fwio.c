@@ -7,16 +7,18 @@
  */
 #include <linux/version.h>
 #include <linux/firmware.h>
+#include <linux/slab.h>
+#include <linux/mm.h>
+
+#include "fwio.h"
+#include "wfx.h"
+#include "hwio.h"
 
 #if (KERNEL_VERSION(4, 9, 0) > LINUX_VERSION_CODE)
 #define FIELD_GET(_mask, _reg) (typeof(_mask))(((_reg) & (_mask)) >> (__builtin_ffsll(_mask) - 1))
 #else
 #include <linux/bitfield.h>
 #endif
-
-#include "fwio.h"
-#include "wfx.h"
-#include "hwio.h"
 
 // Addresses below are in SRAM area
 #define WFX_DNLD_FIFO             0x09004000
