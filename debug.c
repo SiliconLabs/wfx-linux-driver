@@ -204,6 +204,7 @@ static const struct file_operations wfx_send_pds_fops = {
 	.write = wfx_send_pds_write,
 };
 
+#ifdef CONFIG_WFX_SECURE_LINK
 static ssize_t wfx_burn_slk_key_write(struct file *file,
 				      const char __user *user_buf,
 				      size_t count, loff_t *ppos)
@@ -215,10 +216,6 @@ static ssize_t wfx_burn_slk_key_write(struct file *file,
 	uint32_t crc32;
 	int ret;
 
-#ifndef CONFIG_WFX_SECURE_LINK
-	dev_info(wdev->dev, "this driver does not support secure link\n");
-	return -EINVAL;
-#endif
 	if (wdev->hw_caps.capabilities.link_mode == SEC_LINK_ENFORCED) {
 		dev_err(wdev->dev, "key was already burned on this device\n");
 		return -EINVAL;
@@ -253,6 +250,17 @@ static ssize_t wfx_burn_slk_key_write(struct file *file,
 	}
 	return count;
 }
+#else
+static ssize_t wfx_burn_slk_key_write(struct file *file,
+				      const char __user *user_buf,
+				      size_t count, loff_t *ppos)
+{
+	struct wfx_dev *wdev = file->private_data;
+
+	dev_info(wdev->dev, "this driver does not support secure link\n");
+	return -EINVAL;
+}
+#endif
 
 static const struct file_operations wfx_burn_slk_key_fops = {
 	.open = simple_open,
