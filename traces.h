@@ -229,6 +229,47 @@ wfx_reg_list_enum
 #define wfx_reg_name(sym, name) { sym, name },
 #define wfx_reg_list wfx_reg_list_enum { -1, NULL }
 
+DECLARE_EVENT_CLASS(io_data,
+	TP_PROTO(int reg, int addr, const void *io_buf, size_t len),
+	TP_ARGS(reg, addr, io_buf, len),
+	TP_STRUCT__entry(
+		__field(int, reg)
+		__field(int, addr)
+		__field(int, msg_len)
+		__field(int, buf_len)
+		__array(u8, buf, 32)
+		__array(u8, addr_str, 10)
+	),
+	TP_fast_assign(
+		__entry->reg = reg;
+		__entry->addr = addr;
+		__entry->msg_len = len;
+		__entry->buf_len = min_t(int, sizeof(__entry->buf), __entry->msg_len);
+		memcpy(__entry->buf, io_buf, __entry->buf_len);
+		if (addr >= 0)
+			snprintf(__entry->addr_str, 10, "/%08x", addr);
+		else
+			__entry->addr_str[0] = 0;
+	),
+	TP_printk("%s%s: %s%s (%d bytes)",
+		__print_symbolic(__entry->reg, wfx_reg_list),
+		__entry->addr_str,
+		__print_hex(__entry->buf, __entry->buf_len),
+		__entry->msg_len > sizeof(__entry->buf) ? " ..." : "",
+		__entry->msg_len
+	)
+);
+DEFINE_EVENT(io_data, io_write,
+	TP_PROTO(int reg, int addr, const void *io_buf, size_t len),
+	TP_ARGS(reg, addr, io_buf, len));
+#define _trace_io_ind_write(reg, addr, io_buf, len) trace_io_write(reg, addr, io_buf, len)
+#define _trace_io_write(reg, io_buf, len) trace_io_write(reg, -1, io_buf, len)
+DEFINE_EVENT(io_data, io_read,
+	TP_PROTO(int reg, int addr, const void *io_buf, size_t len),
+	TP_ARGS(reg, addr, io_buf, len));
+#define _trace_io_ind_read(reg, addr, io_buf, len) trace_io_read(reg, addr, io_buf, len)
+#define _trace_io_read(reg, io_buf, len) trace_io_read(reg, -1, io_buf, len)
+
 DECLARE_EVENT_CLASS(io_data32,
 	TP_PROTO(int reg, int addr, u32 val),
 	TP_ARGS(reg, addr, val),
@@ -285,46 +326,32 @@ DEFINE_EVENT(piggyback, piggyback,
 	TP_ARGS(val, ignored));
 #define _trace_piggyback(val, ignored) trace_piggyback(val, ignored)
 
-DECLARE_EVENT_CLASS(io_data,
-	TP_PROTO(int reg, int addr, const void *io_buf, size_t len),
-	TP_ARGS(reg, addr, io_buf, len),
+TRACE_EVENT(bh_stats,
+	TP_PROTO(int ind, int req, int cnf, int busy, bool release),
+	TP_ARGS(ind, req, cnf, busy, release),
 	TP_STRUCT__entry(
-		__field(int, reg)
-		__field(int, addr)
-		__field(int, msg_len)
-		__field(int, buf_len)
-		__array(u8, buf, 32)
-		__array(u8, addr_str, 10)
+		__field(int, ind)
+		__field(int, req)
+		__field(int, cnf)
+		__field(int, busy)
+		__field(bool, release)
 	),
 	TP_fast_assign(
-		__entry->reg = reg;
-		__entry->addr = addr;
-		__entry->msg_len = len;
-		__entry->buf_len = min_t(int, sizeof(__entry->buf), __entry->msg_len);
-		memcpy(__entry->buf, io_buf, __entry->buf_len);
-		if (addr >= 0)
-			snprintf(__entry->addr_str, 10, "/%08x", addr);
-		else
-			__entry->addr_str[0] = 0;
+		__entry->ind = ind;
+		__entry->req = req;
+		__entry->cnf = cnf;
+		__entry->busy = busy;
+		__entry->release = release;
 	),
-	TP_printk("%s%s: %s%s (%d bytes)",
-		__print_symbolic(__entry->reg, wfx_reg_list),
-		__entry->addr_str,
-		__print_hex(__entry->buf, __entry->buf_len),
-		__entry->msg_len > sizeof(__entry->buf) ? " ..." : "",
-		__entry->msg_len
+	TP_printk("IND/REQ/CNF:%3d/%3d/%3d, REQ in progress:%3d, WUP: %s",
+		__entry->ind,
+		__entry->req,
+		__entry->cnf,
+		__entry->busy,
+		__entry->release ? "release" : "keep"
 	)
 );
-DEFINE_EVENT(io_data, io_write,
-	TP_PROTO(int reg, int addr, const void *io_buf, size_t len),
-	TP_ARGS(reg, addr, io_buf, len));
-#define _trace_io_ind_write(reg, addr, io_buf, len) trace_io_write(reg, addr, io_buf, len)
-#define _trace_io_write(reg, io_buf, len) trace_io_write(reg, -1, io_buf, len)
-DEFINE_EVENT(io_data, io_read,
-	TP_PROTO(int reg, int addr, const void *io_buf, size_t len),
-	TP_ARGS(reg, addr, io_buf, len));
-#define _trace_io_ind_read(reg, addr, io_buf, len) trace_io_read(reg, addr, io_buf, len)
-#define _trace_io_read(reg, io_buf, len) trace_io_read(reg, -1, io_buf, len)
+#define _trace_bh_stats(ind, req, cnf, busy, release) trace_bh_stats(ind, req, cnf, busy, release)
 
 TRACE_EVENT(tx_stats,
 	TP_PROTO(struct hif_cnf_tx *tx_cnf, struct sk_buff *skb, int delay),
@@ -398,33 +425,6 @@ TRACE_EVENT(tx_stats,
 	)
 );
 #define _trace_tx_stats(tx_cnf, skb, delay) trace_tx_stats(tx_cnf, skb, delay)
-
-TRACE_EVENT(bh_stats,
-	TP_PROTO(int ind, int req, int cnf, int busy, bool release),
-	TP_ARGS(ind, req, cnf, busy, release),
-	TP_STRUCT__entry(
-		__field(int, ind)
-		__field(int, req)
-		__field(int, cnf)
-		__field(int, busy)
-		__field(bool, release)
-	),
-	TP_fast_assign(
-		__entry->ind = ind;
-		__entry->req = req;
-		__entry->cnf = cnf;
-		__entry->busy = busy;
-		__entry->release = release;
-	),
-	TP_printk("IND/REQ/CNF:%3d/%3d/%3d, REQ in progress:%3d, WUP: %s",
-		__entry->ind,
-		__entry->req,
-		__entry->cnf,
-		__entry->busy,
-		__entry->release ? "release" : "keep"
-	)
-);
-#define _trace_bh_stats(ind, req, cnf, busy, release) trace_bh_stats(ind, req, cnf, busy, release)
 
 #endif
 
