@@ -13,9 +13,11 @@
 
 #include <linux/tracepoint.h>
 #include <linux/version.h>
+#include <net/mac80211.h>
 
-#include "hif_api_cmd.h"
 #include "bus.h"
+#include "hif_api_cmd.h"
+#include "hif_api_mib.h"
 
 #if (KERNEL_VERSION(4, 1, 0) > LINUX_VERSION_CODE)
 #define TRACE_DEFINE_ENUM(a)
