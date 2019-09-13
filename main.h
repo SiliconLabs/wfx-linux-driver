@@ -7,14 +7,14 @@
  * Copyright (c) 2006, Michael Wu <flamingice@sourmilk.net>
  * Copyright 2004-2006 Jean-Baptiste Note <jbnote@gmail.com>, et al.
  */
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef WFX_MAIN_H
+#define WFX_MAIN_H
 
 #include <linux/device.h>
 #include <linux/gpio/consumer.h>
 
-#include "hif_api_general.h"
 #include "bus.h"
+#include "hif_api_general.h"
 
 struct wfx_dev;
 
@@ -41,11 +41,9 @@ void wfx_free_common(struct wfx_dev *wdev);
 int wfx_probe(struct wfx_dev *wdev);
 void wfx_release(struct wfx_dev *wdev);
 
-bool wfx_api_older_than(struct wfx_dev *wdev, int major, int minor);
-
 struct gpio_desc *wfx_get_gpio(struct device *dev, int override,
 			       const char *label);
-
+bool wfx_api_older_than(struct wfx_dev *wdev, int major, int minor);
 int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len);
 
-#endif /* MAIN_H */
+#endif
