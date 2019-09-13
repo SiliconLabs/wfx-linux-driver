@@ -304,7 +304,7 @@ static const struct {
 	//{ HIF_IND_ID_RX,            hif_receive_indication },
 };
 
-void hif_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
+void wfx_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
 {
 	int i;
 	struct hif_msg *hif = (struct hif_msg *) skb->data;

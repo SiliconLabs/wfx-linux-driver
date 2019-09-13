@@ -115,7 +115,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 
 	skb_put(skb, hif->len);
 	// wfx_handle_rx takes care on SKB livetime
-	hif_handle_rx(wdev, skb);
+	wfx_handle_rx(wdev, skb);
 
 	return piggyback;
 

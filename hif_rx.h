@@ -13,6 +13,6 @@
 struct wfx_dev;
 struct sk_buff;
 
-void hif_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb);
+void wfx_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb);
 
 #endif
