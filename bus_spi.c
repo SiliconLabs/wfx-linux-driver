@@ -30,19 +30,19 @@ MODULE_PARM_DESC(gpio_reset, "gpio number for reset. -1 for none.");
 #define SET_WRITE 0x7FFF        /* usage: and operation */
 #define SET_READ 0x8000         /* usage: or operation */
 
+static const struct wfx_platform_data wfx_spi_pdata = {
+	.file_fw = "wfm_wf200",
+	.file_pds = "wf200.pds",
+	.use_rising_clk = true,
+	.support_ldpc = true,
+};
+
 struct wfx_spi_priv {
 	struct spi_device *func;
 	struct wfx_dev *core;
 	struct gpio_desc *gpio_reset;
 	struct work_struct request_rx;
 	bool need_swab;
-};
-
-static const struct wfx_platform_data wfx_spi_pdata = {
-	.file_fw = "wfm_wf200",
-	.file_pds = "wf200.pds",
-	.use_rising_clk = true,
-	.support_ldpc = true,
 };
 
 /*
