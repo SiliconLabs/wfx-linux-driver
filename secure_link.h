@@ -2,8 +2,8 @@
 /*
  * Copyright (c) 2019, Silicon Laboratories, Inc.
  */
-#ifndef SECURE_LINK_H
-#define SECURE_LINK_H
+#ifndef WFX_SECURE_LINK_H
+#define WFX_SECURE_LINK_H
 
 #include "hif_api_general.h"
 
@@ -68,4 +68,4 @@ static inline void wfx_sl_deinit(struct wfx_dev *wdev)
 
 #endif /* CONFIG_WFX_SECURE_LINK */
 
-#endif /* SECURE_LINK_H */
+#endif
