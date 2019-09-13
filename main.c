@@ -381,7 +381,7 @@ int wfx_probe(struct wfx_dev *wdev)
 
 	err = wfx_init_device(wdev);
 	if (err)
-		goto err2;
+		goto err1;
 
 	err = wait_for_completion_interruptible_timeout(&wdev->firmware_ready, 10 * HZ);
 	if (err <= 0) {
@@ -391,7 +391,7 @@ int wfx_probe(struct wfx_dev *wdev)
 		} else if (err == -ERESTARTSYS) {
 			dev_info(wdev->dev, "probe interrupted by user\n");
 		}
-		goto err2;
+		goto err1;
 	}
 
 	// FIXME: fill wiphy::fw_version and wiphy::hw_version
@@ -410,13 +410,13 @@ int wfx_probe(struct wfx_dev *wdev)
 		dev_err(wdev->dev, "Unsupported firmware API version (expect 1 while firmware returns %d)\n",
 			wdev->hw_caps.api_version_major);
 		err = -ENOTSUPP;
-		goto err2;
+		goto err1;
 	}
 
 	err = wfx_sl_init(wdev);
 	if (err && wdev->hw_caps.capabilities.link_mode == SEC_LINK_ENFORCED) {
 		dev_err(wdev->dev, "chip require secure_link, but can't negociate it\n");
-		goto err2;
+		goto err1;
 	}
 
 	// Current firmware does not support secure link with high throughput
@@ -432,7 +432,7 @@ int wfx_probe(struct wfx_dev *wdev)
 	dev_dbg(wdev->dev, "sending configuration file %s", wdev->pdata.file_pds);
 	err = wfx_send_pdata_pds(wdev);
 	if (err < 0)
-		goto err2;
+		goto err1;
 
 	wdev->pdata.gpio_wakeup = gpio_saved;
 	if (wdev->pdata.gpio_wakeup) {
@@ -466,18 +466,18 @@ int wfx_probe(struct wfx_dev *wdev)
 
 	err = ieee80211_register_hw(wdev->hw);
 	if (err)
-		goto err2;
+		goto err1;
 
 	err = wfx_debug_init(wdev);
 	if (err)
-		goto err3;
+		goto err2;
 
 	return 0;
 
-err3:
+err2:
 	ieee80211_unregister_hw(wdev->hw);
 	ieee80211_free_hw(wdev->hw);
-err2:
+err1:
 	wfx_bh_unregister(wdev);
 	return err;
 }
