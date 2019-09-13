@@ -331,7 +331,6 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	hw->wiphy->n_iface_combinations = ARRAY_SIZE(wfx_iface_combinations);
 	hw->wiphy->iface_combinations = wfx_iface_combinations;
 	hw->wiphy->bands[NL80211_BAND_2GHZ] = devm_kmalloc(dev, sizeof(wfx_band_2ghz), GFP_KERNEL);
-	// FIXME: report OTP restriction here
 	// FIXME: also copy wfx_rates and wfx_2ghz_chantable
 	memcpy(hw->wiphy->bands[NL80211_BAND_2GHZ], &wfx_band_2ghz, sizeof(wfx_band_2ghz));
 
@@ -347,11 +346,10 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	// LDPC support was not yet tested
 	wdev->pdata.support_ldpc = false;
 
-	init_completion(&wdev->firmware_ready);
-	wfx_init_hif_ctxt(&wdev->hif_ctxt);
 	mutex_init(&wdev->conf_mutex);
 	mutex_init(&wdev->rx_stats_lock);
-
+	init_completion(&wdev->firmware_ready);
+	wfx_init_hif_ctxt(&wdev->hif_ctxt);
 	wfx_tx_queues_init(wdev);
 
 	return wdev;
