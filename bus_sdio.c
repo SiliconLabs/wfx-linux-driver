@@ -11,8 +11,8 @@
 #include <linux/interrupt.h>
 #include <linux/of_irq.h>
 
-#include "wfx.h"
 #include "bus.h"
+#include "wfx.h"
 #include "hwio.h"
 #include "main.h"
 #include "bh.h"

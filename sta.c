@@ -12,6 +12,7 @@
 #include "fwio.h"
 #include "bh.h"
 #include "key.h"
+#include "scan.h"
 #include "debug.h"
 #include "hif_tx.h"
 #include "hif_tx_mib.h"

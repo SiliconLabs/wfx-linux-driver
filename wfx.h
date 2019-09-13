@@ -19,10 +19,11 @@
 #include "data_tx.h"
 #include "main.h"
 #include "queue.h"
-#include "scan.h"
 #include "secure_link.h"
 #include "sta.h"
+#include "scan.h"
 #include "hif_tx.h"
+#include "hif_api_general.h"
 
 #if (KERNEL_VERSION(4, 2, 0) > LINUX_VERSION_CODE)
 static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,

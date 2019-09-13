@@ -11,9 +11,10 @@
 #include "bh.h"
 #include "wfx.h"
 #include "hwio.h"
-#include "hif_rx.h"
 #include "traces.h"
 #include "secure_link.h"
+#include "hif_rx.h"
+#include "hif_api_cmd.h"
 
 static void device_wakeup(struct wfx_dev *wdev)
 {

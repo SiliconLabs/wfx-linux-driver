@@ -10,12 +10,13 @@
 #include <linux/etherdevice.h>
 
 #include "hif_rx.h"
-#include "hif_tx_mib.h"
 #include "wfx.h"
+#include "scan.h"
 #include "bh.h"
+#include "sta.h"
 #include "data_rx.h"
 #include "secure_link.h"
-#include "sta.h"
+#include "hif_api_cmd.h"
 
 static int hif_generic_confirm(struct wfx_dev *wdev, struct hif_msg *hif, void *buf)
 {

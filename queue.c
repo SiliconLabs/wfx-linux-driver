@@ -10,6 +10,7 @@
 
 #include "queue.h"
 #include "wfx.h"
+#include "sta.h"
 #include "data_tx.h"
 
 void wfx_tx_lock(struct wfx_dev *wdev)

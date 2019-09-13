@@ -9,11 +9,12 @@
 
 #include "data_tx.h"
 #include "wfx.h"
-#include "hif_tx_mib.h"
 #include "bh.h"
 #include "sta.h"
+#include "queue.h"
 #include "debug.h"
 #include "traces.h"
+#include "hif_tx_mib.h"
 
 #define WFX_INVALID_RATE_ID (0xFF)
 #define WFX_LINK_ID_GC_TIMEOUT ((unsigned long)(10 * HZ))

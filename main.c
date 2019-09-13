@@ -20,17 +20,20 @@
 #include <linux/etherdevice.h>
 #include <linux/firmware.h>
 
-#include "wfx_version.h"
-#include "hif_api_cmd.h"
+#include "main.h"
 #include "wfx.h"
 #include "fwio.h"
 #include "hwio.h"
+#include "bus.h"
 #include "bh.h"
 #include "sta.h"
 #include "key.h"
 #include "debug.h"
-#include "hif_tx_mib.h"
+#include "data_tx.h"
 #include "secure_link.h"
+#include "hif_tx_mib.h"
+#include "hif_api_cmd.h"
+#include "wfx_version.h"
 
 #define WFX_PDS_MAX_SIZE 1500
 

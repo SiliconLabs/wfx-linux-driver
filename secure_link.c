@@ -11,8 +11,8 @@
 #include <mbedtls/sha256.h>
 #include <mbedtls/sha512.h>
 
-#include "wfx.h"
 #include "secure_link.h"
+#include "wfx.h"
 
 static int mbedtls_random(void *data, unsigned char *output, size_t len)
 {

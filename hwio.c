@@ -6,6 +6,8 @@
  * Copyright (c) 2010, ST-Ericsson
  */
 #include <linux/kernel.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
 
 #include "hwio.h"
 #include "wfx.h"
