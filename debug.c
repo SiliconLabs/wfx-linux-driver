@@ -5,9 +5,9 @@
  * Copyright (c) 2017-2019, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
+#include <linux/version.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
-#include <linux/version.h>
 #include <linux/crc32.h>
 
 #include "debug.h"

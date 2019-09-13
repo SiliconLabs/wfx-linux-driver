@@ -7,14 +7,16 @@
  * Copyright (c) 2010, ST-Ericsson
  */
 #include <linux/module.h>
+#include <linux/delay.h>
+#include <linux/version.h>
 #include <linux/gpio.h>
 #include <linux/gpio/consumer.h>
 #include <linux/spi/spi.h>
 #include <linux/interrupt.h>
 #include <linux/of.h>
 
-#include "wfx.h"
 #include "bus.h"
+#include "wfx.h"
 #include "hwio.h"
 #include "main.h"
 #include "bh.h"
