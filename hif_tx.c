@@ -12,6 +12,7 @@
 #include "hif_tx.h"
 #include "wfx.h"
 #include "bh.h"
+#include "hwio.h"
 #include "debug.h"
 #include "sta.h"
 
@@ -134,6 +135,8 @@ int hif_shutdown(struct wfx_dev *wdev)
 	wdev->hif_cmd.buf_send = NULL;
 	if (wdev->pdata.gpio_wakeup)
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
+	else
+		control_reg_write(wdev, 0);
 	mutex_unlock(&wdev->hif_cmd.lock);
 	kfree(hif);
 	return ret;
