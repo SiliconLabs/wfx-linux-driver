@@ -1532,26 +1532,15 @@ int wfx_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 		mutex_unlock(&wdev->conf_mutex);
 		return -EOPNOTSUPP;
 	}
+	// FIXME: prefer use of container_of() to get vif
 	wvif->vif = vif;
 	wvif->wdev = wdev;
 
-	spin_lock_init(&wvif->event_queue_lock);
-	mutex_init(&wvif->bss_loss_lock);
-	/* STA Work*/
-	INIT_LIST_HEAD(&wvif->event_queue);
-	INIT_WORK(&wvif->event_handler_work, wfx_event_handler_work);
-	INIT_WORK(&wvif->unjoin_work, wfx_unjoin_work);
-	INIT_WORK(&wvif->wep_key_work, wfx_wep_key_work);
-	INIT_WORK(&wvif->bss_params_work, wfx_bss_params_work);
-	INIT_WORK(&wvif->set_beacon_wakeup_period_work, wfx_set_beacon_wakeup_period_work);
-	INIT_DELAYED_WORK(&wvif->bss_loss_work, wfx_bss_loss_work);
-
 	INIT_WORK(&wvif->link_id_work, wfx_link_id_work);
 	INIT_DELAYED_WORK(&wvif->link_id_gc_work, wfx_link_id_gc_work);
-	INIT_WORK(&wvif->update_filtering_work, wfx_update_filtering_work);
 
+	spin_lock_init(&wvif->ps_state_lock);
 	INIT_WORK(&wvif->set_tim_work, wfx_set_tim_work);
-	INIT_WORK(&wvif->set_cts_work, wfx_set_cts_work);
 
 	INIT_WORK(&wvif->mcast_start_work, wfx_mcast_start_work);
 	INIT_WORK(&wvif->mcast_stop_work, wfx_mcast_stop_work);
@@ -1561,16 +1550,29 @@ int wfx_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 	timer_setup(&wvif->mcast_timeout, wfx_mcast_timeout, 0);
 #endif
 
+	wvif->setbssparams_done = false;
+	mutex_init(&wvif->bss_loss_lock);
+	INIT_DELAYED_WORK(&wvif->bss_loss_work, wfx_bss_loss_work);
+
+	wvif->wep_default_key_id = -1;
+	INIT_WORK(&wvif->wep_key_work, wfx_wep_key_work);
+
 	sema_init(&wvif->scan.lock, 1);
 	INIT_WORK(&wvif->scan.work, wfx_scan_work);
 	INIT_DELAYED_WORK(&wvif->scan.timeout, wfx_scan_timeout);
 
-	spin_lock_init(&wvif->ps_state_lock);
+	spin_lock_init(&wvif->event_queue_lock);
+	INIT_LIST_HEAD(&wvif->event_queue);
+	INIT_WORK(&wvif->event_handler_work, wfx_event_handler_work);
+
 	init_completion(&wvif->set_pm_mode_complete);
 	complete(&wvif->set_pm_mode_complete);
+	INIT_WORK(&wvif->set_beacon_wakeup_period_work, wfx_set_beacon_wakeup_period_work);
+	INIT_WORK(&wvif->update_filtering_work, wfx_update_filtering_work);
+	INIT_WORK(&wvif->bss_params_work, wfx_bss_params_work);
+	INIT_WORK(&wvif->set_cts_work, wfx_set_cts_work);
+	INIT_WORK(&wvif->unjoin_work, wfx_unjoin_work);
 
-	wvif->setbssparams_done = false;
-	wvif->wep_default_key_id = -1;
 	mutex_unlock(&wdev->conf_mutex);
 
 	hif_set_macaddr(wvif, vif->addr);
