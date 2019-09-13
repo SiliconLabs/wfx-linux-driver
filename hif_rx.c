@@ -286,22 +286,22 @@ static const struct {
 	int (*handler)(struct wfx_dev *wdev, struct hif_msg *hif, void *buf);
 } hif_handlers[] = {
 	/* Confirmations */
-	{ HIF_CNF_ID_TX,              hif_tx_confirm },
-	{ HIF_CNF_ID_MULTI_TRANSMIT,  hif_multi_tx_confirm },
+	{ HIF_CNF_ID_TX,                   hif_tx_confirm },
+	{ HIF_CNF_ID_MULTI_TRANSMIT,       hif_multi_tx_confirm },
 	/* Indications */
-	{ HIF_IND_ID_EVENT,           hif_event_indication },
-	{ HIF_IND_ID_SET_PM_MODE_CMPL, hif_pm_mode_complete_indication },
-	{ HIF_IND_ID_JOIN_COMPLETE,   hif_join_complete_indication },
-	{ HIF_IND_ID_SCAN_CMPL,       hif_scan_complete_indication },
-	{ HIF_IND_ID_SUSPEND_RESUME_TX, hif_suspend_resume_indication },
-	{ HIF_IND_ID_ERROR,               hif_error_indication },
-	{ HIF_IND_ID_STARTUP,             hif_startup_indication },
-	{ HIF_IND_ID_WAKEUP,              hif_wakeup_indication },
-	{ HIF_IND_ID_GENERIC,             hif_generic_indication },
-	{ HIF_IND_ID_EXCEPTION,           hif_exception_indication },
+	{ HIF_IND_ID_STARTUP,              hif_startup_indication },
+	{ HIF_IND_ID_WAKEUP,               hif_wakeup_indication },
+	{ HIF_IND_ID_JOIN_COMPLETE,        hif_join_complete_indication },
+	{ HIF_IND_ID_SET_PM_MODE_CMPL,     hif_pm_mode_complete_indication },
+	{ HIF_IND_ID_SCAN_CMPL,            hif_scan_complete_indication },
+	{ HIF_IND_ID_SUSPEND_RESUME_TX,    hif_suspend_resume_indication },
 	{ HIF_IND_ID_SL_EXCHANGE_PUB_KEYS, hif_keys_indication },
+	{ HIF_IND_ID_EVENT,                hif_event_indication },
+	{ HIF_IND_ID_GENERIC,              hif_generic_indication },
+	{ HIF_IND_ID_ERROR,                hif_error_indication },
+	{ HIF_IND_ID_EXCEPTION,            hif_exception_indication },
 	// FIXME: allocate skb_p from hif_receive_indication and make it generic
-	//{ HIF_IND_ID_RX,            hif_receive_indication },
+	//{ HIF_IND_ID_RX,                 hif_receive_indication },
 };
 
 void wfx_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
