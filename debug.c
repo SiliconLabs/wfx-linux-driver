@@ -10,6 +10,16 @@
 #include <linux/version.h>
 #include <linux/crc32.h>
 
+#include "debug.h"
+#include "wfx.h"
+#include "sta.h"
+#include "main.h"
+#include "hif_tx.h"
+#include "hif_tx_mib.h"
+
+#define CREATE_TRACE_POINTS
+#include "traces.h"
+
 #if (KERNEL_VERSION(4, 17, 0) > LINUX_VERSION_CODE)
 #define DEFINE_SHOW_ATTRIBUTE(__name)					\
 static int __name ## _open(struct inode *inode, struct file *file)	\
@@ -25,15 +35,6 @@ static const struct file_operations __name ## _fops = {			\
 	.release	= single_release,				\
 }
 #endif
-
-#include "debug.h"
-#include "wfx.h"
-#include "hif_tx_mib.h"
-#include "hif_tx.h"
-#include "sta.h"
-
-#define CREATE_TRACE_POINTS
-#include "traces.h"
 
 static const struct trace_print_flags hif_msg_print_map[] = {
 	hif_msg_list,
