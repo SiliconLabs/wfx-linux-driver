@@ -32,19 +32,19 @@ CFLAGS_debug.o = -I$(src)
 
 
 wfx-y := \
-		hwio.o \
-		bh.o \
-		fwio.o \
-		data_rx.o \
-		data_tx.o \
-		main.o \
-		queue.o \
-		hif_tx.o \
-		hif_rx.o \
-		key.o \
-		sta.o \
-		scan.o \
-		debug.o
+	bh.o \
+	hwio.o \
+	fwio.o \
+	data_rx.o \
+	data_tx.o \
+	main.o \
+	queue.o \
+	hif_tx.o \
+	hif_rx.o \
+	key.o \
+	sta.o \
+	scan.o \
+	debug.o
 wfx-$(CONFIG_SPI) += bus_spi.o
 wfx-$(subst m,y,$(CONFIG_MMC)) += bus_sdio.o
 wfx-$(CONFIG_WFX_SECURE_LINK) += \
