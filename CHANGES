@@ -1,8 +1,52 @@
+Changes in 2.3
+--------------
+
+  * Include support for secure link. A firmware > 3.0 is necessary
+    (IPWHIFER-376)
+  * Driver does not follow short_frame_max_tx_count and long_frame_max_tx_count
+    anymore. These properties should be take into account by mac80211. This
+    change improve upstream TCP throughput.
+  * Clean up and improvement of Rate Control algorithm (aka minstrel
+    algorithm). Also add sanity checks in received Tx confirmations.
+    Improvements in noisy environments are expected (IPWHIFER-408,
+    IPWHIFER-341)
+  * Previous item should also fix SGI usage in corner cases (IPWHIFER-323)
+  * IBSS works now (IPWHIFER-88, IPWHIFER-480)
+  * Interface is now faster to start. Indeed 100ms delay at start is useless
+    since firmware 2.0
+  * Drop support for P2P since it is not yet functionnal (IPWHIFER-374)
+  * Drop support for mesh since it is not yet tested
+  * Drop support for legacy DT compatible "siliconlabs,wfx-wlan-spi"
+  * Drop legacy aliases "wfx-*-intern", "wfx-core*" and "wfx-wlan-*"
+  * Drop testmode (internal driver only)
+  * Drop development code that check acesses to control register
+  * Drop inaccurate "status" file from debugfs (IPWHIFER-260, IPWHIFER-345)
+  * Fix NULL pointer dereference when firmware version is not supported
+  * Fix errors when maximum number of accepted station is reached
+  * Fix support for short preamble in some circumstances (IPWHIFER-327)
+  * When rts_threshold is -1, RTS is now correctly disabled (it was always
+    enabled) (IPWHIFER-470)
+  * Fix output of fw_version in ethtool -i
+  * Fix potential deadlock during scan (IPWHIFER-384)
+  * Fix interface and rates used of self-generated frames (null-frames in case
+    of bss loss)
+  * Fix polarity of rx_filter.bssid. Expect to receive less useless data.
+  * Fix shutdown handling when gpio_reset is not used (IPWHIFER-467)
+  * Add "tx_status" tracepoint
+  * Make API compliant with kernel coding style (IPWHIFER-353, IPWHIFER-248,
+    IPWHIFER-253)
+  * Synchronize API headers with firmware
+  * Unify naming rules for driver internal API and clarify architecture:
+      - "hif" is now the prefered terminology for messages between host and chip
+      - "mcast" is now prefered over "multicast"
+      - multiple files were been renamed
+  * Multiple cosmetics fixes for upstream submission (IPWHIFER-371)
+
 Changes in 2.2.5
 ----------------
 
   * Add support for "Certified parts". These parts restrict usage of channels
-    12, 13 and 14 (IPWHIFER-460).
+    12, 13 and 14 (IPWHIFER-460, IPWHIFER-359).
   * Consider NO_IR flag when joining an AP
   * Fix potential freeze when CCA is enabled.
 
