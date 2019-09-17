@@ -68,8 +68,8 @@ static inline int hif_set_macaddr(struct wfx_vif *wvif, u8 *mac)
 
 	if (mac)
 		ether_addr_copy(msg.mac_addr, mac);
-	return hif_write_mib(wvif->wdev, wvif->id,
-			     HIF_MIB_ID_DOT11_MAC_ADDRESS, &msg, sizeof(msg));
+	return hif_write_mib(wvif->wdev, wvif->id, HIF_MIB_ID_DOT11_MAC_ADDRESS,
+			     &msg, sizeof(msg));
 }
 
 static inline int hif_set_rx_filter(struct wfx_vif *wvif, bool filter_bssid,
@@ -102,8 +102,8 @@ static inline int hif_beacon_filter_control(struct wfx_vif *wvif,
 		.enable = cpu_to_le32(enable),
 		.bcn_count = cpu_to_le32(beacon_count),
 	};
-	return hif_write_mib(wvif->wdev, wvif->id, HIF_MIB_ID_BEACON_FILTER_ENABLE,
-			     &arg, sizeof(arg));
+	return hif_write_mib(wvif->wdev, wvif->id,
+			     HIF_MIB_ID_BEACON_FILTER_ENABLE, &arg, sizeof(arg));
 }
 
 static inline int hif_set_operational_mode(struct wfx_dev *wdev,
@@ -114,16 +114,15 @@ static inline int hif_set_operational_mode(struct wfx_dev *wdev,
 		.wup_ind_activation = 1,
 	};
 
-	return hif_write_mib(wdev, -1,
-			     HIF_MIB_ID_GL_OPERATIONAL_POWER_MODE,
+	return hif_write_mib(wdev, -1, HIF_MIB_ID_GL_OPERATIONAL_POWER_MODE,
 			     &val, sizeof(val));
 }
 
 static inline int hif_set_template_frame(struct wfx_vif *wvif,
 					 struct hif_mib_template_frame *arg)
 {
-	return hif_write_mib(wvif->wdev, wvif->id,
-			     HIF_MIB_ID_TEMPLATE_FRAME, arg, sizeof(*arg));
+	return hif_write_mib(wvif->wdev, wvif->id, HIF_MIB_ID_TEMPLATE_FRAME,
+			     arg, sizeof(*arg));
 }
 
 static inline int hif_set_mfp(struct wfx_vif *wvif, bool capable, bool required)
@@ -149,8 +148,8 @@ static inline int hif_set_block_ack_policy(struct wfx_vif *wvif,
 		.block_ack_rx_tid_policy = rx_tid_policy,
 	};
 
-	return hif_write_mib(wvif->wdev, wvif->id,
-			     HIF_MIB_ID_BLOCK_ACK_POLICY, &val, sizeof(val));
+	return hif_write_mib(wvif->wdev, wvif->id, HIF_MIB_ID_BLOCK_ACK_POLICY,
+			     &val, sizeof(val));
 }
 
 static inline int hif_set_association_mode(struct wfx_vif *wvif,
@@ -212,7 +211,8 @@ static inline int hif_keep_alive_period(struct wfx_vif *wvif, int period)
 static inline int hif_set_arp_ipv4_filter(struct wfx_vif *wvif,
 					  struct hif_mib_arp_ip_addr_table *fp)
 {
-	return hif_write_mib(wvif->wdev, wvif->id, HIF_MIB_ID_ARP_IP_ADDRESSES_TABLE,
+	return hif_write_mib(wvif->wdev, wvif->id,
+			     HIF_MIB_ID_ARP_IP_ADDRESSES_TABLE,
 			     fp, sizeof(*fp));
 }
 
