@@ -134,7 +134,7 @@ struct wfx_vif {
 	struct work_struct	set_beacon_wakeup_period_work;
 
 	bool			filter_bssid;
-	bool			filter_probe_resp;
+	bool			fwd_probe_req;
 	bool			disable_beacon_filter;
 	struct work_struct	update_filtering_work;
 

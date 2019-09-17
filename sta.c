@@ -159,9 +159,9 @@ static int wfx_set_uapsd_param(struct wfx_vif *wvif,
 
 int wfx_fwd_probe_req(struct wfx_vif *wvif, bool enable)
 {
-	wvif->filter_probe_resp = enable;
+	wvif->fwd_probe_req = enable;
 	return hif_set_rx_filter(wvif, wvif->filter_bssid,
-				 wvif->filter_probe_resp);
+				 wvif->fwd_probe_req);
 }
 
 static int wfx_set_mcast_filter(struct wfx_vif *wvif,
@@ -220,7 +220,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 	int ret;
 	bool is_sta = wvif->vif && NL80211_IFTYPE_STATION == wvif->vif->type;
 	bool filter_bssid = wvif->filter_bssid;
-	bool filter_probe_resp = wvif->filter_probe_resp;
+	bool fwd_probe_req = wvif->fwd_probe_req;
 	struct hif_mib_bcn_filter_enable bf_ctrl;
 	struct hif_mib_bcn_filter_table *bf_tbl;
 	struct hif_ie_table_entry ie_tbl[] = {
@@ -262,7 +262,7 @@ void wfx_update_filtering(struct wfx_vif *wvif)
 		bf_tbl->num_of_info_elmts = 3;
 	}
 
-	ret = hif_set_rx_filter(wvif, filter_bssid, filter_probe_resp);
+	ret = hif_set_rx_filter(wvif, filter_bssid, fwd_probe_req);
 	if (!ret)
 		ret = hif_set_beacon_filter_table(wvif, bf_tbl);
 	if (!ret)
