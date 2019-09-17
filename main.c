@@ -402,6 +402,7 @@ int wfx_probe(struct wfx_dev *wdev)
 	if (wfx_api_older_than(wdev, 1, 0)) {
 		dev_err(wdev->dev, "Unsupported firmware API version (expect 1 while firmware returns %d)\n",
 			wdev->wsm_caps.ApiVersionMajor);
+		err = -ENOTSUPP;
 		goto err2;
 	}
 
