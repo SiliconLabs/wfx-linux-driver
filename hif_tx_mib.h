@@ -127,13 +127,15 @@ static inline int hif_set_template_frame(struct wfx_vif *wvif,
 
 static inline int hif_set_mfp(struct wfx_vif *wvif, bool capable, bool required)
 {
-	int val = 0;
+	struct hif_mib_protected_mgmt_policy val = { };
 
 	WARN_ON(required && !capable);
-	if (capable)
-		val = BIT(0) | BIT(2);
+	if (capable) {
+		val.pmf_enable = 1;
+		val.host_enc_auth_frames = 1;
+	}
 	if (!required)
-		val |= BIT(1);
+		val.unpmf_allowed = 1;
 	cpu_to_le32s(&val);
 	return hif_write_mib(wvif->wdev, wvif->id,
 			     HIF_MIB_ID_PROTECTED_MGMT_POLICY,
