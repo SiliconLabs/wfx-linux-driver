@@ -985,8 +985,8 @@ static void wfx_set_mfp(struct wfx_vif *wvif, struct cfg80211_bss *bss)
 		ptr += pairwise_cipher_suite_count_offset;
 		ptr += 1 + pairwise_cipher_suite_size * *ptr;
 		ptr += 1 + akm_suite_size * *ptr;
-		mfpc = *ptr & BIT(6);
-		mfpr = *ptr & BIT(7);
+		mfpr = *ptr & BIT(6);
+		mfpc = *ptr & BIT(7);
 	}
 	rcu_read_unlock();
 
