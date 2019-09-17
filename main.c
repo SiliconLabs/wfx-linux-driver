@@ -368,7 +368,7 @@ int wfx_probe(struct wfx_dev *wdev)
 	int i;
 	int err;
 	const void *macaddr;
-	struct gpio_desc *gpio_saved = wdev->pdata.gpio_wakeup;
+	struct gpio_desc *gpio_saved;
 
 	// During first part of boot, gpio_wakeup cannot yet been used. So
 	// prevent bh() to touch it.
