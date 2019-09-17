@@ -415,10 +415,6 @@ int wfx_probe(struct wfx_dev *wdev)
 		goto err1;
 	}
 
-	// Current firmware does not support secure link with high throughput
-	if (wfx_is_secure_command(wdev, HIF_REQ_ID_TX))
-		wdev->hw_caps.num_inp_ch_bufs = 2;
-
 	if (wdev->hw_caps.regul_sel_mode_info.region_sel_mode) {
 		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[11].flags |= IEEE80211_CHAN_NO_IR;
 		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[12].flags |= IEEE80211_CHAN_NO_IR;
