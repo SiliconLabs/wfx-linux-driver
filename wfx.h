@@ -74,7 +74,7 @@ struct wfx_dev {
 	int			chip_frozen;
 	struct mutex		conf_mutex;
 
-	struct wfx_hif_ctxt	hif_ctxt;
+	struct wfx_hif_cmd	hif_cmd;
 	struct wfx_queue	tx_queue[4];
 	struct wfx_queue_stats	tx_queue_stats;
 	int			tx_burst_idx;

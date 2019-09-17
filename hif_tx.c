@@ -15,12 +15,12 @@
 #include "debug.h"
 #include "sta.h"
 
-void wfx_init_hif_ctxt(struct wfx_hif_ctxt *wfx_hif_ctxt)
+void wfx_init_hif_cmd(struct wfx_hif_cmd *hif_cmd)
 {
-	init_completion(&wfx_hif_ctxt->ready);
-	init_completion(&wfx_hif_ctxt->done);
-	mutex_init(&wfx_hif_ctxt->lock);
-	mutex_init(&wfx_hif_ctxt->key_renew_lock);
+	init_completion(&hif_cmd->ready);
+	init_completion(&hif_cmd->done);
+	mutex_init(&hif_cmd->lock);
+	mutex_init(&hif_cmd->key_renew_lock);
 }
 
 static void wfx_fill_header(struct hif_msg *hif, int if_id, unsigned int cmd, size_t size)
@@ -54,25 +54,25 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request, void *reply, siz
 	int vif = request->interface;
 	int ret;
 
-	WARN(wdev->hif_ctxt.buf_recv && wdev->hif_ctxt.async, "API usage error");
+	WARN(wdev->hif_cmd.buf_recv && wdev->hif_cmd.async, "API usage error");
 
 	// Do not wait for any reply if chip is frozen
 	if (wdev->chip_frozen)
 		return -ETIMEDOUT;
 
 	if (cmd != HIF_REQ_ID_SL_EXCHANGE_PUB_KEYS)
-		mutex_lock(&wdev->hif_ctxt.key_renew_lock);
+		mutex_lock(&wdev->hif_cmd.key_renew_lock);
 
-	mutex_lock(&wdev->hif_ctxt.lock);
-	WARN(wdev->hif_ctxt.buf_send, "data locking error");
+	mutex_lock(&wdev->hif_cmd.lock);
+	WARN(wdev->hif_cmd.buf_send, "data locking error");
 
 	// Note: call to complete() below has an implicit memory barrier that
 	// hopefully protect buf_send
-	wdev->hif_ctxt.buf_send = request;
-	wdev->hif_ctxt.buf_recv = reply;
-	wdev->hif_ctxt.len_recv = reply_len;
-	wdev->hif_ctxt.async = async;
-	complete(&wdev->hif_ctxt.ready);
+	wdev->hif_cmd.buf_send = request;
+	wdev->hif_cmd.buf_recv = reply;
+	wdev->hif_cmd.len_recv = reply_len;
+	wdev->hif_cmd.async = async;
+	complete(&wdev->hif_cmd.ready);
 
 	wfx_bh_request_tx(wdev);
 
@@ -80,25 +80,25 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request, void *reply, siz
 	if (async)
 		return 0;
 
-	ret = wait_for_completion_timeout(&wdev->hif_ctxt.done, 1 * HZ);
+	ret = wait_for_completion_timeout(&wdev->hif_cmd.done, 1 * HZ);
 	if (!ret) {
 		dev_err(wdev->dev, "chip is abnormally long to answer");
-		reinit_completion(&wdev->hif_ctxt.ready);
-		ret = wait_for_completion_timeout(&wdev->hif_ctxt.done, 3 * HZ);
+		reinit_completion(&wdev->hif_cmd.ready);
+		ret = wait_for_completion_timeout(&wdev->hif_cmd.done, 3 * HZ);
 	}
 	if (!ret) {
 		dev_err(wdev->dev, "chip did not answer");
 		dev_info(wdev->dev, "list of stuck frames:\n");
 		wfx_pending_dump_old_frames(wdev, 3000);
 		wdev->chip_frozen = 1;
-		reinit_completion(&wdev->hif_ctxt.done);
+		reinit_completion(&wdev->hif_cmd.done);
 		ret = -ETIMEDOUT;
 	} else {
-		ret = wdev->hif_ctxt.ret;
+		ret = wdev->hif_cmd.ret;
 	}
 
-	wdev->hif_ctxt.buf_send = NULL;
-	mutex_unlock(&wdev->hif_ctxt.lock);
+	wdev->hif_cmd.buf_send = NULL;
+	mutex_unlock(&wdev->hif_cmd.lock);
 
 	if (ret && (cmd == HIF_REQ_ID_READ_MIB || cmd == HIF_REQ_ID_WRITE_MIB)) {
 		mib_name = get_mib_name(((u16 *) request)[2]);
@@ -114,12 +114,12 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request, void *reply, siz
 			 get_hif_name(cmd), mib_sep, mib_name, cmd, vif, ret);
 
 	if (cmd != HIF_REQ_ID_SL_EXCHANGE_PUB_KEYS)
-		mutex_unlock(&wdev->hif_ctxt.key_renew_lock);
+		mutex_unlock(&wdev->hif_cmd.key_renew_lock);
 	return ret;
 }
 
 // This function is special. After HIF_REQ_ID_SHUT_DOWN, chip won't reply to any
-// request anymore. We need to slightly hack struct wfx_hif_ctxt for that job. Be
+// request anymore. We need to slightly hack struct wfx_hif_cmd for that job. Be
 // carefull to only call this funcion during device unregister.
 int hif_shutdown(struct wfx_dev *wdev)
 {
@@ -132,10 +132,10 @@ int hif_shutdown(struct wfx_dev *wdev)
 	// After this command, chip won't reply. Be sure to give enough time to
 	// bh to send buffer:
 	msleep(100);
-	wdev->hif_ctxt.buf_send = NULL;
+	wdev->hif_cmd.buf_send = NULL;
 	if (wdev->pdata.gpio_wakeup)
 		gpiod_set_value(wdev->pdata.gpio_wakeup, 0);
-	mutex_unlock(&wdev->hif_ctxt.lock);
+	mutex_unlock(&wdev->hif_cmd.lock);
 	kfree(hif);
 	return ret;
 }

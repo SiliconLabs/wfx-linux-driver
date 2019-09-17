@@ -25,34 +25,34 @@ static int hif_generic_confirm(struct wfx_dev *wdev, struct hif_msg *hif, void *
 	int cmd = hif->id;
 	int len = hif->len - 4; // drop header
 
-	WARN(!mutex_is_locked(&wdev->hif_ctxt.lock), "data locking error");
+	WARN(!mutex_is_locked(&wdev->hif_cmd.lock), "data locking error");
 
-	if (!wdev->hif_ctxt.buf_send) {
+	if (!wdev->hif_cmd.buf_send) {
 		dev_warn(wdev->dev, "Unexpected confirmation: 0x%.2x\n", cmd);
 		return -EINVAL;
 	}
 
-	if (cmd != wdev->hif_ctxt.buf_send->id) {
+	if (cmd != wdev->hif_cmd.buf_send->id) {
 		dev_warn(wdev->dev, "Chip response mismatch request: 0x%.2x vs 0x%.2x\n",
-			 cmd, wdev->hif_ctxt.buf_send->id);
+			 cmd, wdev->hif_cmd.buf_send->id);
 		return -EINVAL;
 	}
 
-	if (wdev->hif_ctxt.buf_recv) {
-		if (wdev->hif_ctxt.len_recv >= len)
-			memcpy(wdev->hif_ctxt.buf_recv, buf, len);
+	if (wdev->hif_cmd.buf_recv) {
+		if (wdev->hif_cmd.len_recv >= len)
+			memcpy(wdev->hif_cmd.buf_recv, buf, len);
 		else
 			status = -ENOMEM;
 	}
-	wdev->hif_ctxt.ret = status;
+	wdev->hif_cmd.ret = status;
 
-	if (!wdev->hif_ctxt.async) {
-		complete(&wdev->hif_ctxt.done);
+	if (!wdev->hif_cmd.async) {
+		complete(&wdev->hif_cmd.done);
 	} else {
-		wdev->hif_ctxt.buf_send = NULL;
-		mutex_unlock(&wdev->hif_ctxt.lock);
+		wdev->hif_cmd.buf_send = NULL;
+		mutex_unlock(&wdev->hif_cmd.lock);
 		if (cmd != HIF_REQ_ID_SL_EXCHANGE_PUB_KEYS)
-			mutex_unlock(&wdev->hif_ctxt.key_renew_lock);
+			mutex_unlock(&wdev->hif_cmd.key_renew_lock);
 	}
 	return status;
 }
@@ -317,9 +317,9 @@ void wfx_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
 	}
 	// Note: mutex_is_lock cause an implicit memory barrier that protect
 	// buf_send
-	if (mutex_is_locked(&wdev->hif_ctxt.lock)
-	    && wdev->hif_ctxt.buf_send
-	    && wdev->hif_ctxt.buf_send->id == hif_id) {
+	if (mutex_is_locked(&wdev->hif_cmd.lock)
+	    && wdev->hif_cmd.buf_send
+	    && wdev->hif_cmd.buf_send->id == hif_id) {
 		hif_generic_confirm(wdev, hif, hif->body);
 		goto free;
 	}
