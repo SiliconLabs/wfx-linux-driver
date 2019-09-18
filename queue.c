@@ -604,4 +604,3 @@ struct hif_msg *wfx_tx_queues_get(struct wfx_dev *wdev)
 		return hif;
 	}
 }
-

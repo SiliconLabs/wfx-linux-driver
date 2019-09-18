@@ -296,4 +296,3 @@ void wfx_scan_timeout(struct work_struct *work)
 		wfx_scan_complete(wvif);
 	}
 }
-

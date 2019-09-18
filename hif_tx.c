@@ -468,4 +468,3 @@ int hif_sl_set_mac_key(struct wfx_dev *wdev, const uint8_t *slk_key, int destina
 		ret = 0;
 	return ret;
 }
-

@@ -270,4 +270,3 @@ void wfx_wep_key_work(struct work_struct *work)
 	wvif->wep_pending_skb = NULL;
 	wfx_tx_unlock(wvif->wdev);
 }
-

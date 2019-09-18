@@ -314,4 +314,3 @@ void wfx_bh_unregister(struct wfx_dev *wdev)
 {
 	flush_work(&wdev->hif.bh);
 }
-

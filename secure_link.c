@@ -239,4 +239,3 @@ void wfx_sl_deinit(struct wfx_dev *wdev)
 {
 	mbedtls_ccm_free(&wdev->sl.ccm_ctxt);
 }
-

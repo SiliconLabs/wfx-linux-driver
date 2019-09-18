@@ -99,8 +99,6 @@ struct hif_cnf_reset {
 	uint32_t   status;
 } __packed;
 
-
-
 struct hif_req_read_mib {
 	uint16_t   mib_id;
 	uint16_t   reserved;

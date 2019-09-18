@@ -424,7 +424,6 @@ void wfx_link_id_work(struct work_struct *work)
 
 /* Tx implementation */
 
-
 static bool ieee80211_is_action_back(struct ieee80211_hdr *hdr)
 {
 	struct ieee80211_mgmt *mgmt = (struct ieee80211_mgmt *) hdr;
@@ -798,5 +797,3 @@ void wfx_skb_dtor(struct wfx_dev *wdev, struct sk_buff *skb)
 	tx_policy_put(wvif, req->tx_flags.retry_policy_index);
 	ieee80211_tx_status_irqsafe(wdev->hw, skb);
 }
-
-

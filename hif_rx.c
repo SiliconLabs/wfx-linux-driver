@@ -334,4 +334,3 @@ void wfx_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
 free:
 	dev_kfree_skb(skb);
 }
-

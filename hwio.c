@@ -336,4 +336,3 @@ int igpr_reg_write(struct wfx_dev *wdev, int index, u32 val)
 {
 	return write32_locked(wdev, WFX_REG_SET_GEN_R_W, index << 24 | val);
 }
-

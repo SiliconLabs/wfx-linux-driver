@@ -740,7 +740,6 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	}
 	wfx_update_filtering(wvif);
 
-
 done_put:
 	mutex_unlock(&wvif->wdev->conf_mutex);
 	if (bss)
@@ -1415,7 +1414,6 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 	struct ieee80211_conf *conf = &hw->conf;
 	struct wfx_vif *wvif;
 
-
 	// FIXME: Interface id should not been hardcoded
 	wvif = wdev_to_wvif(wdev, 0);
 	if (!wvif) {
@@ -1682,4 +1680,3 @@ void wfx_stop(struct ieee80211_hw *hw)
 	wfx_tx_unlock(wdev);
 	WARN(atomic_read(&wdev->tx_lock), "tx_lock is locked");
 }
-
