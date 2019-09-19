@@ -1135,20 +1135,20 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 		if (!info->cqm_rssi_thold && !info->cqm_rssi_hyst) {
 			th.upperthresh = 1;
 			th.lowerthresh = 1;
+		} else {
+			/* FIXME It's not a correct way of setting threshold.
+			 * Upper and lower must be set equal here and adjusted
+			 * in callback. However current implementation is much
+			 * more reliable and stable.
+			 */
+			/* RSSI: signed Q8.0, RCPI: unsigned Q7.1
+			 * RSSI = RCPI / 2 - 110
+			 */
+			th.upper_threshold = info->cqm_rssi_thold + info->cqm_rssi_hyst;
+			th.upper_threshold = (th.upper_threshold + 110) * 2;
+			th.lower_threshold = info->cqm_rssi_thold;
+			th.lower_threshold = (th.lower_threshold + 110) * 2;
 		}
-		/* FIXME It's not a correct way of setting threshold.
-		 * Upper and lower must be set equal here and adjusted
-		 * in callback. However current implementation is much
-		 * more reliable and stable.
-		 */
-		/* RSSI: signed Q8.0, RCPI: unsigned Q7.1
-		 * RSSI = RCPI / 2 - 110
-		 */
-		th.rcpi_rssi = 1;
-		th.upper_threshold = info->cqm_rssi_thold + info->cqm_rssi_hyst;
-		th.upper_threshold = (th.upper_threshold + 110) * 2;
-		th.lower_threshold = info->cqm_rssi_thold;
-		th.lower_threshold = (th.lower_threshold + 110) * 2;
 		hif_set_rcpi_rssi_threshold(wvif, &th);
 	}
 
