@@ -15,6 +15,8 @@ struct wfx_dev;
 #include <mbedtls/ecdh.h>
 #include <mbedtls/ccm.h>
 
+struct wfx_platform_data;
+
 struct sl_context {
 	unsigned int         rx_seqnum;
 	unsigned int         tx_seqnum;
@@ -31,8 +33,11 @@ int wfx_sl_encode(struct wfx_dev *wdev, struct hif_msg *input, struct hif_sl_msg
 int wfx_sl_check_pubkey(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac);
 int wfx_sl_init(struct wfx_dev *wdev);
 void wfx_sl_deinit(struct wfx_dev *wdev);
+void wfx_sl_fill_pdata(struct device *dev, struct wfx_platform_data *pdata);
 
 #else /* CONFIG_WFX_SECURE_LINK */
+
+#include <linux/of.h>
 
 struct sl_context {
 };
@@ -55,6 +60,13 @@ static inline int wfx_sl_encode(struct wfx_dev *wdev, struct hif_msg *input, str
 static inline int wfx_sl_check_pubkey(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac)
 {
 	return -EIO;
+}
+
+static inline void wfx_sl_fill_pdata(struct device *dev,
+				     struct wfx_platform_data *pdata)
+{
+	if (of_find_property(dev->of_node, "slk_key", NULL))
+		dev_err(dev, "secure link is not supported by this driver, ignoring provided key\n");
 }
 
 static inline int wfx_sl_init(struct wfx_dev *wdev)

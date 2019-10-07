@@ -22,13 +22,15 @@ struct wfx_platform_data {
 	/* Keyset and ".sec" extention will appended to this string */
 	const char *file_fw;
 	const char *file_pds;
-	unsigned char slk_key[API_KEY_VALUE_SIZE];
 	struct gpio_desc *gpio_wakeup;
 	/*
 	 * if true HIF D_out is sampled on the rising edge of the clock
 	 * (intended to be used in 50Mhz SDIO)
 	 */
 	bool use_rising_clk;
+#ifdef CONFIG_WFX_SECURE_LINK
+	unsigned char slk_key[API_KEY_VALUE_SIZE];
+#endif
 };
 
 struct wfx_dev *wfx_init_common(struct device *dev,

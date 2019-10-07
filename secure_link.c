@@ -3,6 +3,7 @@
  * Copyright (c) 2019, Silicon Laboratories, Inc.
  */
 
+#include <linux/of.h>
 #include <linux/module.h>
 #include <linux/random.h>
 #include <crypto/sha.h>
@@ -14,6 +15,10 @@
 
 #include "secure_link.h"
 #include "wfx.h"
+
+static char *slk_key;
+module_param(slk_key, charp, 0600);
+MODULE_PARM_DESC(slk_key, "secret key for secure link (expect 64 hex digits).");
 
 static char *slk_unsecure_cmds = "";
 module_param(slk_unsecure_cmds, charp, 0644);
@@ -257,4 +262,26 @@ int wfx_sl_init(struct wfx_dev *wdev)
 void wfx_sl_deinit(struct wfx_dev *wdev)
 {
 	mbedtls_ccm_free(&wdev->sl.ccm_ctxt);
+}
+
+void wfx_sl_fill_pdata(struct device *dev, struct wfx_platform_data *pdata)
+{
+	const char *ascii_key = NULL;
+	int ret = 0;
+
+	if (slk_key)
+		ascii_key = slk_key;
+	if (!ascii_key)
+		ret = of_property_read_string(dev->of_node, "slk_key", &ascii_key);
+	if (ret == -EILSEQ || ret == -ENODATA)
+		dev_err(dev, "ignoring malformatted key from DT\n");
+	if (!ascii_key)
+		return;
+
+	ret = hex2bin(pdata->slk_key, ascii_key, sizeof(pdata->slk_key));
+	if (ret) {
+		dev_err(dev, "ignoring malformatted key: %s\n", ascii_key);
+		memset(pdata->slk_key, 0, sizeof(pdata->slk_key));
+		return;
+	}
 }
