@@ -3,6 +3,7 @@
  * Copyright (c) 2019, Silicon Laboratories, Inc.
  */
 
+#include <linux/module.h>
 #include <linux/random.h>
 #include <crypto/sha.h>
 #include <mbedtls/md.h>
@@ -13,6 +14,10 @@
 
 #include "secure_link.h"
 #include "wfx.h"
+
+unsigned int slk_renew_period = BIT(29);
+module_param(slk_renew_period, int, 0644);
+MODULE_PARM_DESC(slk_renew_period, "number of secure link messages before renewing the key (default: 2^29).");
 
 void mbedtls_platform_zeroize(void *buf, size_t len)
 {
@@ -48,7 +53,7 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m)
 		dev_warn(wdev->dev, "wrong encrypted message sequence: %d != %d\n",
 				m->hdr.seqnum, wdev->sl.rx_seqnum);
 	wdev->sl.rx_seqnum = m->hdr.seqnum + 1;
-	if (wdev->sl.rx_seqnum == BIT(30) / 2)
+	if (wdev->sl.rx_seqnum == slk_renew_period)
 		schedule_work(&wdev->sl.key_renew_work);
 
 	memcpy(output, &m->len, sizeof(m->len));
@@ -78,7 +83,7 @@ int wfx_sl_encode(struct wfx_dev *wdev, struct hif_msg *input, struct hif_sl_msg
 	// Other bytes of nonce are 0
 	nonce[2] = wdev->sl.tx_seqnum;
 	wdev->sl.tx_seqnum++;
-	if (wdev->sl.tx_seqnum == BIT(30) / 2)
+	if (wdev->sl.tx_seqnum == slk_renew_period)
 		schedule_work(&wdev->sl.key_renew_work);
 
 	ret = mbedtls_ccm_encrypt_and_tag(&wdev->sl.ccm_ctxt, payload_len,
