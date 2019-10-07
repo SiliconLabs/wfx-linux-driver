@@ -15,6 +15,10 @@
 #include "secure_link.h"
 #include "wfx.h"
 
+static char *slk_unsecure_cmds = "";
+module_param(slk_unsecure_cmds, charp, 0644);
+MODULE_PARM_DESC(slk_unsecure_cmds, "list of HIF commands IDs (ie. 4,132-256) that won't be encrypted (default: empty).");
+
 unsigned int slk_renew_period = BIT(29);
 module_param(slk_renew_period, int, 0644);
 MODULE_PARM_DESC(slk_renew_period, "number of secure link messages before renewing the key (default: 2^29).");
@@ -206,7 +210,12 @@ static void wfx_sl_init_cfg(struct wfx_dev *wdev)
 {
 	DECLARE_BITMAP(sl_commands, 256);
 
-	bitmap_fill(sl_commands, 256);
+	if (bitmap_parselist(slk_unsecure_cmds, sl_commands, 256)) {
+		dev_err(wdev->dev, "ignoring malformatted list of unencrypted commands: %s\n",
+			slk_unsecure_cmds);
+		bitmap_zero(sl_commands, 256);
+	}
+	bitmap_complement(sl_commands, sl_commands, 256);
 	clear_bit(HIF_REQ_ID_SET_SL_MAC_KEY, sl_commands);
 	clear_bit(HIF_REQ_ID_SL_EXCHANGE_PUB_KEYS, sl_commands);
 	clear_bit(HIF_IND_ID_SL_EXCHANGE_PUB_KEYS, sl_commands);
