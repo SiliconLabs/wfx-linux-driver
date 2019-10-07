@@ -14,6 +14,11 @@
 #include "secure_link.h"
 #include "wfx.h"
 
+void mbedtls_platform_zeroize(void *buf, size_t len)
+{
+	memset(buf, 0, len);
+}
+
 static int mbedtls_random(void *data, unsigned char *output, size_t len)
 {
 	get_random_bytes(output, len);
