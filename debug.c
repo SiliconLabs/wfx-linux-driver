@@ -230,9 +230,8 @@ static ssize_t wfx_burn_slk_key_write(struct file *file,
 	}
 	*ppos = *ppos + count;
 
-	ret = copy_from_user(ascii_buf, user_buf, min(count, sizeof(ascii_buf)));
-	if (ret)
-		return ret;
+	if (copy_from_user(ascii_buf, user_buf, min(count, sizeof(ascii_buf))))
+		return -EFAULT;
 	ret = hex2bin(bin_buf, ascii_buf, sizeof(bin_buf));
 	if (ret) {
 		dev_info(wdev->dev, "ignoring malformatted key: %s\n", ascii_buf);
@@ -321,9 +320,8 @@ static ssize_t wfx_send_hif_msg_read(struct file *file, char __user *user_buf,
 		return context->ret;
 	// Be carefull, write() is waiting for a full message while read()
 	// only return a payload
-	ret = copy_to_user(user_buf, context->reply, count);
-	if (ret)
-		return ret;
+	if (copy_to_user(user_buf, context->reply, count))
+		return -EFAULT;
 
 	return count;
 }
