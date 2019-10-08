@@ -125,7 +125,7 @@ Some properties are recognized either by SPI and SDIO versions:
   this property, driver will disable most of power saving features
 - `config-file`: Use an alternative file as PDS. Default is `wf200.pds`. Only
   necessary for development/debug purpose.
-- `slk_key`: String representing hexdecimal value of secure link key to
+- `slk_key`: String representing hexadecimal value of secure link key to
   use (only if driver is compiled with `CONFIG_WFX_SECURE_LINK`). Must contains
   64 hexadecimal digits.
 
