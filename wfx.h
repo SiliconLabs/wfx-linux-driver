@@ -26,6 +26,12 @@
 #include "hif_tx.h"
 #include "hif_api_general.h"
 
+#if (KERNEL_VERSION(4, 16, 0) > LINUX_VERSION_CODE)
+#define array_index_nospec(index, size) index
+#else
+#include <linux/nospec.h>
+#endif
+
 #if (KERNEL_VERSION(4, 2, 0) > LINUX_VERSION_CODE)
 static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
 				     enum ieee80211_hw_flags flg)
@@ -168,6 +174,7 @@ static inline struct wfx_vif *wdev_to_wvif(struct wfx_dev *wdev, int vif_id)
 		dev_dbg(wdev->dev, "requesting non-existent vif: %d\n", vif_id);
 		return NULL;
 	}
+	vif_id = array_index_nospec(vif_id, ARRAY_SIZE(wdev->vif));
 	if (!wdev->vif[vif_id]) {
 		dev_dbg(wdev->dev, "requesting non-allocated vif: %d\n", vif_id);
 		return NULL;
