@@ -1,3 +1,23 @@
+Changes in 2.3.2
+----------------
+
+  * Do not use tx_retry_policy 15 that is reserved for firmware internal usage
+  * Add parameter slk_unsecure_cmds to exclude some commands from encryption set
+    when secure link is used (mainly for debug purpose)
+  * Add parameter slk_renew_period to reduce key renew period (mainly for debug
+    purpose)
+  * Parameter slk_key is no more visible when module is compiled without secure
+    link
+  * Add a way to reset "frozen_chip" state in internal version
+  * Replace BUG_ON() with simple warnings
+  * Fix setting MAC address from DT (IPWHIFER-510)
+  * Fix Oops when CONFIG_OF_NET is not enabled
+  * Fix error code when using burn_slk_key and send_hif_msg return errors
+  * Fix memory initialisation in send_hif_msg
+  * Fix various compilation problems related to big-endian targets
+  * Fix potential vulnerability to spectre
+  * Various improvement in continuous integration recipe
+
 Changes in 2.3.1
 ----------------
 
