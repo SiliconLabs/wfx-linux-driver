@@ -353,6 +353,7 @@ static const struct file_operations wfx_send_hif_msg_fops = {
 	.read = wfx_send_hif_msg_read,
 };
 
+
 int wfx_debug_init(struct wfx_dev *wdev)
 {
 	struct dentry *d;
