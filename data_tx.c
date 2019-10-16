@@ -736,11 +736,16 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, struct hif_cnf_tx *arg)
 	if (!arg->status) {
 		if (wvif->bss_loss_state && arg->packet_id == wvif->bss_loss_confirm_id)
 			wfx_cqm_bssloss_sm(wvif, 0, 1, 0);
+#if (KERNEL_VERSION(3, 19, 0) <= LINUX_VERSION_CODE)
 		tx_info->status.tx_time = arg->media_delay - arg->tx_queue_delay;
 		if (tx_info->flags & IEEE80211_TX_CTL_NO_ACK)
 			tx_info->flags |= IEEE80211_TX_STAT_NOACK_TRANSMITTED;
 		else
 			tx_info->flags |= IEEE80211_TX_STAT_ACK;
+#else
+		if (!(tx_info->flags & IEEE80211_TX_CTL_NO_ACK))
+			tx_info->flags |= IEEE80211_TX_STAT_ACK;
+#endif
 	} else if (arg->status == HIF_REQUEUE) {
 		/* "REQUEUE" means "implicit suspend" */
 		struct hif_ind_suspend_resume_tx suspend = {
