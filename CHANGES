@@ -36,8 +36,8 @@ Changes in 2.3
   * Fix interface and rates used of self-generated frames (null-frames in case
     of bss loss)
   * Fix polarity of rx_filter.bssid. Expect to receive less useless data.
-  * Fix shutdown handling when gpio_reset is not used (IPWHIFER-467)
-  * Add "tx_status" tracepoint
+  * Fix shutdown handling when gpio_reset is not used (IPWHIFER-467,
+    IPWHIFER-501)
   * Make API compliant with kernel coding style (IPWHIFER-353, IPWHIFER-248,
     IPWHIFER-253)
   * Synchronize API headers with firmware
@@ -45,6 +45,8 @@ Changes in 2.3
       - "hif" is now the prefered terminology for messages between host and chip
       - "mcast" is now prefered over "multicast"
       - multiple files were been renamed
+  * Tracepoints wsm_* has been renamed in hif_*
+  * Add "tx_status" tracepoint
   * Multiple cosmetics fixes for upstream submission (IPWHIFER-371)
 
 Changes in 2.2.5
