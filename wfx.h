@@ -95,7 +95,6 @@ struct wfx_dev {
 	struct mutex		rx_stats_lock;
 
 	int			output_power;
-	atomic_t		scan_in_progress;
 };
 
 struct wfx_vif {
