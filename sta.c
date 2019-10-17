@@ -331,12 +331,10 @@ void wfx_configure_filter(struct ieee80211_hw *hw,
 	}
 }
 
-static int wfx_set_pm(struct wfx_vif *wvif,
-		      const struct hif_req_set_pm_mode *arg)
+static int wfx_update_pm(struct wfx_vif *wvif)
 {
-	struct hif_req_set_pm_mode pm = *arg;
+	struct hif_req_set_pm_mode pm = wvif->powersave_mode;
 	u16 uapsd_flags;
-	int ret;
 
 	if (wvif->state != WFX_STATE_STA || !wvif->bss_params.aid)
 		return 0;
@@ -395,7 +393,7 @@ int wfx_conf_tx(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			if (!ret && wvif->setbssparams_done &&
 			    wvif->state == WFX_STATE_STA &&
 			    old_uapsd_flags != new_uapsd_flags)
-				ret = wfx_set_pm(wvif, &wvif->powersave_mode);
+				ret = wfx_update_pm(wvif);
 		}
 	} else {
 		ret = -EINVAL;
@@ -1029,7 +1027,7 @@ static void wfx_join_finalize(struct wfx_vif *wvif,
 		hif_set_bss_params(wvif, &wvif->bss_params);
 		wvif->setbssparams_done = true;
 		wfx_set_beacon_wakeup_period_work(&wvif->set_beacon_wakeup_period_work);
-		wfx_set_pm(wvif, &wvif->powersave_mode);
+		wfx_update_pm(wvif);
 	}
 }
 
@@ -1485,7 +1483,7 @@ int wfx_config(struct ieee80211_hw *hw, u32 changed)
 				}
 			}
 			if (wvif->state == WFX_STATE_STA && wvif->bss_params.aid)
-				wfx_set_pm(wvif, &wvif->powersave_mode);
+				wfx_update_pm(wvif);
 		}
 		wvif = wdev_to_wvif(wdev, 0);
 	}
@@ -1631,7 +1629,7 @@ int wfx_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 		else
 			hif_set_block_ack_policy(wvif, 0x00, 0x00);
 		// Combo force powersave mode. We can re-enable it now
-		wfx_set_pm(wvif, &wvif->powersave_mode);
+		wfx_update_pm(wvif);
 	}
 	return 0;
 }
@@ -1706,7 +1704,7 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 		else
 			hif_set_block_ack_policy(wvif, 0x00, 0x00);
 		// Combo force powersave mode. We can re-enable it now
-		wfx_set_pm(wvif, &wvif->powersave_mode);
+		wfx_update_pm(wvif);
 	}
 }
 
