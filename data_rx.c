@@ -99,7 +99,8 @@ static int wfx_drop_encrypt_data(struct wfx_dev *wdev, struct hif_ind_rx *arg, s
 
 }
 
-void wfx_rx_cb(struct wfx_vif *wvif, struct hif_ind_rx *arg, struct sk_buff *skb)
+void wfx_rx_cb(struct wfx_vif *wvif, struct hif_ind_rx *arg,
+	       struct sk_buff *skb)
 {
 	int link_id = arg->rx_flags.peer_sta_id;
 	struct ieee80211_rx_status *hdr = IEEE80211_SKB_RXCB(skb);
@@ -119,7 +120,8 @@ void wfx_rx_cb(struct wfx_vif *wvif, struct hif_ind_rx *arg, struct sk_buff *skb
 	if (link_id && link_id <= WFX_MAX_STA_IN_AP_MODE) {
 		entry = &wvif->link_id_db[link_id - 1];
 		entry->timestamp = jiffies;
-		if (entry->status == WFX_LINK_SOFT && ieee80211_is_data(frame->frame_control))
+		if (entry->status == WFX_LINK_SOFT &&
+		    ieee80211_is_data(frame->frame_control))
 			early_data = true;
 	}
 
@@ -138,7 +140,8 @@ void wfx_rx_cb(struct wfx_vif *wvif, struct hif_ind_rx *arg, struct sk_buff *skb
 			goto drop;
 
 	hdr->band = NL80211_BAND_2GHZ;
-	hdr->freq = ieee80211_channel_to_frequency(arg->channel_number, hdr->band);
+	hdr->freq = ieee80211_channel_to_frequency(arg->channel_number,
+						   hdr->band);
 
 	if (arg->rxed_rate >= 14) {
 #if (KERNEL_VERSION(4, 12, 0) > LINUX_VERSION_CODE)
@@ -171,7 +174,8 @@ void wfx_rx_cb(struct wfx_vif *wvif, struct hif_ind_rx *arg, struct sk_buff *skb
 		goto drop;
 	if (ieee80211_is_beacon(frame->frame_control)
 	    && !arg->status && wvif->vif
-	    && ether_addr_equal(ieee80211_get_SA(frame), wvif->vif->bss_conf.bssid)) {
+	    && ether_addr_equal(ieee80211_get_SA(frame),
+				wvif->vif->bss_conf.bssid)) {
 		const u8 *tim_ie;
 		u8 *ies = mgmt->u.beacon.variable;
 		size_t ies_len = skb->len - (ies - skb->data);
@@ -188,7 +192,8 @@ void wfx_rx_cb(struct wfx_vif *wvif, struct hif_ind_rx *arg, struct sk_buff *skb
 
 		/* Disable beacon filter once we're associated... */
 		if (wvif->disable_beacon_filter &&
-		    (wvif->vif->bss_conf.assoc || wvif->vif->bss_conf.ibss_joined)) {
+		    (wvif->vif->bss_conf.assoc ||
+		     wvif->vif->bss_conf.ibss_joined)) {
 			wvif->disable_beacon_filter = false;
 			schedule_work(&wvif->update_filtering_work);
 		}
