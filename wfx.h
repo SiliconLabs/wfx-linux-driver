@@ -157,7 +157,6 @@ struct wfx_vif {
 	struct work_struct	set_cts_work;
 
 	int			join_complete_status;
-	bool			delayed_unjoin;
 	struct work_struct	unjoin_work;
 
 	struct ieee80211_scan_request *scan_req;
