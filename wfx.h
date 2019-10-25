@@ -162,6 +162,7 @@ struct wfx_vif {
 	struct work_struct	scan_work;
 	struct mutex		scan_lock;
 	struct completion	scan_complete;
+	bool			scan_abort;
 
 	struct completion	set_pm_mode_complete;
 
