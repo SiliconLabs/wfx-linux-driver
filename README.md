@@ -303,11 +303,11 @@ If user want run exemple above with `sudo`, he must take care that pattern
 For some tests, UAPSD is required. To get it, you need a kernel compiled with
 `CONFIG_MAC80211_DEBUGFS`. Next, you can enable UAPSD with:
 
-    echo 0xF > /sys/kernel/debug/ieee80211/phy*/netdev:wlan0/uapsd_queue
+    echo 0xF > /sys/kernel/debug/ieee80211/phy*/netdev:wlan0/uapsd_queues
 
 Obviously, you can disable UAPSD with:
 
-    echo 0 > /sys/kernel/debug/ieee80211/phy*/netdev:wlan0/uapsd_queue
+    echo 0 > /sys/kernel/debug/ieee80211/phy*/netdev:wlan0/uapsd_queues
 
 Debugging
 ---------
