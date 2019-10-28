@@ -69,7 +69,6 @@ static int wfx_scan_start(struct wfx_vif *wvif,
 static int update_probe_tmpl(struct wfx_vif *wvif,
 			     struct cfg80211_scan_request *req)
 {
-	struct hif_mib_template_frame *tmpl;
 	struct sk_buff *skb;
 
 #if (KERNEL_VERSION(3, 19, 0) > LINUX_VERSION_CODE)
@@ -83,11 +82,7 @@ static int update_probe_tmpl(struct wfx_vif *wvif,
 		return -ENOMEM;
 
 	skb_put_data(skb, req->ie, req->ie_len);
-	skb_push(skb, 4);
-	tmpl = (struct hif_mib_template_frame *)skb->data;
-	tmpl->frame_type = HIF_TMPLT_PRBREQ;
-	tmpl->frame_length = cpu_to_le16(skb->len - 4);
-	hif_set_template_frame(wvif, tmpl);
+	hif_set_template_frame(wvif, skb, HIF_TMPLT_PRBREQ, 0);
 	dev_kfree_skb(skb);
 	return 0;
 }
