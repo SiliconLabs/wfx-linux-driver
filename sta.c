@@ -890,7 +890,6 @@ static void wfx_ps_notify(struct wfx_vif *wvif, enum sta_notify_cmd notify_cmd,
 	case STA_NOTIFY_AWAKE:
 		if (prev) {
 			wvif->sta_asleep_mask &= ~bit;
-			wvif->pspoll_mask &= ~bit;
 			if (link_id && !wvif->sta_asleep_mask)
 				schedule_work(&wvif->mcast_stop_work);
 			wfx_bh_request_tx(wvif->wdev);
@@ -1225,7 +1224,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 		wvif->mcast_tx = false;
 		wvif->aid0_bit_set = false;
 		wvif->mcast_buffered = false;
-		wvif->pspoll_mask = 0;
 		/* reset.link_id = 0; */
 		hif_reset(wvif, false);
 		break;

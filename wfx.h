@@ -118,17 +118,16 @@ struct wfx_vif {
 	struct work_struct	mcast_start_work;
 	struct work_struct	mcast_stop_work;
 
+	u32			sta_asleep_mask;
+	spinlock_t		ps_state_lock;
+	struct work_struct	update_tim_work;
+
 	s8			wep_default_key_id;
 	struct sk_buff		*wep_pending_skb;
 	struct work_struct	wep_key_work;
 
 	struct tx_policy_cache	tx_policy_cache;
 	struct work_struct	tx_policy_upload_work;
-
-	u32			sta_asleep_mask;
-	u32			pspoll_mask;
-	spinlock_t		ps_state_lock;
-	struct work_struct	update_tim_work;
 
 	int			beacon_int;
 	bool			filter_bssid;
