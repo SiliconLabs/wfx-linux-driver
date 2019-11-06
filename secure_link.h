@@ -29,8 +29,10 @@ struct sl_context {
 
 int wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id);
 int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m);
-int wfx_sl_encode(struct wfx_dev *wdev, struct hif_msg *input, struct hif_sl_msg *output);
-int wfx_sl_check_pubkey(struct wfx_dev *wdev, uint8_t *ncp_pubkey, uint8_t *ncp_pubmac);
+int wfx_sl_encode(struct wfx_dev *wdev,
+		  const struct hif_msg *input, struct hif_sl_msg *output);
+int wfx_sl_check_pubkey(struct wfx_dev *wdev,
+			const uint8_t *ncp_pubkey, const uint8_t *ncp_pubmac);
 int wfx_sl_init(struct wfx_dev *wdev);
 void wfx_sl_deinit(struct wfx_dev *wdev);
 void wfx_sl_fill_pdata(struct device *dev, struct wfx_platform_data *pdata);
@@ -52,14 +54,16 @@ static inline int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m)
 	return -EIO;
 }
 
-static inline int wfx_sl_encode(struct wfx_dev *wdev, struct hif_msg *input,
+static inline int wfx_sl_encode(struct wfx_dev *wdev,
+				const struct hif_msg *input,
 				struct hif_sl_msg *output)
 {
 	return -EIO;
 }
 
-static inline int wfx_sl_check_pubkey(struct wfx_dev *wdev, u8 *ncp_pubkey,
-				      u8 *ncp_pubmac)
+static inline int wfx_sl_check_pubkey(struct wfx_dev *wdev,
+				      const u8 *ncp_pubkey,
+				      const u8 *ncp_pubmac)
 {
 	return -EIO;
 }

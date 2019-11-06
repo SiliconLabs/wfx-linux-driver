@@ -79,7 +79,8 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m)
 	return 0;
 }
 
-int wfx_sl_encode(struct wfx_dev *wdev, struct hif_msg *input, struct hif_sl_msg *output)
+int wfx_sl_encode(struct wfx_dev *wdev,
+		  const struct hif_msg *input, struct hif_sl_msg *output)
 {
 	int payload_len = round_up(input->len - sizeof(input->len), 16);
 	uint8_t *tag = output->payload + payload_len;
@@ -106,7 +107,8 @@ int wfx_sl_encode(struct wfx_dev *wdev, struct hif_msg *input, struct hif_sl_msg
 	return 0;
 }
 
-static int wfx_sl_get_pubkey_mac(struct wfx_dev *wdev, uint8_t *pubkey, uint8_t *mac)
+static int wfx_sl_get_pubkey_mac(struct wfx_dev *wdev,
+				 const uint8_t *pubkey, uint8_t *mac)
 {
 	return mbedtls_md_hmac(
 			mbedtls_md_info_from_type(MBEDTLS_MD_SHA512),
@@ -115,7 +117,8 @@ static int wfx_sl_get_pubkey_mac(struct wfx_dev *wdev, uint8_t *pubkey, uint8_t 
 			mac);
 }
 
-int wfx_sl_check_pubkey(struct wfx_dev *wdev, uint8_t *pubkey, uint8_t *mac)
+int wfx_sl_check_pubkey(struct wfx_dev *wdev,
+			const uint8_t *pubkey, const uint8_t *mac)
 {
 	int ret;
 	size_t olen;
@@ -132,7 +135,6 @@ int wfx_sl_check_pubkey(struct wfx_dev *wdev, uint8_t *pubkey, uint8_t *mac)
 
 	// FIXME: save Qp.Y or (reset it), concat it with ncp_public_key and
 	// use mbedtls_ecdh_read_public.
-	memreverse(pubkey, API_NCP_PUB_KEY_SIZE);
 	ret = mbedtls_mpi_read_binary(&wdev->sl.edch_ctxt.Qp.X, pubkey, API_NCP_PUB_KEY_SIZE);
 	if (ret)
 		goto end;
