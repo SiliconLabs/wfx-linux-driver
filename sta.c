@@ -874,16 +874,12 @@ static void wfx_ps_notify_sta(struct wfx_vif *wvif, enum sta_notify_cmd notify_c
 	switch (notify_cmd) {
 	case STA_NOTIFY_SLEEP:
 		if (!prev) {
-			if (wvif->mcast_buffered && !wvif->sta_asleep_mask)
-				schedule_work(&wvif->mcast_start_work);
 			wvif->sta_asleep_mask |= bit;
 		}
 		break;
 	case STA_NOTIFY_AWAKE:
 		if (prev) {
 			wvif->sta_asleep_mask &= ~bit;
-			if (!wvif->sta_asleep_mask)
-				schedule_work(&wvif->mcast_stop_work);
 			wfx_bh_request_tx(wvif->wdev);
 		}
 		break;
@@ -921,7 +917,7 @@ static int wfx_update_tim(struct wfx_vif *wvif)
 		tim_ptr[2] = 0;
 
 		/* Set/reset aid0 bit */
-		if (wvif->aid0_bit_set)
+		if (wfx_tx_queues_get_after_dtim(wvif))
 			tim_ptr[4] |= 1;
 		else
 			tim_ptr[4] &= ~1;
@@ -950,52 +946,12 @@ int wfx_set_tim(struct ieee80211_hw *hw, struct ieee80211_sta *sta, bool set)
 	return 0;
 }
 
-static void wfx_mcast_start_work(struct work_struct *work)
+void wfx_suspend_resume_mc(struct wfx_vif *wvif, enum sta_notify_cmd notify_cmd)
 {
-	struct wfx_vif *wvif =
-		container_of(work, struct wfx_vif, mcast_start_work);
-	struct ieee80211_bss_conf *conf = &wvif->vif->bss_conf;
-	long tmo = conf->dtim_period * TU_TO_JIFFIES(wvif->beacon_int + 20);
-
-	cancel_work_sync(&wvif->mcast_stop_work);
-	if (!wvif->aid0_bit_set) {
-		wfx_tx_lock_flush(wvif->wdev);
-		wvif->aid0_bit_set = true;
-		wfx_update_tim(wvif);
-		mod_timer(&wvif->mcast_timeout, jiffies + tmo);
-		wfx_tx_unlock(wvif->wdev);
-	}
-}
-
-static void wfx_mcast_stop_work(struct work_struct *work)
-{
-	struct wfx_vif *wvif = container_of(work, struct wfx_vif,
-					    mcast_stop_work);
-
-	if (wvif->aid0_bit_set) {
-		del_timer_sync(&wvif->mcast_timeout);
-		wfx_tx_lock_flush(wvif->wdev);
-		wvif->aid0_bit_set = false;
-		wfx_update_tim(wvif);
-		wfx_tx_unlock(wvif->wdev);
-	}
-}
-
-#if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
-static void wfx_mcast_timeout(unsigned long arg)
-{
-	struct wfx_vif *wvif = (struct wfx_vif *)arg;
-#else
-static void wfx_mcast_timeout(struct timer_list *t)
-{
-	struct wfx_vif *wvif = from_timer(wvif, t, mcast_timeout);
-#endif
-	dev_warn(wvif->wdev->dev, "multicast delivery timeout\n");
-	spin_lock_bh(&wvif->ps_state_lock);
-	wvif->mcast_tx = wvif->aid0_bit_set && wvif->mcast_buffered;
-	if (wvif->mcast_tx)
-		wfx_bh_request_tx(wvif->wdev);
-	spin_unlock_bh(&wvif->ps_state_lock);
+	WARN(!wfx_tx_queues_get_after_dtim(wvif), "incorrect sequence");
+	WARN(wvif->after_dtim_tx_allowed, "incorrect sequence");
+	wvif->after_dtim_tx_allowed = true;
+	wfx_bh_request_tx(wvif->wdev);
 }
 
 #if (KERNEL_VERSION(4, 4, 0) > LINUX_VERSION_CODE)
@@ -1025,25 +981,6 @@ int wfx_ampdu_action(struct ieee80211_hw *hw,
 	/* Note that we still need this function stubbed. */
 
 	return -ENOTSUPP;
-}
-
-void wfx_suspend_resume_mc(struct wfx_vif *wvif, enum sta_notify_cmd notify_cmd)
-{
-	bool cancel_tmo = false;
-
-	spin_lock_bh(&wvif->ps_state_lock);
-	if (notify_cmd == STA_NOTIFY_SLEEP)
-		wvif->mcast_tx = false;
-	else
-		wvif->mcast_tx = wvif->aid0_bit_set &&
-				 wvif->mcast_buffered;
-	if (wvif->mcast_tx) {
-		cancel_tmo = true;
-		wfx_bh_request_tx(wvif->wdev);
-	}
-	spin_unlock_bh(&wvif->ps_state_lock);
-	if (cancel_tmo)
-		del_timer_sync(&wvif->mcast_timeout);
 }
 
 int wfx_add_chanctx(struct ieee80211_hw *hw,
@@ -1134,14 +1071,6 @@ int wfx_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 	spin_lock_init(&wvif->ps_state_lock);
 	INIT_WORK(&wvif->update_tim_work, wfx_update_tim_work);
 
-	INIT_WORK(&wvif->mcast_start_work, wfx_mcast_start_work);
-	INIT_WORK(&wvif->mcast_stop_work, wfx_mcast_stop_work);
-#if (KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE)
-	setup_timer(&wvif->mcast_timeout, wfx_mcast_timeout, (unsigned long) wvif);
-#else
-	timer_setup(&wvif->mcast_timeout, wfx_mcast_timeout, 0);
-#endif
-
 	memset(&wvif->bss_params, 0, sizeof(wvif->bss_params));
 
 	mutex_init(&wvif->bss_loss_lock);
@@ -1203,9 +1132,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 		break;
 	case WFX_STATE_AP:
 		wvif->sta_asleep_mask = 0;
-		wvif->mcast_tx = false;
-		wvif->aid0_bit_set = false;
-		wvif->mcast_buffered = false;
 		/* reset.link_id = 0; */
 		hif_reset(wvif, false);
 		break;
@@ -1222,7 +1148,6 @@ void wfx_remove_interface(struct ieee80211_hw *hw,
 
 	wfx_cqm_bssloss_sm(wvif, 0, 0, 0);
 	cancel_work_sync(&wvif->unjoin_work);
-	del_timer_sync(&wvif->mcast_timeout);
 	wfx_free_event_queue(wvif);
 
 	wdev->vif[wvif->id] = NULL;

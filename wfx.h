@@ -110,13 +110,9 @@ struct wfx_vif {
 
 	u32			link_id_map;
 
-	bool			aid0_bit_set;
-	bool			mcast_tx;
-	bool			mcast_buffered;
+
+	bool			after_dtim_tx_allowed;
 	struct wfx_grp_addr_table mcast_filter;
-	struct timer_list	mcast_timeout;
-	struct work_struct	mcast_start_work;
-	struct work_struct	mcast_stop_work;
 
 	u32			sta_asleep_mask;
 	spinlock_t		ps_state_lock;
