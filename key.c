@@ -32,7 +32,7 @@ static void wfx_free_key(struct wfx_dev *wdev, int idx)
 	wdev->key_map &= ~BIT(idx);
 }
 
-static uint8_t fill_wep_pair(struct hif_wep_pairwise_key *msg,
+static u8 fill_wep_pair(struct hif_wep_pairwise_key *msg,
 			     struct ieee80211_key_conf *key, u8 *peer_addr)
 {
 	WARN(key->keylen > sizeof(msg->key_data), "inconsistent data");
@@ -42,7 +42,7 @@ static uint8_t fill_wep_pair(struct hif_wep_pairwise_key *msg,
 	return HIF_KEY_TYPE_WEP_PAIRWISE;
 }
 
-static uint8_t fill_wep_group(struct hif_wep_group_key *msg,
+static u8 fill_wep_group(struct hif_wep_group_key *msg,
 			      struct ieee80211_key_conf *key)
 {
 	WARN(key->keylen > sizeof(msg->key_data), "inconsistent data");
@@ -52,10 +52,10 @@ static uint8_t fill_wep_group(struct hif_wep_group_key *msg,
 	return HIF_KEY_TYPE_WEP_DEFAULT;
 }
 
-static uint8_t fill_tkip_pair(struct hif_tkip_pairwise_key *msg,
+static u8 fill_tkip_pair(struct hif_tkip_pairwise_key *msg,
 			      struct ieee80211_key_conf *key, u8 *peer_addr)
 {
-	uint8_t *keybuf = key->key;
+	u8 *keybuf = key->key;
 
 	WARN(key->keylen != sizeof(msg->tkip_key_data)
 			    + sizeof(msg->tx_mic_key)
@@ -69,18 +69,20 @@ static uint8_t fill_tkip_pair(struct hif_tkip_pairwise_key *msg,
 	return HIF_KEY_TYPE_TKIP_PAIRWISE;
 }
 
-static uint8_t fill_tkip_group(struct hif_tkip_group_key *msg,
+static u8 fill_tkip_group(struct hif_tkip_group_key *msg,
 			       struct ieee80211_key_conf *key,
 			       struct ieee80211_key_seq *seq,
 			       enum nl80211_iftype iftype)
 {
-	uint8_t *keybuf = key->key;
+	u8 *keybuf = key->key;
 
 	WARN(key->keylen != sizeof(msg->tkip_key_data)
 			    + 2 * sizeof(msg->rx_mic_key), "inconsistent data");
 	msg->key_id = key->keyidx;
-	memcpy(msg->rx_sequence_counter, &seq->tkip.iv16, sizeof(seq->tkip.iv16));
-	memcpy(msg->rx_sequence_counter + sizeof(uint16_t), &seq->tkip.iv32, sizeof(seq->tkip.iv32));
+	memcpy(msg->rx_sequence_counter,
+	       &seq->tkip.iv16, sizeof(seq->tkip.iv16));
+	memcpy(msg->rx_sequence_counter + sizeof(u16),
+	       &seq->tkip.iv32, sizeof(seq->tkip.iv32));
 	memcpy(msg->tkip_key_data, keybuf, sizeof(msg->tkip_key_data));
 	keybuf += sizeof(msg->tkip_key_data);
 	if (iftype == NL80211_IFTYPE_AP)
@@ -92,7 +94,7 @@ static uint8_t fill_tkip_group(struct hif_tkip_group_key *msg,
 	return HIF_KEY_TYPE_TKIP_GROUP;
 }
 
-static uint8_t fill_ccmp_pair(struct hif_aes_pairwise_key *msg,
+static u8 fill_ccmp_pair(struct hif_aes_pairwise_key *msg,
 			      struct ieee80211_key_conf *key, u8 *peer_addr)
 {
 	WARN(key->keylen != sizeof(msg->aes_key_data), "inconsistent data");
@@ -101,7 +103,7 @@ static uint8_t fill_ccmp_pair(struct hif_aes_pairwise_key *msg,
 	return HIF_KEY_TYPE_AES_PAIRWISE;
 }
 
-static uint8_t fill_ccmp_group(struct hif_aes_group_key *msg,
+static u8 fill_ccmp_group(struct hif_aes_group_key *msg,
 			       struct ieee80211_key_conf *key,
 			       struct ieee80211_key_seq *seq)
 {
@@ -113,10 +115,10 @@ static uint8_t fill_ccmp_group(struct hif_aes_group_key *msg,
 	return HIF_KEY_TYPE_AES_GROUP;
 }
 
-static uint8_t fill_sms4_pair(struct hif_wapi_pairwise_key *msg,
+static u8 fill_sms4_pair(struct hif_wapi_pairwise_key *msg,
 			      struct ieee80211_key_conf *key, u8 *peer_addr)
 {
-	uint8_t *keybuf = key->key;
+	u8 *keybuf = key->key;
 
 	WARN(key->keylen != sizeof(msg->wapi_key_data)
 			    + sizeof(msg->mic_key_data), "inconsistent data");
@@ -128,10 +130,10 @@ static uint8_t fill_sms4_pair(struct hif_wapi_pairwise_key *msg,
 	return HIF_KEY_TYPE_WAPI_PAIRWISE;
 }
 
-static uint8_t fill_sms4_group(struct hif_wapi_group_key *msg,
+static u8 fill_sms4_group(struct hif_wapi_group_key *msg,
 			       struct ieee80211_key_conf *key)
 {
-	uint8_t *keybuf = key->key;
+	u8 *keybuf = key->key;
 
 	WARN(key->keylen != sizeof(msg->wapi_key_data)
 			    + sizeof(msg->mic_key_data), "inconsistent data");
@@ -142,7 +144,7 @@ static uint8_t fill_sms4_group(struct hif_wapi_group_key *msg,
 	return HIF_KEY_TYPE_WAPI_GROUP;
 }
 
-static uint8_t fill_aes_cmac_group(struct hif_igtk_group_key *msg,
+static u8 fill_aes_cmac_group(struct hif_igtk_group_key *msg,
 				   struct ieee80211_key_conf *key,
 				   struct ieee80211_key_seq *seq)
 {
