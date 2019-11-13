@@ -13,7 +13,8 @@
 #include "sta.h"
 #include "hif_tx_mib.h"
 
-static void __ieee80211_scan_completed_compat(struct ieee80211_hw *hw, bool aborted)
+static void __ieee80211_scan_completed_compat(struct ieee80211_hw *hw,
+					      bool aborted)
 {
 #if (KERNEL_VERSION(4, 8, 0) > LINUX_VERSION_CODE)
 	ieee80211_scan_completed(hw, aborted);
@@ -168,7 +169,8 @@ void wfx_scan_work(struct work_struct *work)
 
 	if (!wvif->scan.req || wvif->scan.curr == wvif->scan.end) {
 		if (wvif->scan.output_power != wvif->wdev->output_power)
-			hif_set_output_power(wvif, wvif->wdev->output_power * 10);
+			hif_set_output_power(wvif,
+					     wvif->wdev->output_power * 10);
 
 		if (wvif->scan.status < 0)
 			dev_warn(wvif->wdev->dev, "scan failed\n");
@@ -181,7 +183,8 @@ void wfx_scan_work(struct work_struct *work)
 		wfx_scan_restart_delayed(wvif);
 		wfx_tx_unlock(wvif->wdev);
 		mutex_unlock(&wvif->wdev->conf_mutex);
-		__ieee80211_scan_completed_compat(wvif->wdev->hw, wvif->scan.status ? 1 : 0);
+		__ieee80211_scan_completed_compat(wvif->wdev->hw,
+						  wvif->scan.status ? 1 : 0);
 		up(&wvif->scan.lock);
 		if (wvif->state == WFX_STATE_STA &&
 		    !(wvif->powersave_mode.pm_mode.enter_psm))
@@ -220,7 +223,8 @@ void wfx_scan_work(struct work_struct *work)
 		scan.scan_req.scan_flags.fbg = 1;
 	}
 
-	scan.ch = kcalloc(scan.scan_req.num_of_channels, sizeof(u8), GFP_KERNEL);
+	scan.ch = kcalloc(scan.scan_req.num_of_channels,
+			  sizeof(u8), GFP_KERNEL);
 
 	if (!scan.ch) {
 		wvif->scan.status = -ENOMEM;
@@ -282,7 +286,8 @@ void wfx_scan_complete_cb(struct wfx_vif *wvif, struct hif_ind_scan_cmpl *arg)
 
 void wfx_scan_timeout(struct work_struct *work)
 {
-	struct wfx_vif *wvif = container_of(work, struct wfx_vif, scan.timeout.work);
+	struct wfx_vif *wvif = container_of(work, struct wfx_vif,
+					    scan.timeout.work);
 
 	if (atomic_xchg(&wvif->scan.in_progress, 0)) {
 		if (wvif->scan.status > 0) {
