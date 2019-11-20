@@ -221,11 +221,14 @@ static void wfx_sl_init_cfg(struct wfx_dev *wdev)
 		bitmap_zero(sl_commands, 256);
 	}
 	bitmap_complement(sl_commands, sl_commands, 256);
-	clear_bit(HIF_REQ_ID_SET_SL_MAC_KEY, sl_commands);
-	clear_bit(HIF_REQ_ID_SL_EXCHANGE_PUB_KEYS, sl_commands);
+	clear_bit(HIF_CNF_ID_SET_SL_MAC_KEY, sl_commands);
+	clear_bit(HIF_CNF_ID_SL_EXCHANGE_PUB_KEYS, sl_commands);
 	clear_bit(HIF_IND_ID_SL_EXCHANGE_PUB_KEYS, sl_commands);
 	clear_bit(HIF_IND_ID_EXCEPTION, sl_commands);
 	clear_bit(HIF_IND_ID_ERROR, sl_commands);
+	clear_bit(HIF_IND_ID_RX, sl_commands);
+	clear_bit(HIF_CNF_ID_TX, sl_commands);
+	clear_bit(HIF_CNF_ID_MULTI_TRANSMIT, sl_commands);
 	hif_sl_config(wdev, sl_commands);
 	bitmap_copy(wdev->sl.commands, sl_commands, 256);
 }
