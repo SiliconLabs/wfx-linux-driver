@@ -160,6 +160,8 @@ struct wfx_vif {
 	bool			delayed_unjoin;
 	struct work_struct	unjoin_work;
 
+	struct ieee80211_scan_request *scan_req;
+	struct work_struct	scan_work;
 	struct mutex		scan_lock;
 	struct completion	scan_complete;
 
