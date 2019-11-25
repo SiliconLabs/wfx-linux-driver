@@ -31,7 +31,7 @@ static __always_inline void assign_bit(long nr, volatile unsigned long *addr,
 }
 #endif
 
-static u32 wfx_rate_mask_to_hw(struct wfx_dev *wdev, u32 rates)
+u32 wfx_rate_mask_to_hw(struct wfx_dev *wdev, u32 rates)
 {
 	int i;
 	u32 ret = 0;
