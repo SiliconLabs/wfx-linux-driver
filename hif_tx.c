@@ -110,12 +110,10 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request,
 		mib_sep = "/";
 	}
 	if (ret < 0)
-		dev_err(wdev->dev,
-			"WSM request %s%s%s (%#.2x) on vif %d returned error %d\n",
+		dev_err(wdev->dev, "WSM request %s%s%s (%#.2x) on vif %d returned error %d\n",
 			get_hif_name(cmd), mib_sep, mib_name, cmd, vif, ret);
 	if (ret > 0)
-		dev_warn(wdev->dev,
-			 "WSM request %s%s%s (%#.2x) on vif %d returned status %d\n",
+		dev_warn(wdev->dev, "WSM request %s%s%s (%#.2x) on vif %d returned status %d\n",
 			 get_hif_name(cmd), mib_sep, mib_name, cmd, vif, ret);
 
 	if (cmd != HIF_REQ_ID_SL_EXCHANGE_PUB_KEYS)
@@ -190,13 +188,12 @@ int hif_read_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id,
 	ret = wfx_cmd_send(wdev, hif, reply, buf_len, false);
 
 	if (!ret && mib_id != reply->mib_id) {
-		dev_warn(wdev->dev,
-			 "%s: confirmation mismatch request\n", __func__);
+		dev_warn(wdev->dev, "%s: confirmation mismatch request\n",
+			 __func__);
 		ret = -EIO;
 	}
 	if (ret == -ENOMEM)
-		dev_err(wdev->dev,
-			"buffer is too small to receive %s (%zu < %d)\n",
+		dev_err(wdev->dev, "buffer is too small to receive %s (%zu < %d)\n",
 			get_mib_name(mib_id), val_len, reply->length);
 	if (!ret)
 		memcpy(val, &reply->mib_data, reply->length);

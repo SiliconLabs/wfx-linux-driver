@@ -195,12 +195,12 @@ struct gpio_desc *wfx_get_gpio(struct device *dev,
 		if (!ret || PTR_ERR(ret) == -ENOENT)
 			dev_warn(dev, "gpio %s is not defined\n", label);
 		else
-			dev_warn(dev,
-				 "error while requesting gpio %s\n", label);
+			dev_warn(dev, "error while requesting gpio %s\n",
+				 label);
 		ret = NULL;
 	} else {
-		dev_dbg(dev,
-			"using gpio %d for %s\n", desc_to_gpio(ret), label);
+		dev_dbg(dev, "using gpio %d for %s\n",
+			desc_to_gpio(ret), label);
 	}
 	return ret;
 }
@@ -233,15 +233,18 @@ int wfx_send_pds(struct wfx_dev *wdev, unsigned char *buf, size_t len)
 			ret = hif_configuration(wdev, buf + start,
 						i - start + 1);
 			if (ret == HIF_STATUS_FAILURE) {
-				dev_err(wdev->dev, "PDS bytes %d to %d: invalid data (unsupported options?)\n", start, i);
+				dev_err(wdev->dev, "PDS bytes %d to %d: invalid data (unsupported options?)\n",
+					start, i);
 				return -EINVAL;
 			}
 			if (ret == -ETIMEDOUT) {
-				dev_err(wdev->dev, "PDS bytes %d to %d: chip didn't reply (corrupted file?)\n", start, i);
+				dev_err(wdev->dev, "PDS bytes %d to %d: chip didn't reply (corrupted file?)\n",
+					start, i);
 				return ret;
 			}
 			if (ret) {
-				dev_err(wdev->dev, "PDS bytes %d to %d: chip returned an unknown error\n", start, i);
+				dev_err(wdev->dev, "PDS bytes %d to %d: chip returned an unknown error\n",
+					start, i);
 				return -EIO;
 			}
 			buf[i] = ',';
@@ -405,8 +408,7 @@ int wfx_probe(struct wfx_dev *wdev)
 		 wdev->hw_caps.firmware_build);
 
 	if (wfx_api_older_than(wdev, 1, 0)) {
-		dev_err(wdev->dev,
-			"unsupported firmware API version (expect 1 while firmware returns %d)\n",
+		dev_err(wdev->dev, "unsupported firmware API version (expect 1 while firmware returns %d)\n",
 			wdev->hw_caps.api_version_major);
 		err = -ENOTSUPP;
 		goto err0;
@@ -414,8 +416,7 @@ int wfx_probe(struct wfx_dev *wdev)
 
 	err = wfx_sl_init(wdev);
 	if (err && wdev->hw_caps.capabilities.link_mode == SEC_LINK_ENFORCED) {
-		dev_err(wdev->dev,
-			"chip require secure_link, but can't negociate it\n");
+		dev_err(wdev->dev, "chip require secure_link, but can't negociate it\n");
 		goto err0;
 	}
 
@@ -442,8 +443,7 @@ int wfx_probe(struct wfx_dev *wdev)
 
 	wdev->pdata.gpio_wakeup = gpio_saved;
 	if (wdev->pdata.gpio_wakeup) {
-		dev_dbg(wdev->dev,
-			"enable 'quiescent' power mode with gpio %d and PDS file %s\n",
+		dev_dbg(wdev->dev, "enable 'quiescent' power mode with gpio %d and PDS file %s\n",
 			desc_to_gpio(wdev->pdata.gpio_wakeup),
 			wdev->pdata.file_pds);
 		gpiod_set_value_cansleep(wdev->pdata.gpio_wakeup, 1);

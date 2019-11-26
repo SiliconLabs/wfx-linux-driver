@@ -174,7 +174,8 @@ static int wfx_sdio_probe(struct sdio_func *func,
 	int ret;
 
 	if (func->num != 1) {
-		dev_err(&func->dev, "SDIO function number is %d while it should always be 1 (unsupported chip?)\n", func->num);
+		dev_err(&func->dev, "SDIO function number is %d while it should always be 1 (unsupported chip?)\n",
+			func->num);
 		return -ENODEV;
 	}
 
@@ -189,8 +190,7 @@ static int wfx_sdio_probe(struct sdio_func *func,
 		}
 		bus->of_irq = irq_of_parse_and_map(np, 0);
 	} else {
-		dev_warn(&func->dev,
-			 "device is not declared in DT, features will be limited\n");
+		dev_warn(&func->dev, "device is not declared in DT, features will be limited\n");
 		// FIXME: ignore VID/PID and only rely on device tree
 		// return -ENODEV;
 	}

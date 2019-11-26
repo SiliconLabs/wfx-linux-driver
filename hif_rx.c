@@ -34,8 +34,7 @@ static int hif_generic_confirm(struct wfx_dev *wdev,
 	}
 
 	if (cmd != wdev->hif_cmd.buf_send->id) {
-		dev_warn(wdev->dev,
-			 "chip response mismatch request: 0x%.2x vs 0x%.2x\n",
+		dev_warn(wdev->dev, "chip response mismatch request: 0x%.2x vs 0x%.2x\n",
 			 cmd, wdev->hif_cmd.buf_send->id);
 		return -EINVAL;
 	}
@@ -259,8 +258,7 @@ static int hif_error_indication(struct wfx_dev *wdev,
 
 	switch (body->type) {
 	case HIF_ERROR_FIRMWARE_ROLLBACK:
-		dev_err(wdev->dev,
-			"asynchronous error: firmware rollback error %d\n",
+		dev_err(wdev->dev, "asynchronous error: firmware rollback error %d\n",
 			*pRollback);
 		break;
 	case HIF_ERROR_FIRMWARE_DEBUG_ENABLED:
@@ -282,8 +280,7 @@ static int hif_error_indication(struct wfx_dev *wdev,
 			*pStatus);
 		break;
 	case HIF_ERROR_PDS_VERSION:
-		dev_err(wdev->dev,
-			"asynchronous error: wrong PDS payload or version: %#.8x\n",
+		dev_err(wdev->dev, "asynchronous error: wrong PDS payload or version: %#.8x\n",
 			*pStatus);
 		break;
 	default:
@@ -318,8 +315,7 @@ static int hif_generic_indication(struct wfx_dev *wdev,
 		mutex_unlock(&wdev->rx_stats_lock);
 		return 0;
 	default:
-		dev_err(wdev->dev,
-			"generic_indication: unknown indication type: %#.8x\n",
+		dev_err(wdev->dev, "generic_indication: unknown indication type: %#.8x\n",
 			body->indication_type);
 		return -EIO;
 	}

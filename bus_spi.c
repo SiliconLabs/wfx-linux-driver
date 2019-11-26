@@ -85,7 +85,8 @@ static int wfx_spi_read_ctrl_reg(struct wfx_spi_priv *bus, u16 *dst)
 	if (tmp[0] != tmp[1])
 		ret = -ETIMEDOUT;
 	else if (i > 1)
-		dev_info(bus->core->dev, "success read after %d failures\n", i - 1);
+		dev_info(bus->core->dev, "success read after %d failures\n",
+			 i - 1);
 
 	*dst = rx_buf[1];
 	return ret;

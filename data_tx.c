@@ -500,8 +500,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, const struct hif_cnf_tx *arg)
 
 	skb = wfx_pending_get(wvif->wdev, arg->packet_id);
 	if (!skb) {
-		dev_warn(wvif->wdev->dev,
-			 "received unknown packet_id (%#.8x) from chip\n",
+		dev_warn(wvif->wdev->dev, "received unknown packet_id (%#.8x) from chip\n",
 			 arg->packet_id);
 		return;
 	}
@@ -525,8 +524,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, const struct hif_cnf_tx *arg)
 				rate->count, tx_count);
 		if (tx_count <= rate->count && tx_count &&
 		    arg->txed_rate != wfx_get_hw_rate(wvif->wdev, rate))
-			dev_dbg(wvif->wdev->dev,
-				"inconsistent tx_info rates: %d != %d\n",
+			dev_dbg(wvif->wdev->dev, "inconsistent tx_info rates: %d != %d\n",
 				arg->txed_rate,
 				wfx_get_hw_rate(wvif->wdev, rate));
 		if (tx_count > rate->count) {
@@ -540,8 +538,8 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, const struct hif_cnf_tx *arg)
 		}
 	}
 	if (tx_count)
-		dev_dbg(wvif->wdev->dev,
-			"%d more retries than expected\n", tx_count);
+		dev_dbg(wvif->wdev->dev, "%d more retries than expected\n",
+			tx_count);
 	skb_trim(skb, skb->len - wfx_tx_get_icv_len(tx_priv->hw_key));
 
 	// From now, you can touch to tx_info->status, but do not touch to

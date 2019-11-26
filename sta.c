@@ -246,8 +246,7 @@ static int wfx_update_pm(struct wfx_vif *wvif)
 
 	if (!wait_for_completion_timeout(&wvif->set_pm_mode_complete,
 					 TU_TO_JIFFIES(512)))
-		dev_warn(wvif->wdev->dev,
-			 "timeout while waiting of set_pm_mode_complete\n");
+		dev_warn(wvif->wdev->dev, "timeout while waiting of set_pm_mode_complete\n");
 	return hif_set_pm(wvif, ps, ps_timeout);
 }
 

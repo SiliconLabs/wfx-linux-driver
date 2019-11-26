@@ -244,12 +244,14 @@ static ssize_t wfx_burn_slk_key_write(struct file *file,
 		return -EFAULT;
 	ret = hex2bin(bin_buf, ascii_buf, sizeof(bin_buf));
 	if (ret) {
-		dev_info(wdev->dev, "ignoring malformatted key: %s\n", ascii_buf);
+		dev_info(wdev->dev, "ignoring malformatted key: %s\n",
+			 ascii_buf);
 		return -EINVAL;
 	}
 	crc32 = crc32(0xffffffff, bin_buf, API_KEY_VALUE_SIZE) ^ 0xffffffff;
 	if (crc32 != *user_crc32) {
-		dev_err(wdev->dev, "incorrect crc32: %08x != %08x\n", crc32, *user_crc32);
+		dev_err(wdev->dev, "incorrect crc32: %08x != %08x\n",
+			crc32, *user_crc32);
 		return -EINVAL;
 	}
 	ret = hif_sl_set_mac_key(wdev, bin_buf, SL_MAC_KEY_DEST_OTP);
