@@ -107,8 +107,7 @@ static int wfx_tx_policy_release(struct tx_policy_cache *cache,
 }
 
 static int wfx_tx_policy_get(struct wfx_vif *wvif,
-			     struct ieee80211_tx_rate *rates,
-			     bool *renew)
+			     struct ieee80211_tx_rate *rates, bool *renew)
 {
 	int idx;
 	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
@@ -304,7 +303,7 @@ static void wfx_tx_fixup_rates(struct ieee80211_tx_rate *rates)
 }
 
 static u8 wfx_tx_get_rate_id(struct wfx_vif *wvif,
-				  struct ieee80211_tx_info *tx_info)
+			     struct ieee80211_tx_info *tx_info)
 {
 	bool tx_policy_renew = false;
 	u8 rate_id;
@@ -322,7 +321,8 @@ static u8 wfx_tx_get_rate_id(struct wfx_vif *wvif,
 	return rate_id;
 }
 
-static struct hif_ht_tx_parameters wfx_tx_get_tx_parms(struct wfx_dev *wdev, struct ieee80211_tx_info *tx_info)
+static struct hif_ht_tx_parameters wfx_tx_get_tx_parms(struct wfx_dev *wdev,
+						       struct ieee80211_tx_info *tx_info)
 {
 	struct ieee80211_tx_rate *rate = &tx_info->driver_rates[0];
 	struct hif_ht_tx_parameters ret = { };
