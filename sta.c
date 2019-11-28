@@ -906,9 +906,6 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 	if (changed & BSS_CHANGED_ASSOC ||
 	    changed & BSS_CHANGED_ERP_CTS_PROT ||
 	    changed & BSS_CHANGED_ERP_PREAMBLE) {
-		struct hif_ie_flags target_frame = {
-			.beacon = 1,
-		};
 		u8 erp_ie[3] = { WLAN_EID_ERP_INFO, 1, 0 };
 
 		hif_erp_use_protection(wvif, info->use_cts_prot);
@@ -917,7 +914,7 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw,
 		if (info->use_short_preamble)
 			erp_ie[2] |= WLAN_ERP_BARKER_PREAMBLE;
 		if (wvif->vif->type != NL80211_IFTYPE_STATION)
-			hif_update_ie(wvif, &target_frame, erp_ie, sizeof(erp_ie));
+			hif_update_ie_beacon(wvif, erp_ie, sizeof(erp_ie));
 	}
 
 	if (changed & BSS_CHANGED_ASSOC || changed & BSS_CHANGED_ERP_SLOT)
@@ -985,9 +982,6 @@ void wfx_sta_notify(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
 {
 	struct sk_buff *skb;
-	struct hif_ie_flags target_frame = {
-		.beacon = 1,
-	};
 	u16 tim_offset, tim_length;
 	u8 *tim_ptr;
 
@@ -1012,7 +1006,7 @@ static int wfx_set_tim_impl(struct wfx_vif *wvif, bool aid0_bit_set)
 			tim_ptr[4] &= ~1;
 	}
 
-	hif_update_ie(wvif, &target_frame, tim_ptr, tim_length);
+	hif_update_ie_beacon(wvif, tim_ptr, tim_length);
 	dev_kfree_skb(skb);
 
 	return 0;
