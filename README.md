@@ -591,5 +591,6 @@ The diagram below show the driver architecture:
 Upstream status
 ---------------
 
-This driver was not yet proposed to kernel mainline. It will submitted in near
-future.
+A driver based on version 2.3.2 of this driver will be included with Kernel
+5.5. Development is relocated in kernel mainstream. This driver only get
+backports of Linux driver.
