@@ -538,23 +538,55 @@ being easy and many things must be done manually.
 Architecture
 ------------
 
- * `wfx_sdio.c`, `wfx_spi.c` and `hwbus.h` provide abstraction from bus access.
+The diagram below show the driver architecture:
+
+    ,------------------------------------.
+    |                mac80211            |
+    `------------------------------------'
+    ,------------+-----------+-----------.
+    |    sta     |           |           |
+    |    scan    |           |           |
+    |    main    |           |           |
+    +------------+  data_tx  |           |
+    |    key     |           |  data_rx  |
+    | hif_tx_mib |   queue   |           |
+    |   hif_tx   |           |           |
+    |   hif_rx   |           |           |
+    |  hif_api_* |           |           |
+    +------------+-----------+-----------+--------.
+    |                  bh                |        |
+    |              secure_link           |  fwio  |
+    +------------------------------------+--------+
+    |                     hwio                    |
+    +---------------------------------------------+
+    |                   bus_sdio                  |
+    |                   bus_spi                   |
+    |                    hwbus                    |
+    `---------------------------------------------'
+
+
+ * `bus_sdio.c`, `bus_spi.c` and `hwbus.h` provide abstraction from bus access.
    They are in charge of driver registration, device probing and low-level
    access to hardware.
 
- * No function directly accesses hardware, they use abstraction provided by
-   `hwio.c` and `hwio.h`. Most of these functions are only used during device
-   initialisation. `fwio.c` and `fwio_fpga.c` are in charge of firmware
-   loading.  Once started, only `wfx_data_read` and `wfx_data_write` are really
-   used during device runtime.
+ * No functions directly access to the hardware, they use abstraction provided
+   by `hwio.c` and `hwio.h`. Most of these functions are only used during
+   device initialisation. Once device is initialized, only `wfx_data_read()`,
+   `wfx_data_write()` and `control_reg_read()` are used.
 
- * The only user of `wfx_data_{read,write}` is a thread launched by `bh.c`.
-   This thread schedules data from/to device.
+ * `fwio.c` is in charge of firmware loading.
 
- * `wsm_rx.c` and `wsm_tx.c` provide a high layer interface to bh thread. It
-   manages asynchronous communication with bh thread.
+ * Once the device is initialized, functions provided by hwio.c are only used
+   by a `work_struct` launched by `bh.c` This thread schedules data from/to
+   device.
 
- * `sta.c`, `scan.c` and `data_txrx.c` provide interfaces with kernel API.
+ * `hif_rx.c`, `hif_tx.c` and `hif_tx_mib.c` provide a high layer interface to
+   bh thread. It manages asynchronous communication with bh thread.
+
+ * `sta.c` and `scan.c` provide interfaces with kernel API.
+
+ * Beside that, `data_tx.c` and `queue.c` are in chare of Tx data while
+   `data_rx.c` is in charge of Rx data.
 
 Upstream status
 ---------------
