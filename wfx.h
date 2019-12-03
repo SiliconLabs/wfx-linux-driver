@@ -27,6 +27,7 @@
 #include "hif_api_general.h"
 
 #define USEC_PER_TXOP 32 // see struct ieee80211_tx_queue_params
+#define USEC_PER_TU 1024
 
 #if (KERNEL_VERSION(4, 16, 0) > LINUX_VERSION_CODE)
 #define array_index_nospec(index, size) index
