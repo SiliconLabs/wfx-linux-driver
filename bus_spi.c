@@ -66,7 +66,7 @@ static int wfx_spi_read_ctrl_reg(struct wfx_spi_priv *bus, u16 *dst)
 	};
 	u16 regaddr = (WFX_REG_CONTROL << 12) | (sizeof(u16) / 2) | SET_READ;
 
-	cpu_to_le16s(regaddr);
+	cpu_to_le16s(&regaddr);
 	if (bus->need_swab)
 		swab16s(&regaddr);
 
