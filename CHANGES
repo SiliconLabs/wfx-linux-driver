@@ -7,16 +7,16 @@ Changes in 2.3.5
 Changes in 2.3.4
 ----------------
 
-  * Improve thoughput by changing the way to build tx_retry_policies requests
+  * Improve throughput by changing the way to build tx_retry_policies requests
 
 Changes in 2.3.3
 ----------------
 
-  * Fix some thoughput issues caused by:
+  * Fix some throughput issues caused by:
      - wrong tx_retry_policy reset
      - overflow in the usage counter of tx_retry_policies
-  * Backport changes accepted in kernel 5.5. It contains mainly cometics
-    changes.
+  * Backport changes accepted in kernel 5.5. It contains mainly cosmetics
+    changes
   * Update architecture in documentation
 
 Changes in 2.3.2
