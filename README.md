@@ -29,6 +29,13 @@ These files can be retrieved from [Github `wfx-firmware` repository][2].
 [1]: https://github.com/SiliconLabs/wfx-firmware/blob/master/PDS/README.md
 [2]: https://github.com/SiliconLabs/wfx-firmware
 
+Clock type
+----------
+
+By default, the driver is configured to use a crystal for the clock.
+If you want to use an external oscillator, in `fwio.c` edit function
+`init_gpr()` to add the line `{ 0x0A, 0x10240F },` in `gpr_init[]`.
+
 Loading and probing
 -------------------
 
