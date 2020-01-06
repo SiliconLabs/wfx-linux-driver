@@ -16,6 +16,10 @@
 #include "traces.h"
 #include "hif_tx_mib.h"
 
+#if (KERNEL_VERSION(4, 16, 0) > LINUX_VERSION_CODE)
+#define sizeof_field(type, member) FIELD_SIZEOF(type, member)
+#endif
+
 #define WFX_INVALID_RATE_ID    15
 #define WFX_LINK_ID_NO_ASSOC   15
 #define WFX_LINK_ID_GC_TIMEOUT ((unsigned long)(10 * HZ))
@@ -692,7 +696,7 @@ void wfx_tx(struct ieee80211_hw *hw, struct ieee80211_tx_control *control,
 	struct ieee80211_sta *sta = control ? control->sta : NULL;
 	struct ieee80211_tx_info *tx_info = IEEE80211_SKB_CB(skb);
 	struct ieee80211_hdr *hdr = (struct ieee80211_hdr *)skb->data;
-	size_t driver_data_room = FIELD_SIZEOF(struct ieee80211_tx_info,
+	size_t driver_data_room = sizeof_field(struct ieee80211_tx_info,
 					       rate_driver_data);
 
 	compiletime_assert(sizeof(struct wfx_tx_priv) <= driver_data_room,
