@@ -24,7 +24,7 @@ static char *slk_unsecure_cmds = "";
 module_param(slk_unsecure_cmds, charp, 0644);
 MODULE_PARM_DESC(slk_unsecure_cmds, "list of HIF commands IDs (ie. 4,132-256) that won't be encrypted (default: empty).");
 
-unsigned int slk_renew_period = BIT(29);
+static unsigned int slk_renew_period = BIT(29);
 module_param(slk_renew_period, int, 0644);
 MODULE_PARM_DESC(slk_renew_period, "number of secure link messages before renewing the key (default: 2^29).");
 
