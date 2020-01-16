@@ -122,8 +122,6 @@ struct wfx_vif {
 	bool			after_dtim_tx_allowed;
 	struct wfx_grp_addr_table mcast_filter;
 
-	u32			sta_asleep_mask;
-	spinlock_t		ps_state_lock;
 	struct work_struct	update_tim_work;
 
 	s8			wep_default_key_id;
