@@ -400,9 +400,8 @@ static int wfx_get_prio_queue(struct wfx_vif *wvif, u32 tx_allowed_mask)
 	return winner;
 }
 
-static int wfx_tx_queue_mask_get(struct wfx_vif *wvif,
-				     struct wfx_queue **queue_p,
-				     u32 *tx_allowed_mask_p)
+static struct wfx_queue *wfx_tx_queue_mask_get(struct wfx_vif *wvif,
+					       u32 *tx_allowed_mask_p)
 {
 	int idx;
 	u32 tx_allowed_mask;
@@ -416,11 +415,10 @@ static int wfx_tx_queue_mask_get(struct wfx_vif *wvif,
 		tx_allowed_mask |= BIT(WFX_LINK_ID_AFTER_DTIM);
 	idx = wfx_get_prio_queue(wvif, tx_allowed_mask);
 	if (idx < 0)
-		return -ENOENT;
+		return NULL;
 
-	*queue_p = &wvif->wdev->tx_queue[idx];
 	*tx_allowed_mask_p = tx_allowed_mask;
-	return 0;
+	return &wvif->wdev->tx_queue[idx];
 }
 
 struct hif_msg *wfx_tx_queues_get_after_dtim(struct wfx_vif *wvif)
@@ -452,7 +450,6 @@ struct hif_msg *wfx_tx_queues_get(struct wfx_dev *wdev)
 	u32 tx_allowed_mask = 0;
 	u32 vif_tx_allowed_mask = 0;
 	struct wfx_vif *wvif;
-	int not_found;
 	int i;
 
 	if (atomic_read(&wdev->tx_lock))
@@ -487,12 +484,12 @@ struct hif_msg *wfx_tx_queues_get(struct wfx_dev *wdev)
 		while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
 			spin_lock_bh(&wvif->ps_state_lock);
 
-			not_found = wfx_tx_queue_mask_get(wvif, &vif_queue,
+			vif_queue = wfx_tx_queue_mask_get(wvif,
 							  &vif_tx_allowed_mask);
 
 			spin_unlock_bh(&wvif->ps_state_lock);
 
-			if (!not_found) {
+			if (vif_queue) {
 				if (queue && queue != vif_queue)
 					dev_info(wdev->dev, "vifs disagree about queue priority\n");
 				tx_allowed_mask |= vif_tx_allowed_mask;
