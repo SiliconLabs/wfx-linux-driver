@@ -20,6 +20,17 @@ static inline s64 ktime_ms_delta(const ktime_t later, const ktime_t earlier)
 }
 #endif
 
+#if KERNEL_VERSION(5, 3, 10) > LINUX_VERSION_CODE
+#if KERNEL_VERSION(4, 19, 83) > LINUX_VERSION_CODE || KERNEL_VERSION(4, 20, 0) < LINUX_VERSION_CODE
+#if KERNEL_VERSION(4, 14, 153) > LINUX_VERSION_CODE || KERNEL_VERSION(4, 15, 0) < LINUX_VERSION_CODE
+static inline bool skb_queue_empty_lockless(const struct sk_buff_head *list)
+{
+	return READ_ONCE(list->next) == (const struct sk_buff *) list;
+}
+#endif
+#endif
+#endif
+
 void wfx_tx_lock(struct wfx_dev *wdev)
 {
 	atomic_inc(&wdev->tx_lock);
@@ -310,20 +321,14 @@ unsigned int wfx_pending_get_pkt_us_delay(struct wfx_dev *wdev,
 	return ktime_us_delta(now, tx_priv->xmit_timestamp);
 }
 
-bool wfx_tx_queues_is_empty(struct wfx_dev *wdev)
+bool wfx_tx_queues_empty(struct wfx_dev *wdev)
 {
 	int i;
-	struct sk_buff_head *queue;
-	bool ret = true;
 
-	for (i = 0; i < IEEE80211_NUM_ACS; i++) {
-		queue = &wdev->tx_queue[i].queue;
-		spin_lock_bh(&queue->lock);
-		if (!skb_queue_empty(queue))
-			ret = false;
-		spin_unlock_bh(&queue->lock);
-	}
-	return ret;
+	for (i = 0; i < IEEE80211_NUM_ACS; i++)
+		if (!skb_queue_empty_lockless(&wdev->tx_queue[i].queue))
+			return false;
+	return true;
 }
 
 static bool wfx_handle_tx_data(struct wfx_dev *wdev, struct sk_buff *skb)
