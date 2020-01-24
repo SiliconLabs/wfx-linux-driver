@@ -518,14 +518,9 @@ static void wfx_do_join(struct wfx_vif *wvif)
 	if (wvif->state)
 		wfx_do_unjoin(wvif);
 
-#if (KERNEL_VERSION(4, 1, 0) > LINUX_VERSION_CODE)
-	bss = cfg80211_get_bss(wvif->wdev->hw->wiphy, wvif->channel,
-			       conf->bssid, NULL, 0, 0, 0);
-#else
 	bss = cfg80211_get_bss(wvif->wdev->hw->wiphy, wvif->channel,
 			       conf->bssid, NULL, 0,
 			       IEEE80211_BSS_TYPE_ANY, IEEE80211_PRIVACY_ANY);
-#endif
 	if (!bss && !conf->ibss_joined) {
 		wfx_tx_unlock(wvif->wdev);
 		return;
