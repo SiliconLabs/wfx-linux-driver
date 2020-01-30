@@ -6,6 +6,7 @@
  * Copyright (c) 2010, ST-Ericsson
  */
 #include <linux/version.h>
+#include <linux/etherdevice.h>
 #include <net/mac80211.h>
 
 #include "sta.h"

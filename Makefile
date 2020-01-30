@@ -39,6 +39,7 @@ wfx-y := \
 	data_tx.o \
 	main.o \
 	queue.o \
+	hif_tx_mib.o \
 	hif_tx.o \
 	hif_rx.o \
 	key.o \
