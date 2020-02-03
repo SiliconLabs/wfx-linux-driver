@@ -143,7 +143,6 @@ struct wfx_vif {
 	struct work_struct	bss_params_work;
 
 	int			join_complete_status;
-	struct work_struct	unjoin_work;
 
 	struct ieee80211_scan_request *scan_req;
 	struct work_struct	scan_work;
