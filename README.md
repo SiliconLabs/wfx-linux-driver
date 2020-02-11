@@ -40,7 +40,7 @@ The WFx chip series can be connected via SPI or via SDIO.
 You have to declare the WFx chip in your device tree.
 
 Required properties:
-- `compatible`: Should be `"silabs,wfx-spi"`
+- `compatible`: Should be `"silabs,wf200"`
 - `reg`: Chip select address of device
 - `spi-max-frequency`: Maximum SPI clocking speed of device in Hz
 - `interrupts-extended`: Should contain interrupt line (`interrupt-parent` +
@@ -49,6 +49,7 @@ Required properties:
 Optional properties:
 - `reset-gpios`: phandle of gpio that will be used to reset chip during probe.
    Without this property, you may encounter issues with warm boot.
+   (Legacy: when compatible == "silabs,wfx-spi", the gpio is inverted.)
 
 Please consult [`Documentation/devicetree/bindings/spi/spi-bus.txt`][3] for optional
 SPI connection related properties,
