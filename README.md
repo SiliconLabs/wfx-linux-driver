@@ -80,7 +80,7 @@ case. Thus declaring Wfx chip in device tree is strongly recommended (and may
 become mandatory in the future).
 
 Required properties:
-- `compatible`: Should be `"silabs,wfx-sdio"`
+- `compatible`: Should be `"silabs,wf200"`
 - `reg`: Should be `1`
 
 In addition, it is recommended to declare a `mmc-pwrseq` on SDIO host above
