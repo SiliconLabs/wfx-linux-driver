@@ -133,7 +133,7 @@ struct wfx_vif {
 	struct work_struct	tx_policy_upload_work;
 
 	bool			filter_bssid;
-	bool			fwd_probe_req;
+	bool			filter_prbreq;
 	bool			filter_beacon;
 
 	unsigned long		uapsd_mask;
