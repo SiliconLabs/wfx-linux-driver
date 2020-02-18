@@ -132,7 +132,6 @@ struct wfx_vif {
 	struct tx_policy_cache	tx_policy_cache;
 	struct work_struct	tx_policy_upload_work;
 
-	int			beacon_int;
 	bool			filter_bssid;
 	bool			fwd_probe_req;
 	bool			disable_beacon_filter;
