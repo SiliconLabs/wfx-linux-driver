@@ -127,8 +127,6 @@ struct wfx_vif {
 
 	unsigned long		uapsd_mask;
 
-	int			join_complete_status;
-
 	struct ieee80211_scan_request *scan_req;
 	struct work_struct	scan_work;
 	struct mutex		scan_lock;
