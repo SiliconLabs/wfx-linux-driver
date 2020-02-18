@@ -121,7 +121,6 @@ struct wfx_vif {
 
 
 	bool			after_dtim_tx_allowed;
-	struct wfx_grp_addr_table mcast_filter;
 
 	struct work_struct	update_tim_work;
 
@@ -132,6 +131,10 @@ struct wfx_vif {
 	struct tx_policy_cache	tx_policy_cache;
 	struct work_struct	tx_policy_upload_work;
 
+
+	int			filter_mcast_count;
+	u8			filter_mcast_addr[8][ETH_ALEN];
+	bool			filter_mcast;
 	bool			filter_bssid;
 	bool			filter_prbreq;
 	bool			filter_beacon;
