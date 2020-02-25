@@ -142,10 +142,6 @@ struct wfx_vif {
 	bool			scan_abort;
 
 	struct completion	set_pm_mode_complete;
-
-	struct list_head	event_queue;
-	spinlock_t		event_queue_lock;
-	struct work_struct	event_handler_work;
 };
 
 static inline struct wfx_vif *wdev_to_wvif(struct wfx_dev *wdev, int vif_id)
