@@ -395,9 +395,6 @@ static void wfx_do_join(struct wfx_vif *wvif)
 		else
 			wvif->state = WFX_STATE_PRE_STA;
 
-		/* Upload keys */
-		wfx_upload_keys(wvif);
-
 		/* Due to beacon filtering it is possible that the
 		 * AP's beacon is not known for the mac80211 stack.
 		 * Disable filtering temporary to make sure the stack
@@ -474,7 +471,6 @@ int wfx_start_ap(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 {
 	struct wfx_vif *wvif = (struct wfx_vif *)vif->drv_priv;
 
-	wfx_upload_keys(wvif);
 	wvif->state = WFX_STATE_AP;
 	wfx_upload_ap_templates(wvif);
 	hif_start(wvif, &vif->bss_conf, wvif->channel);
