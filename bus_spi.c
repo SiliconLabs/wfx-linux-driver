@@ -248,6 +248,9 @@ static const struct hwbus_ops wfx_spi_hwbus_ops = {
 
 static int wfx_spi_probe(struct spi_device *func)
 {
+#if (KERNEL_VERSION(5, 5, 5) > LINUX_VERSION_CODE)
+	bool invert = spi_get_device_id(func)->driver_data & WFX_RESET_INVERTED;
+#endif
 	struct wfx_spi_priv *bus;
 	int ret;
 
@@ -279,11 +282,17 @@ static int wfx_spi_probe(struct spi_device *func)
 	if (!bus->gpio_reset) {
 		dev_warn(&func->dev, "try to load firmware anyway\n");
 	} else {
+#if (KERNEL_VERSION(5, 5, 5) > LINUX_VERSION_CODE)
+		gpiod_set_value_cansleep(bus->gpio_reset, invert ? 0 : 1);
+		usleep_range(100, 150);
+		gpiod_set_value_cansleep(bus->gpio_reset, invert ? 1 : 0);
+#else
 		if (spi_get_device_id(func)->driver_data & WFX_RESET_INVERTED)
 			gpiod_toggle_active_low(bus->gpio_reset);
 		gpiod_set_value_cansleep(bus->gpio_reset, 1);
 		usleep_range(100, 150);
 		gpiod_set_value_cansleep(bus->gpio_reset, 0);
+#endif
 		usleep_range(2000, 2500);
 	}
 
