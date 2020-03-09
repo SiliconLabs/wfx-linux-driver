@@ -46,6 +46,7 @@ struct wfx_spi_priv {
 	bool need_swab;
 };
 
+#if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
 /*
  * Read of control register need a particular attention because it should be
  * done only after an IRQ raise. We can detect if this event happens by reading
@@ -53,7 +54,6 @@ struct wfx_spi_priv {
  * no data acess was done since IRQ raising). In add, this function optimize it
  * by doing only one SPI request.
  */
-#if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
 static int wfx_spi_read_ctrl_reg(struct wfx_spi_priv *bus, u16 *dst)
 {
 	int i, ret = 0;
