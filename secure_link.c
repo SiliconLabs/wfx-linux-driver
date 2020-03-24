@@ -118,14 +118,16 @@ static int wfx_sl_get_pubkey_mac(struct wfx_dev *wdev,
 }
 
 int wfx_sl_check_pubkey(struct wfx_dev *wdev,
-			const uint8_t *pubkey, const uint8_t *mac)
+			const uint8_t *pubkey_orig, const uint8_t *mac)
 {
 	int ret;
 	size_t olen;
+	uint8_t pubkey[API_NCP_PUB_KEY_SIZE];
 	uint8_t secret[API_HOST_PUB_KEY_SIZE];
 	uint8_t secret_digest[SHA256_DIGEST_SIZE];
 	uint8_t expected_mac[SHA512_DIGEST_SIZE];
 
+	memcpy(pubkey, pubkey_orig, sizeof(pubkey));
 	ret = wfx_sl_get_pubkey_mac(wdev, pubkey, expected_mac);
 	if (ret)
 		goto end;
@@ -135,6 +137,7 @@ int wfx_sl_check_pubkey(struct wfx_dev *wdev,
 
 	// FIXME: save Qp.Y or (reset it), concat it with ncp_public_key and
 	// use mbedtls_ecdh_read_public.
+	memreverse(pubkey, sizeof(pubkey));
 	ret = mbedtls_mpi_read_binary(&wdev->sl.edch_ctxt.Qp.X, pubkey, API_NCP_PUB_KEY_SIZE);
 	if (ret)
 		goto end;

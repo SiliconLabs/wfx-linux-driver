@@ -124,14 +124,11 @@ static int hif_keys_indication(struct wfx_dev *wdev,
 			       const struct hif_msg *hif, const void *buf)
 {
 	const struct hif_ind_sl_exchange_pub_keys *body = buf;
-	uint8_t pubkey[API_NCP_PUB_KEY_SIZE];
 
 	// SL_PUB_KEY_EXCHANGE_STATUS_SUCCESS is used by legacy secure link
 	if (body->status && body->status != SL_PUB_KEY_EXCHANGE_STATUS_SUCCESS)
 		dev_warn(wdev->dev, "secure link negociation error\n");
-	memcpy(pubkey, body->ncp_pub_key, sizeof(pubkey));
-	memreverse(pubkey, sizeof(pubkey));
-	wfx_sl_check_pubkey(wdev, pubkey, body->ncp_pub_key_mac);
+	wfx_sl_check_pubkey(wdev, body->ncp_pub_key, body->ncp_pub_key_mac);
 	return 0;
 }
 
