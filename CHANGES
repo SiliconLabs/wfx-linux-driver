@@ -1,13 +1,59 @@
+Changes in 2.4
+--------------
+
+  * Fix support for Out-Of-Band IRQ when using SDIO bus (IOTPA_WIFI-286)
+  * Allow to to use edge or level triggered IRQs (in SPI or in SDIO OOB). This
+    can be defined in device tree. If nothing is specified (or if IRQ
+    controller doesn't report trigger correctly), use level IRQ. You can check
+    the configuration in /proc/interrupts.
+  * Support for new Suspend/Resume indication sent for firmware 3.5 when chip
+    is too hot (IPWHIFER-591)
+  * In combo mode, legacy PS is automaticaly enabled. Now, it also automaticaly
+    switch to FastPS if AP does not support legacy PS (IPWHIFER-588)
+  * In combo mode, greatly improve bandwith if both interfaces use same channel
+    PS is not enforced anymore. (IPWHIFER-485)
+  * Fix Block Ack usage in combo mode (IPWHIFER-562)
+  * Fix RTS threshold == 0, it disabled RTS instead of always enabling
+    (IPWHIFER-470)
+  * Support associate/disassociate has been re-written (IPWHIFER-566,
+    IPWHIFER-257, IPWHIFER-262, IPWHIFER-568)
+  * Fix potential dead lock during unjoin (IPWHIFER-539, IPWHIFER-569,
+    IPWHIFER-580)
+  * Fix association with hidden SSID (IPWHIFER-542)
+  * Correctly take into account keep alive period provided by AP(IPWHIFER-307)
+  * Fix false "all retries were not consumed" errors
+  * Fix warning about potential mutex in use during driver unload
+  * Improve compliance with Open Firmware policy by adding support for
+    compatible string "silabs,wf200"
+  * Support for hardware scan has been re-written (IPWHIFER-466, IPWHIFER-259,
+    IPWHIFER-380)
+  * Fix potential wrong output power after scan (IPWHIFER-311)
+  * Support start/stop AP has been re-written (IPWHIFER-517, IPWHIFER-262,
+    IPWHIFER-570)
+  * Support IBSS has been re-written (IPWHIFER-558)
+  * Support for filtering has been re-written (IPWHIFER-574, IPWHIFER-545)
+  * Support for beacon loss has been re-written (IPWHIFER-494)
+  * Support for power save has been re-written (IPWHIFER-554)
+  * Support for power save stations while AP (mainly the link-id handling) has
+    been re-written (IPWHIFER-493, IPWHIFER-492, IPWHIFER-564)
+  * Support for QoS queues (and Content After DTIM Beacon) has been re-written.
+    Fix warning "Vifs disagree about queue priority" (IPWHIFER-495,
+    IPWHIFER-565, IPWHIFER-337, IPWHIFER-567)
+  * Drop prefix "WFX_" from driver version (shown in /sys/module/wfx//version)
+
 Changes in 2.3.5
 ----------------
 
   * Fix support of secure link
   * Fix change in rx_stats output introduced in 2.3.3
+  * This version is more-or-less aligned on wfx driver included in Linux kernel
+    5.5
 
 Changes in 2.3.4
 ----------------
 
   * Improve throughput by changing the way to build tx_retry_policies requests
+    (IPWHIFER-537, IPWHIFER-503)
 
 Changes in 2.3.3
 ----------------
