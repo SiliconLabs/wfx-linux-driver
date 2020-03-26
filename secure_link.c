@@ -192,6 +192,8 @@ static int wfx_sl_key_exchange(struct wfx_dev *wdev)
 	ret = hif_sl_send_pub_keys(wdev, pubkey + 2, mac);
 	if (ret)
 		goto err;
+	if (wdev->poll_irq)
+		wfx_bh_poll_irq(wdev);
 	if (!wait_for_completion_timeout(&wdev->sl.key_renew_done, msecs_to_jiffies(500)))
 		goto err;
 	if (!memzcmp(&wdev->sl.ccm_ctxt, sizeof(wdev->sl.ccm_ctxt)))
