@@ -13,7 +13,6 @@
 #include <linux/device.h>
 #include <linux/gpio/consumer.h>
 
-#include "bus.h"
 #include "hif_api_general.h"
 
 #if (KERNEL_VERSION(4, 6, 0) > LINUX_VERSION_CODE)
@@ -31,6 +30,7 @@ static inline int devm_add_action_or_reset(struct device *dev,
 #endif
 
 struct wfx_dev;
+struct hwbus_ops;
 
 struct wfx_platform_data {
 	/* Keyset and ".sec" extention will appended to this string */
