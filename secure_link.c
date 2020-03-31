@@ -48,7 +48,7 @@ int wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id)
 int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m)
 {
 	int ret;
-	size_t clear_len = le16_to_cpu(m->len);
+	size_t clear_len = m->len;
 	size_t payload_len = round_up(clear_len - sizeof(m->len), 16);
 	u8 *tag = m->payload + payload_len;
 	u8 *output = (u8 *)m;
