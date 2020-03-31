@@ -307,7 +307,7 @@ int hif_join(struct wfx_vif *wvif, const struct ieee80211_bss_conf *conf,
 		body->probe_for_join = 0;
 	else
 		body->probe_for_join = 1;
-	body->channel_number = cpu_to_le16(channel->hw_value);
+	body->channel_number = channel->hw_value;
 	body->beacon_interval = cpu_to_le32(conf->beacon_int);
 	body->basic_rate_set = cpu_to_le32(wfx_rate_mask_to_hw(wvif->wdev, conf->basic_rates));
 	memcpy(body->bssid, conf->bssid, sizeof(body->bssid));
@@ -426,7 +426,7 @@ int hif_start(struct wfx_vif *wvif, const struct ieee80211_bss_conf *conf,
 	WARN_ON(!conf->beacon_int);
 	body->dtim_period = conf->dtim_period;
 	body->short_preamble = conf->use_short_preamble;
-	body->channel_number = cpu_to_le16(channel->hw_value);
+	body->channel_number = channel->hw_value;
 	body->beacon_interval = cpu_to_le32(conf->beacon_int);
 	body->basic_rate_set = cpu_to_le32(wfx_rate_mask_to_hw(wvif->wdev, conf->basic_rates));
 	body->ssid_length = conf->ssid_len;

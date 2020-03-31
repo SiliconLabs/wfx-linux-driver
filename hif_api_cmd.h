@@ -325,7 +325,8 @@ struct hif_rx_flags {
 
 struct hif_ind_rx {
 	__le32 status;
-	__le16 channel_number;
+	u8     channel_number;
+	u8     reserved;
 	u8     rxed_rate;
 	u8     rcpi_rssi;
 	struct hif_rx_flags rx_flags;
@@ -360,7 +361,8 @@ struct hif_req_join {
 	u8     infrastructure_bss_mode:1;
 	u8     reserved1:7;
 	u8     band;
-	__le16 channel_number;
+	u8     channel_number;
+	u8     reserved;
 	u8     bssid[ETH_ALEN];
 	__le16 atim_window;
 	u8     short_preamble:1;
@@ -425,7 +427,8 @@ struct hif_ind_set_pm_mode_cmpl {
 struct hif_req_start {
 	u8     mode;
 	u8     band;
-	__le16 channel_number;
+	u8     channel_number;
+	u8     reserved;
 	__le32 reserved1;
 	__le32 beacon_interval;
 	u8     dtim_period;
