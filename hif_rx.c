@@ -325,8 +325,15 @@ static int hif_exception_indication(struct wfx_dev *wdev,
 				    const struct hif_msg *hif, const void *buf)
 {
 	size_t len = hif->len - 4; // drop header
-	dev_err(wdev->dev, "firmware exception\n");
-	print_hex_dump_bytes("Dump: ", DUMP_PREFIX_NONE, buf, len);
+	const struct hif_ind_exception *body = buf;
+
+	if (body->reason != 4)
+		dev_err(wdev->dev, "firmware exception\n");
+	else
+		dev_err(wdev->dev, "firmware assert %d\n",
+			le32_to_cpup((__le32 *)body->data));
+	print_hex_dump(KERN_INFO, "dump:", DUMP_PREFIX_OFFSET,
+		       16, 1, buf, len, false);
 	wdev->chip_frozen = true;
 
 	return -1;
