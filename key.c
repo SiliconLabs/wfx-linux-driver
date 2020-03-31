@@ -211,7 +211,7 @@ static int wfx_add_key(struct wfx_vif *wvif, struct ieee80211_sta *sta,
 #if KERNEL_VERSION(4, 14, 0) > LINUX_VERSION_CODE
 #if KERNEL_VERSION(4, 9, 63) > LINUX_VERSION_CODE || KERNEL_VERSION(4, 10, 0) <= LINUX_VERSION_CODE
 #if KERNEL_VERSION(4, 4, 99) > LINUX_VERSION_CODE || KERNEL_VERSION(4, 5, 0) <= LINUX_VERSION_CODE
-		if (ret == HIF_INVALID_PARAMETER) {
+		if (ret == HIF_STATUS_INVALID_PARAMETER) {
 			// Use a patched kernel in order to solve this error
 			dev_warn(wdev->dev, "chip prevents re-installation of same key\n");
 			dev_warn(wdev->dev, "your kernel is not patched to protect against KRACK attack\n");
