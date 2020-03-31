@@ -1,6 +1,7 @@
 Changes in 2.4
 --------------
 
+  * Improve display of the exception indication. It is now always shown.
   * Fix support for Out-Of-Band IRQ when using SDIO bus (IOTPA_WIFI-286)
   * Allow to to use edge or level triggered IRQs (in SPI or in SDIO OOB). This
     can be defined in device tree. If nothing is specified (or if IRQ
@@ -8,9 +9,14 @@ Changes in 2.4
     the configuration in /proc/interrupts.
   * Support for new Suspend/Resume indication sent for firmware 3.5 when chip
     is too hot (IPWHIFER-591)
-  * In combo mode, legacy PS is automaticaly enabled. Now, it also automaticaly
-    switch to FastPS if AP does not support legacy PS (IPWHIFER-588)
-  * In combo mode, greatly improve bandwith if both interfaces use same channel
+  * Improve output of the file "counters" in debugfs. It now show counter for
+    all interfaces. It also displays not yet named counters.
+  * In combo mode, legacy PS is automatically enabled. Now, it also
+    automatically switch to FastPS if AP does not support legacy PS
+    (IPWHIFER-588)
+  * Drop the prefix "WFX_" from driver version (displayed in dmesg and in
+    /sys/module/wfx//version)
+  * In combo mode, greatly improve bandwidth if both interfaces use same channel
     PS is not enforced anymore. (IPWHIFER-485)
   * Fix Block Ack usage in combo mode (IPWHIFER-562)
   * Fix RTS threshold == 0, it disabled RTS instead of always enabling
@@ -39,7 +45,7 @@ Changes in 2.4
   * Support for QoS queues (and Content After DTIM Beacon) has been re-written.
     Fix warning "Vifs disagree about queue priority" (IPWHIFER-495,
     IPWHIFER-565, IPWHIFER-337, IPWHIFER-567)
-  * Drop prefix "WFX_" from driver version (shown in /sys/module/wfx//version)
+  * Fix maximum reception throughtput declared in ieee80211_supported_band.
 
 Changes in 2.3.5
 ----------------
