@@ -255,8 +255,9 @@ static int hif_generic_indication(struct wfx_dev *wdev,
 				  const struct hif_msg *hif, const void *buf)
 {
 	const struct hif_ind_generic *body = buf;
+	int type = le32_to_cpu(body->indication_type);
 
-	switch (body->indication_type) {
+	switch (type) {
 	case HIF_GENERIC_INDICATION_TYPE_RAW:
 		return 0;
 	case HIF_GENERIC_INDICATION_TYPE_STRING:
@@ -275,7 +276,7 @@ static int hif_generic_indication(struct wfx_dev *wdev,
 		return 0;
 	default:
 		dev_err(wdev->dev, "generic_indication: unknown indication type: %#.8x\n",
-			body->indication_type);
+			type);
 		return -EIO;
 	}
 }
