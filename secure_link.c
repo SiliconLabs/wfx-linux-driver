@@ -51,7 +51,7 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m)
 	size_t clear_len = le16_to_cpu(m->len);
 	size_t payload_len = round_up(clear_len - sizeof(m->len), 16);
 	uint8_t *tag = m->payload + payload_len;
-	uint8_t *output = (uint8_t *) m;
+	uint8_t *output = (uint8_t *)m;
 	uint32_t nonce[3] = { };
 
 	WARN(m->hdr.encrypted != 0x02, "packet is not encrypted");
@@ -67,7 +67,7 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m)
 
 	memcpy(output, &m->len, sizeof(m->len));
 	ret = mbedtls_ccm_auth_decrypt(&wdev->sl.ccm_ctxt, payload_len,
-			(uint8_t *) nonce, sizeof(nonce), NULL, 0,
+			(uint8_t *)nonce, sizeof(nonce), NULL, 0,
 			m->payload, output + sizeof(m->len),
 			tag, sizeof(struct hif_sl_tag));
 	if (ret) {
@@ -97,8 +97,8 @@ int wfx_sl_encode(struct wfx_dev *wdev,
 		schedule_work(&wdev->sl.key_renew_work);
 
 	ret = mbedtls_ccm_encrypt_and_tag(&wdev->sl.ccm_ctxt, payload_len,
-			(uint8_t *) nonce, sizeof(nonce), NULL, 0,
-			(uint8_t *) input + sizeof(input->len), output->payload,
+			(uint8_t *)nonce, sizeof(nonce), NULL, 0,
+			(uint8_t *)input + sizeof(input->len), output->payload,
 			tag, sizeof(struct hif_sl_tag));
 	if (ret) {
 		dev_err(wdev->dev, "mbedtls error: %08x\n", ret);

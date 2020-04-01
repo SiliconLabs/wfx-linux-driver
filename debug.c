@@ -221,7 +221,7 @@ static ssize_t wfx_burn_slk_key_write(struct file *file,
 {
 	struct wfx_dev *wdev = file->private_data;
 	char bin_buf[API_KEY_VALUE_SIZE + 4];
-	uint32_t *user_crc32 = (uint32_t *) (bin_buf + API_KEY_VALUE_SIZE);
+	uint32_t *user_crc32 = (uint32_t *)(bin_buf + API_KEY_VALUE_SIZE);
 	char ascii_buf[(API_KEY_VALUE_SIZE + 4) * 2];
 	uint32_t crc32;
 	int ret;

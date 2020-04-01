@@ -253,8 +253,8 @@ static int hif_error_indication(struct wfx_dev *wdev,
 				const struct hif_msg *hif, const void *buf)
 {
 	const struct hif_ind_error *body = buf;
-	u8 *pRollback = (u8 *) body->data;
-	u32 *pStatus = (u32 *) body->data;
+	u8 *pRollback = (u8 *)body->data;
+	u32 *pStatus = (u32 *)body->data;
 
 	switch (body->type) {
 	case HIF_ERROR_FIRMWARE_ROLLBACK:
@@ -302,7 +302,7 @@ static int hif_generic_indication(struct wfx_dev *wdev,
 		return 0;
 	case HIF_GENERIC_INDICATION_TYPE_STRING:
 		dev_info(wdev->dev, "firmware says: %s\n",
-			 (char *) body->indication_data.raw_data);
+			 (char *)body->indication_data.raw_data);
 		return 0;
 	case HIF_GENERIC_INDICATION_TYPE_RX_STATS:
 		mutex_lock(&wdev->rx_stats_lock);

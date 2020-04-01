@@ -148,7 +148,7 @@ static int wfx_spi_copy_from_io(void *priv, unsigned int addr,
 	 */
 	if (addr == WFX_REG_IN_OUT_QUEUE && !ret && dst8[count - 1] == 0xFF) {
 		dev_warn(bus->core->dev, "SPI DMA error detected (and resolved)\n");
-		ret = wfx_spi_read_ctrl_reg(bus, (u16 *) (dst8 + count - 2));
+		ret = wfx_spi_read_ctrl_reg(bus, (u16 *)(dst8 + count - 2));
 	}
 #endif
 
