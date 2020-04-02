@@ -161,7 +161,7 @@ static void wfx_tx_policy_put(struct wfx_vif *wvif, int idx)
 static int wfx_tx_policy_upload(struct wfx_vif *wvif)
 {
 	struct tx_policy *policies = wvif->tx_policy_cache.cache;
-	uint8_t tmp_rates[12];
+	u8 tmp_rates[12];
 	int i;
 
 	do {

@@ -29,14 +29,14 @@ int hif_beacon_filter_control(struct wfx_vif *wvif,
 			      int enable, int beacon_count);
 int hif_set_operational_mode(struct wfx_dev *wdev, enum hif_op_power_mode mode);
 int hif_set_template_frame(struct wfx_vif *wvif, struct sk_buff *skb,
-			   uint8_t frame_type, int init_rate);
+			   u8 frame_type, int init_rate);
 int hif_set_mfp(struct wfx_vif *wvif, bool capable, bool required);
 int hif_set_block_ack_policy(struct wfx_vif *wvif,
 			     u8 tx_tid_policy, u8 rx_tid_policy);
 int hif_set_association_mode(struct wfx_vif *wvif,
 			     struct ieee80211_bss_conf *info);
 int hif_set_tx_rate_retry_policy(struct wfx_vif *wvif,
-				 int policy_index, uint8_t *rates);
+				 int policy_index, u8 *rates);
 int hif_set_mac_addr_condition(struct wfx_vif *wvif,
 			       int idx, const u8 *mac_addr);
 int hif_set_uc_mc_bc_condition(struct wfx_vif *wvif,

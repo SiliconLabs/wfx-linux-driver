@@ -32,7 +32,7 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m);
 int wfx_sl_encode(struct wfx_dev *wdev,
 		  const struct hif_msg *input, struct hif_sl_msg *output);
 int wfx_sl_check_pubkey(struct wfx_dev *wdev,
-			const uint8_t *ncp_pubkey, const uint8_t *ncp_pubmac);
+			const u8 *ncp_pubkey, const u8 *ncp_pubmac);
 int wfx_sl_init(struct wfx_dev *wdev);
 void wfx_sl_deinit(struct wfx_dev *wdev);
 void wfx_sl_fill_pdata(struct device *dev, struct wfx_platform_data *pdata);
