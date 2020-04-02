@@ -15,7 +15,7 @@ Changes in 2.4
     automatically switch to FastPS if AP does not support legacy PS
     (IPWHIFER-588)
   * Drop the prefix "WFX_" from driver version (displayed in dmesg and in
-    /sys/module/wfx//version)
+    /sys/module/wfx/version)
   * In combo mode, greatly improve bandwidth if both interfaces use same channel
     PS is not enforced anymore. (IPWHIFER-485)
   * Fix Block Ack usage in combo mode (IPWHIFER-562)
@@ -31,6 +31,7 @@ Changes in 2.4
   * Fix warning about potential mutex in use during driver unload
   * Improve compliance with Open Firmware policy by adding support for
     compatible string "silabs,wf200"
+  * MbedTLS library has been updated to release 2.16.5
   * Support for hardware scan has been re-written (IPWHIFER-466, IPWHIFER-259,
     IPWHIFER-380)
   * Fix potential wrong output power after scan (IPWHIFER-311)
@@ -45,7 +46,7 @@ Changes in 2.4
   * Support for QoS queues (and Content After DTIM Beacon) has been re-written.
     Fix warning "Vifs disagree about queue priority" (IPWHIFER-495,
     IPWHIFER-565, IPWHIFER-337, IPWHIFER-567)
-  * Fix maximum reception throughtput declared in ieee80211_supported_band.
+  * Fix maximum reception throughput declared in ieee80211_supported_band.
 
 Changes in 2.3.5
 ----------------
