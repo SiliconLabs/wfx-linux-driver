@@ -1,7 +1,8 @@
 Changes in 2.4
 --------------
 
-  * Improve display of the exception indication. It is now always shown.
+  * Improve display of the exception and errors indications. They are now always
+    dumped (IPWHIFER-596)
   * Fix support for Out-Of-Band IRQ when using SDIO bus (IOTPA_WIFI-286)
   * Allow to to use edge or level triggered IRQs (in SPI or in SDIO OOB). This
     can be defined in device tree. If nothing is specified (or if IRQ
