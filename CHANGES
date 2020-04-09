@@ -14,16 +14,16 @@ Changes in 2.4
   * Improve display of the exception and errors indications. They are now always
     dumped (IPWHIFER-596)
   * Fix support for Out-Of-Band IRQ when using SDIO bus (IOTPA_WIFI-286)
-  * Allow to to use edge or level triggered IRQs (in SPI or in SDIO OOB). This
-    can be defined in device tree. If nothing is specified (or if IRQ
-    controller doesn't report trigger correctly), use level IRQ. You can check
-    the configuration in /proc/interrupts.
+  * Allow to use edge or level triggered IRQs (in SPI or in SDIO OOB). This can
+    be defined in device tree. If nothing is specified (or if IRQ controller
+    doesn't report trigger correctly), use level IRQ. You can check the
+    configuration in /proc/interrupts.
   * Support for new Suspend/Resume indication sent for firmware 3.5 when chip
     is too hot (IPWHIFER-591)
-  * Improve output of the file "counters" in debugfs. It now show counter for
+  * Improve output of the file "counters" in debugfs. It now shows counters for
     all interfaces. It also displays not yet named counters.
   * In combo mode, legacy PS is automatically enabled. Now, it also
-    automatically switch to FastPS if AP does not support legacy PS
+    automatically switches to FastPS if AP does not support legacy PS
     (IPWHIFER-588)
   * Drop the prefix "WFX_" from driver version (displayed in dmesg and in
     /sys/module/wfx/version)
@@ -32,7 +32,7 @@ Changes in 2.4
   * Fix Block Ack usage in combo mode (IPWHIFER-562)
   * Fix RTS threshold == 0, it disabled RTS instead of always enabling
     (IPWHIFER-470)
-  * Support associate/disassociate has been re-written (IPWHIFER-566,
+  * Support for associate/disassociate has been re-written (IPWHIFER-566,
     IPWHIFER-257, IPWHIFER-262, IPWHIFER-568)
   * Fix potential dead lock during unjoin (IPWHIFER-539, IPWHIFER-569,
     IPWHIFER-580)
@@ -46,9 +46,9 @@ Changes in 2.4
   * Support for hardware scan has been re-written (IPWHIFER-466, IPWHIFER-259,
     IPWHIFER-380)
   * Fix potential wrong output power after scan (IPWHIFER-311)
-  * Support start/stop AP has been re-written (IPWHIFER-517, IPWHIFER-262,
+  * Support for start/stop AP has been re-written (IPWHIFER-517, IPWHIFER-262,
     IPWHIFER-570)
-  * Support IBSS has been re-written (IPWHIFER-558)
+  * Support for IBSS has been re-written (IPWHIFER-558)
   * Support for filtering has been re-written (IPWHIFER-574, IPWHIFER-545)
   * Support for beacon loss has been re-written (IPWHIFER-494)
   * Support for power save has been re-written (IPWHIFER-554)
