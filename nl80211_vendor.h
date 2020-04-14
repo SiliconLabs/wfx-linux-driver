@@ -17,18 +17,23 @@
 
 int wfx_nl_ps_timeout(struct wiphy *wiphy, struct wireless_dev *widev,
 		      const void *data, int data_len);
+int wfx_nl_burn_antirollback(struct wiphy *wiphy, struct wireless_dev *widev,
+			     const void *data, int data_len);
 
 enum {
 	WFX_NL80211_SUBCMD_PS_TIMEOUT                   = 0x10,
+	WFX_NL80211_SUBCMD_BURN_PREVENT_ROLLBACK        = 0x20,
 };
 
 enum {
 	WFX_NL80211_ATTR_PS_TIMEOUT     = 1,
+	WFX_NL80211_ATTR_ROLLBACK_MAGIC = 2,
 	WFX_NL80211_ATTR_MAX
 };
 
 static const struct nla_policy wfx_nl_policy[WFX_NL80211_ATTR_MAX] = {
 	[WFX_NL80211_ATTR_PS_TIMEOUT]     = NLA_POLICY_RANGE(NLA_S32, -1, 127),
+	[WFX_NL80211_ATTR_ROLLBACK_MAGIC] = { .type = NLA_U32 },
 };
 
 static const struct wiphy_vendor_command wfx_nl80211_vendor_commands[] = {
@@ -38,6 +43,12 @@ static const struct wiphy_vendor_command wfx_nl80211_vendor_commands[] = {
 		.flags = WIPHY_VENDOR_CMD_NEED_WDEV,
 		.policy = wfx_nl_policy,
 		.doit = wfx_nl_ps_timeout,
+		.maxattr = WFX_NL80211_ATTR_MAX - 1,
+	}, {
+		.info.vendor_id = WFX_NL80211_ID,
+		.info.subcmd = WFX_NL80211_SUBCMD_BURN_PREVENT_ROLLBACK,
+		.policy = wfx_nl_policy,
+		.doit = wfx_nl_burn_antirollback,
 		.maxattr = WFX_NL80211_ATTR_MAX - 1,
 	},
 };

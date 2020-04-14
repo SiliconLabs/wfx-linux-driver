@@ -360,4 +360,12 @@ struct hif_cnf_sl_configure {
 	__le32 status;
 } __packed;
 
+struct hif_req_prevent_rollback {
+	__le32 magic_word; // Return an error if not equal to 0x5C8912F3
+} __packed;
+
+struct hif_cnf_prevent_rollback {
+	__le32 status;
+} __packed;
+
 #endif

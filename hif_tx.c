@@ -525,6 +525,24 @@ int hif_update_ie_beacon(struct wfx_vif *wvif, const u8 *ies, size_t ies_len)
 	return ret;
 }
 
+int hif_burn_prevent_rollback(struct wfx_dev *wdev, u32 magic_word)
+{
+	int ret;
+	struct hif_msg *hif;
+	struct hif_req_prevent_rollback *body = wfx_alloc_hif(sizeof(*body),
+							      &hif);
+
+	if (!hif)
+		return -ENOMEM;
+	body->magic_word = cpu_to_le32(magic_word);
+	wfx_fill_header(hif, -1, HIF_REQ_ID_PREVENT_ROLLBACK, sizeof(*body));
+	ret = wfx_cmd_send(wdev, hif, NULL, 0, false);
+	if (ret == le32_to_cpu(HIF_STATUS_ROLLBACK_SUCCESS))
+		ret = 0;
+	kfree(hif);
+	return ret;
+}
+
 int hif_sl_send_pub_keys(struct wfx_dev *wdev,
 			 const u8 *pubkey, const u8 *pubkey_hmac)
 {

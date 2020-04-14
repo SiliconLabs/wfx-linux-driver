@@ -7,6 +7,7 @@
 #include "nl80211_vendor.h"
 #include "wfx.h"
 #include "sta.h"
+#include "hif_tx.h"
 
 int wfx_nl_ps_timeout(struct wiphy *wiphy, struct wireless_dev *widev,
 		      const void *data, int data_len)
@@ -45,5 +46,27 @@ int wfx_nl_ps_timeout(struct wiphy *wiphy, struct wireless_dev *widev,
 error:
 	kfree_skb(msg);
 	return rc;
+}
+
+int wfx_nl_burn_antirollback(struct wiphy *wiphy, struct wireless_dev *widev,
+			     const void *data, int data_len)
+{
+	struct ieee80211_hw *hw = wiphy_to_ieee80211_hw(wiphy);
+	struct wfx_dev *wdev = (struct wfx_dev *)hw->priv;
+	struct nlattr *tb[WFX_NL80211_ATTR_MAX];
+	u32 magic;
+	int rc;
+
+	rc = nla_parse(tb, WFX_NL80211_ATTR_MAX - 1, data, data_len,
+		       wfx_nl_policy, NULL);
+	if (rc)
+		return rc;
+	if (!tb[WFX_NL80211_ATTR_ROLLBACK_MAGIC])
+		return -EINVAL;
+	magic = nla_get_u32(tb[WFX_NL80211_ATTR_ROLLBACK_MAGIC]);
+	rc = hif_burn_prevent_rollback(wdev, magic);
+	if (rc)
+		return -EINVAL;
+	return 0;
 }
 
