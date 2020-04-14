@@ -229,14 +229,18 @@ int wfx_get_ps_timeout(struct wfx_vif *wvif, bool *enable_ps)
 		// are differents.
 		if (enable_ps)
 			*enable_ps = true;
-		if (wvif->bss_not_support_ps_poll)
+		if (wvif->force_ps_timeout > -1)
+			return wvif->force_ps_timeout;
+		else if (wvif->bss_not_support_ps_poll)
 			return 30;
 		else
 			return 0;
 	}
 	if (enable_ps)
 		*enable_ps = wvif->vif->bss_conf.ps;
-	if (wvif->vif->bss_conf.assoc && wvif->vif->bss_conf.ps)
+	if (wvif->force_ps_timeout > -1)
+		return wvif->force_ps_timeout;
+	else if (wvif->vif->bss_conf.assoc && wvif->vif->bss_conf.ps)
 		return conf->dynamic_ps_timeout;
 	else
 		return -1;
@@ -822,6 +826,7 @@ int wfx_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 	wvif->vif = vif;
 	wvif->wdev = wdev;
 
+	wvif->force_ps_timeout = -1;
 	wvif->link_id_map = 1; // link-id 0 is reserved for multicast
 	INIT_WORK(&wvif->update_tim_work, wfx_update_tim_work);
 	INIT_DELAYED_WORK(&wvif->beacon_loss_work, wfx_beacon_loss_work);

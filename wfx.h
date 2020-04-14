@@ -135,6 +135,7 @@ struct wfx_vif {
 	struct completion	scan_complete;
 	bool			scan_abort;
 
+	int			force_ps_timeout;
 	bool			bss_not_support_ps_poll;
 	struct work_struct	update_pm_work;
 	struct completion	set_pm_mode_complete;

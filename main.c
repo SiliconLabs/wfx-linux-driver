@@ -35,6 +35,7 @@
 #include "secure_link.h"
 #include "hif_tx_mib.h"
 #include "hif_api_cmd.h"
+#include "nl80211_vendor.h"
 #include "wfx_version.h"
 
 #define WFX_PDS_MAX_SIZE 1500
@@ -318,6 +319,9 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 				sizeof(struct hif_msg)
 				+ sizeof(struct hif_req_tx)
 				+ 4 /* alignment */ + 8 /* TKIP IV */;
+
+	hw->wiphy->n_vendor_commands = ARRAY_SIZE(wfx_nl80211_vendor_commands);
+	hw->wiphy->vendor_commands = wfx_nl80211_vendor_commands;
 	hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
 				     BIT(NL80211_IFTYPE_ADHOC) |
 				     BIT(NL80211_IFTYPE_AP);

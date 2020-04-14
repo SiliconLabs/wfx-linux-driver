@@ -43,6 +43,7 @@ wfx-y := \
 	hif_tx.o \
 	hif_rx.o \
 	key.o \
+	nl80211_vendor.o \
 	sta.o \
 	scan.o \
 	debug.o
