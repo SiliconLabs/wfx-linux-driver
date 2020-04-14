@@ -368,4 +368,45 @@ struct hif_cnf_prevent_rollback {
 	__le32 status;
 } __packed;
 
+struct hif_req_pta_settings {
+	u8     PtaMode;
+	u8     RequestSignalActiveLevel;
+	u8     PrioritySignalActiveLevel;
+	u8     FreqSignalActiveLevel;
+	u8     GrantSignalActiveLevel;
+	u8     CoexType;
+	u8     DefaultGrantState;
+	u8     SimultaneousRxAccesses;
+	u8     PrioritySamplingTime;
+	u8     TxRxSamplingTime;
+	u8     FreqSamplingTime;
+	u8     GrantValidTime;
+	u8     FemControlTime;
+	u8     FirstSlotTime;
+	__le16 PeriodicTxRxSamplingTime;
+	__le16 CoexQuota;
+	__le16 WlanQuota;
+} __packed;
+
+struct hif_cnf_pta_settings {
+	__le32 status;
+} __packed;
+
+struct hif_req_pta_priority {
+	__le32 priority;
+} __packed;
+
+struct hif_cnf_pta_priority {
+	__le32 status;
+} __packed;
+
+struct hif_req_pta_enable {
+	u8     enable;
+	u8     reserved[3];
+} __packed;
+
+struct hif_cnf_pta_enable {
+	__le32 status;
+} __packed;
+
 #endif

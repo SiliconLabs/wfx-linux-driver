@@ -103,6 +103,10 @@ struct wfx_dev {
 	struct mutex		rx_stats_lock;
 	struct hif_tx_power_loop_info tx_power_loop_info;
 	struct mutex		tx_power_loop_info_lock;
+
+	bool			pta_enable;
+	u32			pta_priority;
+	struct hif_req_pta_settings pta_settings;
 };
 
 struct wfx_vif {

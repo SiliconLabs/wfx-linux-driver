@@ -525,6 +525,52 @@ int hif_update_ie_beacon(struct wfx_vif *wvif, const u8 *ies, size_t ies_len)
 	return ret;
 }
 
+int hif_pta_settings(struct wfx_dev *wdev,
+		     const struct hif_req_pta_settings *parms)
+{
+	int ret;
+	struct hif_msg *hif;
+	struct hif_req_pta_settings *body = wfx_alloc_hif(sizeof(*body), &hif);
+
+	if (!hif)
+		return -ENOMEM;
+	memcpy(body, parms, sizeof(*body));
+	wfx_fill_header(hif, -1, HIF_REQ_ID_PTA_SETTINGS, sizeof(*body));
+	ret = wfx_cmd_send(wdev, hif, NULL, 0, false);
+	kfree(hif);
+	return ret;
+}
+
+int hif_pta_priority(struct wfx_dev *wdev, u32 priority)
+{
+	int ret;
+	struct hif_msg *hif;
+	struct hif_req_pta_priority *body = wfx_alloc_hif(sizeof(*body), &hif);
+
+	if (!hif)
+		return -ENOMEM;
+	body->priority = cpu_to_le32(priority);
+	wfx_fill_header(hif, -1, HIF_REQ_ID_PTA_PRIORITY, sizeof(*body));
+	ret = wfx_cmd_send(wdev, hif, NULL, 0, false);
+	kfree(hif);
+	return ret;
+}
+
+int hif_pta_enable(struct wfx_dev *wdev, bool enable)
+{
+	int ret;
+	struct hif_msg *hif;
+	struct hif_req_pta_enable *body = wfx_alloc_hif(sizeof(*body), &hif);
+
+	if (!hif)
+		return -ENOMEM;
+	body->enable = enable;
+	wfx_fill_header(hif, -1, HIF_REQ_ID_PTA_STATE, sizeof(*body));
+	ret = wfx_cmd_send(wdev, hif, NULL, 0, false);
+	kfree(hif);
+	return ret;
+}
+
 int hif_burn_prevent_rollback(struct wfx_dev *wdev, u32 magic_word)
 {
 	int ret;
