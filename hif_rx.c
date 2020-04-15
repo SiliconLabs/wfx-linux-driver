@@ -323,7 +323,6 @@ static const struct {
 static int hif_error_indication(struct wfx_dev *wdev,
 				const struct hif_msg *hif, const void *buf)
 {
-	size_t len = hif->len - 4; // drop header
 	const struct hif_ind_error *body = buf;
 	int type = le32_to_cpu(body->type);
 	int param = (s8)body->data[0];
@@ -341,8 +340,8 @@ static int hif_error_indication(struct wfx_dev *wdev,
 				hif_errors[i].str);
 	else
 		dev_err(wdev->dev, "asynchronous error: unknown: %08x\n", type);
-	print_hex_dump(KERN_INFO, "dump: ", DUMP_PREFIX_OFFSET,
-		       16, 1, buf, len, false);
+	print_hex_dump(KERN_INFO, "hif: ", DUMP_PREFIX_OFFSET,
+		       16, 1, hif, hif->len, false);
 	wdev->chip_frozen = true;
 
 	return 0;
