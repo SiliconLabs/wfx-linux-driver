@@ -222,12 +222,6 @@ struct hif_ind_generic {
 	union hif_indication_data indication_data;
 } __packed;
 
-struct hif_ind_exception {
-	u8     reason;
-	u8     reserved[3];
-	u8     data[];
-} __packed;
-
 enum hif_error {
 	HIF_ERROR_FIRMWARE_ROLLBACK           = 0x00,
 	HIF_ERROR_FIRMWARE_DEBUG_ENABLED      = 0x01,
@@ -249,6 +243,11 @@ enum hif_error {
 };
 
 struct hif_ind_error {
+	__le32 type;
+	u8     data[];
+} __packed;
+
+struct hif_ind_exception {
 	__le32 type;
 	u8     data[];
 } __packed;
