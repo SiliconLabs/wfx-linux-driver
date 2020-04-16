@@ -182,6 +182,94 @@ formated as a string of hexadecimal digits. So overall process is:
     $ ( xxd -p secret; crc32 secret ) | tr -d '\n' > secret+crc32
     $ dd if=secret+crc32 of=/sys/kernel/debug/ieee80211/phy0/wfx/burn_slk_key
 
+### How to use nl80211 interface?
+
+The driver offer a nl80211 interface from some tasks. The simplest way to
+access to this API is to use the command `iw vendor`:
+
+     iw dev <devname> vendor recvbin <oui> <subcmd> <filename|-|hex data>
+     iw dev <devname> vendor recv <oui> <subcmd> <filename|-|hex data>
+     iw dev <devname> vendor send <oui> <subcmd> <filename|-|hex data>
+
+You can find necessary constants in `nl80211_wfx.h`:
+  - The `oui` is always `0x90fd9f`
+  - `subcmd` can be `0x11` (`PS_TIMEOUT`), `0x21` (`BURN_PREVENT_ROLLBACK`) and
+    `0x31` (`PTA_PARMS`)
+  - The argument of the `subcmd` contains a list of attribute in Netlink
+    attribute (`nla`) format: 16btts for size, 16bits for ID of the attribute,
+    then data and finally padding to align on 32bits.
+  - Each attribute is identified by a  number: `1 = PS_TIMEOUT`,
+   `2 = ROLLBACK_MAGIC`, `3 = PTA_SETTINGS`, `4 = PTA_PRIORITY`,
+   `5 = PTA_ENABLE`
+  - The size and the format of each attribute is defined in variable
+    `wfx_nl_policy`
+
+Thus, the command below run the command `PS_TIMEOUT` (`0x11`) with argument
+`PS_TIMEOUT` (ID `0x01`, then signed 32bit number) with value 0x64:
+
+    $ echo -ne '\x08\x00\x01\x00\x64\x00\x00\x00' | iw dev wlan0 vendor send 0x90fd9f 0x11 -
+
+You also run command `PS_TIMEOUT` (`0x11`) with `recv` to retreive value:
+
+    $ iw dev wlan0 vendor recv 0x001234 0x11 - < /dev/null
+    vendor response: 08 00 01 00 64 00 00 00
+
+Finally nothing prevents you to write and read value in same time:
+
+    $ echo -ne '\x08\x00\x01\x00\x40\x00\x00\x00' | iw dev wlan0 vendor recv 0x90fd9f 0x11 -
+    vendor response: 08 00 01 00 40 00 00 00
+
+Note that attribute ID not recognized by command is just ignored:
+
+    $ echo -ne '\x08\x00\x02\x00\xFF\xFF\xFF\xFF' | iw dev wlan0 vendor recv 0x90fd9f 0x11 -
+    vendor response: 08 00 01 00 40 00 00 00
+
+In case you want to get ride of `iw`, you can use `libnl` directly (in C,
+python, etc...). `libnl` allows to forge complete netlink packets.
+
+### How to prevent firmware rollback?
+
+You use the command `BURN_PREVENT_ROLLBACK` from the [nl80211 API]. This command
+will work only if it receive attribute `ROLLBACK_MAGIC` with value defined in
+HIF API (`0x5C8912F3`):
+
+    $ echo -ne '\x08\x00\x02\x00\xF3\x12\x89\x5C' | iw dev wlan0 vendor send 0x90fd9f 0x21 -
+
+### How to force FastPS delay or PS-Poll usage?
+
+You use the command `PS_TIMEOUT` from the [nl80211 API] with attribute
+`PS_TIMEOUT`. To fix the FastPS delay to 32, use:
+
+    $ echo -ne '\x08\x00\x01\x00\x20\x00\x00\x00' | iw dev wlan0 vendor recv 0x90fd9f 0x11 -
+    vendor response: 08 00 01 00 20 00 00 00
+
+Note that the `PS_TIMEOUT` setting is lost if the interface type changes. So,
+it is recommended to launch `wpa_supplicant` (even if you don't run any
+command) before to change this value. It is even mandatory if you work with
+wlan1 (one of the rare case where wlan1 behavior is not the same than wlan0).
+
+Note that if the interface is wlan1, it has to be started (launching
+`wpa_supplicant` on the interface is sufficient) before to be able to access it.
+
+Also note that `PS_TIMEOUT` return the actual value (-1 if this value is not
+available).
+
+A few notes about the value of `PS_TIMEOUT`:
+  - it cannot been greater than 127ms.
+  - if 0, PS-Poll is used instead of FastPS
+  - if -1, it use value provided by mac80211
+
+Don't forget to enable power save to apply your settings:
+
+    $ iw dev wlan0 set power_save on
+
+### How to set PTA parameters?
+
+You use the command `PTA_PARMS` from the [nl80211 API] with the attributes
+` PTA_SETTINGS`, `PTA_PRIORITY` and `PTA_ENABLE`. See the HIF API for more
+information about content of these attribute.
+
+
 Advanced driver usage
 ---------------------
 
