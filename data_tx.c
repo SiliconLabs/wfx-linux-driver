@@ -500,14 +500,49 @@ static void wfx_skb_dtor(struct wfx_dev *wdev,
 	ieee80211_tx_status_irqsafe(wdev->hw, skb);
 }
 
+static void wfx_tx_fill_rates(struct wfx_dev *wdev,
+			      struct ieee80211_tx_info *tx_info,
+			      const struct hif_cnf_tx *arg)
+{
+	struct ieee80211_tx_rate *rate;
+	int tx_count;
+	int i;
+
+	tx_count = arg->ack_failures;
+	if (!arg->status || arg->ack_failures)
+		tx_count += 1; // Also report success
+	for (i = 0; i < IEEE80211_TX_MAX_RATES; i++) {
+		rate = &tx_info->status.rates[i];
+		if (rate->idx < 0)
+			break;
+		if (tx_count < rate->count &&
+		    arg->status == HIF_STATUS_TX_FAIL_RETRIES &&
+		    arg->ack_failures)
+			dev_dbg(wdev->dev, "all retries were not consumed: %d != %d\n",
+				rate->count, tx_count);
+		if (tx_count <= rate->count && tx_count &&
+		    arg->txed_rate != wfx_get_hw_rate(wdev, rate))
+			dev_dbg(wdev->dev, "inconsistent tx_info rates: %d != %d\n",
+				arg->txed_rate, wfx_get_hw_rate(wdev, rate));
+		if (tx_count > rate->count) {
+			tx_count -= rate->count;
+		} else if (!tx_count) {
+			rate->count = 0;
+			rate->idx = -1;
+		} else {
+			rate->count = tx_count;
+			tx_count = 0;
+		}
+	}
+	if (tx_count)
+		dev_dbg(wdev->dev, "%d more retries than expected\n", tx_count);
+}
+
 void wfx_tx_confirm_cb(struct wfx_vif *wvif, const struct hif_cnf_tx *arg)
 {
-	int i;
-	int tx_count;
-	struct sk_buff *skb;
-	struct ieee80211_tx_rate *rate;
 	struct ieee80211_tx_info *tx_info;
 	const struct wfx_tx_priv *tx_priv;
+	struct sk_buff *skb;
 	bool has_sta;
 
 	skb = wfx_pending_get(wvif->wdev, arg->packet_id);
@@ -523,37 +558,7 @@ void wfx_tx_confirm_cb(struct wfx_vif *wvif, const struct hif_cnf_tx *arg)
 			wfx_pending_get_pkt_us_delay(wvif->wdev, skb));
 
 	// You can touch to tx_priv, but don't touch to tx_info->status.
-	tx_count = arg->ack_failures;
-	if (!arg->status || arg->ack_failures)
-		tx_count += 1; // Also report success
-	for (i = 0; i < IEEE80211_TX_MAX_RATES; i++) {
-		rate = &tx_info->status.rates[i];
-		if (rate->idx < 0)
-			break;
-		if (tx_count < rate->count &&
-		    arg->status == HIF_STATUS_TX_FAIL_RETRIES &&
-		    arg->ack_failures)
-			dev_dbg(wvif->wdev->dev,
-				"all retries were not consumed: %d != %d\n",
-				rate->count, tx_count);
-		if (tx_count <= rate->count && tx_count &&
-		    arg->txed_rate != wfx_get_hw_rate(wvif->wdev, rate))
-			dev_dbg(wvif->wdev->dev, "inconsistent tx_info rates: %d != %d\n",
-				arg->txed_rate,
-				wfx_get_hw_rate(wvif->wdev, rate));
-		if (tx_count > rate->count) {
-			tx_count -= rate->count;
-		} else if (!tx_count) {
-			rate->count = 0;
-			rate->idx = -1;
-		} else {
-			rate->count = tx_count;
-			tx_count = 0;
-		}
-	}
-	if (tx_count)
-		dev_dbg(wvif->wdev->dev, "%d more retries than expected\n",
-			tx_count);
+	wfx_tx_fill_rates(wvif->wdev, tx_info, arg);
 	skb_trim(skb, skb->len - wfx_tx_get_icv_len(tx_priv->hw_key));
 
 	// From now, you can touch to tx_info->status, but do not touch to
