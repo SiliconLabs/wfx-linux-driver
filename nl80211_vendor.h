@@ -7,11 +7,33 @@
 #ifndef WFX_NL80211_VENDOR_H
 #define WFX_NL80211_VENDOR_H
 
+#include <linux/version.h>
 #include <net/netlink.h>
 #include <net/cfg80211.h>
 
 #include "hif_api_general.h"
 
+#if (KERNEL_VERSION(4, 20, 0) > LINUX_VERSION_CODE)
+
+#define __NLA_ENSURE(condition) BUILD_BUG_ON_ZERO(!(condition))
+
+#define NLA_ENSURE_INT_TYPE(tp)				\
+	(__NLA_ENSURE(tp == NLA_S8 || tp == NLA_U8 ||	\
+		      tp == NLA_S16 || tp == NLA_U16 ||	\
+		      tp == NLA_S32 || tp == NLA_U32 ||	\
+		      tp == NLA_S64 || tp == NLA_U64) + tp)
+
+#define NLA_POLICY_EXACT_LEN(_len)	{ .type = NLA_BINARY }
+
+#define NLA_POLICY_RANGE(tp, _min, _max) {		\
+	.type = NLA_ENSURE_INT_TYPE(tp),		\
+}
+
+#define NLA_POLICY_MAX(tp, _max) {			\
+	.type = NLA_ENSURE_INT_TYPE(tp),		\
+}
+
+#endif
 
 #define WFX_NL80211_ID 0x90fd9f
 
@@ -49,6 +71,24 @@ static const struct nla_policy wfx_nl_policy[WFX_NL80211_ATTR_MAX] = {
 		NLA_POLICY_EXACT_LEN(sizeof(struct hif_req_pta_settings)),
 };
 
+#if (KERNEL_VERSION(4, 20, 0) > LINUX_VERSION_CODE)
+static const struct wiphy_vendor_command wfx_nl80211_vendor_commands[] = {
+	{
+		.info.vendor_id = WFX_NL80211_ID,
+		.info.subcmd = WFX_NL80211_SUBCMD_PS_TIMEOUT_COMPAT,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV,
+		.doit = wfx_nl_ps_timeout,
+	}, {
+		.info.vendor_id = WFX_NL80211_ID,
+		.info.subcmd = WFX_NL80211_SUBCMD_BURN_PREVENT_ROLLBACK_COMPAT,
+		.doit = wfx_nl_burn_antirollback,
+	}, {
+		.info.vendor_id = WFX_NL80211_ID,
+		.info.subcmd = WFX_NL80211_SUBCMD_PTA_PARMS_COMPAT,
+		.doit = wfx_nl_pta_params,
+	},
+};
+#else
 static const struct wiphy_vendor_command wfx_nl80211_vendor_commands[] = {
 	{
 		.info.vendor_id = WFX_NL80211_ID,
@@ -90,5 +130,6 @@ static const struct wiphy_vendor_command wfx_nl80211_vendor_commands[] = {
 		.doit = wfx_nl_pta_params,
 	},
 };
+#endif
 
 #endif /* WFX_NL80211_VENDOR_H */
