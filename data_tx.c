@@ -171,7 +171,7 @@ static int wfx_tx_policy_upload(struct wfx_vif *wvif)
 			    memzcmp(policies[i].rates, sizeof(policies[i].rates)))
 				break;
 		if (i < ARRAY_SIZE(wvif->tx_policy_cache.cache)) {
-			policies[i].uploaded = 1;
+			policies[i].uploaded = true;
 			memcpy(tmp_rates, policies[i].rates, sizeof(tmp_rates));
 			spin_unlock_bh(&wvif->tx_policy_cache.lock);
 			hif_set_tx_rate_retry_policy(wvif, i, tmp_rates);
