@@ -36,6 +36,23 @@ static const struct file_operations __name ## _fops = {			\
 }
 #endif
 
+#if (KERNEL_VERSION(4, 7, 0) > LINUX_VERSION_CODE)
+#define DEFINE_DEBUGFS_ATTRIBUTE(__fops, __get, __set, __fmt)		\
+static int __fops ## _open(struct inode *inode, struct file *file)	\
+{									\
+	__simple_attr_check_format(__fmt, 0ull);			\
+	return simple_attr_open(inode, file, __get, __set, __fmt);	\
+}									\
+static const struct file_operations __fops = {				\
+	.owner	 = THIS_MODULE,						\
+	.open	 = __fops ## _open,					\
+	.release = simple_attr_release,					\
+	.read	 = simple_attr_read,					\
+	.write	 = simple_attr_write,					\
+	.llseek  = generic_file_llseek,					\
+}
+#endif
+
 static const struct trace_print_flags hif_msg_print_map[] = {
 	hif_msg_list,
 };
