@@ -185,9 +185,9 @@ static int wfx_rx_stats_show(struct seq_file *seq, void *v)
 				   channel_names[i],
 				   le32_to_cpu(st->nb_rx_by_rate[i]),
 				   le16_to_cpu(st->per[i]),
-				   le16_to_cpu(st->rssi[i]) / 100,
-				   le16_to_cpu(st->snr[i]) / 100,
-				   le16_to_cpu(st->cfo[i]));
+				   (s16)le16_to_cpu(st->rssi[i]) / 100,
+				   (s16)le16_to_cpu(st->snr[i]) / 100,
+				   (s16)le16_to_cpu(st->cfo[i]));
 	}
 	mutex_unlock(&wdev->rx_stats_lock);
 
