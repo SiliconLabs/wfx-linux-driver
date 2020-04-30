@@ -113,6 +113,7 @@ struct wfx_vif {
 
 
 	bool			after_dtim_tx_allowed;
+	bool			join_in_progress;
 
 	struct delayed_work	beacon_loss_work;
 	struct work_struct	update_tim_work;
