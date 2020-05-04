@@ -499,8 +499,10 @@ int wfx_start_ap(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 		wfx_update_pm(wvif);
 	wvif = (struct wfx_vif *)vif->drv_priv;
 	wfx_upload_ap_templates(wvif);
-	hif_start(wvif, &vif->bss_conf, wvif->channel);
-	return 0;
+	ret = hif_start(wvif, &vif->bss_conf, wvif->channel);
+	if (ret > 0)
+		return -EIO;
+	return ret;
 }
 
 void wfx_stop_ap(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
