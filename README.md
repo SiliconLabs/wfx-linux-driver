@@ -131,9 +131,9 @@ Some properties are recognized either by SPI and SDIO versions:
   64 hexadecimal digits.
 
 WFx driver also supports `mac-address` and `local-mac-address` as described in
-[`Documentation/devicetree/binding/net/ethernet.txt`][5]
+[`Documentation/devicetree/bindings/net/ethernet.txt`][5]
 
-[5]: https://www.kernel.org/doc/Documentation/devicetree/binding/net/ethernet.txt
+[5]: https://www.kernel.org/doc/Documentation/devicetree/bindings/net/ethernet.txt
 
 ### How to change MAC address?
 
