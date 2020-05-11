@@ -1,3 +1,13 @@
+Changes in 2.4.1
+----------------
+
+  * Fix potential dead lock between join and scan (IPWHIFER-610)
+  * Fix PS parameters when multiple vif are in use (IPWHIFER-605)
+  * Fix error report whan stating AP
+  * Fix output of rx_stats (IPWHIFER-602)
+  * Remove false positive warnings (IPWHIFER-607)
+  * Add a knob to force LGI/SGI in internal version
+
 Changes in 2.4
 --------------
 
