@@ -9,6 +9,11 @@
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 #include <linux/crc32.h>
+#if (KERNEL_VERSION(4, 1, 0) > LINUX_VERSION_CODE)
+#include <linux/ftrace_event.h>
+#else
+#include <linux/trace_events.h>
+#endif
 
 #include "debug.h"
 #include "wfx.h"
