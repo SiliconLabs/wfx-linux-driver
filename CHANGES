@@ -1,3 +1,9 @@
+Changes in 2.4.2
+----------------
+
+  * Fix dead lock when scan fail
+  * Fix compilation for some kernels < 4.6
+
 Changes in 2.4.1
 ----------------
 
