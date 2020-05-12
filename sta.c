@@ -702,7 +702,8 @@ int wfx_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		     struct ieee80211_sta *sta, u16 tid,
 		     u16 *ssn, u8 buf_size)
 #else
-#if (KERNEL_VERSION(4, 4, 69) > LINUX_VERSION_CODE)
+#if (KERNEL_VERSION(4, 4, 69) > LINUX_VERSION_CODE) || \
+	(KERNEL_VERSION(4, 6, 0) > LINUX_VERSION_CODE && KERNEL_VERSION(4, 5, 0) <= LINUX_VERSION_CODE)
 int wfx_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		     enum ieee80211_ampdu_mlme_action action,
 		     struct ieee80211_sta *sta, u16 tid, u16 *ssn,
