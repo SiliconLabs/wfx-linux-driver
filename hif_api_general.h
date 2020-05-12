@@ -23,10 +23,7 @@
 #define HIF_COUNTER_MAX           7
 
 struct hif_msg {
-	// len is in fact little endian. However, it is widely used in the
-	// driver, so we declare it in native byte order and we reorder just
-	// before/after send/receive it (see bh.c).
-	u16    len;
+	__le16 len;
 	u8     id;
 	u8     reserved:1;
 	u8     interface:2;
@@ -285,8 +282,7 @@ struct hif_sl_msg_hdr {
 
 struct hif_sl_msg {
 	struct hif_sl_msg_hdr hdr;
-	// Same note than struct hif_msg
-	u16    len;
+	__le16 len;
 	u8     payload[];
 } __packed;
 

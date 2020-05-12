@@ -74,7 +74,6 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	_trace_piggyback(piggyback, false);
 
 	hif = (struct hif_msg *)skb->data;
-	le16_to_cpus((__le16 *)&hif->len);
 	WARN(hif->encrypted & 0x1, "unsupported encryption type");
 	if (hif->encrypted == 0x2) {
 		if (wfx_sl_decode(wdev, (void *)hif)) {
@@ -85,12 +84,12 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 			// piggyback is probably correct.
 			return piggyback;
 		}
-		le16_to_cpus((__le16 *)&hif->len);
-		computed_len = round_up(hif->len - sizeof(hif->len), 16)
-			       + sizeof(struct hif_sl_msg)
-			       + sizeof(struct hif_sl_tag);
+		computed_len =
+			round_up(le16_to_cpu(hif->len) - sizeof(hif->len), 16) +
+			sizeof(struct hif_sl_msg) +
+			sizeof(struct hif_sl_tag);
 	} else {
-		computed_len = round_up(hif->len, 2);
+		computed_len = round_up(le16_to_cpu(hif->len), 2);
 	}
 	if (computed_len != read_len) {
 		dev_err(wdev->dev, "inconsistent message length: %zu != %zu\n",
@@ -118,7 +117,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 		wdev->hif.rx_seqnum = (hif->seqnum + 1) % (HIF_COUNTER_MAX + 1);
 	}
 
-	skb_put(skb, hif->len);
+	skb_put(skb, le16_to_cpu(hif->len));
 	// wfx_handle_rx takes care on SKB livetime
 	wfx_handle_rx(wdev, skb);
 	if (!wdev->hif.tx_buffers_used)
@@ -172,7 +171,7 @@ static void tx_helper(struct wfx_dev *wdev, struct hif_msg *hif)
 	int ret;
 	void *data;
 	bool is_encrypted = false;
-	size_t len = hif->len;
+	size_t len = le16_to_cpu(hif->len);
 
 	WARN(len < sizeof(*hif), "try to send corrupted data");
 
@@ -199,7 +198,6 @@ static void tx_helper(struct wfx_dev *wdev, struct hif_msg *hif)
 	WARN(len > wdev->hw_caps.size_inp_ch_buf,
 	     "%s: request exceed WFx capability: %zu > %d\n", __func__,
 	     len, wdev->hw_caps.size_inp_ch_buf);
-	cpu_to_le16s(((struct hif_msg *)data)->len);
 	len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, len);
 	ret = wfx_data_write(wdev, data, len);
 	if (ret)
