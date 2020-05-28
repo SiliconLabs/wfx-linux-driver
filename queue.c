@@ -20,17 +20,6 @@ static inline s64 ktime_ms_delta(const ktime_t later, const ktime_t earlier)
 }
 #endif
 
-#if KERNEL_VERSION(5, 3, 10) > LINUX_VERSION_CODE
-#if KERNEL_VERSION(4, 19, 83) > LINUX_VERSION_CODE || KERNEL_VERSION(4, 20, 0) < LINUX_VERSION_CODE
-#if KERNEL_VERSION(4, 14, 153) > LINUX_VERSION_CODE || KERNEL_VERSION(4, 15, 0) < LINUX_VERSION_CODE
-static inline bool skb_queue_empty_lockless(const struct sk_buff_head *list)
-{
-	return READ_ONCE(list->next) == (const struct sk_buff *) list;
-}
-#endif
-#endif
-#endif
-
 void wfx_tx_lock(struct wfx_dev *wdev)
 {
 	atomic_inc(&wdev->tx_lock);

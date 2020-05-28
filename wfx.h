@@ -69,6 +69,17 @@ static inline u8 ieee80211_get_tid(struct ieee80211_hdr *hdr)
 	(n * sizeof(*(p)->member) + __must_be_array((p)->member) + sizeof(*(p)))
 #endif
 
+#if KERNEL_VERSION(5, 3, 10) > LINUX_VERSION_CODE
+#if KERNEL_VERSION(4, 19, 83) > LINUX_VERSION_CODE || KERNEL_VERSION(4, 20, 0) < LINUX_VERSION_CODE
+#if KERNEL_VERSION(4, 14, 153) > LINUX_VERSION_CODE || KERNEL_VERSION(4, 15, 0) < LINUX_VERSION_CODE
+static inline bool skb_queue_empty_lockless(const struct sk_buff_head *list)
+{
+	return READ_ONCE(list->next) == (const struct sk_buff *) list;
+}
+#endif
+#endif
+#endif
+
 struct hwbus_ops;
 
 struct wfx_dev {
