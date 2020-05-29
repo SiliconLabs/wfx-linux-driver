@@ -1,3 +1,9 @@
+Changes in 2.4.3
+----------------
+
+  * Fix 'scan timeout' issue (introduced in 2.4.2)
+  * Fix AC priority (introduced in 2.4)
+
 Changes in 2.4.2
 ----------------
 
