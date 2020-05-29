@@ -1,3 +1,12 @@
+Changes in 2.5
+--------------
+
+  * Introduce nl80211 vendor interface with these commands:
+     - force FastPS mode and duration
+     - burn anti-rollback bit
+     - change the PTA settings
+  * Fix interfaces balancing while using combo mode
+
 Changes in 2.4.3
 ----------------
 
