@@ -86,7 +86,6 @@ int wfx_update_pm(struct wfx_vif *wvif);
 
 // Other Helpers
 void wfx_reset(struct wfx_vif *wvif);
-int wfx_get_ps_timeout(struct wfx_vif *wvif, bool *force_ps);
 u32 wfx_rate_mask_to_hw(struct wfx_dev *wdev, u32 rates);
 
 #endif /* WFX_STA_H */
