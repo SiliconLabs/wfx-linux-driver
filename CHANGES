@@ -1,11 +1,28 @@
 Changes in 2.5
 --------------
 
+  * Enable A-MDPU reordering. This change relies on the BlockAck sessions
+    forwarded by the firmware. The firmware API < 3.4 don't forward this
+    information and cannot benefit of this feature (IPWHIFER-409)
+  * Enable TKIP/CCMP replay protection. This change relies on A-MPDU reordering.
+    It will cause a performaance hit on firmware API < 3.4 (IPWHIFER-410)
+  * Fix potential wrong TIM value when a station fall asleep (IPWHIFER-561,
+    IPWHIFER-590)
   * Introduce nl80211 vendor interface with these commands:
-     - force FastPS mode and duration
-     - burn anti-rollback bit
-     - change the PTA settings
-  * Fix interfaces balancing while using combo mode
+     - burn anti-rollback bit (IPWHIFER-586)
+     - change the PTA settings (IPWHIFER-576, IPWHIFER-573)
+  * Add way to force FastPs mode and duration from debugfs (IPWHIFER-587)
+  * When using combo with a firmware >= 3.8, enable FastPS (PS-Poll was
+    preferred until now)
+  * Fix interfaces balancing while using combo mode (IPWHIFER-616)
+  * The file "tx_power_loop", in debugfs, provides an access to the status of
+    the amplifier for the calibration process.
+  * Load the firmware a little faster:
+      - in 64ms instead of 130ms using SDIO bus
+      - in 78ms instead of 115ms using SPI bus
+  * Improve robusteness against malformed HIF messages
+  * Fix handling of frames without valid RSSI
+  * Add a tracepoint to check balancing of tthe interfaces
 
 Changes in 2.4.3
 ----------------
