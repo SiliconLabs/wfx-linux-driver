@@ -55,15 +55,6 @@ static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
 #define IEEE80211_PRIVACY_ANY  0
 #endif
 
-#if (KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE)
-static inline u8 ieee80211_get_tid(struct ieee80211_hdr *hdr)
-{
-	u8 *qc = ieee80211_get_qos_ctl(hdr);
-
-	return qc[0] & IEEE80211_QOS_CTL_TID_MASK;
-}
-#endif
-
 #if (KERNEL_VERSION(4, 17, 0) > LINUX_VERSION_CODE)
 #define struct_size(p, member, n) \
 	(n * sizeof(*(p)->member) + __must_be_array((p)->member) + sizeof(*(p)))
