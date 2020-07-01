@@ -235,34 +235,6 @@ HIF API (`0x5C8912F3`):
 
     $ echo -ne '\x08\x00\x02\x00\xF3\x12\x89\x5C' | iw dev wlan0 vendor send 0x90fd9f 0x21 -
 
-### How to force FastPS delay or PS-Poll usage?
-
-You use the command `PS_TIMEOUT` from the [nl80211 API] with attribute
-`PS_TIMEOUT`. To fix the FastPS delay to 32, use:
-
-    $ echo -ne '\x08\x00\x01\x00\x20\x00\x00\x00' | iw dev wlan0 vendor recv 0x90fd9f 0x11 -
-    vendor response: 08 00 01 00 20 00 00 00
-
-Note that the `PS_TIMEOUT` setting is lost if the interface type changes. So,
-it is recommended to launch `wpa_supplicant` (even if you don't run any
-command) before to change this value. It is even mandatory if you work with
-wlan1 (one of the rare case where wlan1 behavior is not the same than wlan0).
-
-Note that if the interface is wlan1, it has to be started (launching
-`wpa_supplicant` on the interface is sufficient) before to be able to access it.
-
-Also note that `PS_TIMEOUT` return the actual value (-1 if this value is not
-available).
-
-A few notes about the value of `PS_TIMEOUT`:
-  - it cannot been greater than 127ms.
-  - if 0, PS-Poll is used instead of FastPS
-  - if -1, it use value provided by mac80211
-
-Don't forget to enable power save to apply your settings:
-
-    $ iw dev wlan0 set power_save on
-
 ### How to set PTA parameters?
 
 You use the command `PTA_PARMS` from the [nl80211 API] with the attributes
@@ -687,6 +659,9 @@ The diagram below show the driver architecture:
 Upstream status
 ---------------
 
-A driver based on version 2.3.2 of this driver will be included with Kernel
+A driver based on version 2.3.2 of this driver is included with Kernel
 5.5. Development is relocated in kernel mainstream. This driver only get
-backports of Linux driver.
+backports of mainstream driver.
+
+The driver 2.4.3 is more-or-les equivalent of mainstream 5.8.And the driver 2.5
+will be equivalent of mainstream 5.9.
