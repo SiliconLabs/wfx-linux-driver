@@ -4,8 +4,10 @@ Changes in 2.5
   * Enable A-MDPU reordering. This change relies on the BlockAck sessions
     forwarded by the firmware. The firmware API < 3.4 don't forward this
     information and cannot benefit of this feature (IPWHIFER-409)
-  * Enable TKIP/CCMP replay protection. This change relies on A-MPDU reordering.
-    It will cause a performaance hit on firmware API < 3.4 (IPWHIFER-410)
+  * Enable TKIP/CCMP replay protection in kernel < 4.3. This change relies on
+    A-MPDU reordering. It will cause a performance hit on firmware API < 3.4.
+    This change will be also applied to kernel >= 4.3 in a next version of the
+    driver. (IPWHIFER-410)
   * Fix potential wrong TIM value when a station fall asleep (IPWHIFER-561,
     IPWHIFER-590)
   * Introduce nl80211 vendor interface with these commands:
@@ -22,7 +24,7 @@ Changes in 2.5
       - in 78ms instead of 115ms using SPI bus
   * Improve robusteness against malformed HIF messages
   * Fix handling of frames without valid RSSI
-  * Add a tracepoint to check balancing of tthe interfaces
+  * Add a tracepoint to check balancing of the interfaces
 
 Changes in 2.4.3
 ----------------
