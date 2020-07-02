@@ -76,7 +76,11 @@ void wfx_rx_cb(struct wfx_vif *wvif,
 	hdr->antenna = 0;
 
 	if (arg->rx_flags.encryp)
+#if (KERNEL_VERSION(4, 3, 0) > LINUX_VERSION_CODE)
 		hdr->flag |= RX_FLAG_DECRYPTED;
+#else
+		hdr->flag |= RX_FLAG_DECRYPTED | RX_FLAG_PN_VALIDATED;
+#endif
 
 	// Block ack negociation is offloaded by the firmware. However,
 	// re-ordering must be done by the mac80211.
