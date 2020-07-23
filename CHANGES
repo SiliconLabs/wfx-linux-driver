@@ -1,3 +1,11 @@
+Changes in 2.5.2
+----------------
+
+  * Fix BlockAck negotiation when the device is AP and MFP is enabled. This fix
+    support for WPA3. (IPWHIFER-627)
+  * Fix BlockAack negotiation when MFP is disabled but BSS is MFP capable.
+    (IPWHIFER-229)
+
 Changes in 2.5.1
 ----------------
 
