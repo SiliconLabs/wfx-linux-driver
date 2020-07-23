@@ -412,8 +412,12 @@ int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 
 	sta_priv->vif_id = wvif->id;
 
+#if (KERNEL_VERSION(3, 20, 0) <= LINUX_VERSION_CODE)
+	// Kernel < 3.20 may encounter problems to negociate BlockAck with MFP
+	// enabled. You may backport 64a8cef41 to solve it.
 	if (vif->type == NL80211_IFTYPE_STATION)
 		hif_set_mfp(wvif, sta->mfp, sta->mfp);
+#endif
 
 	// In station mode, the firmware interprets new link-id as a TDLS peer.
 	if (vif->type == NL80211_IFTYPE_STATION && !sta->tdls)
@@ -422,7 +426,11 @@ int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	wvif->link_id_map |= BIT(sta_priv->link_id);
 	WARN_ON(!sta_priv->link_id);
 	WARN_ON(sta_priv->link_id >= HIF_LINK_ID_MAX);
+#if (KERNEL_VERSION(3, 20, 0) > LINUX_VERSION_CODE)
+	hif_map_link(wvif, sta->addr, 0, sta_priv->link_id);
+#else
 	hif_map_link(wvif, sta->addr, sta->mfp ? 2 : 0, sta_priv->link_id);
+#endif
 
 	return 0;
 }
