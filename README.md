@@ -65,12 +65,12 @@ Example:
 
     &spi1 {
     	wfx {
-    		compatible = "silabs,wfx-spi";
+    		compatible = "silabs,wf200";
     		pinctrl-names = "default";
     		pinctrl-0 = <&wfx_irq &wfx_gpios>;
     		interrupts-extended = <&gpio 16 IRQ_TYPE_EDGE_RISING>;
     		wakeup-gpios = <&gpio 12 GPIO_ACTIVE_HIGH>;
-    		reset-gpios = <&gpio 13 GPIO_ACTIVE_HIGH>;
+    		reset-gpios = <&gpio 13 GPIO_ACTIVE_LOW>;
     		reg = <0>;
     		spi-max-frequency = <42000000>;
     	};
@@ -113,7 +113,7 @@ Example:
     	#size = <0>;
     
     	mmc@1 {
-    		compatible = "silabs,wfx-sdio";
+    		compatible = "silabs,wf200";
     		reg = <1>;
     		pinctrl-names = "default";
     		pinctrl-0 = <&wfx_wakeup>;
@@ -281,7 +281,7 @@ on SDIO bus.
 
 ### Using `spidev` besides `wfx-spi`
 
-It is possible to declare your device compatible with both `silabs,wfx-spi` and
+It is possible to declare your device compatible with both `silabs,wf200` and
 `spidev` (ie. using `/dev/spi0.0`). In this case, you will be able to use
 alternatively both drivers without rebooting or changing device tree.
 
@@ -653,7 +653,7 @@ The diagram below show the driver architecture:
 
  * `sta.c` and `scan.c` provide interfaces with kernel API.
 
- * Beside that, `data_tx.c` and `queue.c` are in chare of Tx data while
+ * Beside that, `data_tx.c` and `queue.c` are in charge of Tx data while
    `data_rx.c` is in charge of Rx data.
 
 Upstream status
