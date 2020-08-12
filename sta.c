@@ -696,23 +696,33 @@ void wfx_suspend_resume_mc(struct wfx_vif *wvif, enum sta_notify_cmd notify_cmd)
 	wfx_bh_request_tx(wvif->wdev);
 }
 
+#if (KERNEL_VERSION(4, 4, 69) > LINUX_VERSION_CODE) || \
+	(KERNEL_VERSION(4, 6, 0) > LINUX_VERSION_CODE && KERNEL_VERSION(4, 5, 0) <= LINUX_VERSION_CODE)
 #if (KERNEL_VERSION(4, 4, 0) > LINUX_VERSION_CODE)
 int wfx_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		     enum ieee80211_ampdu_mlme_action action,
 		     struct ieee80211_sta *sta, u16 tid,
 		     u16 *ssn, u8 buf_size)
 #else
-#if (KERNEL_VERSION(4, 4, 69) > LINUX_VERSION_CODE) || \
-	(KERNEL_VERSION(4, 6, 0) > LINUX_VERSION_CODE && KERNEL_VERSION(4, 5, 0) <= LINUX_VERSION_CODE)
 int wfx_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		     enum ieee80211_ampdu_mlme_action action,
 		     struct ieee80211_sta *sta, u16 tid, u16 *ssn,
 		     u8 buf_size, bool amsdu)
+#endif
+{
+	// Aggregation is implemented fully in firmware
+	switch (action) {
+	case IEEE80211_AMPDU_RX_START:
+	case IEEE80211_AMPDU_RX_STOP:
+		// Just acknowledge it to enable frame re-ordering
+		return 0;
+	default:
+		// Leave the firmware doing its business for tx aggregation
+		return -ENOTSUPP;
+	}}
 #else
 int wfx_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		     struct ieee80211_ampdu_params *params)
-#endif
-#endif
 {
 	/* Aggregation is implemented fully in firmware,
 	 * including block ack negotiation. Do not allow
@@ -724,6 +734,7 @@ int wfx_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 
 	return -ENOTSUPP;
 }
+#endif
 
 int wfx_add_chanctx(struct ieee80211_hw *hw,
 		    struct ieee80211_chanctx_conf *conf)
