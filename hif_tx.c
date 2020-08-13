@@ -616,17 +616,23 @@ int hif_sl_send_pub_keys(struct wfx_dev *wdev,
 	return ret;
 }
 
-int hif_sl_config(struct wfx_dev *wdev, const unsigned long *bitmap)
+int hif_sl_config(struct wfx_dev *wdev, unsigned long *bitmap)
 {
 	int ret;
 	struct hif_msg *hif;
 	struct hif_req_sl_configure *body = wfx_alloc_hif(sizeof(*body), &hif);
+	struct hif_cnf_sl_configure reply;
 
 	if (!hif)
 		return -ENOMEM;
 	memcpy(body->encr_bmp, bitmap, sizeof(body->encr_bmp));
 	wfx_fill_header(hif, -1, HIF_REQ_ID_SL_CONFIGURE, sizeof(*body));
-	ret = wfx_cmd_send(wdev, hif, NULL, 0, false);
+	if (wfx_api_older_than(wdev, 3, 4)) {
+		ret = wfx_cmd_send(wdev, hif, NULL, 0, false);
+	} else {
+		ret = wfx_cmd_send(wdev, hif, &reply, sizeof(reply), false);
+		memcpy(bitmap, reply.encr_bmp, sizeof(reply.encr_bmp));
+	}
 	kfree(hif);
 	return ret;
 }

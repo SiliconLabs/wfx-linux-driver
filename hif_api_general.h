@@ -359,6 +359,7 @@ struct hif_req_sl_configure {
 
 struct hif_cnf_sl_configure {
 	__le32 status;
+	u8     encr_bmp[32];
 } __packed;
 
 struct hif_req_prevent_rollback {

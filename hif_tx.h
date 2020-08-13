@@ -66,7 +66,7 @@ int hif_pta_enable(struct wfx_dev *wdev, bool enable);
 int hif_burn_prevent_rollback(struct wfx_dev *wdev, u32 magic_word);
 int hif_sl_set_mac_key(struct wfx_dev *wdev,
 		       const u8 *slk_key, int destination);
-int hif_sl_config(struct wfx_dev *wdev, const unsigned long *bitmap);
+int hif_sl_config(struct wfx_dev *wdev, unsigned long *bitmap);
 int hif_sl_send_pub_keys(struct wfx_dev *wdev,
 			 const u8 *pubkey, const u8 *pubkey_hmac);
 
