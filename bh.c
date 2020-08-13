@@ -118,6 +118,13 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 			// piggyback is probably correct.
 			return piggyback;
 		}
+		if (!wfx_is_secure_command(wdev, hif->id))
+			dev_warn(wdev->dev, "unexpected encrypted command\n");
+	} else if (wfx_is_secure_command(wdev, hif->id) &&
+		   !wfx_api_older_than(wdev, 3, 4)) {
+		dev_warn(wdev->dev, "drop expected encrypted command\n");
+		dev_kfree_skb(skb);
+		return piggyback;
 	}
 
 	if (!(hif->id & HIF_ID_IS_INDICATION)) {
