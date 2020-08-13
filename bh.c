@@ -87,6 +87,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	piggyback = le16_to_cpup((__le16 *)(skb->data + alloc_len - 2));
 	_trace_piggyback(piggyback, false);
 
+#ifdef CONFIG_WFX_SECURE_LINK
 	hif = (struct hif_msg *)skb->data;
 	WARN(hif->encrypted & 0x1, "unsupported encryption type");
 	if (hif->encrypted == 0x2) {
@@ -126,6 +127,21 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 		dev_kfree_skb(skb);
 		return piggyback;
 	}
+#else
+	hif = (struct hif_msg *)skb->data;
+	WARN(hif->encrypted & 0x3, "encryption is unsupported");
+	if (WARN(read_len < sizeof(struct hif_msg), "corrupted read"))
+		goto err;
+	computed_len = le16_to_cpu(hif->len);
+	computed_len = round_up(computed_len, 2);
+	if (computed_len != read_len) {
+		dev_err(wdev->dev, "inconsistent message length: %zu != %zu\n",
+			computed_len, read_len);
+		print_hex_dump(KERN_INFO, "hif: ", DUMP_PREFIX_OFFSET, 16, 1,
+			       hif, read_len, true);
+		goto err;
+	}
+#endif
 
 	if (!(hif->id & HIF_ID_IS_INDICATION)) {
 		(*is_cnf)++;
@@ -206,6 +222,7 @@ static void tx_helper(struct wfx_dev *wdev, struct hif_msg *hif)
 	hif->seqnum = wdev->hif.tx_seqnum;
 	wdev->hif.tx_seqnum = (wdev->hif.tx_seqnum + 1) % (HIF_COUNTER_MAX + 1);
 
+#ifdef CONFIG_WFX_SECURE_LINK
 	if (wfx_is_secure_command(wdev, hif->id)) {
 		len = round_up(len - sizeof(hif->len), 16) + sizeof(hif->len) +
 			sizeof(struct hif_sl_msg_hdr) +
@@ -223,6 +240,9 @@ static void tx_helper(struct wfx_dev *wdev, struct hif_msg *hif)
 	} else {
 		data = hif;
 	}
+#else
+	data = hif;
+#endif
 	WARN(len > wdev->hw_caps.size_inp_ch_buf,
 	     "%s: request exceed WFx capability: %zu > %d\n", __func__,
 	     len, wdev->hw_caps.size_inp_ch_buf);
