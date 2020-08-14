@@ -200,7 +200,12 @@ static int wfx_add_key(struct wfx_vif *wvif, struct ieee80211_sta *sta,
 			k.type = fill_sms4_group(&k.key.wapi_group_key, key);
 	} else if (key->cipher == WLAN_CIPHER_SUITE_AES_CMAC) {
 		k.type = fill_aes_cmac_group(&k.key.igtk_group_key, key, &seq);
+#if KERNEL_VERSION(5, 4, 0) > LINUX_VERSION_CODE
+		wfx_free_key(wdev, idx);
+		return -EOPNOTSUPP;
+#else
 		key->flags |= IEEE80211_KEY_FLAG_GENERATE_MMIE;
+#endif
 	} else {
 		dev_warn(wdev->dev, "unsupported key type %d\n", key->cipher);
 		wfx_free_key(wdev, idx);
