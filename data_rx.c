@@ -75,7 +75,7 @@ void wfx_rx_cb(struct wfx_vif *wvif,
 	hdr->signal = arg->rcpi_rssi / 2 - 110;
 	hdr->antenna = 0;
 
-	if (arg->rx_flags.encryp)
+	if (arg->encryp)
 #if (KERNEL_VERSION(4, 3, 0) > LINUX_VERSION_CODE)
 		hdr->flag |= RX_FLAG_DECRYPTED;
 #else
