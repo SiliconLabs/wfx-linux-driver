@@ -60,15 +60,11 @@ enum hif_indications_ids {
 	HIF_IND_ID_EVENT                = 0x85
 };
 
-struct hif_reset_flags {
+struct hif_req_reset {
 	u8     reset_stat:1;
 	u8     reset_all_int:1;
 	u8     reserved1:6;
 	u8     reserved2[3];
-} __packed;
-
-struct hif_req_reset {
-	struct hif_reset_flags reset_flags;
 } __packed;
 
 struct hif_cnf_reset {
