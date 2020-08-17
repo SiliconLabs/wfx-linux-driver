@@ -423,7 +423,6 @@ struct hif_ind_set_pm_mode_cmpl {
 	u8     reserved[3];
 } __packed;
 
-
 struct hif_req_start {
 	u8     mode;
 	u8     band;
