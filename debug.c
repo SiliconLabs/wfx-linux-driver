@@ -281,11 +281,11 @@ static ssize_t wfx_burn_slk_key_write(struct file *file,
 	u32 crc32;
 	int ret;
 
-	if (wdev->hw_caps.capabilities.link_mode == SEC_LINK_ENFORCED) {
+	if (wdev->hw_caps.link_mode == SEC_LINK_ENFORCED) {
 		dev_err(wdev->dev, "key was already burned on this device\n");
 		return -EINVAL;
 	}
-	if (wdev->hw_caps.capabilities.link_mode != SEC_LINK_EVAL) {
+	if (wdev->hw_caps.link_mode != SEC_LINK_EVAL) {
 		dev_err(wdev->dev, "this device does not support secure link\n");
 		return -EINVAL;
 	}

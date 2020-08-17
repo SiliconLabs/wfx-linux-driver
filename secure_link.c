@@ -243,8 +243,6 @@ static void wfx_sl_init_cfg(struct wfx_dev *wdev)
 
 int wfx_sl_init(struct wfx_dev *wdev)
 {
-	int link_mode = wdev->hw_caps.capabilities.link_mode;
-
 	INIT_WORK(&wdev->sl.key_renew_work, wfx_sl_renew_key);
 	init_completion(&wdev->sl.key_renew_done);
 	if (!memzcmp(wdev->pdata.slk_key, sizeof(wdev->pdata.slk_key)))
@@ -253,12 +251,12 @@ int wfx_sl_init(struct wfx_dev *wdev)
 		dev_info(wdev->dev, "this driver only support secure link API >= 2.0\n");
 		return -EIO;
 	}
-	if (link_mode == SEC_LINK_ENFORCED) {
+	if (wdev->hw_caps.link_mode == SEC_LINK_ENFORCED) {
 		bitmap_set(wdev->sl.commands, HIF_REQ_ID_SL_CONFIGURE, 1);
 		if (wfx_sl_key_exchange(wdev))
 			return -EIO;
 		wfx_sl_init_cfg(wdev);
-	} else if (link_mode == SEC_LINK_EVAL) {
+	} else if (wdev->hw_caps.link_mode == SEC_LINK_EVAL) {
 		if (hif_sl_set_mac_key(wdev, wdev->pdata.slk_key, SL_MAC_KEY_DEST_RAM))
 			return -EIO;
 		if (wfx_sl_key_exchange(wdev))
