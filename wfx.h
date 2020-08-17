@@ -130,10 +130,6 @@ struct wfx_vif {
 	struct tx_policy_cache	tx_policy_cache;
 	struct work_struct	tx_policy_upload_work;
 
-
-	int			filter_mcast_count;
-	u8			filter_mcast_addr[8][ETH_ALEN];
-
 	unsigned long		uapsd_mask;
 
 	struct ieee80211_scan_request *scan_req;
