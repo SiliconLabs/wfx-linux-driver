@@ -8,7 +8,26 @@
 #ifndef WFX_HIF_API_CMD_H
 #define WFX_HIF_API_CMD_H
 
+#include <linux/ieee80211.h>
+#include <linux/version.h>
+
 #include "hif_api_general.h"
+
+#if KERNEL_VERSION(5, 1, 0) > LINUX_VERSION_CODE
+#if KERNEL_VERSION(4, 19, 79) > LINUX_VERSION_CODE || KERNEL_VERSION(4, 20, 0) <= LINUX_VERSION_CODE
+#if KERNEL_VERSION(4, 14, 149) > LINUX_VERSION_CODE || KERNEL_VERSION(4, 15, 0) <= LINUX_VERSION_CODE
+#if KERNEL_VERSION(4, 9, 197) > LINUX_VERSION_CODE || KERNEL_VERSION(4, 10, 0) <= LINUX_VERSION_CODE
+#if KERNEL_VERSION(4, 4, 197) > LINUX_VERSION_CODE || KERNEL_VERSION(4, 5, 0) <= LINUX_VERSION_CODE
+struct element {
+	u8 id;
+	u8 datalen;
+	u8 data[];
+} __packed;
+#endif
+#endif
+#endif
+#endif
+#endif
 
 #define HIF_API_SSID_SIZE                      API_SSID_SIZE
 
@@ -93,12 +112,6 @@ struct hif_cnf_write_mib {
 	__le32 status;
 } __packed;
 
-struct hif_ie_tlv {
-	u8     type;
-	u8     length;
-	u8     data[];
-} __packed;
-
 struct hif_req_update_ie {
 	u8     beacon:1;
 	u8     probe_resp:1;
@@ -106,7 +119,7 @@ struct hif_req_update_ie {
 	u8     reserved1:5;
 	u8     reserved2;
 	__le16 num_ies;
-	struct hif_ie_tlv ie[];
+	struct element ie[];
 } __packed;
 
 struct hif_cnf_update_ie {
