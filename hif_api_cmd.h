@@ -246,7 +246,7 @@ struct hif_cnf_tx {
 struct hif_cnf_multi_transmit {
 	u8     num_tx_confs;
 	u8     reserved[3];
-	struct hif_cnf_tx   tx_conf_payload[];
+	struct hif_cnf_tx tx_conf_payload[];
 } __packed;
 
 enum hif_ri_flags_encrypt {
