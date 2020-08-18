@@ -370,13 +370,13 @@ struct hif_req_start {
 	u8     mode;
 	u8     band;
 	u8     channel_number;
-	u8     reserved;
-	__le32 reserved1;
+	u8     reserved1;
+	__le32 reserved2;
 	__le32 beacon_interval;
 	u8     dtim_period;
 	u8     short_preamble:1;
-	u8     reserved2:7;
-	u8     reserved3;
+	u8     reserved3:7;
+	u8     reserved4;
 	u8     ssid_length;
 	u8     ssid[IEEE80211_MAX_SSID_LEN];
 	__le32 basic_rate_set;
