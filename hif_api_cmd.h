@@ -29,8 +29,6 @@ struct element {
 #endif
 #endif
 
-#define HIF_API_SSID_SIZE                      API_SSID_SIZE
-
 enum hif_requests_ids {
 	HIF_REQ_ID_RESET                = 0x0a,
 	HIF_REQ_ID_READ_MIB             = 0x05,
@@ -128,7 +126,7 @@ struct hif_cnf_update_ie {
 
 struct hif_ssid_def {
 	__le32 ssid_length;
-	u8     ssid[HIF_API_SSID_SIZE];
+	u8     ssid[IEEE80211_MAX_SSID_LEN];
 } __packed;
 
 #define HIF_API_MAX_NB_SSIDS                           2
@@ -324,7 +322,7 @@ struct hif_req_join {
 	u8     force_with_ind:1;
 	u8     reserved6:4;
 	__le32 ssid_length;
-	u8     ssid[HIF_API_SSID_SIZE];
+	u8     ssid[IEEE80211_MAX_SSID_LEN];
 	__le32 beacon_interval;
 	__le32 basic_rate_set;
 } __packed;
@@ -380,7 +378,7 @@ struct hif_req_start {
 	u8     reserved2:7;
 	u8     reserved3;
 	u8     ssid_length;
-	u8     ssid[HIF_API_SSID_SIZE];
+	u8     ssid[IEEE80211_MAX_SSID_LEN];
 	__le32 basic_rate_set;
 } __packed;
 
