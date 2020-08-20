@@ -317,8 +317,10 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 							  GPIOD_OUT_LOW);
 	if (IS_ERR(wdev->pdata.gpio_wakeup))
 		return ERR_CAST(wdev->pdata.gpio_wakeup);
+#if (KERNEL_VERSION(4, 19, 0) <= LINUX_VERSION_CODE)
 	if (wdev->pdata.gpio_wakeup)
 		gpiod_set_consumer_name(wdev->pdata.gpio_wakeup, "wfx wakeup");
+#endif
 	wfx_sl_fill_pdata(dev, &wdev->pdata);
 
 	mutex_init(&wdev->conf_mutex);

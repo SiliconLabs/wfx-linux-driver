@@ -289,7 +289,9 @@ static int wfx_spi_probe(struct spi_device *func)
 		dev_warn(&func->dev,
 			 "gpio reset is not defined, trying to load firmware anyway\n");
 	} else {
+#if (KERNEL_VERSION(4, 19, 0) <= LINUX_VERSION_CODE)
 		gpiod_set_consumer_name(bus->gpio_reset, "wfx reset");
+#endif
 #if (KERNEL_VERSION(5, 5, 5) > LINUX_VERSION_CODE)
 		gpiod_set_value_cansleep(bus->gpio_reset, invert ? 0 : 1);
 		usleep_range(100, 150);
