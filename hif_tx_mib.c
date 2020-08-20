@@ -8,11 +8,17 @@
  */
 
 #include <linux/etherdevice.h>
+#include <linux/version.h>
 
 #include "wfx.h"
 #include "hif_tx.h"
 #include "hif_tx_mib.h"
 #include "hif_api_mib.h"
+
+#if (KERNEL_VERSION(5, 8, 0) > LINUX_VERSION_CODE)
+#define flex_array_size(p, member, count)				\
+	count * sizeof(*(p)->member) + __must_be_array((p)->member)
+#endif
 
 int hif_set_output_power(struct wfx_vif *wvif, int val)
 {
