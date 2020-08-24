@@ -483,8 +483,14 @@ static void wfx_set_mfp_ap(struct wfx_vif *wvif)
 
 	if (ptr) {
 		ptr += pairwise_cipher_suite_count_offset;
+		if (WARN_ON(ptr > (u16 *)skb_tail_pointer(skb)))
+			return;
 		ptr += 1 + pairwise_cipher_suite_size * *ptr;
+		if (WARN_ON(ptr > (u16 *)skb_tail_pointer(skb)))
+			return;
 		ptr += 1 + akm_suite_size * *ptr;
+		if (WARN_ON(ptr > (u16 *)skb_tail_pointer(skb)))
+			return;
 		hif_set_mfp(wvif, *ptr & BIT(7), *ptr & BIT(6));
 	}
 }
