@@ -661,9 +661,26 @@ The diagram below show the driver architecture:
 Upstream status
 ---------------
 
-A driver based on version 2.3.2 of this driver is included with Kernel
-5.5. Development is relocated in kernel mainstream. This driver only get
-backports of mainstream driver.
+The developments of the driver is now located in the Linux kernel. This driver
+continues to live but it only get backports from the mainstream driver.
 
-The driver 2.4.3 is more-or-les equivalent of mainstream 5.8.And the driver 2.5
-will be equivalent of mainstream 5.9.
+The following table show versions equivalences between mainstream and this
+driver:
+
+    Kernel  |  This driver
+  ----------+------------------------------------
+    5.5     |  2.3.5
+    5.6     |  somewhere between 2.3.5 and 2.4
+    5.7     |  same than kernel 5.6
+    5.8     |  2.4.3
+    5.9     |  2.5.1
+    5.10    |  2.7
+
+Keep in mind that it is not an exact science. This driver add support for secure
+link and is able to compile with kernel up to 3.18. So the code is necessarily a
+bit different than the mainstream kernel. In addition, the patch from mainstream
+may apply directly to this repository and a few changes could be necessary.
+
+And also, keep in mind that some patches are automatically backported the Long
+Term Support of the kernel.
+
