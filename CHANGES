@@ -1,9 +1,27 @@
+Changes in 2.6
+--------------
+
+  * Module parameters 'gpio_reset' and 'gpio_wakeup' are not supported
+    anymore. These variables were considered obsolete by the mainstream. User
+    has to deal with Device Tree.
+  * Powersave is now enabled by default. There is no more impact of powersave on
+    Rx bandwidth for a while.
+  * Add a workaround for the error 'timeout while wake up chip'.
+    (WHIFER_FW-1442)
+  * Secure link does not accept unexpected unencrypted packets anymore (only for
+    API >= 3.4).
+  * Fix support for sending of protected multicast management frames.
+    (IPWHIFER-636)
+  * Fix potential race during interface initialization.
+  * Allow to scan while acting as an AP. The firmware support this feature but
+    it was unfairly disabled in the driver.
+
 Changes in 2.5.2
 ----------------
 
   * Fix BlockAck negotiation when the device is AP and MFP is enabled. This fix
     support for WPA3. (IPWHIFER-627)
-  * Fix BlockAack negotiation when MFP is disabled but BSS is MFP capable.
+  * Fix BlockAck negotiation when MFP is disabled but BSS is MFP capable.
     (IPWHIFER-229)
 
 Changes in 2.5.1
