@@ -697,7 +697,7 @@ int wfx_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		return 0;
 	default:
 		// Leave the firmware doing its business for tx aggregation
-		return -ENOTSUPP;
+		return -EOPNOTSUPP;
 	}}
 #else
 int wfx_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
@@ -711,7 +711,7 @@ int wfx_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 		return 0;
 	default:
 		// Leave the firmware doing its business for tx aggregation
-		return -ENOTSUPP;
+		return -EOPNOTSUPP;
 	}
 }
 #endif
