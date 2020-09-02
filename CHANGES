@@ -1,5 +1,10 @@
-Changes in 2.6
---------------
+Changes in 2.6.1
+----------------
+
+  * Fix process error during delivery of release 2.6
+
+Changes in 2.6 (not released)
+-----------------------------
 
   * Module parameters 'gpio_reset' and 'gpio_wakeup' are not supported
     anymore. These variables were considered obsolete by the mainstream. User
