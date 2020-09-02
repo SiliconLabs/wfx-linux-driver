@@ -1,3 +1,12 @@
+Changes in 2.6.2
+----------------
+
+  * TKIP/CCMP replay protection is now fully enabled. It may cause some
+    bandwidth drop down with firmware older than 3.11.
+  * Fix reporting of MMIC errors. The frames with MMIC errors were dropped to
+    early and the EAP session was not renegotiated as expected.
+  * Fix documentation about nl80211 interface
+
 Changes in 2.6.1
 ----------------
 
