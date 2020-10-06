@@ -379,6 +379,51 @@ Obviously, you can disable UAPSD with:
 
     echo 0 > /sys/kernel/debug/ieee80211/phy*/netdev:wlan0/uapsd_queues
 
+### Improving scheduling on slow targets
+
+The wfx driver works with the high priority workqueue. It allows to
+limit the latency when waiting for the bus to complete the transactions.
+The gains appears when the bus is slow compared to the Wifi connection
+(either because the bandwidth of the bus is lower or because the HIF
+buffers are full of small frames). In this case, it can provide up to
+30% of throughput improvement.
+
+Unfortunately, when the CPU is slow, the driver tries hard to send
+frames to the device and the frames supplier has no time to execute. It
+ends with a frames shortage that decrease the overall performances.
+
+Therefore:
+  - apply the patch below if your CPU is slow (and whatever the speed of
+    the bus between the device and your host).
+  - don't apply this patch if you use the WF200 over a slow bus (eg.
+    SPI)
+  - it won't have any effect if your bus and your CPU are fast enough.
+
+```diff
+diff --git a/bh.c b/bh.c
+index 9f64fac6..2a53368c 100644
+--- a/bh.c
++++ b/bh.c
+@@ -336,7 +336,7 @@ void wfx_bh_request_rx(struct wfx_dev *wdev)
+        control_reg_read(wdev, &cur);
+        prev = atomic_xchg(&wdev->hif.ctrl_reg, cur);
+        complete(&wdev->hif.ctrl_ready);
+-       queue_work(system_highpri_wq, &wdev->hif.bh);
++       schedule_work(&wdev->hif.bh);
+
+        if (!(cur & CTRL_NEXT_LEN_MASK))
+                dev_err(wdev->dev, "unexpected control register value: length field is 0: %04x\n",
+@@ -351,7 +351,7 @@ void wfx_bh_request_rx(struct wfx_dev *wdev)
+  */
+ void wfx_bh_request_tx(struct wfx_dev *wdev)
+ {
+-       queue_work(system_highpri_wq, &wdev->hif.bh);
++       schedule_work(&wdev->hif.bh);
+ }
+
+ /*
+```
+
 Debugging
 ---------
 
