@@ -1,3 +1,10 @@
+Changes in 2.7
+--------------
+
+  * Improve QoS when bus is slow.
+  * Add a section in the README about possible scheduling improvements when the
+    CPU of the host is slow.
+
 Changes in 2.6.2
 ----------------
 
