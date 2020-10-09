@@ -122,9 +122,9 @@ static int hif_receive_indication(struct wfx_dev *wdev,
 	const struct hif_ind_rx *body = buf;
 
 	if (!wvif) {
-		dev_warn(wdev->dev, "ignore rx data for non-existent vif %d\n",
-			 hif->interface);
-		return 0;
+		dev_warn(wdev->dev, "%s: ignore rx data for non-existent vif %d\n",
+			 __func__, hif->interface);
+		return -EIO;
 	}
 	skb_pull(skb, sizeof(struct hif_msg) + sizeof(struct hif_ind_rx));
 	wfx_rx_cb(wvif, body, skb);
@@ -140,8 +140,8 @@ static int hif_event_indication(struct wfx_dev *wdev,
 	int type = le32_to_cpu(body->event_id);
 
 	if (!wvif) {
-		dev_warn(wdev->dev, "received event for non-existent vif\n");
-		return 0;
+		dev_warn(wdev->dev, "%s: received event for non-existent vif\n", __func__);
+		return -EIO;
 	}
 
 	switch (type) {
@@ -173,7 +173,10 @@ static int hif_pm_mode_complete_indication(struct wfx_dev *wdev,
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hif->interface);
 
-	WARN_ON(!wvif);
+	if (!wvif) {
+		dev_warn(wdev->dev, "%s: received event for non-existent vif\n", __func__);
+		return -EIO;
+	}
 	complete(&wvif->set_pm_mode_complete);
 
 	return 0;
@@ -185,7 +188,11 @@ static int hif_scan_complete_indication(struct wfx_dev *wdev,
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hif->interface);
 
-	WARN_ON(!wvif);
+	if (!wvif) {
+		dev_warn(wdev->dev, "%s: received event for non-existent vif\n", __func__);
+		return -EIO;
+	}
+
 	wfx_scan_complete(wvif);
 
 	return 0;
@@ -197,7 +204,10 @@ static int hif_join_complete_indication(struct wfx_dev *wdev,
 {
 	struct wfx_vif *wvif = wdev_to_wvif(wdev, hif->interface);
 
-	WARN_ON(!wvif);
+	if (!wvif) {
+		dev_warn(wdev->dev, "%s: received event for non-existent vif\n", __func__);
+		return -EIO;
+	}
 	dev_warn(wdev->dev, "unattended JoinCompleteInd\n");
 
 	return 0;
@@ -207,11 +217,15 @@ static int hif_suspend_resume_indication(struct wfx_dev *wdev,
 					 const struct hif_msg *hif,
 					 const void *buf)
 {
-	struct wfx_vif *wvif = wdev_to_wvif(wdev, hif->interface);
 	const struct hif_ind_suspend_resume_tx *body = buf;
+	struct wfx_vif *wvif;
 
 	if (body->bc_mc_only) {
-		WARN_ON(!wvif);
+		wvif = wdev_to_wvif(wdev, hif->interface);
+		if (!wvif) {
+			dev_warn(wdev->dev, "%s: received event for non-existent vif\n", __func__);
+			return -EIO;
+		}
 		if (body->resume)
 			wfx_suspend_resume_mc(wvif, STA_NOTIFY_AWAKE);
 		else
