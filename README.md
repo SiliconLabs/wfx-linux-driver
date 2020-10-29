@@ -6,22 +6,22 @@ Compiling and installing
 
 Compiling and installing the driver as a module is straightforward if your
 kernel sources are located in `/lib/modules/$(uname -r)/build`. Just change
-directory to driver source directory and run:
+directory to the driver source directory and run:
 
     make
     sudo make install
 
-If kernel sources are located somewhere else, change `KDIR` variable:
+If kernel sources are located somewhere else, change the `KDIR` variable:
 
     make KDIR=your_kernel_directory
     sudo make KDIR=your_kernel_directory install
 
-Note that driver is called `wfx.ko` and is installed in
+Note that the driver is called `wfx.ko` and is installed in
 `/lib/modules/$(uname -r)/extra/`.
 
 At runtime, WFx module needs:
 - `/lib/firmware/wfm_wf200.sec`, the firmware
-- `/lib/firmware/wf200.pds`, configuration data of your hardware configuration.
+- `/lib/firmware/wf200.pds`, configuration data of your hardware.
   Check [README for `wfx-firmware` repository][1] for more information.
 
 These files can be retrieved from [Github `wfx-firmware` repository][2].
@@ -58,8 +58,8 @@ Optional properties:
    Without this property, you may encounter issues with warm boot.
    (Legacy: when compatible == "silabs,wfx-spi", the gpio is inverted.)
 
-Please consult [`Documentation/devicetree/bindings/spi/spi-bus.txt`][3] for optional
-SPI connection related properties,
+Please consult [`Documentation/devicetree/bindings/spi/spi-bus.txt`][3] for
+optional SPI connection related properties,
 
 Example:
 
@@ -82,8 +82,8 @@ Example:
 ### SDIO
 
 The driver is able to detect a WFx chip on SDIO bus by matching its Vendor ID
-and Product ID. However, driver will only provide limited features in this
-case. Thus declaring Wfx chip in device tree is strongly recommended (and may
+and Product ID. However, the driver will only provide limited features in this
+case. Thus, declaring Wfx chip in device tree is strongly recommended (and may
 become mandatory in the future).
 
 Required properties:
@@ -129,16 +129,16 @@ but it is rarely the case.
 ### Common properties
 
 Some properties are recognized either by SPI or SDIO versions:
-- `wakeup-gpios`: phandle of gpio that will be used to wake-up chip. Without
-  this property, driver will disable most of power saving features
+- `wakeup-gpios`: phandle of gpio that will be used to wake-up the chip.
+  Without this property, the driver will disable most power saving features.
 - `config-file`: Use an alternative file as PDS. Default is `wf200.pds`. Only
   necessary for development/debug purpose.
 - `slk_key`: String representing hexadecimal value of secure link key to
   use (only if driver is compiled with `CONFIG_WFX_SECURE_LINK`). Must contains
   64 hexadecimal digits.
 
-WFx driver also supports `mac-address` and `local-mac-address` as described in
-[`Documentation/devicetree/bindings/net/ethernet.txt`][5]
+The WFx driver also supports `mac-address` and `local-mac-address` as described
+in [`Documentation/devicetree/bindings/net/ethernet.txt`][5]
 
 [5]: https://www.kernel.org/doc/Documentation/devicetree/bindings/net/ethernet.txt
 
@@ -151,32 +151,34 @@ them in device tree or once driver is loaded with:
 
 ### How to use Secure Link?
 
-Secure link feature allows to encrypt communication between host and chip.
+The Secure link feature allows to encrypt communication between host and chip.
 
-First make sure that driver is compiled with `CONFIG_WFX_SECURE_LINK=y`. This
-option will pull mbedtls library in ths driver.
+First make sure that the driver is compiled with `CONFIG_WFX_SECURE_LINK=y`.
+This option will pull mbedtls library in the driver.
 
-Chip may have three mode:
+The chip may have three secure link modes:
 - enforced: a key is burned in chip OTP and secure link is mandatory
 - eval: no key is burned but secure link is possible.
 - unavailable: secure link is not possible
 
-Key can be set either using `slk_key` module parameter or using
-`slk_key` DT attribute. In both case, it should contains 64 hexadecimal
+The key can be set either using the `slk_key` module parameter or the
+`slk_key` DT attribute. In both case, it should contain 64 hexadecimal
 digits.
 
-If chip is in enforced mode, local key is compared with OTP key from chip. Chip
-binding can continue only if both keys are equal.
+If the chip is in enforced mode, the local key is compared with the OTP key from
+chip. Chip binding can continue only if both keys are equal.
 
-If chip is in eval mode, local key is sent to chip then process continue as in
-enforced mode. It should always succed since keys are garanteed to be the same.
+If the chip is in eval mode, the local key is sent to the chip then the process
+continues as in enforced mode. It should always succeed, since keys are
+guaranteed to be the same.
 
-If chip is in eval mode, user has also possibility to burn a key in OTP.
-Operation is irreversible and chip will automaticaly use enforced mode on next
-reset. User has to write key to
+If the chip is in eval mode, the user has also the possibility to burn a key in
+OTP. This operation is irreversible and the chip will automatically use enforced
+mode on the next reset. The user has to write the key to
 `/sys/kernel/debug/ieee80211/phy*/wfx/burn_slk_key`. In order to avoid
-unintended key burning, user must follow key with its CRC32. Whole data must be
-formatted as a string of hexadecimal digits. So overall process is:
+unintended key burning, the user must follow the key with its CRC32. The whole
+data must be formatted as a string of hexadecimal digits. So, the overall
+process is:
 
     $ dd if=/dev/urandom bs=8 count=1 > secret
     $ ( xxd -p secret; crc32 secret ) | tr -d '\n' > secret+crc32
@@ -184,14 +186,15 @@ formatted as a string of hexadecimal digits. So overall process is:
 
 ### How to use nl80211 interface?
 
-The driver offer a nl80211 interface from some tasks. The simplest way to
-access to this API is to use the command `iw vendor`:
+The driver offers a nl80211 interface for some tasks. The simplest way to
+access this API is to use the `iw vendor` command:
 
      iw dev <devname> vendor recvbin <oui> <subcmd> <filename|-|hex data>
      iw dev <devname> vendor recv <oui> <subcmd> <filename|-|hex data>
      iw dev <devname> vendor send <oui> <subcmd> <filename|-|hex data>
 
 You can find necessary constants in `nl80211_wfx.h`:
+
   - The `oui` is always `0x90fd9f`
   - `subcmd` can be `0x11` (`PS_TIMEOUT`), `0x21` (`BURN_PREVENT_ROLLBACK`) and
     `0x31` (`PTA_PARMS`)
@@ -224,14 +227,14 @@ Note that attribute ID not recognized by command is just ignored:
     $ echo -ne '\x08\x00\x02\x00\xFF\xFF\xFF\xFF' | iw dev wlan0 vendor recv 0x90fd9f 0x11 -
     vendor response: 08 00 01 00 40 00 00 00
 
-In case you want to get ride of `iw`, you can use `libnl` directly (in C,
+In case you want to get rid of `iw`, you can use `libnl` directly (in C,
 python, etc...). `libnl` allows to forge complete netlink packets.
 
 ### How to prevent firmware rollback?
 
 You use the command `BURN_PREVENT_ROLLBACK` from the [nl80211
 API](#how-to-use-nl80211-interface). This command will work only if it
-receive attribute `ROLLBACK_MAGIC` with value defined in HIF API
+receives the `ROLLBACK_MAGIC` attribute with value defined in the HIF API
 (`0x5C8912F3`):
 
     $ echo -ne '\x08\x00\x02\x00\xF3\x12\x89\x5C' | iw dev wlan0 vendor send 0x90fd9f 0x21 -
@@ -239,9 +242,9 @@ receive attribute `ROLLBACK_MAGIC` with value defined in HIF API
 ### How to set PTA parameters?
 
 You use the command `PTA_PARMS` from the [nl80211
-API](#how-to-use-nl80211-interface) with the attributes ` PTA_SETTINGS`,
+API](#how-to-use-nl80211-interface) with the attributes `PTA_SETTINGS`,
 `PTA_PRIORITY` and `PTA_ENABLE`. See the HIF API for more information
-about content of these attribute.
+about content of these attributes.
 
 
 Advanced driver usage
@@ -249,15 +252,15 @@ Advanced driver usage
 
 ### How to get error messages?
 
-Run `dmesg` to display all message generated by WFx (or any drivers). Note that
-`dmesg -w` allow to display driver messages as they arrive.
+Run `dmesg` to display all messages generated by WFx (or any drivers). Note that
+`dmesg -w` allows to display driver messages as they arrive.
 
 
 ### Reset device without rebooting target
 
-In order to reset device, device tree should correctly declare `reset-gpio`
+In order to reset device, the device tree should correctly declare `reset-gpio`
 (directly in device node for SPI and using `mmc-pwrseq` for SDIO). Once done,
-it is possible to dynamically bind and unbind device.
+it is possible to dynamically bind and unbind the device.
 
 For spi, it is possible to just unbind the device:
 
@@ -311,7 +314,7 @@ To make `wlan0` appear:
 
 ### Controlling gpio manually
 
-When device is not binded, you can control the reset gpio manually:
+When device is not binded, you can manually control the reset gpio:
 
     echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/unbind
     echo 13 > /sys/class/gpio/export
@@ -336,37 +339,40 @@ Of course, you can also remove the `reset-gpio` attribute from device tree.
 
 ### Loading PDS
 
-You can send PDS fragment to chip using `/sys/kernel/debug/ieee80211/phy*/wfx/send_pds`
+You can send PDS fragments to the chip using `/sys/kernel/debug/ieee80211/phy*/wfx/send_pds`
 
 You can directly execute `pds_compress` on this file:
 
     pds_compress YOUR.pds.in /sys/kernel/debug/ieee80211/phy*/wfx/send_pds
 
 
-## Send arbitray HIF request to chip
+## Send arbitrary HIF request to chip
 
-For debug purpose (and only for this purpose please), driver provides a way to
-send arbitrary HIF request to chip. Thus, data written to file
-`/sys/kernel/debug/ieee80211/phy*/wfx/send_hif_msg` will be sent directly to
-Ineo. For exemple:
+For debug purpose (and only for this purpose please), the driver provides a way
+to send arbitrary HIF requests to the chip. Thus, data written to file
+`/sys/kernel/debug/ieee80211/phy*/wfx/send_hif_msg` will be sent directly to the
+wfx. For example:
 
     echo -en "\x18\x00\x2b\x00\x04\x01\x01\x01\x00\x00\x01\x00\x0a\x32\x28\x48\x8c\x96\x6c\x02\x4c\x1d\x4c\x1d" | tee /sys/kernel/debug/ieee80211/phy*/wfx/send_hif_msg
 
-Payload should include HIF header containing message length and command id.
+The payload should include the HIF header containing message length and command
+id.
 
-Data must be sent in one call. In example above, `tee` is mandatory else `echo`
-tend to send string in multiple parts (it split data on `\n`).
+Data must be sent in one call. In the above example, `tee` is mandatory
+otherwise `echo` tends to send strings in multiple parts (it splits data on
+`\n`).
 
-Write will fail only if request is malformatted. So, it succeed even if
-firmware returns an error. It is possible to get confirmation returned by
-request by reading `send_hif_msg` after writing it (without closing it).  This
+Write will fail only if the request is mal-formatted. So, it succeeds even if
+the firmware returns an error. It is possible to get confirmation returned by
+requests by reading `send_hif_msg` after writing it (without closing it).  This
 process is difficult to support in shell.
 
-Obviously, User is responsible of consequence of this data to driver behavior.
-For exemple, sending a Tx request using this interface won't work.
+Obviously, the user is responsible of any consequence of sending this data to
+driver behavior.  For example, sending a Tx request using this interface won't
+work.
 
-If user want run exemple above with `sudo`, he must take care that pattern
-`phy*` won't work.
+If the user wants to run the example above with `sudo`, he must take care that
+the `phy*` pattern won't work.
 
 ### Enable/Disable UAPSD
 
@@ -390,7 +396,7 @@ buffers are full of small frames). In this case, it can provide up to
 
 Unfortunately, when the CPU is slow, the driver tries hard to send
 frames to the device and the frames supplier has no time to execute. It
-ends with a frames shortage that decrease the overall performances.
+ends with a frames shortage that decreases the overall performances.
 
 Therefore:
   - apply the patch below if your CPU is slow (and whatever the speed of
@@ -560,8 +566,7 @@ An alternative (less intrusive?) that does not imply driver reload is:
     $ echo spi0.0 > /sys/bus/spi/drivers/wfx-spi/bind
 
 
-Also note that `perf` command provides an alternative way to access to
-tracepoints:
+Also note that `perf` command provides an alternative way to access tracepoints:
 
     $ perf trace --no-syscalls --event 'wfx:*' sleep 10
 
@@ -573,7 +578,7 @@ However, for our needs, features are more limited than
 
 ### How to use gdb
 
-Before to start, you need to install `gdb-multiarch`:
+Before starting, you need to install `gdb-multiarch`:
 
     apt-get install gdb-multiarch
 
@@ -647,13 +652,13 @@ Next, follow these steps:
 
           (gdb) detach
 
-Note that it is possible to use it inside eclipse, however, process is far from
-being easy and many things must be done manually.
+Note that it is possible to use it inside eclipse, however, this process is far
+from being easy and many things must be done manually.
 
 Architecture
 ------------
 
-The diagram below show the driver architecture:
+The diagram below shows the driver architecture:
 
     ,------------------------------------.
     |                mac80211            |
@@ -684,7 +689,7 @@ The diagram below show the driver architecture:
    They are in charge of driver registration, device probing and low-level
    access to hardware.
 
- * No functions directly access to the hardware, they use abstraction provided
+ * No functions directly access the hardware, they use abstractions provided
    by `hwio.c` and `hwio.h`. Most of these functions are only used during
    device initialisation. Once device is initialized, only `wfx_data_read()`,
    `wfx_data_write()` and `control_reg_read()` are used.
@@ -707,25 +712,26 @@ Upstream status
 ---------------
 
 The developments of the driver is now located in the Linux kernel. This driver
-continues to live but it only get backports from the mainstream driver.
+continues to live but it only gets backports from the mainstream driver.
 
-The following table show versions equivalences between mainstream and this
+The following table shows version equivalences between mainstream and this
 driver:
 
-    Kernel  |  This driver
-  ----------+------------------------------------
-    5.5     |  2.3.5
-    5.6     |  somewhere between 2.3.5 and 2.4
-    5.7     |  same than kernel 5.6
-    5.8     |  2.4.3
-    5.9     |  2.5.1
-    5.10    |  2.7
+  |  Kernel  |  This driver
+  |----------|------------------------------------
+  |  5.5     |  2.3.5
+  |  5.6     |  somewhere between 2.3.5 and 2.4
+  |  5.7     |  same than kernel 5.6
+  |  5.8     |  2.4.3
+  |  5.9     |  2.5.1
+  |  5.10    |  2.7
 
-Keep in mind that it is not an exact science. This driver add support for secure
-link and is able to compile with kernel up to 3.18. So the code is necessarily a
-bit different than the mainstream kernel. In addition, the patch from mainstream
-may apply directly to this repository and a few changes could be necessary.
+Keep in mind that it is not an exact science. This driver adds support for
+secure link and is able to compile with kernel up to 3.18. So the code is
+necessarily a bit different from the mainstream kernel. In addition, the patches
+from mainstream may not apply directly to this repository and a few changes
+could be necessary.
 
-And also, keep in mind that some patches are automatically backported the Long
-Term Support of the kernel.
+And also, keep in mind that some patches are automatically backported in the
+Long Term Support of the kernel.
 
