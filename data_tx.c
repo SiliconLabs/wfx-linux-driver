@@ -7,6 +7,7 @@
  */
 #include <net/mac80211.h>
 #include <linux/etherdevice.h>
+#include <linux/moduleparam.h>
 
 #include "data_tx.h"
 #include "wfx.h"
@@ -20,6 +21,10 @@
 #if (KERNEL_VERSION(4, 16, 0) > LINUX_VERSION_CODE)
 #define sizeof_field(type, member) FIELD_SIZEOF(type, member)
 #endif
+
+static bool disable_qos = false;
+module_param(disable_qos, bool, 0644);
+MODULE_PARM_DESC(disable_qos, "remove all QoS data from output frames");
 
 static int wfx_get_hw_rate(struct wfx_dev *wdev,
 			   const struct ieee80211_tx_rate *rate)
@@ -342,6 +347,7 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta,
 	size_t offset = (size_t)skb->data & 3;
 	int wmsg_len = sizeof(struct hif_msg) +
 			sizeof(struct hif_req_tx) + offset;
+	u8 *qc;
 
 	WARN(queue_id >= IEEE80211_NUM_ACS, "unsupported queue_id");
 	wfx_tx_fixup_rates(tx_info->driver_rates);
@@ -386,6 +392,14 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta,
 	req->frame_format = wfx_tx_get_frame_format(tx_info);
 	if (tx_info->driver_rates[0].flags & IEEE80211_TX_RC_SHORT_GI)
 		req->short_gi = 1;
+
+	if (disable_qos) {
+		req->queue_id = 3 - IEEE80211_AC_BE;
+		if (ieee80211_is_data_qos(hdr->frame_control)) {
+			qc = ieee80211_get_qos_ctl(hdr);
+			*qc &= ~IEEE80211_QOS_CTL_TID_MASK;
+		}
+	}
 
 	// Auxiliary operations
 	wfx_tx_queues_put(wvif, skb);
