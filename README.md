@@ -196,36 +196,42 @@ access this API is to use the `iw vendor` command:
 You can find necessary constants in `nl80211_wfx.h`:
 
   - The `oui` is always `0x90fd9f`
-  - `subcmd` can be `0x11` (`PS_TIMEOUT`), `0x21` (`BURN_PREVENT_ROLLBACK`) and
-    `0x31` (`PTA_PARMS`)
+  - `subcmd` can be `0x21` (`BURN_PREVENT_ROLLBACK`) or `0x31` (`PTA_PARMS`)
   - The argument of the `subcmd` contains a list of attribute in Netlink
     attribute (`nla`) format: 16bits for size, 16bits for ID of the
     attribute, then data and finally padding to align on 32bits.
-  - Each attribute is identified by a  number: `1 = PS_TIMEOUT`,
-   `2 = ROLLBACK_MAGIC`, `3 = PTA_ENABLE`, `4 = PTA_PRIORITY`,
-   `5 = PTA_SETTINGS`
+  - Each attribute is identified by a  number: `2 = ROLLBACK_MAGIC`, `3 =
+    PTA_ENABLE`, `4 = PTA_PRIORITY`, `5 = PTA_SETTINGS`
   - The size and the format of each attribute is defined in variable
     `wfx_nl_policy`
 
-Thus, the command below run the command `PS_TIMEOUT` (`0x11`) with argument
-`PS_TIMEOUT` (ID `0x01`, then signed 32bit number) with value 0x64:
+Thus, the command below runs the `PTA_PARMS` command (`0x31`) with argument
+`PTA_STATE` (ID `0x03`, then signed 32bit number) with value 0x01:
 
-    $ echo -ne '\x08\x00\x01\x00\x64\x00\x00\x00' | iw dev wlan0 vendor send 0x90fd9f 0x11 -
+    $ echo -ne '\x08\x00\x03\x00\x01\x00\x00\x00' | iw dev wlan0 vendor send 0x90fd9f 0x31 -
 
-You also run command `PS_TIMEOUT` (`0x11`) with `recv` to retrieve value:
+You also run command `PTA_PARMS` (`0x31`) with `recv` to retrieve data
+associated to the `PTA_PARMS`. For this API, it composed of several attributes:
+`PTA_ENABLE`, `PTA_PRIORITY` and `PTA_SETTINGS`:
 
-    $ iw dev wlan0 vendor recv 0x001234 0x11 - < /dev/null
-    vendor response: 08 00 01 00 64 00 00 00
+    $ iw dev wlan0 vendor recv 0x90fd9f 0x31 - < /dev/null
+    vendor response: 18 00 04 00 00 00 00 00 00 00 00 00 00 00 00 00
+    vendor response: 00 00 00 00 00 00 00 00 08 00 05 00 00 00 00 00
+    vendor response: 05 00 03 00 00 00 00 00
 
 Finally nothing prevents you to write and read value in same time:
 
-    $ echo -ne '\x08\x00\x01\x00\x40\x00\x00\x00' | iw dev wlan0 vendor recv 0x90fd9f 0x11 -
-    vendor response: 08 00 01 00 40 00 00 00
+    $ echo -ne '\x08\x00\x01\x00\x40\x00\x00\x00' | iw dev wlan0 vendor recv 0x90fd9f 0x31 -
+    vendor response: 18 00 04 00 00 00 00 00 00 00 00 00 00 00 00 00
+    vendor response: 00 00 00 00 00 00 00 00 08 00 05 00 00 00 00 00
+    vendor response: 05 00 03 00 00 00 00 00
 
 Note that attribute ID not recognized by command is just ignored:
 
-    $ echo -ne '\x08\x00\x02\x00\xFF\xFF\xFF\xFF' | iw dev wlan0 vendor recv 0x90fd9f 0x11 -
-    vendor response: 08 00 01 00 40 00 00 00
+    $ echo -ne '\x08\x00\x02\x00\xFF\xFF\xFF\xFF' | iw dev wlan0 vendor recv 0x90fd9f 0x31 -
+    vendor response: 18 00 04 00 00 00 00 00 00 00 00 00 00 00 00 00
+    vendor response: 00 00 00 00 00 00 00 00 08 00 05 00 00 00 00 00
+    vendor response: 05 00 03 00 00 00 00 00
 
 In case you want to get rid of `iw`, you can use `libnl` directly (in C,
 python, etc...). `libnl` allows to forge complete netlink packets.
@@ -245,7 +251,6 @@ You use the command `PTA_PARMS` from the [nl80211
 API](#how-to-use-nl80211-interface) with the attributes `PTA_SETTINGS`,
 `PTA_PRIORITY` and `PTA_ENABLE`. See the HIF API for more information
 about content of these attributes.
-
 
 Advanced driver usage
 ---------------------
