@@ -1,3 +1,12 @@
+Changes in 2.8
+--------------
+
+  * Allow to disable QoS with:
+      echo 1 > /sys/module/wfx/parameters/disable_qos
+    This option aims to comply with certain ASD to pass WFA certification
+  * Improve handling of some very unexpected errors (IPWHIFER-652)
+  * Fix typos and improve documentation
+
 Changes in 2.7
 --------------
 
