@@ -18,8 +18,8 @@ Changes in 2.6.2
 ----------------
 
   * TKIP/CCMP replay protection is now fully enabled. It may cause some
-    bandwidth drop down with firmware older than 3.11.
-  * Fix reporting of MMIC errors. The frames with MMIC errors were dropped to
+    throughput drop down with firmware older than 3.11.
+  * Fix reporting of MMIC errors. The frames with MMIC errors were dropped too
     early and the EAP session was not renegotiated as expected.
   * Fix documentation about nl80211 interface
 
@@ -34,8 +34,8 @@ Changes in 2.6 (not released)
   * Module parameters 'gpio_reset' and 'gpio_wakeup' are not supported
     anymore. These variables were considered obsolete by the mainstream. User
     has to deal with Device Tree.
-  * Powersave is now enabled by default. There is no more impact of powersave on
-    Rx bandwidth for a while.
+  * Powersave is now enabled by default. There has been no more impact of
+    powersave on Rx bandwidth for a while.
   * Add a workaround for the error 'timeout while wake up chip'.
     (WHIFER_FW-1442)
   * Secure link does not accept unexpected unencrypted packets anymore (only for
@@ -43,14 +43,14 @@ Changes in 2.6 (not released)
   * Fix support for sending of protected multicast management frames.
     (IPWHIFER-636)
   * Fix potential race during interface initialization.
-  * Allow to scan while acting as an AP. The firmware support this feature but
+  * Allow to scan while acting as an AP. The firmware supports this feature but
     it was unfairly disabled in the driver.
 
 Changes in 2.5.2
 ----------------
 
-  * Fix BlockAck negotiation when the device is AP and MFP is enabled. This fix
-    support for WPA3. (IPWHIFER-627)
+  * Fix BlockAck negotiation when the device is AP and MFP is enabled. This
+    fixes support for WPA3. (IPWHIFER-627)
   * Fix BlockAck negotiation when MFP is disabled but BSS is MFP capable.
     (IPWHIFER-229)
 
@@ -65,12 +65,12 @@ Changes in 2.5
 
   * Enable A-MDPU reordering. This change relies on the BlockAck sessions
     forwarded by the firmware. The firmware API < 3.4 don't forward this
-    information and cannot benefit of this feature (IPWHIFER-409)
+    information and cannot benefit from this feature (IPWHIFER-409)
   * Enable TKIP/CCMP replay protection in kernel < 4.3. This change relies on
     A-MPDU reordering. It will cause a performance hit on firmware API < 3.4.
     This change will be also applied to kernel >= 4.3 in a next version of the
     driver. (IPWHIFER-410)
-  * Fix potential wrong TIM value when a station fall asleep (IPWHIFER-561,
+  * Fix potential wrong TIM value when a station falls asleep (IPWHIFER-561,
     IPWHIFER-590)
   * Introduce nl80211 vendor interface with these commands:
      - burn anti-rollback bit (IPWHIFER-586)
@@ -82,8 +82,8 @@ Changes in 2.5
   * The file "tx_power_loop", in debugfs, provides an access to the status of
     the amplifier for the calibration process.
   * Load the firmware a little faster:
-      - in 64ms instead of 130ms using SDIO bus
-      - in 78ms instead of 115ms using SPI bus
+      - in 64ms instead of 130ms using SDIO bus
+      - in 78ms instead of 115ms using SPI bus
   * Improve robusteness against malformed HIF messages
   * Fix handling of frames without valid RSSI
   * Add a tracepoint to check balancing of the interfaces
@@ -105,7 +105,7 @@ Changes in 2.4.1
 
   * Fix potential dead lock between join and scan (IPWHIFER-610)
   * Fix PS parameters when multiple vif are in use (IPWHIFER-605)
-  * Fix error report whan stating AP
+  * Fix error report when stating AP
   * Fix output of rx_stats (IPWHIFER-602)
   * Remove false positive warnings (IPWHIFER-607)
   * Add a knob to force LGI/SGI in internal version
@@ -216,8 +216,8 @@ Changes in 2.3
   * Include support for secure link. A firmware > 3.0 is necessary
     (IPWHIFER-376)
   * Driver does not follow short_frame_max_tx_count and long_frame_max_tx_count
-    anymore. These properties should be take into account by mac80211. This
-    change improve upstream TCP throughput.
+    anymore. These properties should be taken into account by mac80211. This
+    change improves upstream TCP throughput.
   * Clean up and improvement of Rate Control algorithm (aka minstrel
     algorithm). Also add sanity checks in received Tx confirmations.
     Improvements in noisy environments are expected (IPWHIFER-408,
@@ -231,7 +231,7 @@ Changes in 2.3
   * Drop support for legacy DT compatible "siliconlabs,wfx-wlan-spi"
   * Drop legacy aliases "wfx-*-intern", "wfx-core*" and "wfx-wlan-*"
   * Drop testmode (internal driver only)
-  * Drop development code that check acesses to control register
+  * Drop development code that check accesses to control register
   * Drop inaccurate "status" file from debugfs (IPWHIFER-260, IPWHIFER-345)
   * Fix NULL pointer dereference when firmware version is not supported
   * Fix errors when maximum number of accepted station is reached
@@ -268,8 +268,8 @@ Changes in 2.2.4
 ----------------
 
   * Fix potential reset failure. Increase delay after reset to 2ms.
-  * Expose send_hif_msg in debugfs. This debug feature allow to send any HIF
-    request to chip.
+  * Expose send_hif_msg in debugfs. This debug feature allows to send any HIF
+    requests to the chip.
 
 Changes in 2.2.3
 ----------------
@@ -326,7 +326,7 @@ Changes in 2.2
   * Start to clean up API and synchronize it with firmware (IPWHIFER-369).
   * Improve tolerance to firmware freeze.
   * Normal users are now allowed to access counters, rx_stats and status.
-    However, user have to access to debugfs itself. Administrators have to run:
+    However, users have to access to debugfs itself. Administrators have to run:
         chmod 755 /sys/kernel/debug
   * Allow to trace piggyback values.
   * Allow to trace BH stats.
@@ -348,8 +348,8 @@ Changes in 2.1.2
 ----------------
 
   * Driver included a workaround for Raspberry SPI driver described here: [1].
-    However, it was not enabled. This release improve this workaround and
-    enable it when necessary.
+    However, it was not enabled. This release improves this workaround and
+    enables it when necessary.
   * In internal versions, testmode did not return correct error code
 
 [1]: https://github.com/raspberrypi/linux/issues/2200
@@ -411,9 +411,9 @@ Changes in 2.0
   * Fix compatibility with CONFIG_VMAP_STACK
   * Fix possible race conditions during chip initialization
   * Fix issue with Short GI negotiation. Short GI was not enabled even if
-    remote support it
+    remote supports it
   * Fix issue with Tx power. Tx power was correctly restored after a scan
-  * Fix issue with HT features. HT features was not always reset between
+  * Fix issue with HT features. HT features were not always reset between
     sessions
   * Report error if configured MTU is not supported (> 1500 bytes)
 
@@ -423,7 +423,7 @@ Changes in 1.6
   * Fix maximum bitrate in IBSS mode
   * Show interface id in traces
   * Improve SDIO bandwidth by improving usage of block mode
-  * Improve SPI bandwidth by ensuring that buffer size are 32bits aligned
+  * Improve SPI bandwidth by ensuring that buffer sizes are 32bits aligned
   * Fix crash during join when BSS is NULL
   * Fix possible race condition while calling ieee80211_bss_get_ie()
   * Fix driver stuck during unbind (mainly with SDIO, but also with SPI)
@@ -458,54 +458,55 @@ Changes in 1.4.2
 Changes in 1.4.1
 ----------------
 
-  * Do not hide ldpc and sgi module parameter in ppublic version (revert change
+  * Do not hide ldpc and sgi module parameter in public version (revert change
     from 1.4)
 
 Changes in 1.4
 --------------
 
-  * Reset and Wake-up gpios should been declared from device tree. Process is
+  * Reset and Wake-up gpios should be declared from device tree. Process is
     described in README. YOU HAVE TO UPDATE YOUR DEVICE TREE (IPWHIFER-275,
     IPWHIFER-274)
   * Driver is now packed in one module named wfx.ko. Module aliases allow to
-    provide a bit compatibility but this change may break external processes.
+    provide a bit of compatibility but this change may break external
+    processes.
   * MAC address is fetched from chip OTP memory. macadress module parameter
     does not exist anymore. It is possible to change macadress using standard
-    Linux tools (or DT). Notice you need firmware >= 1.2.13 to make this work
-    properly
+    Linux tools (or DT). Note that you need firmware >= 1.2.13 to make this
+    work properly
   * Allow to use an external IRQ pin instead of SDIO native one (not yet
     supported by firmware)
   * Drop wfx_refclk module parameter
   * Drop bssloss_mitigation module parameter
   * Drop wfx_ba_*x_tids module parameters
-  * Module parameters ldpc and sgi was now available only for internal versions
+  * Module parameters ldpc and sgi are now available only for internal versions
   * Fix race condition during firmware loading
   * Fix buffer overflow while printing bootloader label
   * Fix potential memory allocation failure during firmware loading
   * Faster chip init (350ms vs 600ms previously)
-  * Network interface does not appears if PDS does not correctly load
-  * PDS name can now been overloaded from DT
-  * Driver try to test bus communication and report useful errors during
+  * Network interface does not appear if PDS does not correctly load
+  * PDS name can now be overloaded from DT
+  * Driver tries to test bus communication and reports useful errors during
     probing
   * Only useful messages are emitted during driver probing
   * Device name in DT has been changed to follow upstream rules from
     vendor-prefixes.txt (legacy naming are also recognized)
-  * Documentation explain how to properly setup SDIO host to allow to reset
-    chip without reboot whole target
+  * Documentation explains how to properly set up SDIO host to allow to reset
+    chip without rebooting whole target
   * Add documentation about debug features
   * Add documentation about driver architecture
-  * Driver now build if kernel does enable SPI or MMC support
+  * Driver now builds if kernel enables SPI or MMC support
   * You can now run 'make clean modules' without race condition between targets
-  * Driver now build without warning on various architecture/kernel versions
+  * Driver now builds without warning on various architecture/kernel versions
   * Checkpatch results are now reported during continuous integration (but
-    there is yet plenty of errors)
+    there are yet plenty of errors)
   * Spinlock bss_loss_lock is now a mutex
 
 Changes in 1.3.0
 ----------------
 
   * Driver is now maintained outside of reference kernel. This prominent change
-    may break some process.
+    may break some processes.
   * PDS format changes. It is now necessary to use a compressed PDS.
   * Driver now compiles with kernels from 4.4 to 4.18
   * Driver now autoloads when chip is detected on SDIO bus
