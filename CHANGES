@@ -1,3 +1,13 @@
+Changes in 2.8.1
+----------------
+
+  * Fix possible kernel panic (skb_over_panic) when the frames are queued
+    multiple time by mac80211. It seems it may happen when WF200 run as AP with
+    encryption enabled and a station with weird power saving or when a station
+    quickly disconnect and reconnect multiple times.  This bug has been
+    introduced in driver 2.6 with the commit "tx: drop useless field from struct
+    wfx_tx_priv".
+
 Changes in 2.8
 --------------
 
