@@ -225,7 +225,7 @@ static int wfx_send_pdata_pds(struct wfx_dev *wdev)
 
 	ret = request_firmware(&pds, wdev->pdata.file_pds, wdev->dev);
 	if (ret) {
-		dev_err(wdev->dev, "can't load PDS file %s\n",
+		dev_err(wdev->dev, "can't load antenna parameters (PDS file %s). The device may be instable.\n",
 			wdev->pdata.file_pds);
 		goto err1;
 	}
@@ -411,9 +411,7 @@ int wfx_probe(struct wfx_dev *wdev)
 
 	dev_dbg(wdev->dev, "sending configuration file %s\n",
 		wdev->pdata.file_pds);
-	err = wfx_send_pdata_pds(wdev);
-	if (err < 0)
-		goto err0;
+	wfx_send_pdata_pds(wdev);
 
 	wdev->poll_irq = false;
 	err = wdev->hwbus_ops->irq_subscribe(wdev->hwbus_priv);
