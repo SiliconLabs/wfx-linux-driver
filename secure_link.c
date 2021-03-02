@@ -6,12 +6,18 @@
 #include <linux/of.h>
 #include <linux/module.h>
 #include <linux/random.h>
-#include <crypto/sha.h>
+#include <linux/version.h>
 #include <mbedtls/md.h>
 #include <mbedtls/ecdh.h>
 #include <mbedtls/ccm.h>
 #include <mbedtls/sha256.h>
 #include <mbedtls/sha512.h>
+
+#if (KERNEL_VERSION(5, 10, 0) > LINUX_VERSION_CODE)
+#include <crypto/sha.h>
+#else
+#include <crypto/sha2.h>
+#endif
 
 #include "secure_link.h"
 #include "wfx.h"
