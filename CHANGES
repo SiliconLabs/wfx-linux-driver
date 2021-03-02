@@ -1,3 +1,14 @@
+Changes in 2.9
+--------------
+
+  * Allow to continue to use the device even if the PDS is not found (it is
+    still an error, but no more a fatal error)
+  * Fix possible warning storm because of the "incorrect sequence" warning
+    (IPWHIFER-668)
+  * Improve mangement of Content After DTIM Beacon (CAB) when a scan request is
+    in progress (IPWHIFER-670)
+  * Fix secure link compilation with kernel >= 5.10
+
 Changes in 2.8.1
 ----------------
 
