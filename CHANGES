@@ -1,10 +1,23 @@
+Changes in 2.10
+---------------
+
+  * Fix possible HIF_STATUS_BUSY (23) after a scan timeout (IPWHIFER-679)
+  * Improve traffic latency while scanning (WHIFER_FW-1752)
+  * Enable TDLS with last firmware versions (IPWHIFER-632)
+  * Ignore Power Save when an STA listen on same channel than an AP. Enabling PS
+    in this case is never usefull and may lead to confusing behaviors
+    (IPWHIFER-675)
+  * Fix Channel Switch Announcement in station mode (IPWHIFER-412)
+  * Update statistics counters with API 3.8
+  * Improve counter names and display
+
 Changes in 2.9
 --------------
 
   * Allow to continue to use the device even if the PDS is not found (it is
     still an error, but no more a fatal error)
   * Fix possible warning storm because of the "incorrect sequence" warning
-    (IPWHIFER-668)
+    (IPWHIFER-668, IPWHIFER-659)
   * Improve mangement of Content After DTIM Beacon (CAB) when a scan request is
     in progress (IPWHIFER-670)
   * Fix secure link compilation with kernel >= 5.10
@@ -17,7 +30,7 @@ Changes in 2.8.1
     encryption enabled and a station with weird power saving or when a station
     quickly disconnect and reconnect multiple times.  This bug has been
     introduced in driver 2.6 with the commit "tx: drop useless field from struct
-    wfx_tx_priv".
+    wfx_tx_priv" (IPWHIFER-665)
 
 Changes in 2.8
 --------------
@@ -25,8 +38,9 @@ Changes in 2.8
   * Allow to disable QoS with:
       echo 1 > /sys/module/wfx/parameters/disable_qos
     This option aims to comply with certain ASD to pass WFA certification
-  * Improve handling of some very unexpected errors (IPWHIFER-652)
-  * Fix typos and improve documentation
+    (IPWHIFER-648)
+  * Improve handling of some very unexpected errors
+  * Fix typos and improve documentation (IPWHIFER-652)
 
 Changes in 2.7
 --------------
