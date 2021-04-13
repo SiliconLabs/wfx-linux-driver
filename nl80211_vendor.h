@@ -107,4 +107,4 @@ static const struct wiphy_vendor_command wfx_nl80211_vendor_commands[] = {
 };
 #endif
 
-#endif /* WFX_NL80211_VENDOR_H */
+#endif
