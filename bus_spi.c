@@ -42,8 +42,7 @@ struct wfx_spi_priv {
 };
 
 #if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
-/*
- * Read of control register need a particular attention because it should be
+/* Read of control register need a particular attention because it should be
  * done only after an IRQ raise. We can detect if this event happens by reading
  * control register twice (it is safe to read twice since we can garantee that
  * no data acess was done since IRQ raising). In add, this function optimize it
@@ -89,8 +88,7 @@ static int wfx_spi_read_ctrl_reg(struct wfx_spi_priv *bus, u16 *dst)
 }
 #endif
 
-/*
- * The chip reads 16bits of data at time and place them directly into (little
+/* The chip reads 16bits of data at time and place them directly into (little
  * endian) CPU register. So, the chip expects bytes order to be "B1 B0 B3 B2"
  * (while LE is "B0 B1 B2 B3" and BE is "B3 B2 B1 B0")
  *
@@ -140,8 +138,7 @@ static int wfx_spi_copy_from_io(void *priv, unsigned int addr,
 	ret = spi_sync(bus->func, &m);
 
 #if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
-	/* If last byte has not been overwritten, read ctrl_reg manually
-	 */
+	/* If last byte has not been overwritten, read ctrl_reg manually */
 	if (addr == WFX_REG_IN_OUT_QUEUE && !ret && dst8[count - 1] == 0xFF) {
 		dev_warn(bus->core->dev, "SPI DMA error detected (and resolved)\n");
 		ret = wfx_spi_read_ctrl_reg(bus, (u16 *)(dst8 + count - 2));
@@ -325,8 +322,7 @@ static int wfx_spi_remove(struct spi_device *func)
 	return 0;
 }
 
-/*
- * For dynamic driver binding, kernel does not use OF to match driver. It only
+/* For dynamic driver binding, kernel does not use OF to match driver. It only
  * use modalias and modalias is a copy of 'compatible' DT node with vendor
  * stripped.
  */
