@@ -56,7 +56,7 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request,
 	int vif = request->interface;
 	int ret;
 
-	// Do not wait for any reply if chip is frozen
+	/* Do not wait for any reply if chip is frozen */
 	if (wdev->chip_frozen)
 		return -ETIMEDOUT;
 
@@ -66,8 +66,9 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request,
 	mutex_lock(&wdev->hif_cmd.lock);
 	WARN(wdev->hif_cmd.buf_send, "data locking error");
 
-	// Note: call to complete() below has an implicit memory barrier that
-	// hopefully protect buf_send
+	/* Note: call to complete() below has an implicit memory barrier that
+	 * hopefully protect buf_send
+	 */
 	wdev->hif_cmd.buf_send = request;
 	wdev->hif_cmd.buf_recv = reply;
 	wdev->hif_cmd.len_recv = reply_len;
@@ -76,8 +77,9 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request,
 	wfx_bh_request_tx(wdev);
 
 	if (no_reply) {
-		// Chip won't reply. Give enough time to the wq to send the
-		// buffer.
+		/* Chip won't reply. Give enough time to the wq to send the
+		 * buffer.
+		 */
 		msleep(100);
 		wdev->hif_cmd.buf_send = NULL;
 		mutex_unlock(&wdev->hif_cmd.lock);
@@ -125,8 +127,9 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request,
 	return ret;
 }
 
-// This function is special. After HIF_REQ_ID_SHUT_DOWN, chip won't reply to any
-// request anymore. Obviously, only call this function during device unregister.
+/* This function is special. After HIF_REQ_ID_SHUT_DOWN, chip won't reply to any
+ * request anymore. Obviously, only call this function during device unregister.
+ */
 int hif_shutdown(struct wfx_dev *wdev)
 {
 	int ret;
@@ -285,7 +288,7 @@ int hif_stop_scan(struct wfx_vif *wvif)
 {
 	int ret;
 	struct hif_msg *hif;
-	// body associated to HIF_REQ_ID_STOP_SCAN is empty
+	/* body associated to HIF_REQ_ID_STOP_SCAN is empty */
 	wfx_alloc_hif(0, &hif);
 
 	if (!hif)
@@ -350,16 +353,17 @@ int hif_add_key(struct wfx_dev *wdev, const struct hif_req_add_key *arg)
 {
 	int ret;
 	struct hif_msg *hif;
-	// FIXME: only send necessary bits
+	/* FIXME: only send necessary bits */
 	struct hif_req_add_key *body = wfx_alloc_hif(sizeof(*body), &hif);
 
 	if (!hif)
 		return -ENOMEM;
-	// FIXME: swap bytes as necessary in body
+	/* FIXME: swap bytes as necessary in body */
 	memcpy(body, arg, sizeof(*body));
 	if (wfx_api_older_than(wdev, 1, 5))
-		// Legacy firmwares expect that add_key to be sent on right
-		// interface.
+		/* Legacy firmwares expect that add_key to be sent on right
+		 * interface.
+		 */
 		wfx_fill_header(hif, arg->int_id, HIF_REQ_ID_ADD_KEY,
 				sizeof(*body));
 	else
@@ -400,7 +404,7 @@ int hif_set_edca_queue_params(struct wfx_vif *wvif, u16 queue,
 	body->cw_max = cpu_to_le16(arg->cw_max);
 	body->tx_op_limit = cpu_to_le16(arg->txop * USEC_PER_TXOP);
 	body->queue_id = 3 - queue;
-	// API 2.0 has changed queue IDs values
+	/* API 2.0 has changed queue IDs values */
 	if (wfx_api_older_than(wvif->wdev, 2, 0) && queue == IEEE80211_AC_BE)
 		body->queue_id = HIF_QUEUE_ID_BACKGROUND;
 	if (wfx_api_older_than(wvif->wdev, 2, 0) && queue == IEEE80211_AC_BK)
@@ -422,7 +426,7 @@ int hif_set_pm(struct wfx_vif *wvif, bool ps, int dynamic_ps_timeout)
 		return -ENOMEM;
 	if (ps) {
 		body->enter_psm = 1;
-		// Firmware does not support more than 128ms
+		/* Firmware does not support more than 128ms */
 		body->fast_psm_idle_period = min(dynamic_ps_timeout * 2, 255);
 		if (body->fast_psm_idle_period)
 			body->fast_psm = 1;
@@ -593,7 +597,7 @@ int hif_sl_send_pub_keys(struct wfx_dev *wdev,
 			sizeof(*body));
 	ret = wfx_cmd_send(wdev, hif, NULL, 0, false);
 	kfree(hif);
-	// Compatibility with legacy secure link
+	/* Compatibility with legacy secure link */
 	if (ret == le32_to_cpu(HIF_STATUS_SLK_NEGO_SUCCESS))
 		ret = 0;
 	return ret;
@@ -634,7 +638,7 @@ int hif_sl_set_mac_key(struct wfx_dev *wdev, const u8 *slk_key, int destination)
 	wfx_fill_header(hif, -1, HIF_REQ_ID_SET_SL_MAC_KEY, sizeof(*body));
 	ret = wfx_cmd_send(wdev, hif, NULL, 0, false);
 	kfree(hif);
-	// Compatibility with legacy secure link
+	/* Compatibility with legacy secure link */
 	if (ret == le32_to_cpu(HIF_STATUS_SLK_SET_KEY_SUCCESS))
 		ret = 0;
 	return ret;

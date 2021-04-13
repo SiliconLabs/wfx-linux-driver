@@ -86,7 +86,7 @@ static const struct wiphy_vendor_command wfx_nl80211_vendor_commands[] = {
 		.doit = wfx_nl_burn_antirollback,
 		.maxattr = WFX_NL80211_ATTR_MAX - 1,
 	}, {
-		// Compat with iw
+		/* Compat with iw */
 		.info.vendor_id = WFX_NL80211_ID,
 		.info.subcmd = WFX_NL80211_SUBCMD_BURN_PREVENT_ROLLBACK_COMPAT,
 		.policy = VENDOR_CMD_RAW_DATA,
@@ -98,7 +98,7 @@ static const struct wiphy_vendor_command wfx_nl80211_vendor_commands[] = {
 		.doit = wfx_nl_pta_params,
 		.maxattr = WFX_NL80211_ATTR_MAX - 1,
 	}, {
-		// Compat with iw
+		/* Compat with iw */
 		.info.vendor_id = WFX_NL80211_ID,
 		.info.subcmd = WFX_NL80211_SUBCMD_PTA_PARMS_COMPAT,
 		.policy = VENDOR_CMD_RAW_DATA,

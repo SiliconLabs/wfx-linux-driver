@@ -62,7 +62,7 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m)
 
 	WARN(m->hdr.encrypted != 0x02, "packet is not encrypted");
 
-	// Other bytes of nonce are 0
+	/* Other bytes of nonce are 0 */
 	nonce[1] = m->hdr.seqnum;
 	if (wdev->sl.rx_seqnum != m->hdr.seqnum)
 		dev_warn(wdev->dev, "wrong encrypted message sequence: %d != %d\n",
@@ -97,7 +97,7 @@ int wfx_sl_encode(struct wfx_dev *wdev,
 	output->hdr.encrypted = 0x1;
 	output->len = input->len;
 	output->hdr.seqnum = wdev->sl.tx_seqnum;
-	// Other bytes of nonce are 0
+	/* Other bytes of nonce are 0 */
 	nonce[2] = wdev->sl.tx_seqnum;
 	wdev->sl.tx_seqnum++;
 	if (wdev->sl.tx_seqnum == slk_renew_period)
@@ -142,8 +142,9 @@ int wfx_sl_check_pubkey(struct wfx_dev *wdev,
 	if (ret)
 		goto end;
 
-	// FIXME: save Qp.Y or (reset it), concat it with ncp_public_key and
-	// use mbedtls_ecdh_read_public.
+	/* FIXME: save Qp.Y or (reset it), concat it with ncp_public_key and
+	 * use mbedtls_ecdh_read_public.
+	 */
 	memreverse(pubkey, sizeof(pubkey));
 	ret = mbedtls_mpi_read_binary(&wdev->sl.edch_ctxt.Qp.X, pubkey, API_NCP_PUB_KEY_SIZE);
 	if (ret)
@@ -166,7 +167,7 @@ int wfx_sl_check_pubkey(struct wfx_dev *wdev,
 	wdev->sl.rx_seqnum = 0;
 	wdev->sl.tx_seqnum = 0;
 	mbedtls_ccm_free(&wdev->sl.ccm_ctxt);
-	// Use the lower 16 bytes of the sha256 of the secret for AES key
+	/* Use the lower 16 bytes of the sha256 of the secret for AES key */
 	ret = mbedtls_ccm_setkey(&wdev->sl.ccm_ctxt, MBEDTLS_CIPHER_ID_AES,
 			secret_digest, 16 * BITS_PER_BYTE);
 

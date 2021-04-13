@@ -23,7 +23,7 @@ struct sl_context {
 	struct completion    key_renew_done;
 	struct work_struct   key_renew_work;
 	DECLARE_BITMAP(commands, 256);
-	mbedtls_ecdh_context edch_ctxt; // Only valid druing key negociation
+	mbedtls_ecdh_context edch_ctxt; /* Only valid druing key negociation */
 	mbedtls_ccm_context  ccm_ctxt;
 };
 

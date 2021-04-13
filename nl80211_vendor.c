@@ -74,7 +74,7 @@ int wfx_nl_pta_params(struct wiphy *wiphy, struct wireless_dev *widev,
 		return -EINVAL;
 #endif
 	if (nla) {
-		// User has to care about endianness of data it send.
+		/* User has to care about endianness of data it send. */
 		memcpy(&wdev->pta_settings, nla_data(nla),
 		       sizeof(wdev->pta_settings));
 		rc = hif_pta_settings(wdev, &wdev->pta_settings);

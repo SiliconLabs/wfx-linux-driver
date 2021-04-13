@@ -20,10 +20,10 @@
 static int hif_generic_confirm(struct wfx_dev *wdev,
 			       const struct hif_msg *hif, const void *buf)
 {
-	// All confirm messages start with status
+	/* All confirm messages start with status */
 	int status = le32_to_cpup((__le32 *)buf);
 	int cmd = hif->id;
-	int len = le16_to_cpu(hif->len) - 4; // drop header
+	int len = le16_to_cpu(hif->len) - 4; /* drop header */
 
 	WARN(!mutex_is_locked(&wdev->hif_cmd.lock), "data locking error");
 
@@ -106,7 +106,7 @@ static int hif_keys_indication(struct wfx_dev *wdev,
 {
 	const struct hif_ind_sl_exchange_pub_keys *body = buf;
 
-	// SL_PUB_KEY_EXCHANGE_STATUS_SUCCESS is used by legacy secure link
+	/* SL_PUB_KEY_EXCHANGE_STATUS_SUCCESS is used by legacy secure link */
 	if (body->status && body->status != HIF_STATUS_SLK_NEGO_SUCCESS)
 		dev_warn(wdev->dev, "secure link negotiation error\n");
 	wfx_sl_check_pubkey(wdev, body->ncp_pub_key, body->ncp_pub_key_mac);
@@ -256,7 +256,7 @@ static int hif_generic_indication(struct wfx_dev *wdev,
 		return 0;
 	case HIF_GENERIC_INDICATION_TYPE_RX_STATS:
 		mutex_lock(&wdev->rx_stats_lock);
-		// Older firmware send a generic indication beside RxStats
+		/* Older firmware send a generic indication beside RxStats */
 		if (!wfx_api_older_than(wdev, 1, 4))
 			dev_info(wdev->dev, "Rx test ongoing. Temperature: %d degrees C\n",
 				 body->data.rx_stats.current_temp);
@@ -309,7 +309,7 @@ static const struct {
 		"bus clock is too slow (<1kHz)" },
 	{ HIF_ERROR_HIF_RX_DATA_TOO_LARGE,
 		"HIF message too large" },
-	// Following errors only exists in old firmware versions:
+	/* Following errors only exists in old firmware versions: */
 	{ HIF_ERROR_HIF_TX_QUEUE_FULL,
 		"HIF messages queue is full" },
 	{ HIF_ERROR_HIF_BUS,
@@ -387,7 +387,7 @@ static const struct {
 	{ HIF_IND_ID_GENERIC,              hif_generic_indication },
 	{ HIF_IND_ID_ERROR,                hif_error_indication },
 	{ HIF_IND_ID_EXCEPTION,            hif_exception_indication },
-	// FIXME: allocate skb_p from hif_receive_indication and make it generic
+	/* FIXME: allocate skb_p from hif_receive_indication and make it generic */
 	//{ HIF_IND_ID_RX,                 hif_receive_indication },
 };
 
@@ -398,12 +398,13 @@ void wfx_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
 	int hif_id = hif->id;
 
 	if (hif_id == HIF_IND_ID_RX) {
-		// hif_receive_indication take care of skb lifetime
+		/* hif_receive_indication take care of skb lifetime */
 		hif_receive_indication(wdev, hif, hif->body, skb);
 		return;
 	}
-	// Note: mutex_is_lock cause an implicit memory barrier that protect
-	// buf_send
+	/* Note: mutex_is_lock cause an implicit memory barrier that protect
+	 * buf_send
+	 */
 	if (mutex_is_locked(&wdev->hif_cmd.lock) &&
 	    wdev->hif_cmd.buf_send &&
 	    wdev->hif_cmd.buf_send->id == hif_id) {
