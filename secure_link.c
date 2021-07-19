@@ -13,7 +13,7 @@
 #include <mbedtls/sha256.h>
 #include <mbedtls/sha512.h>
 
-#if (KERNEL_VERSION(5, 10, 0) > LINUX_VERSION_CODE)
+#if (KERNEL_VERSION(5, 11, 0) > LINUX_VERSION_CODE)
 #include <crypto/sha.h>
 #else
 #include <crypto/sha2.h>
