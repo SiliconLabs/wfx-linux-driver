@@ -1,3 +1,9 @@
+Changes in 2.10.1
+-----------------
+
+  * Fix compilation with kernel >= 3.13
+  * Fix compilation of CONFIG_WFX_SECURE_LINK with kernel 3.10.x.
+
 Changes in 2.10
 ---------------
 
