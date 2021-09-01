@@ -424,7 +424,9 @@ int wfx_probe(struct wfx_dev *wdev)
 
 	dev_dbg(wdev->dev, "sending configuration file %s\n",
 		wdev->pdata.file_pds);
-	wfx_send_pdata_pds(wdev);
+	err = wfx_send_pdata_pds(wdev);
+	if (err < 0 && err != -ENOENT)
+		goto err0;
 
 	wdev->poll_irq = false;
 	err = wdev->hwbus_ops->irq_subscribe(wdev->hwbus_priv);
