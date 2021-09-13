@@ -410,8 +410,7 @@ int wfx_probe(struct wfx_dev *wdev)
 
 	err = wfx_sl_init(wdev);
 	if (err && wdev->hw_caps.link_mode == SEC_LINK_ENFORCED) {
-		dev_err(wdev->dev,
-			"chip require secure_link, but can't negotiate it\n");
+		dev_err(wdev->dev, "chip require secure_link, but can't negotiate it\n");
 		goto bh_unregister;
 	}
 
@@ -438,8 +437,7 @@ int wfx_probe(struct wfx_dev *wdev)
 
 	wdev->pdata.gpio_wakeup = gpio_saved;
 	if (wdev->pdata.gpio_wakeup) {
-		dev_dbg(wdev->dev,
-			"enable 'quiescent' power mode with wakeup GPIO and PDS file %s\n",
+		dev_dbg(wdev->dev, "enable 'quiescent' power mode with wakeup GPIO and PDS file %s\n",
 			wdev->pdata.file_pds);
 		gpiod_set_value_cansleep(wdev->pdata.gpio_wakeup, 1);
 		control_reg_write(wdev, 0);
