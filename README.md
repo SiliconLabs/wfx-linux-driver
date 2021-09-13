@@ -731,6 +731,12 @@ driver:
   |  5.8     |  2.4.3
   |  5.9     |  2.5.1
   |  5.10    |  2.7
+  |  5.11    |  2.8.1
+  |  5.12    |  2.8.1
+  |  5.13    |  2.8.1
+  |  5.14    |  2.8.1
+  |  5.15    |  2.8.1
+  |  5.16    |  2.10.1
 
 Keep in mind that it is not an exact science. This driver adds support for
 secure link and is able to compile with kernel up to 3.18. So the code is
