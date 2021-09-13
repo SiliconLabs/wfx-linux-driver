@@ -380,7 +380,7 @@ static int wfx_tx_inner(struct wfx_vif *wvif, struct ieee80211_sta *sta,
 	/* Fill tx request */
 	req = (struct hif_req_tx *)hif_msg->body;
 	/* packet_id just need to be unique on device. 32bits are more than
-	 * necessary for that task, so we tae advantage of it to add some extra
+	 * necessary for that task, so we take advantage of it to add some extra
 	 * data for debug.
 	 */
 	req->packet_id = atomic_add_return(1, &wvif->wdev->packet_id) & 0xFFFF;
