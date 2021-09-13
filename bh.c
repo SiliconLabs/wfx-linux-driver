@@ -74,8 +74,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	int release_count;
 	int piggyback = 0;
 
-	WARN(read_len > round_down(0xFFF, 2) * sizeof(u16),
-	     "%s: request exceed the chip capability", __func__);
+	WARN(read_len > round_down(0xFFF, 2) * sizeof(u16), "request exceed the chip capability");
 
 	/* Add 2 to take into account piggyback size */
 	alloc_len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, read_len + 2);
@@ -248,7 +247,7 @@ static void tx_helper(struct wfx_dev *wdev, struct hif_msg *hif)
 	data = hif;
 #endif
 	WARN(len > wdev->hw_caps.size_inp_ch_buf,
-	     "%s: request exceed the chip capability: %zu > %d\n", __func__,
+	     "request exceed the chip capability: %zu > %d\n",
 	     len, wdev->hw_caps.size_inp_ch_buf);
 	len = wdev->hwbus_ops->align_size(wdev->hwbus_priv, len);
 	ret = wfx_data_write(wdev, data, len);
