@@ -130,6 +130,22 @@ static int hif_receive_indication(struct wfx_dev *wdev,
 	return 0;
 }
 
+static void show_ps_error(struct wfx_dev *wdev, int error)
+{
+	if (error == HIF_PS_ERROR_AP_NOT_RESP_TO_POLL)
+		dev_warn(wdev->dev, "AP has not replied to Poll request\n");
+	else if (error == HIF_PS_ERROR_AP_NOT_RESP_TO_UAPSD_TRIGGER)
+		dev_warn(wdev->dev, "AP has not replied to UAPSD trigger\n");
+	else if (error == HIF_PS_ERROR_AP_SENT_UNICAST_IN_DOZE)
+		dev_warn(wdev->dev, "AP send unexpected data while the chip has been announced asleep\n");
+	else if (error == HIF_PS_ERROR_AP_NO_DATA_AFTER_TIM)
+		dev_warn(wdev->dev, "AP tx queue status mismatches the TIM. Power saving is suboptimal\n");
+	else if (error == HIF_PS_ERROR_AP_BEACON_TSF_JITTING)
+		dev_warn(wdev->dev, "AP beacon periods are unstable. Increasing wake-up duration\n");
+	else
+		dev_warn(wdev->dev, "power saving error: %d\n", error);
+}
+
 static int hif_event_indication(struct wfx_dev *wdev,
 				const struct hif_msg *hif, const void *buf)
 {
@@ -154,12 +170,10 @@ static int hif_event_indication(struct wfx_dev *wdev,
 		dev_dbg(wdev->dev, "ignore BSSREGAINED indication\n");
 		break;
 	case HIF_EVENT_IND_PS_MODE_ERROR:
-		dev_warn(wdev->dev, "error while processing power save request: %d\n",
-			 le32_to_cpu(body->event_data.ps_mode_error));
+		show_ps_error(wdev, le32_to_cpu(body->event_data.ps_mode_error));
 		break;
 	default:
-		dev_warn(wdev->dev, "unhandled event indication: %.2x\n",
-			 type);
+		dev_warn(wdev->dev, "unhandled event indication: %.2x\n", type);
 		break;
 	}
 	return 0;
