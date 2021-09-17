@@ -118,29 +118,28 @@ struct wfx_vif {
 	struct ieee80211_channel *channel;
 	int			id;
 
+	unsigned long		uapsd_mask;
+
 	u32			link_id_map;
-
-
 	bool			after_dtim_tx_allowed;
-	bool			join_in_progress;
-
-	struct delayed_work	beacon_loss_work;
 	struct work_struct	update_tim_work;
+	struct completion	set_pm_mode_complete;
+
+	bool			join_in_progress;
+	struct delayed_work	beacon_loss_work;
 
 	struct wfx_queue	tx_queue[4];
 	struct tx_policy_cache	tx_policy_cache;
 	struct work_struct	tx_policy_upload_work;
 
-	unsigned long		uapsd_mask;
-
-	struct ieee80211_scan_request *scan_req;
-	struct work_struct	scan_work;
+	/* avoid some operations in parallel with scan */
 	struct mutex		scan_lock;
+	struct work_struct	scan_work;
 	struct completion	scan_complete;
 	int			scan_nb_chan_done;
 	bool			scan_abort;
+	struct ieee80211_scan_request *scan_req;
 
-	struct completion	set_pm_mode_complete;
 };
 
 static inline struct wfx_vif *wdev_to_wvif(struct wfx_dev *wdev, int vif_id)
