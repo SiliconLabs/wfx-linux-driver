@@ -1,3 +1,10 @@
+Changes in 2.11
+---------------
+
+  * Fix possible kernel crash when PDS was not correct
+  * Improve displayed information when power consumption is suboptimal
+  * Include various cosmetics changes from the Linux kernel
+
 Changes in 2.10.1
 -----------------
 
