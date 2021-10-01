@@ -77,15 +77,12 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request,
 	wfx_bh_request_tx(wdev);
 
 	if (no_reply) {
-		/* Chip won't reply. Give enough time to the wq to send the
-		 * buffer.
+		/* Chip won't reply. Ensure the wq has send the buffer before
+		 * to continue.
 		 */
-		msleep(100);
-		wdev->hif_cmd.buf_send = NULL;
-		mutex_unlock(&wdev->hif_cmd.lock);
-		if (cmd != HIF_REQ_ID_SL_EXCHANGE_PUB_KEYS)
-			mutex_unlock(&wdev->hif_cmd.key_renew_lock);
-		return 0;
+		flush_workqueue(system_highpri_wq);
+		ret = 0;
+		goto end;
 	}
 
 	if (wdev->poll_irq)
@@ -107,6 +104,7 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request,
 		ret = wdev->hif_cmd.ret;
 	}
 
+end:
 	wdev->hif_cmd.buf_send = NULL;
 	mutex_unlock(&wdev->hif_cmd.lock);
 
