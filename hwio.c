@@ -14,6 +14,8 @@
 #include "bus.h"
 #include "traces.h"
 
+#define WFX_HIF_BUFFER_SIZE 0x2000
+
 static int read32(struct wfx_dev *wdev, int reg, u32 *val)
 {
 	int ret;
@@ -102,7 +104,7 @@ static int indirect_read(struct wfx_dev *wdev, int reg, u32 addr,
 	u32 cfg;
 	u32 prefetch;
 
-	WARN_ON(len >= 0x2000);
+	WARN_ON(len >= WFX_HIF_BUFFER_SIZE);
 	WARN_ON(reg != WFX_REG_AHB_DPORT && reg != WFX_REG_SRAM_DPORT);
 
 	if (reg == WFX_REG_AHB_DPORT)
@@ -150,7 +152,7 @@ static int indirect_write(struct wfx_dev *wdev, int reg, u32 addr,
 {
 	int ret;
 
-	WARN_ON(len >= 0x2000);
+	WARN_ON(len >= WFX_HIF_BUFFER_SIZE);
 	WARN_ON(reg != WFX_REG_AHB_DPORT && reg != WFX_REG_SRAM_DPORT);
 	ret = write32(wdev, WFX_REG_BASE_ADDR, addr);
 	if (ret < 0)
