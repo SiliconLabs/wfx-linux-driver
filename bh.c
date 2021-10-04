@@ -291,11 +291,11 @@ static void ack_sdio_data(struct wfx_dev *wdev)
 {
 	u32 cfg_reg;
 
-	config_reg_read(wdev, &cfg_reg);
+	wfx_config_reg_read(wdev, &cfg_reg);
 	if (cfg_reg & 0xFF) {
 		dev_warn(wdev->dev, "chip reports errors: %02x\n",
 			 cfg_reg & 0xFF);
-		config_reg_write_bits(wdev, 0xFF, 0x00);
+		wfx_config_reg_write_bits(wdev, 0xFF, 0x00);
 	}
 }
 
@@ -334,7 +334,7 @@ void wfx_bh_request_rx(struct wfx_dev *wdev)
 {
 	u32 cur, prev;
 
-	control_reg_read(wdev, &cur);
+	wfx_control_reg_read(wdev, &cur);
 	prev = atomic_xchg(&wdev->hif.ctrl_reg, cur);
 	complete(&wdev->hif.ctrl_ready);
 	queue_work(system_highpri_wq, &wdev->hif.bh);
@@ -369,7 +369,7 @@ void wfx_bh_poll_irq(struct wfx_dev *wdev)
 	flush_workqueue(system_highpri_wq);
 	start = ktime_get();
 	for (;;) {
-		control_reg_read(wdev, &reg);
+		wfx_control_reg_read(wdev, &reg);
 		now = ktime_get();
 		if (reg & 0xFFF)
 			break;
