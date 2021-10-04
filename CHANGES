@@ -1,3 +1,11 @@
+Changes in 2.12
+---------------
+
+  * Fix chip start-up on some architecture (mono-core without premption?)
+  * Make easier the use of multiple PDS file. The user can extend the driver
+    with his board instead of juggling this wf200.pds.
+  * License issue in HIF API headers
+
 Changes in 2.11
 ---------------
 
