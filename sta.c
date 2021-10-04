@@ -37,7 +37,8 @@ u32 wfx_rate_mask_to_hw(struct wfx_dev *wdev, u32 rates)
 	int i;
 	u32 ret = 0;
 	/* The device only supports 2GHz */
-	struct ieee80211_supported_band *sband = wdev->hw->wiphy->bands[NL80211_BAND_2GHZ];
+	struct ieee80211_supported_band *sband =
+		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ];
 
 	for (i = 0; i < sband->n_bitrates; i++) {
 		if (rates & BIT(i)) {

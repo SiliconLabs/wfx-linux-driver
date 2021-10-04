@@ -163,9 +163,9 @@ static const struct hwbus_ops wfx_sdio_hwbus_ops = {
 	.copy_to_io = wfx_sdio_copy_to_io,
 	.irq_subscribe = wfx_sdio_irq_subscribe,
 	.irq_unsubscribe = wfx_sdio_irq_unsubscribe,
-	.lock			= wfx_sdio_lock,
-	.unlock			= wfx_sdio_unlock,
-	.align_size		= wfx_sdio_align_size,
+	.lock = wfx_sdio_lock,
+	.unlock = wfx_sdio_unlock,
+	.align_size = wfx_sdio_align_size,
 };
 
 static const struct of_device_id wfx_sdio_of_match[] = {
