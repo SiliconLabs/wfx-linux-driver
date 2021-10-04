@@ -370,22 +370,22 @@ static const struct {
 	int (*handler)(struct wfx_dev *wdev, const struct wfx_hif_msg *hif, const void *buf);
 } hif_handlers[] = {
 	/* Confirmations */
-	{ HIF_CNF_ID_TX,                   wfx_hif_tx_confirm },
-	{ HIF_CNF_ID_MULTI_TRANSMIT,       wfx_hif_multi_tx_confirm },
+	{ HIF_CNF_ID_TX,                wfx_hif_tx_confirm },
+	{ HIF_CNF_ID_MULTI_TRANSMIT,    wfx_hif_multi_tx_confirm },
 	/* Indications */
-	{ HIF_IND_ID_STARTUP,              wfx_hif_startup_indication },
-	{ HIF_IND_ID_WAKEUP,               wfx_hif_wakeup_indication },
-	{ HIF_IND_ID_JOIN_COMPLETE,        wfx_hif_join_complete_indication },
-	{ HIF_IND_ID_SET_PM_MODE_CMPL,     wfx_hif_pm_mode_complete_indication },
-	{ HIF_IND_ID_SCAN_CMPL,            wfx_hif_scan_complete_indication },
-	{ HIF_IND_ID_SUSPEND_RESUME_TX,    wfx_hif_suspend_resume_indication },
+	{ HIF_IND_ID_STARTUP,           wfx_hif_startup_indication },
+	{ HIF_IND_ID_WAKEUP,            wfx_hif_wakeup_indication },
+	{ HIF_IND_ID_JOIN_COMPLETE,     wfx_hif_join_complete_indication },
+	{ HIF_IND_ID_SET_PM_MODE_CMPL,  wfx_hif_pm_mode_complete_indication },
+	{ HIF_IND_ID_SCAN_CMPL,         wfx_hif_scan_complete_indication },
+	{ HIF_IND_ID_SUSPEND_RESUME_TX, wfx_hif_suspend_resume_indication },
 	{ HIF_IND_ID_SL_EXCHANGE_PUB_KEYS, wfx_hif_keys_indication },
-	{ HIF_IND_ID_EVENT,                wfx_hif_event_indication },
-	{ HIF_IND_ID_GENERIC,              wfx_hif_generic_indication },
-	{ HIF_IND_ID_ERROR,                wfx_hif_error_indication },
-	{ HIF_IND_ID_EXCEPTION,            wfx_hif_exception_indication },
+	{ HIF_IND_ID_EVENT,             wfx_hif_event_indication },
+	{ HIF_IND_ID_GENERIC,           wfx_hif_generic_indication },
+	{ HIF_IND_ID_ERROR,             wfx_hif_error_indication },
+	{ HIF_IND_ID_EXCEPTION,         wfx_hif_exception_indication },
 	/* FIXME: allocate skb_p from wfx_hif_receive_indication and make it generic */
-	//{ HIF_IND_ID_RX,                 wfx_hif_receive_indication },
+	//{ HIF_IND_ID_RX,              wfx_hif_receive_indication },
 };
 
 void wfx_handle_rx(struct wfx_dev *wdev, struct sk_buff *skb)
