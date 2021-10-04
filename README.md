@@ -352,7 +352,7 @@ You can directly execute `pds_compress` on this file:
     pds_compress YOUR.pds.in /sys/kernel/debug/ieee80211/phy*/wfx/send_pds
 
 
-## Send arbitrary HIF request to chip
+### Send arbitrary HIF request to chip
 
 For debug purpose (and only for this purpose please), the driver provides a way
 to send arbitrary HIF requests to the chip. Thus, data written to file
