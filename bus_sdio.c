@@ -10,6 +10,7 @@
 #include <linux/mmc/sdio_func.h>
 #include <linux/mmc/card.h>
 #include <linux/interrupt.h>
+#include <linux/of_device.h>
 #include <linux/of_irq.h>
 #include <linux/irq.h>
 
@@ -19,7 +20,28 @@
 #include "main.h"
 #include "bh.h"
 
-static const struct wfx_platform_data wfx_sdio_pdata = {
+static const struct wfx_platform_data pdata_wf200 = {
+	.file_fw = "wfm_wf200",
+	.file_pds = "wf200.pds",
+};
+
+static const struct wfx_platform_data pdata_brd4001a = {
+	.file_fw = "wfm_wf200",
+	.file_pds = "brd4001a.pds",
+};
+
+static const struct wfx_platform_data pdata_brd8022a = {
+	.file_fw = "wfm_wf200",
+	.file_pds = "brd8022a.pds",
+};
+
+static const struct wfx_platform_data pdata_brd8023a = {
+	.file_fw = "wfm_wf200",
+	.file_pds = "brd8023a.pds",
+};
+
+/* Legacy DT don't use it */
+static const struct wfx_platform_data pdata_wfx_sdio = {
 	.file_fw = "wfm_wf200",
 	.file_pds = "wf200.pds",
 };
@@ -169,8 +191,11 @@ static const struct hwbus_ops wfx_sdio_hwbus_ops = {
 };
 
 static const struct of_device_id wfx_sdio_of_match[] = {
-	{ .compatible = "silabs,wfx-sdio" },
-	{ .compatible = "silabs,wf200" },
+	{ .compatible = "silabs,wf200", .data = &pdata_wf200 },
+	{ .compatible = "silabs,brd4001a", .data = &pdata_brd4001a },
+	{ .compatible = "silabs,brd8022a", .data = &pdata_brd8022a },
+	{ .compatible = "silabs,brd8023a", .data = &pdata_brd8023a },
+	{ .compatible = "silabs,wfx-sdio", .data = &pdata_wfx_sdio },
 	{ },
 };
 MODULE_DEVICE_TABLE(of, wfx_sdio_of_match);
@@ -179,6 +204,7 @@ static int wfx_sdio_probe(struct sdio_func *func,
 			  const struct sdio_device_id *id)
 {
 	struct device_node *np = func->dev.of_node;
+	const struct wfx_platform_data *pdata;
 	struct wfx_sdio_priv *bus;
 	int ret;
 
@@ -193,7 +219,8 @@ static int wfx_sdio_probe(struct sdio_func *func,
 		return -ENOMEM;
 
 	if (np) {
-		if (!of_match_node(wfx_sdio_of_match, np)) {
+		pdata = of_device_get_match_data(&func->dev);
+		if (!pdata) {
 			dev_warn(&func->dev, "no compatible device found in DT\n");
 			return -ENODEV;
 		}
@@ -202,6 +229,7 @@ static int wfx_sdio_probe(struct sdio_func *func,
 		dev_warn(&func->dev, "device is not declared in DT, features will be limited\n");
 		/* FIXME: ignore VID/PID and only rely on device tree */
 		// return -ENODEV;
+		pdata = &pdata_wf200;
 	}
 
 	bus->func = func;
@@ -218,8 +246,7 @@ static int wfx_sdio_probe(struct sdio_func *func,
 	if (ret)
 		return ret;
 
-	bus->core = wfx_init_common(&func->dev, &wfx_sdio_pdata,
-				    &wfx_sdio_hwbus_ops, bus);
+	bus->core = wfx_init_common(&func->dev, pdata, &wfx_sdio_hwbus_ops, bus);
 	if (!bus->core) {
 		ret = -EIO;
 		goto sdio_release;

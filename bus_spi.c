@@ -26,12 +26,36 @@
 #define SET_WRITE 0x7FFF        /* usage: and operation */
 #define SET_READ 0x8000         /* usage: or operation */
 
-#define WFX_RESET_INVERTED 1
-
-static const struct wfx_platform_data wfx_spi_pdata = {
+static const struct wfx_platform_data pdata_wf200 = {
 	.file_fw = "wfm_wf200",
 	.file_pds = "wf200.pds",
 	.use_rising_clk = true,
+};
+
+static const struct wfx_platform_data pdata_brd4001a = {
+	.file_fw = "wfm_wf200",
+	.file_pds = "brd4001a.pds",
+	.use_rising_clk = true,
+};
+
+static const struct wfx_platform_data pdata_brd8022a = {
+	.file_fw = "wfm_wf200",
+	.file_pds = "brd8022a.pds",
+	.use_rising_clk = true,
+};
+
+static const struct wfx_platform_data pdata_brd8023a = {
+	.file_fw = "wfm_wf200",
+	.file_pds = "brd8023a.pds",
+	.use_rising_clk = true,
+};
+
+/* Legacy DT don't use it */
+static const struct wfx_platform_data pdata_wfx_spi = {
+	.file_fw = "wfm_wf200",
+	.file_pds = "wf200.pds",
+	.use_rising_clk = true,
+	.reset_inverted = true,
 };
 
 struct wfx_spi_priv {
@@ -251,9 +275,7 @@ static const struct hwbus_ops wfx_spi_hwbus_ops = {
 
 static int wfx_spi_probe(struct spi_device *func)
 {
-#if (KERNEL_VERSION(5, 5, 5) > LINUX_VERSION_CODE)
-	bool invert = spi_get_device_id(func)->driver_data & WFX_RESET_INVERTED;
-#endif
+	const struct wfx_platform_data *pdata;
 	struct wfx_spi_priv *bus;
 	int ret;
 
@@ -281,6 +303,11 @@ static int wfx_spi_probe(struct spi_device *func)
 		bus->need_swab = true;
 	spi_set_drvdata(func, bus);
 
+	pdata = (struct wfx_platform_data *)spi_get_device_id(func)->driver_data;
+	if (!pdata) {
+		dev_err(&func->dev, "unable to retrieve driver data (please report)\n");
+		return -ENOENT;
+	}
 	bus->gpio_reset = devm_gpiod_get_optional(&func->dev, "reset",
 						  GPIOD_OUT_LOW);
 	if (IS_ERR(bus->gpio_reset))
@@ -293,11 +320,11 @@ static int wfx_spi_probe(struct spi_device *func)
 		gpiod_set_consumer_name(bus->gpio_reset, "wfx reset");
 #endif
 #if (KERNEL_VERSION(5, 5, 5) > LINUX_VERSION_CODE)
-		gpiod_set_value_cansleep(bus->gpio_reset, invert ? 0 : 1);
+		gpiod_set_value_cansleep(bus->gpio_reset, pdata->reset_inverted ? 0 : 1);
 		usleep_range(100, 150);
-		gpiod_set_value_cansleep(bus->gpio_reset, invert ? 1 : 0);
+		gpiod_set_value_cansleep(bus->gpio_reset, pdata->reset_inverted ? 1 : 0);
 #else
-		if (spi_get_device_id(func)->driver_data & WFX_RESET_INVERTED)
+		if (pdata->reset_inverted)
 			gpiod_toggle_active_low(bus->gpio_reset);
 		gpiod_set_value_cansleep(bus->gpio_reset, 1);
 		usleep_range(100, 150);
@@ -306,8 +333,7 @@ static int wfx_spi_probe(struct spi_device *func)
 		usleep_range(2000, 2500);
 	}
 
-	bus->core = wfx_init_common(&func->dev, &wfx_spi_pdata,
-				    &wfx_spi_hwbus_ops, bus);
+	bus->core = wfx_init_common(&func->dev, pdata, &wfx_spi_hwbus_ops, bus);
 	if (!bus->core)
 		return -EIO;
 
@@ -327,16 +353,22 @@ static int wfx_spi_remove(struct spi_device *func)
  * stripped.
  */
 static const struct spi_device_id wfx_spi_id[] = {
-	{ "wfx-spi", WFX_RESET_INVERTED },
-	{ "wf200", 0 },
+	{ "wf200", (kernel_ulong_t)&pdata_wf200 },
+	{ "brd4001a", (kernel_ulong_t)&pdata_brd4001a },
+	{ "brd8022a", (kernel_ulong_t)&pdata_brd8022a },
+	{ "brd8023a", (kernel_ulong_t)&pdata_brd8023a },
+	{ "wfx-spi", (kernel_ulong_t)&pdata_wfx_spi },
 	{ },
 };
 MODULE_DEVICE_TABLE(spi, wfx_spi_id);
 
 #ifdef CONFIG_OF
 static const struct of_device_id wfx_spi_of_match[] = {
-	{ .compatible = "silabs,wfx-spi", .data = (void *)WFX_RESET_INVERTED },
 	{ .compatible = "silabs,wf200" },
+	{ .compatible = "silabs,brd4001a" },
+	{ .compatible = "silabs,brd8022a" },
+	{ .compatible = "silabs,brd8023a" },
+	{ .compatible = "silabs,wfx-spi" },
 	{ },
 };
 MODULE_DEVICE_TABLE(of, wfx_spi_of_match);
