@@ -51,7 +51,7 @@ int wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id)
 	return test_bit(cmd_id, wdev->sl.commands);
 }
 
-int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m)
+int wfx_sl_decode(struct wfx_dev *wdev, struct wfx_hif_sl_msg *m)
 {
 	int ret;
 	size_t clear_len = le16_to_cpu(m->len);
@@ -75,7 +75,7 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m)
 	ret = mbedtls_ccm_auth_decrypt(&wdev->sl.ccm_ctxt, payload_len,
 			(u8 *)nonce, sizeof(nonce), NULL, 0,
 			m->payload, output + sizeof(m->len),
-			tag, sizeof(struct hif_sl_tag));
+			tag, sizeof(struct wfx_hif_sl_tag));
 	if (ret) {
 		dev_err(wdev->dev, "mbedtls error: %08x\n", ret);
 		return -EIO;
@@ -86,7 +86,7 @@ int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m)
 }
 
 int wfx_sl_encode(struct wfx_dev *wdev,
-		  const struct hif_msg *input, struct hif_sl_msg *output)
+		  const struct wfx_hif_msg *input, struct wfx_hif_sl_msg *output)
 {
 	int payload_len =
 		round_up(le16_to_cpu(input->len) - sizeof(input->len), 16);
@@ -106,7 +106,7 @@ int wfx_sl_encode(struct wfx_dev *wdev,
 	ret = mbedtls_ccm_encrypt_and_tag(&wdev->sl.ccm_ctxt, payload_len,
 			(u8 *)nonce, sizeof(nonce), NULL, 0,
 			(u8 *)input + sizeof(input->len), output->payload,
-			tag, sizeof(struct hif_sl_tag));
+			tag, sizeof(struct wfx_hif_sl_tag));
 	if (ret) {
 		dev_err(wdev->dev, "mbedtls error: %08x\n", ret);
 		return -EIO;

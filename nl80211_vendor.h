@@ -62,7 +62,7 @@ static const struct nla_policy wfx_nl_policy[WFX_NL80211_ATTR_MAX] = {
 	[WFX_NL80211_ATTR_PTA_ENABLE]     = NLA_POLICY_MAX(NLA_U8, 1),
 	[WFX_NL80211_ATTR_PTA_PRIORITY]   = { .type = NLA_U32 },
 	[WFX_NL80211_ATTR_PTA_SETTINGS]   =
-		NLA_POLICY_EXACT_LEN(sizeof(struct hif_req_pta_settings)),
+		NLA_POLICY_EXACT_LEN(sizeof(struct wfx_hif_req_pta_settings)),
 };
 
 #if (KERNEL_VERSION(4, 20, 0) > LINUX_VERSION_CODE)

@@ -295,10 +295,10 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	hw->queues = 4;
 	hw->max_rates = 8;
 	hw->max_rate_tries = 8;
-	hw->extra_tx_headroom = sizeof(struct hif_sl_msg_hdr) +
-				sizeof(struct hif_msg)
-				+ sizeof(struct hif_req_tx)
-				+ 4 /* alignment */ + 8 /* TKIP IV */;
+	hw->extra_tx_headroom = sizeof(struct wfx_hif_sl_msg_hdr) +
+				sizeof(struct wfx_hif_msg) +
+				sizeof(struct wfx_hif_req_tx) +
+				4 /* alignment */ + 8 /* TKIP IV */;
 
 	hw->wiphy->n_vendor_commands = ARRAY_SIZE(wfx_nl80211_vendor_commands);
 	hw->wiphy->vendor_commands = wfx_nl80211_vendor_commands;

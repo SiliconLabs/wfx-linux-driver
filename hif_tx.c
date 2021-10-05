@@ -23,7 +23,7 @@ void wfx_init_hif_cmd(struct wfx_hif_cmd *hif_cmd)
 	mutex_init(&hif_cmd->key_renew_lock);
 }
 
-static void wfx_fill_header(struct hif_msg *hif, int if_id,
+static void wfx_fill_header(struct wfx_hif_msg *hif, int if_id,
 			    unsigned int cmd, size_t size)
 {
 	if (if_id == -1)
@@ -38,16 +38,16 @@ static void wfx_fill_header(struct hif_msg *hif, int if_id,
 	hif->interface = if_id;
 }
 
-static void *wfx_alloc_hif(size_t body_len, struct hif_msg **hif)
+static void *wfx_alloc_hif(size_t body_len, struct wfx_hif_msg **hif)
 {
-	*hif = kzalloc(sizeof(struct hif_msg) + body_len, GFP_KERNEL);
+	*hif = kzalloc(sizeof(struct wfx_hif_msg) + body_len, GFP_KERNEL);
 	if (*hif)
 		return (*hif)->body;
 	else
 		return NULL;
 }
 
-int wfx_cmd_send(struct wfx_dev *wdev, struct hif_msg *request,
+int wfx_cmd_send(struct wfx_dev *wdev, struct wfx_hif_msg *request,
 		 void *reply, size_t reply_len, bool no_reply)
 {
 	const char *mib_name = "";
@@ -131,7 +131,7 @@ end:
 int wfx_hif_shutdown(struct wfx_dev *wdev)
 {
 	int ret;
-	struct hif_msg *hif;
+	struct wfx_hif_msg *hif;
 
 	wfx_alloc_hif(0, &hif);
 	if (!hif)
@@ -149,9 +149,9 @@ int wfx_hif_shutdown(struct wfx_dev *wdev)
 int wfx_hif_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 {
 	int ret;
-	size_t buf_len = sizeof(struct hif_req_configuration) + len;
-	struct hif_msg *hif;
-	struct hif_req_configuration *body = wfx_alloc_hif(buf_len, &hif);
+	size_t buf_len = sizeof(struct wfx_hif_req_configuration) + len;
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_configuration *body = wfx_alloc_hif(buf_len, &hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -166,8 +166,8 @@ int wfx_hif_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len)
 int wfx_hif_reset(struct wfx_vif *wvif, bool reset_stat)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_reset *body = wfx_alloc_hif(sizeof(*body), &hif);
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_reset *body = wfx_alloc_hif(sizeof(*body), &hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -182,10 +182,10 @@ int wfx_hif_read_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id,
 		     void *val, size_t val_len)
 {
 	int ret;
-	struct hif_msg *hif;
-	int buf_len = sizeof(struct hif_cnf_read_mib) + val_len;
-	struct hif_req_read_mib *body = wfx_alloc_hif(sizeof(*body), &hif);
-	struct hif_cnf_read_mib *reply = kmalloc(buf_len, GFP_KERNEL);
+	struct wfx_hif_msg *hif;
+	int buf_len = sizeof(struct wfx_hif_cnf_read_mib) + val_len;
+	struct wfx_hif_req_read_mib *body = wfx_alloc_hif(sizeof(*body), &hif);
+	struct wfx_hif_cnf_read_mib *reply = kmalloc(buf_len, GFP_KERNEL);
 
 	if (!body || !reply) {
 		ret = -ENOMEM;
@@ -218,9 +218,9 @@ int wfx_hif_write_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id,
 		      void *val, size_t val_len)
 {
 	int ret;
-	struct hif_msg *hif;
-	int buf_len = sizeof(struct hif_req_write_mib) + val_len;
-	struct hif_req_write_mib *body = wfx_alloc_hif(buf_len, &hif);
+	struct wfx_hif_msg *hif;
+	int buf_len = sizeof(struct wfx_hif_req_write_mib) + val_len;
+	struct wfx_hif_req_write_mib *body = wfx_alloc_hif(buf_len, &hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -237,10 +237,10 @@ int wfx_hif_scan(struct wfx_vif *wvif, struct cfg80211_scan_request *req,
 		 int chan_start_idx, int chan_num)
 {
 	int ret, i;
-	struct hif_msg *hif;
-	size_t buf_len =
-		sizeof(struct hif_req_start_scan_alt) + chan_num * sizeof(u8);
-	struct hif_req_start_scan_alt *body = wfx_alloc_hif(buf_len, &hif);
+	struct wfx_hif_msg *hif;
+	size_t buf_len = sizeof(struct wfx_hif_req_start_scan_alt) +
+			 chan_num * sizeof(u8);
+	struct wfx_hif_req_start_scan_alt *body = wfx_alloc_hif(buf_len, &hif);
 
 	WARN(chan_num > HIF_API_MAX_NB_CHANNELS, "invalid params");
 	WARN(req->n_ssids > HIF_API_MAX_NB_SSIDS, "invalid params");
@@ -285,7 +285,7 @@ int wfx_hif_scan(struct wfx_vif *wvif, struct cfg80211_scan_request *req,
 int wfx_hif_stop_scan(struct wfx_vif *wvif)
 {
 	int ret;
-	struct hif_msg *hif;
+	struct wfx_hif_msg *hif;
 	/* body associated to HIF_REQ_ID_STOP_SCAN is empty */
 	wfx_alloc_hif(0, &hif);
 
@@ -301,8 +301,8 @@ int wfx_hif_join(struct wfx_vif *wvif, const struct ieee80211_bss_conf *conf,
 		 struct ieee80211_channel *channel, const u8 *ssid, int ssidlen)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_join *body = wfx_alloc_hif(sizeof(*body), &hif);
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_join *body = wfx_alloc_hif(sizeof(*body), &hif);
 
 	WARN_ON(!conf->beacon_int);
 	WARN_ON(!conf->basic_rates);
@@ -332,9 +332,9 @@ int wfx_hif_join(struct wfx_vif *wvif, const struct ieee80211_bss_conf *conf,
 int wfx_hif_set_bss_params(struct wfx_vif *wvif, int aid, int beacon_lost_count)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_set_bss_params *body =
-		wfx_alloc_hif(sizeof(*body), &hif);
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_set_bss_params *body = wfx_alloc_hif(sizeof(*body),
+								&hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -347,12 +347,12 @@ int wfx_hif_set_bss_params(struct wfx_vif *wvif, int aid, int beacon_lost_count)
 	return ret;
 }
 
-int wfx_hif_add_key(struct wfx_dev *wdev, const struct hif_req_add_key *arg)
+int wfx_hif_add_key(struct wfx_dev *wdev, const struct wfx_hif_req_add_key *arg)
 {
 	int ret;
-	struct hif_msg *hif;
+	struct wfx_hif_msg *hif;
 	/* FIXME: only send necessary bits */
-	struct hif_req_add_key *body = wfx_alloc_hif(sizeof(*body), &hif);
+	struct wfx_hif_req_add_key *body = wfx_alloc_hif(sizeof(*body), &hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -374,8 +374,8 @@ int wfx_hif_add_key(struct wfx_dev *wdev, const struct hif_req_add_key *arg)
 int wfx_hif_remove_key(struct wfx_dev *wdev, int idx)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_remove_key *body = wfx_alloc_hif(sizeof(*body), &hif);
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_remove_key *body = wfx_alloc_hif(sizeof(*body), &hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -390,9 +390,9 @@ int wfx_hif_set_edca_queue_params(struct wfx_vif *wvif, u16 queue,
 				  const struct ieee80211_tx_queue_params *arg)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_edca_queue_params *body = wfx_alloc_hif(sizeof(*body),
-							       &hif);
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_edca_queue_params *body = wfx_alloc_hif(sizeof(*body),
+								   &hif);
 
 	WARN_ON(arg->aifs > 255);
 	if (!hif)
@@ -417,8 +417,9 @@ int wfx_hif_set_edca_queue_params(struct wfx_vif *wvif, u16 queue,
 int wfx_hif_set_pm(struct wfx_vif *wvif, bool ps, int dynamic_ps_timeout)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_set_pm_mode *body = wfx_alloc_hif(sizeof(*body), &hif);
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_set_pm_mode *body = wfx_alloc_hif(sizeof(*body),
+							     &hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -439,8 +440,8 @@ int wfx_hif_start(struct wfx_vif *wvif, const struct ieee80211_bss_conf *conf,
 		  const struct ieee80211_channel *channel)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_start *body = wfx_alloc_hif(sizeof(*body), &hif);
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_start *body = wfx_alloc_hif(sizeof(*body), &hif);
 
 	WARN_ON(!conf->beacon_int);
 	if (!hif)
@@ -462,9 +463,9 @@ int wfx_hif_start(struct wfx_vif *wvif, const struct ieee80211_bss_conf *conf,
 int wfx_hif_beacon_transmit(struct wfx_vif *wvif, bool enable)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_beacon_transmit *body = wfx_alloc_hif(sizeof(*body),
-							     &hif);
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_beacon_transmit *body = wfx_alloc_hif(sizeof(*body),
+								 &hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -480,8 +481,8 @@ int wfx_hif_map_link(struct wfx_vif *wvif, bool unmap, u8 *mac_addr, int sta_id,
 		     bool mfp)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_map_link *body = wfx_alloc_hif(sizeof(*body), &hif);
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_map_link *body = wfx_alloc_hif(sizeof(*body), &hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -500,9 +501,9 @@ int wfx_hif_update_ie_beacon(struct wfx_vif *wvif,
 			     const u8 *ies, size_t ies_len)
 {
 	int ret;
-	struct hif_msg *hif;
-	int buf_len = sizeof(struct hif_req_update_ie) + ies_len;
-	struct hif_req_update_ie *body = wfx_alloc_hif(buf_len, &hif);
+	struct wfx_hif_msg *hif;
+	int buf_len = sizeof(struct wfx_hif_req_update_ie) + ies_len;
+	struct wfx_hif_req_update_ie *body = wfx_alloc_hif(buf_len, &hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -516,11 +517,11 @@ int wfx_hif_update_ie_beacon(struct wfx_vif *wvif,
 }
 
 int wfx_hif_pta_settings(struct wfx_dev *wdev,
-		     const struct hif_req_pta_settings *parms)
+			 const struct wfx_hif_req_pta_settings *parms)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_pta_settings *body = wfx_alloc_hif(sizeof(*body), &hif);
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_pta_settings *body = wfx_alloc_hif(sizeof(*body), &hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -534,8 +535,8 @@ int wfx_hif_pta_settings(struct wfx_dev *wdev,
 int wfx_hif_pta_priority(struct wfx_dev *wdev, u32 priority)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_pta_priority *body = wfx_alloc_hif(sizeof(*body), &hif);
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_pta_priority *body = wfx_alloc_hif(sizeof(*body), &hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -549,8 +550,8 @@ int wfx_hif_pta_priority(struct wfx_dev *wdev, u32 priority)
 int wfx_hif_pta_enable(struct wfx_dev *wdev, bool enable)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_pta_enable *body = wfx_alloc_hif(sizeof(*body), &hif);
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_pta_enable *body = wfx_alloc_hif(sizeof(*body), &hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -564,8 +565,8 @@ int wfx_hif_pta_enable(struct wfx_dev *wdev, bool enable)
 int wfx_hif_burn_prevent_rollback(struct wfx_dev *wdev, u32 magic_word)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_prevent_rollback *body = wfx_alloc_hif(sizeof(*body),
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_prevent_rollback *body = wfx_alloc_hif(sizeof(*body),
 							      &hif);
 
 	if (!hif)
@@ -583,8 +584,8 @@ int wfx_hif_sl_send_pub_keys(struct wfx_dev *wdev,
 			     const u8 *pubkey, const u8 *pubkey_hmac)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_sl_exchange_pub_keys *body = wfx_alloc_hif(sizeof(*body),
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_sl_exchange_pub_keys *body = wfx_alloc_hif(sizeof(*body),
 								  &hif);
 
 	if (!hif)
@@ -606,9 +607,9 @@ int wfx_hif_sl_send_pub_keys(struct wfx_dev *wdev,
 int wfx_hif_sl_config(struct wfx_dev *wdev, unsigned long *bitmap)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_sl_configure *body = wfx_alloc_hif(sizeof(*body), &hif);
-	struct hif_cnf_sl_configure reply;
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_sl_configure *body = wfx_alloc_hif(sizeof(*body), &hif);
+	struct wfx_hif_cnf_sl_configure reply;
 
 	if (!hif)
 		return -ENOMEM;
@@ -627,8 +628,8 @@ int wfx_hif_sl_config(struct wfx_dev *wdev, unsigned long *bitmap)
 int wfx_hif_sl_set_mac_key(struct wfx_dev *wdev, const u8 *slk_key, int destination)
 {
 	int ret;
-	struct hif_msg *hif;
-	struct hif_req_set_sl_mac_key *body = wfx_alloc_hif(sizeof(*body),
+	struct wfx_hif_msg *hif;
+	struct wfx_hif_req_set_sl_mac_key *body = wfx_alloc_hif(sizeof(*body),
 							    &hif);
 
 	if (!hif)

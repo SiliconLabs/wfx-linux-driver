@@ -14,7 +14,7 @@
 #define HIF_ID_IS_INDICATION      0x80
 #define HIF_COUNTER_MAX           7
 
-struct hif_msg {
+struct wfx_hif_msg {
 	__le16 len;
 	u8     id;
 	u8     reserved:1;
@@ -24,7 +24,7 @@ struct hif_msg {
 	u8     body[];
 } __packed;
 
-enum hif_general_requests_ids {
+enum wfx_hif_general_requests_ids {
 	HIF_REQ_ID_CONFIGURATION        = 0x09,
 	HIF_REQ_ID_CONTROL_GPIO         = 0x26,
 	HIF_REQ_ID_SET_SL_MAC_KEY       = 0x27,
@@ -37,7 +37,7 @@ enum hif_general_requests_ids {
 	HIF_REQ_ID_SHUT_DOWN            = 0x32,
 };
 
-enum hif_general_confirmations_ids {
+enum wfx_hif_general_confirmations_ids {
 	HIF_CNF_ID_CONFIGURATION        = 0x09,
 	HIF_CNF_ID_CONTROL_GPIO         = 0x26,
 	HIF_CNF_ID_SET_SL_MAC_KEY       = 0x27,
@@ -50,7 +50,7 @@ enum hif_general_confirmations_ids {
 	HIF_CNF_ID_SHUT_DOWN            = 0x32,
 };
 
-enum hif_general_indications_ids {
+enum wfx_hif_general_indications_ids {
 	HIF_IND_ID_EXCEPTION            = 0xe0,
 	HIF_IND_ID_STARTUP              = 0xe1,
 	HIF_IND_ID_WAKEUP               = 0xe2,
@@ -81,7 +81,7 @@ enum hif_general_indications_ids {
 #define HIF_STATUS_ROLLBACK_SUCCESS                (cpu_to_le32(0x1234))
 #define HIF_STATUS_ROLLBACK_FAIL                   (cpu_to_le32(0x1256))
 
-enum hif_api_rate_index {
+enum wfx_hif_api_rate_index {
 	API_RATE_INDEX_B_1MBPS     = 0,
 	API_RATE_INDEX_B_2MBPS     = 1,
 	API_RATE_INDEX_B_5P5MBPS   = 2,
@@ -107,7 +107,7 @@ enum hif_api_rate_index {
 	API_RATE_NUM_ENTRIES       = 22
 };
 
-struct hif_ind_startup {
+struct wfx_hif_ind_startup {
 	__le32 status;
 	__le16 hardware_id;
 	u8     opn[14];
@@ -138,19 +138,19 @@ struct hif_ind_startup {
 	u8     firmware_label[128];
 } __packed;
 
-struct hif_ind_wakeup {
+struct wfx_hif_ind_wakeup {
 } __packed;
 
-struct hif_req_configuration {
+struct wfx_hif_req_configuration {
 	__le16 length;
 	u8     pds_data[];
 } __packed;
 
-struct hif_cnf_configuration {
+struct wfx_hif_cnf_configuration {
 	__le32 status;
 } __packed;
 
-enum hif_gpio_mode {
+enum wfx_hif_gpio_mode {
 	HIF_GPIO_MODE_D0       = 0x0,
 	HIF_GPIO_MODE_D1       = 0x1,
 	HIF_GPIO_MODE_OD0      = 0x2,
@@ -160,24 +160,24 @@ enum hif_gpio_mode {
 	HIF_GPIO_MODE_READ     = 0x6
 };
 
-struct hif_req_control_gpio {
-	u8 gpio_label;
-	u8 gpio_mode;
+struct wfx_hif_req_control_gpio {
+	u8     gpio_label;
+	u8     gpio_mode;
 } __packed;
 
-struct hif_cnf_control_gpio {
+struct wfx_hif_cnf_control_gpio {
 	__le32 status;
 	__le32 value;
 } __packed;
 
-enum hif_generic_indication_type {
+enum wfx_hif_generic_indication_type {
 	HIF_GENERIC_INDICATION_TYPE_RAW                = 0x0,
 	HIF_GENERIC_INDICATION_TYPE_STRING             = 0x1,
 	HIF_GENERIC_INDICATION_TYPE_RX_STATS           = 0x2,
 	HIF_GENERIC_INDICATION_TYPE_TX_POWER_LOOP_INFO = 0x3,
 };
 
-struct hif_rx_stats {
+struct wfx_hif_rx_stats {
 	__le32 nb_rx_frame;
 	__le32 nb_crc_frame;
 	__le32 per_total;
@@ -193,7 +193,7 @@ struct hif_rx_stats {
 	s8     current_temp;
 } __packed;
 
-struct hif_tx_power_loop_info {
+struct wfx_hif_tx_power_loop_info {
 	__le16 tx_gain_dig;
 	__le16 tx_gain_pa;
 	__le16 target_pout; /* signed value */
@@ -203,15 +203,15 @@ struct hif_tx_power_loop_info {
 	u8     reserved;
 } __packed;
 
-struct hif_ind_generic {
+struct wfx_hif_ind_generic {
 	__le32 type;
 	union {
-		struct hif_rx_stats rx_stats;
-		struct hif_tx_power_loop_info tx_power_loop_info;
+		struct wfx_hif_rx_stats rx_stats;
+		struct wfx_hif_tx_power_loop_info tx_power_loop_info;
 	} data;
 } __packed;
 
-enum hif_error {
+enum wfx_hif_error {
 	HIF_ERROR_FIRMWARE_ROLLBACK           = 0x00,
 	HIF_ERROR_FIRMWARE_DEBUG_ENABLED      = 0x01,
 	HIF_ERROR_SLK_OUTDATED_SESSION_KEY    = 0x02,
@@ -232,64 +232,64 @@ enum hif_error {
 	HIF_ERROR_SLK_UNCONFIGURED            = 0x11,
 };
 
-struct hif_ind_error {
+struct wfx_hif_ind_error {
 	__le32 type;
 	u8     data[];
 } __packed;
 
-struct hif_ind_exception {
+struct wfx_hif_ind_exception {
 	__le32 type;
 	u8     data[];
 } __packed;
 
-enum hif_secure_link_state {
+enum wfx_hif_secure_link_state {
 	SEC_LINK_UNAVAILABLE = 0x0,
 	SEC_LINK_RESERVED    = 0x1,
 	SEC_LINK_EVAL        = 0x2,
 	SEC_LINK_ENFORCED    = 0x3
 };
 
-enum hif_sl_encryption_type {
+enum wfx_hif_sl_encryption_type {
 	NO_ENCRYPTION = 0,
 	TX_ENCRYPTION = 1,
 	RX_ENCRYPTION = 2,
 	HP_ENCRYPTION = 3
 };
 
-struct hif_sl_msg_hdr {
+struct wfx_hif_sl_msg_hdr {
 	u32    seqnum:30;
 	u32    encrypted:2;
 } __packed;
 
-struct hif_sl_msg {
-	struct hif_sl_msg_hdr hdr;
+struct wfx_hif_sl_msg {
+	struct wfx_hif_sl_msg_hdr hdr;
 	__le16 len;
 	u8     payload[];
 } __packed;
 
 #define AES_CCM_TAG_SIZE          16
 
-struct hif_sl_tag {
+struct wfx_hif_sl_tag {
 	u8     tag[16];
 } __packed;
 
-enum hif_sl_mac_key_dest {
+enum wfx_hif_sl_mac_key_dest {
 	SL_MAC_KEY_DEST_OTP = 0x78,
 	SL_MAC_KEY_DEST_RAM = 0x87
 };
 
 #define API_KEY_VALUE_SIZE        32
 
-struct hif_req_set_sl_mac_key {
+struct wfx_hif_req_set_sl_mac_key {
 	u8     otp_or_ram;
 	u8     key_value[API_KEY_VALUE_SIZE];
 } __packed;
 
-struct hif_cnf_set_sl_mac_key {
+struct wfx_hif_cnf_set_sl_mac_key {
 	__le32 status;
 } __packed;
 
-enum hif_sl_session_key_alg {
+enum wfx_hif_sl_session_key_alg {
 	HIF_SL_CURVE25519 = 0x01,
 	HIF_SL_KDF        = 0x02
 };
@@ -297,7 +297,7 @@ enum hif_sl_session_key_alg {
 #define API_HOST_PUB_KEY_SIZE     32
 #define API_HOST_PUB_KEY_MAC_SIZE 64
 
-struct hif_req_sl_exchange_pub_keys {
+struct wfx_hif_req_sl_exchange_pub_keys {
 	u8     algorithm:2;
 	u8     reserved1:6;
 	u8     reserved2[3];
@@ -305,40 +305,40 @@ struct hif_req_sl_exchange_pub_keys {
 	u8     host_pub_key_mac[API_HOST_PUB_KEY_MAC_SIZE];
 } __packed;
 
-struct hif_cnf_sl_exchange_pub_keys {
+struct wfx_hif_cnf_sl_exchange_pub_keys {
 	__le32 status;
 } __packed;
 
 #define API_NCP_PUB_KEY_SIZE      32
 #define API_NCP_PUB_KEY_MAC_SIZE  64
 
-struct hif_ind_sl_exchange_pub_keys {
+struct wfx_hif_ind_sl_exchange_pub_keys {
 	__le32 status;
 	u8     ncp_pub_key[API_NCP_PUB_KEY_SIZE];
 	u8     ncp_pub_key_mac[API_NCP_PUB_KEY_MAC_SIZE];
 } __packed;
 
-struct hif_req_sl_configure {
+struct wfx_hif_req_sl_configure {
 	u8     encr_bmp[32];
 	u8     disable_session_key_protection:1;
 	u8     reserved1:7;
 	u8     reserved2[3];
 } __packed;
 
-struct hif_cnf_sl_configure {
+struct wfx_hif_cnf_sl_configure {
 	__le32 status;
 	u8     encr_bmp[32];
 } __packed;
 
-struct hif_req_prevent_rollback {
+struct wfx_hif_req_prevent_rollback {
 	__le32 magic_word; /* Return an error if not equal to 0x5C8912F3 */
 } __packed;
 
-struct hif_cnf_prevent_rollback {
+struct wfx_hif_cnf_prevent_rollback {
 	__le32 status;
 } __packed;
 
-struct hif_req_pta_settings {
+struct wfx_hif_req_pta_settings {
 	u8     PtaMode;
 	u8     RequestSignalActiveLevel;
 	u8     PrioritySignalActiveLevel;
@@ -358,24 +358,24 @@ struct hif_req_pta_settings {
 	__le16 WlanQuota;
 } __packed;
 
-struct hif_cnf_pta_settings {
+struct wfx_hif_cnf_pta_settings {
 	__le32 status;
 } __packed;
 
-struct hif_req_pta_priority {
+struct wfx_hif_req_pta_priority {
 	__le32 priority;
 } __packed;
 
-struct hif_cnf_pta_priority {
+struct wfx_hif_cnf_pta_priority {
 	__le32 status;
 } __packed;
 
-struct hif_req_pta_enable {
+struct wfx_hif_req_pta_enable {
 	u8     enable;
 	u8     reserved[3];
 } __packed;
 
-struct hif_cnf_pta_enable {
+struct wfx_hif_cnf_pta_enable {
 	__le32 status;
 } __packed;
 

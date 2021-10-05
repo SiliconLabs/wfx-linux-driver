@@ -68,7 +68,7 @@ static void device_release(struct wfx_dev *wdev)
 static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 {
 	struct sk_buff *skb;
-	struct hif_msg *hif;
+	struct wfx_hif_msg *hif;
 	size_t alloc_len;
 	size_t computed_len;
 	int release_count;
@@ -89,17 +89,17 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	_trace_piggyback(piggyback, false);
 
 #ifdef CONFIG_WFX_SECURE_LINK
-	hif = (struct hif_msg *)skb->data;
+	hif = (struct wfx_hif_msg *)skb->data;
 	WARN(hif->encrypted & 0x1, "unsupported encryption type");
 	if (hif->encrypted == 0x2) {
-		if (WARN(read_len < sizeof(struct hif_sl_msg), "corrupted read"))
+		if (WARN(read_len < sizeof(struct wfx_hif_sl_msg), "corrupted read"))
 			goto err;
-		computed_len = le16_to_cpu(((struct hif_sl_msg *)hif)->len);
+		computed_len = le16_to_cpu(((struct wfx_hif_sl_msg *)hif)->len);
 		computed_len = round_up(computed_len - sizeof(u16), 16);
-		computed_len += sizeof(struct hif_sl_msg);
-		computed_len += sizeof(struct hif_sl_tag);
+		computed_len += sizeof(struct wfx_hif_sl_msg);
+		computed_len += sizeof(struct wfx_hif_sl_tag);
 	} else {
-		if (WARN(read_len < sizeof(struct hif_msg), "corrupted read"))
+		if (WARN(read_len < sizeof(struct wfx_hif_msg), "corrupted read"))
 			goto err;
 		computed_len = le16_to_cpu(hif->len);
 		computed_len = round_up(computed_len, 2);
@@ -112,7 +112,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 		goto err;
 	}
 	if (hif->encrypted == 0x2) {
-		if (wfx_sl_decode(wdev, (struct hif_sl_msg *)hif)) {
+		if (wfx_sl_decode(wdev, (struct wfx_hif_sl_msg *)hif)) {
 			dev_kfree_skb(skb);
 			/* If frame was a confirmation, expect trouble in next
 			 * exchange. However, it is harmless to fail to decode
@@ -130,9 +130,9 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 		return piggyback;
 	}
 #else
-	hif = (struct hif_msg *)skb->data;
+	hif = (struct wfx_hif_msg *)skb->data;
 	WARN(hif->encrypted & 0x3, "encryption is unsupported");
-	if (WARN(read_len < sizeof(struct hif_msg), "corrupted read"))
+	if (WARN(read_len < sizeof(struct wfx_hif_msg), "corrupted read"))
 		goto err;
 	computed_len = le16_to_cpu(hif->len);
 	computed_len = round_up(computed_len, 2);
@@ -148,7 +148,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	if (!(hif->id & HIF_ID_IS_INDICATION)) {
 		(*is_cnf)++;
 		if (hif->id == HIF_CNF_ID_MULTI_TRANSMIT)
-			release_count = ((struct hif_cnf_multi_transmit *)hif->body)->num_tx_confs;
+			release_count = ((struct wfx_hif_cnf_multi_transmit *)hif->body)->num_tx_confs;
 		else
 			release_count = 1;
 		WARN(wdev->hif.tx_buffers_used < release_count, "corrupted buffer counter");
@@ -212,7 +212,7 @@ static int bh_work_rx(struct wfx_dev *wdev, int max_msg, int *num_cnf)
 	return i;
 }
 
-static void tx_helper(struct wfx_dev *wdev, struct hif_msg *hif)
+static void tx_helper(struct wfx_dev *wdev, struct wfx_hif_msg *hif)
 {
 	int ret;
 	void *data;
@@ -227,8 +227,8 @@ static void tx_helper(struct wfx_dev *wdev, struct hif_msg *hif)
 #ifdef CONFIG_WFX_SECURE_LINK
 	if (wfx_is_secure_command(wdev, hif->id)) {
 		len = round_up(len - sizeof(hif->len), 16) + sizeof(hif->len) +
-			sizeof(struct hif_sl_msg_hdr) +
-			sizeof(struct hif_sl_tag);
+			sizeof(struct wfx_hif_sl_msg_hdr) +
+			sizeof(struct wfx_hif_sl_tag);
 		/* AES support encryption in-place. However, mac80211 access to
 		 * 802.11 header after frame was sent (to get MAC addresses).
 		 * So, keep origin buffer clear.
@@ -263,7 +263,7 @@ end:
 
 static int bh_work_tx(struct wfx_dev *wdev, int max_msg)
 {
-	struct hif_msg *hif;
+	struct wfx_hif_msg *hif;
 	int i;
 
 	for (i = 0; i < max_msg; i++) {

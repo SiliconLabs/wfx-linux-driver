@@ -102,7 +102,7 @@ static int wfx_counters_show(struct seq_file *seq, void *v)
 {
 	int ret, i;
 	struct wfx_dev *wdev = seq->private;
-	struct hif_mib_extended_count_table counters[3];
+	struct wfx_hif_mib_extended_count_table counters[3];
 
 	for (i = 0; i < ARRAY_SIZE(counters); i++) {
 		ret = wfx_hif_get_counters_table(wdev, i, counters + i);
@@ -192,7 +192,7 @@ static const char * const channel_names[] = {
 static int wfx_rx_stats_show(struct seq_file *seq, void *v)
 {
 	struct wfx_dev *wdev = seq->private;
-	struct hif_rx_stats *st = &wdev->rx_stats;
+	struct wfx_hif_rx_stats *st = &wdev->rx_stats;
 	int i;
 
 	mutex_lock(&wdev->rx_stats_lock);
@@ -224,7 +224,7 @@ DEFINE_SHOW_ATTRIBUTE(wfx_rx_stats);
 static int wfx_tx_power_loop_show(struct seq_file *seq, void *v)
 {
 	struct wfx_dev *wdev = seq->private;
-	struct hif_tx_power_loop_info *st = &wdev->tx_power_loop_info;
+	struct wfx_hif_tx_power_loop_info *st = &wdev->tx_power_loop_info;
 	int tmp;
 
 	mutex_lock(&wdev->tx_power_loop_info_lock);
@@ -313,7 +313,7 @@ static ssize_t wfx_burn_slk_key_write(struct file *file,
 			crc32, *user_crc32);
 		return -EINVAL;
 	}
-	ret = hif_sl_set_mac_key(wdev, bin_buf, SL_MAC_KEY_DEST_OTP);
+	ret = wfx_hif_sl_set_mac_key(wdev, bin_buf, SL_MAC_KEY_DEST_OTP);
 	if (ret) {
 		dev_err(wdev->dev, "chip returned error %d\n", ret);
 		return -EIO;
@@ -350,13 +350,13 @@ static ssize_t wfx_send_hif_msg_write(struct file *file,
 {
 	struct dbgfs_hif_msg *context = file->private_data;
 	struct wfx_dev *wdev = context->wdev;
-	struct hif_msg *request;
+	struct wfx_hif_msg *request;
 
 	if (completion_done(&context->complete)) {
 		dev_dbg(wdev->dev, "read previous result before start a new one\n");
 		return -EBUSY;
 	}
-	if (count < sizeof(struct hif_msg))
+	if (count < sizeof(struct wfx_hif_msg))
 		return -EINVAL;
 
 	/* wfx_cmd_send() checks that reply buffer is wide enough, but does not

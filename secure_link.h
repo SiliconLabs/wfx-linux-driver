@@ -28,9 +28,9 @@ struct sl_context {
 };
 
 int wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id);
-int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m);
+int wfx_sl_decode(struct wfx_dev *wdev, struct wfx_hif_sl_msg *m);
 int wfx_sl_encode(struct wfx_dev *wdev,
-		  const struct hif_msg *input, struct hif_sl_msg *output);
+		  const struct wfx_hif_msg *input, struct wfx_hif_sl_msg *output);
 int wfx_sl_check_pubkey(struct wfx_dev *wdev,
 			const u8 *ncp_pubkey, const u8 *ncp_pubmac);
 int wfx_sl_init(struct wfx_dev *wdev);
@@ -49,14 +49,14 @@ static inline bool wfx_is_secure_command(struct wfx_dev *wdev, int cmd_id)
 	return false;
 }
 
-static inline int wfx_sl_decode(struct wfx_dev *wdev, struct hif_sl_msg *m)
+static inline int wfx_sl_decode(struct wfx_dev *wdev, struct wfx_hif_sl_msg *m)
 {
 	return -EIO;
 }
 
 static inline int wfx_sl_encode(struct wfx_dev *wdev,
-				const struct hif_msg *input,
-				struct hif_sl_msg *output)
+				const struct wfx_hif_msg *input,
+				struct wfx_hif_sl_msg *output)
 {
 	return -EIO;
 }
