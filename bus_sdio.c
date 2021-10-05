@@ -20,6 +20,19 @@
 #include "main.h"
 #include "bh.h"
 
+#if (KERNEL_VERSION(4, 2, 0) > LINUX_VERSION_CODE)
+static const void *of_device_get_match_data(const struct device *dev)
+{
+	const struct of_device_id *match;
+
+	match = of_match_device(dev->driver->of_match_table, dev);
+	if (!match)
+		return NULL;
+
+	return match->data;
+}
+#endif
+
 static const struct wfx_platform_data pdata_wf200 = {
 	.file_fw = "wfm_wf200",
 	.file_pds = "wf200.pds",
