@@ -53,7 +53,7 @@ static int wfx_get_hw_rate(struct wfx_dev *wdev,
 
 /* TX policy cache implementation */
 
-static void wfx_tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
+static void wfx_tx_policy_build(struct wfx_vif *wvif, struct wfx_tx_policy *policy,
 				struct ieee80211_tx_rate *rates)
 {
 	struct wfx_dev *wdev = wvif->wdev;
@@ -75,16 +75,16 @@ static void wfx_tx_policy_build(struct wfx_vif *wvif, struct tx_policy *policy,
 	}
 }
 
-static bool wfx_tx_policy_is_equal(const struct tx_policy *a,
-				   const struct tx_policy *b)
+static bool wfx_tx_policy_is_equal(const struct wfx_tx_policy *a,
+				   const struct wfx_tx_policy *b)
 {
 	return !memcmp(a->rates, b->rates, sizeof(a->rates));
 }
 
-static int wfx_tx_policy_find(struct tx_policy_cache *cache,
-			      struct tx_policy *wanted)
+static int wfx_tx_policy_find(struct wfx_tx_policy_cache *cache,
+			      struct wfx_tx_policy *wanted)
 {
-	struct tx_policy *it;
+	struct wfx_tx_policy *it;
 
 	list_for_each_entry(it, &cache->used, link)
 		if (wfx_tx_policy_is_equal(wanted, it))
@@ -95,15 +95,15 @@ static int wfx_tx_policy_find(struct tx_policy_cache *cache,
 	return -1;
 }
 
-static void wfx_tx_policy_use(struct tx_policy_cache *cache,
-			      struct tx_policy *entry)
+static void wfx_tx_policy_use(struct wfx_tx_policy_cache *cache,
+			      struct wfx_tx_policy *entry)
 {
 	++entry->usage_count;
 	list_move(&entry->link, &cache->used);
 }
 
-static int wfx_tx_policy_release(struct tx_policy_cache *cache,
-				 struct tx_policy *entry)
+static int wfx_tx_policy_release(struct wfx_tx_policy_cache *cache,
+				 struct wfx_tx_policy *entry)
 {
 	int ret = --entry->usage_count;
 
@@ -116,9 +116,9 @@ static int wfx_tx_policy_get(struct wfx_vif *wvif,
 			     struct ieee80211_tx_rate *rates, bool *renew)
 {
 	int idx;
-	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
-	struct tx_policy wanted;
-	struct tx_policy *entry;
+	struct wfx_tx_policy_cache *cache = &wvif->tx_policy_cache;
+	struct wfx_tx_policy wanted;
+	struct wfx_tx_policy *entry;
 
 	wfx_tx_policy_build(wvif, &wanted, rates);
 
@@ -136,7 +136,7 @@ static int wfx_tx_policy_get(struct wfx_vif *wvif,
 		 * entry in "free" list
 		 */
 		*renew = true;
-		entry = list_entry(cache->free.prev, struct tx_policy, link);
+		entry = list_entry(cache->free.prev, struct wfx_tx_policy, link);
 		memcpy(entry->rates, wanted.rates, sizeof(entry->rates));
 		entry->uploaded = false;
 		entry->usage_count = 0;
@@ -152,7 +152,7 @@ static int wfx_tx_policy_get(struct wfx_vif *wvif,
 static void wfx_tx_policy_put(struct wfx_vif *wvif, int idx)
 {
 	int usage, locked;
-	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
+	struct wfx_tx_policy_cache *cache = &wvif->tx_policy_cache;
 
 	if (idx == HIF_TX_RETRY_POLICY_INVALID)
 		return;
@@ -166,7 +166,7 @@ static void wfx_tx_policy_put(struct wfx_vif *wvif, int idx)
 
 static int wfx_tx_policy_upload(struct wfx_vif *wvif)
 {
-	struct tx_policy *policies = wvif->tx_policy_cache.cache;
+	struct wfx_tx_policy *policies = wvif->tx_policy_cache.cache;
 	u8 tmp_rates[12];
 	int i, is_used;
 
@@ -201,7 +201,7 @@ void wfx_tx_policy_upload_work(struct work_struct *work)
 
 void wfx_tx_policy_init(struct wfx_vif *wvif)
 {
-	struct tx_policy_cache *cache = &wvif->tx_policy_cache;
+	struct wfx_tx_policy_cache *cache = &wvif->tx_policy_cache;
 	int i;
 
 	memset(cache, 0, sizeof(*cache));

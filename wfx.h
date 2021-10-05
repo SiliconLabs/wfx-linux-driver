@@ -72,7 +72,7 @@ static inline bool skb_queue_empty_lockless(const struct sk_buff_head *list)
 #endif
 #endif
 
-struct hwbus_ops;
+struct wfx_hwbus_ops;
 
 struct wfx_dev {
 	struct wfx_platform_data pdata;
@@ -80,7 +80,7 @@ struct wfx_dev {
 	struct ieee80211_hw	*hw;
 	struct ieee80211_vif	*vif[2];
 	struct mac_address	addresses[2];
-	const struct hwbus_ops	*hwbus_ops;
+	const struct wfx_hwbus_ops *hwbus_ops;
 	void			*hwbus_priv;
 
 	u8			keyset;
@@ -129,7 +129,7 @@ struct wfx_vif {
 	struct delayed_work	beacon_loss_work;
 
 	struct wfx_queue	tx_queue[4];
-	struct tx_policy_cache	tx_policy_cache;
+	struct wfx_tx_policy_cache tx_policy_cache;
 	struct work_struct	tx_policy_upload_work;
 
 	/* avoid some operations in parallel with scan */

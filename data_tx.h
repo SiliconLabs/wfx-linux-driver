@@ -18,15 +18,15 @@ struct wfx_tx_priv;
 struct wfx_dev;
 struct wfx_vif;
 
-struct tx_policy {
+struct wfx_tx_policy {
 	struct list_head link;
 	int usage_count;
 	u8 rates[12];
 	bool uploaded;
 };
 
-struct tx_policy_cache {
-	struct tx_policy cache[HIF_TX_RETRY_POLICY_MAX];
+struct wfx_tx_policy_cache {
+	struct wfx_tx_policy cache[HIF_TX_RETRY_POLICY_MAX];
 	/* FIXME: use a trees and drop hash from tx_policy */
 	struct list_head used;
 	struct list_head free;
