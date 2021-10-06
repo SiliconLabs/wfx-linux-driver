@@ -26,35 +26,35 @@
 #include "traces.h"
 
 #if (KERNEL_VERSION(4, 17, 0) > LINUX_VERSION_CODE)
-#define DEFINE_SHOW_ATTRIBUTE(__name)					\
-static int __name ## _open(struct inode *inode, struct file *file)	\
-{									\
-	return single_open(file, __name ## _show, inode->i_private);	\
-}									\
-									\
-static const struct file_operations __name ## _fops = {			\
-	.owner		= THIS_MODULE,					\
-	.open		= __name ## _open,				\
-	.read		= seq_read,					\
-	.llseek		= seq_lseek,					\
-	.release	= single_release,				\
+#define DEFINE_SHOW_ATTRIBUTE(__name) \
+static int __name ## _open(struct inode *inode, struct file *file)      \
+{                                                                       \
+	return single_open(file, __name ## _show, inode->i_private);    \
+}                                                                       \
+                                                                        \
+static const struct file_operations __name ## _fops = {                 \
+	.owner   = THIS_MODULE,                                         \
+	.open    = __name ## _open,                                     \
+	.read    = seq_read,                                            \
+	.llseek  = seq_lseek,                                           \
+	.release = single_release,                                      \
 }
 #endif
 
 #if (KERNEL_VERSION(4, 7, 0) > LINUX_VERSION_CODE)
-#define DEFINE_DEBUGFS_ATTRIBUTE(__fops, __get, __set, __fmt)		\
-static int __fops ## _open(struct inode *inode, struct file *file)	\
-{									\
-	__simple_attr_check_format(__fmt, 0ull);			\
-	return simple_attr_open(inode, file, __get, __set, __fmt);	\
-}									\
-static const struct file_operations __fops = {				\
-	.owner	 = THIS_MODULE,						\
-	.open	 = __fops ## _open,					\
-	.release = simple_attr_release,					\
-	.read	 = simple_attr_read,					\
-	.write	 = simple_attr_write,					\
-	.llseek  = generic_file_llseek,					\
+#define DEFINE_DEBUGFS_ATTRIBUTE(__fops, __get, __set, __fmt)           \
+static int __fops ## _open(struct inode *inode, struct file *file)      \
+{                                                                       \
+	__simple_attr_check_format(__fmt, 0ull);                        \
+	return simple_attr_open(inode, file, __get, __set, __fmt);      \
+}                                                                       \
+static const struct file_operations __fops = {                          \
+	.owner   = THIS_MODULE,                                         \
+	.open    = __fops ## _open,                                     \
+	.release = simple_attr_release,                                 \
+	.read    = simple_attr_read,                                    \
+	.write   = simple_attr_write,                                   \
+	.llseek  = generic_file_llseek,                                 \
 }
 #endif
 

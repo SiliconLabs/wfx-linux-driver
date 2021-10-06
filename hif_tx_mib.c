@@ -16,7 +16,7 @@
 #include "hif_api_mib.h"
 
 #if (KERNEL_VERSION(5, 8, 0) > LINUX_VERSION_CODE)
-#define flex_array_size(p, member, count)				\
+#define flex_array_size(p, member, count) \
 	count * sizeof(*(p)->member) + __must_be_array((p)->member)
 #endif
 

@@ -17,20 +17,20 @@
 
 #define __NLA_ENSURE(condition) BUILD_BUG_ON_ZERO(!(condition))
 
-#define NLA_ENSURE_INT_TYPE(tp)				\
-	(__NLA_ENSURE(tp == NLA_S8 || tp == NLA_U8 ||	\
-		      tp == NLA_S16 || tp == NLA_U16 ||	\
-		      tp == NLA_S32 || tp == NLA_U32 ||	\
+#define NLA_ENSURE_INT_TYPE(tp) \
+	(__NLA_ENSURE(tp == NLA_S8 || tp == NLA_U8 ||      \
+		      tp == NLA_S16 || tp == NLA_U16 ||    \
+		      tp == NLA_S32 || tp == NLA_U32 ||    \
 		      tp == NLA_S64 || tp == NLA_U64) + tp)
 
-#define NLA_POLICY_EXACT_LEN(_len)	{ .type = NLA_BINARY }
+#define NLA_POLICY_EXACT_LEN(_len) { .type = NLA_BINARY }
 
-#define NLA_POLICY_RANGE(tp, _min, _max) {		\
-	.type = NLA_ENSURE_INT_TYPE(tp),		\
+#define NLA_POLICY_RANGE(tp, _min, _max) { \
+	.type = NLA_ENSURE_INT_TYPE(tp),   \
 }
 
-#define NLA_POLICY_MAX(tp, _max) {			\
-	.type = NLA_ENSURE_INT_TYPE(tp),		\
+#define NLA_POLICY_MAX(tp, _max) {         \
+	.type = NLA_ENSURE_INT_TYPE(tp),   \
 }
 
 #endif

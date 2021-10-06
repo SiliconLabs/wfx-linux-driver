@@ -37,7 +37,7 @@ static inline void _ieee80211_hw_set(struct ieee80211_hw *hw, enum ieee80211_hw_
 {
 	hw->flags |= flg;
 }
-#define ieee80211_hw_set(hw, flg)	_ieee80211_hw_set(hw, IEEE80211_HW_##flg)
+#define ieee80211_hw_set(hw, flg) _ieee80211_hw_set(hw, IEEE80211_HW_##flg)
 #endif
 
 #if (KERNEL_VERSION(4, 7, 0) > LINUX_VERSION_CODE)
