@@ -41,10 +41,8 @@ int wfx_cmd_send(struct wfx_dev *wdev, struct wfx_hif_msg *request,
 int wfx_hif_shutdown(struct wfx_dev *wdev);
 int wfx_hif_configuration(struct wfx_dev *wdev, const u8 *conf, size_t len);
 int wfx_hif_reset(struct wfx_vif *wvif, bool reset_stat);
-int wfx_hif_read_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id,
-		     void *buf, size_t buf_size);
-int wfx_hif_write_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id,
-		      void *buf, size_t buf_size);
+int wfx_hif_read_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id, void *buf, size_t buf_size);
+int wfx_hif_write_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id, void *buf, size_t buf_size);
 int wfx_hif_scan(struct wfx_vif *wvif, struct cfg80211_scan_request *req80211,
 		 int chan_start, int chan_num);
 int wfx_hif_stop_scan(struct wfx_vif *wvif);
@@ -59,18 +57,14 @@ int wfx_hif_set_edca_queue_params(struct wfx_vif *wvif, u16 queue,
 int wfx_hif_start(struct wfx_vif *wvif, const struct ieee80211_bss_conf *conf,
 		  const struct ieee80211_channel *channel);
 int wfx_hif_beacon_transmit(struct wfx_vif *wvif, bool enable);
-int wfx_hif_map_link(struct wfx_vif *wvif,
-		     bool unmap, u8 *mac_addr, int sta_id, bool mfp);
+int wfx_hif_map_link(struct wfx_vif *wvif, bool unmap, u8 *mac_addr, int sta_id, bool mfp);
 int wfx_hif_update_ie_beacon(struct wfx_vif *wvif, const u8 *ies, size_t ies_len);
-int wfx_hif_pta_settings(struct wfx_dev *wdev,
-			 const struct wfx_hif_req_pta_settings *parms);
+int wfx_hif_pta_settings(struct wfx_dev *wdev, const struct wfx_hif_req_pta_settings *parms);
 int wfx_hif_pta_priority(struct wfx_dev *wdev, u32 priority);
 int wfx_hif_pta_enable(struct wfx_dev *wdev, bool enable);
 int wfx_hif_burn_prevent_rollback(struct wfx_dev *wdev, u32 magic_word);
-int wfx_hif_sl_set_mac_key(struct wfx_dev *wdev,
-			   const u8 *slk_key, int destination);
+int wfx_hif_sl_set_mac_key(struct wfx_dev *wdev, const u8 *slk_key, int destination);
 int wfx_hif_sl_config(struct wfx_dev *wdev, unsigned long *bitmap);
-int wfx_hif_sl_send_pub_keys(struct wfx_dev *wdev,
-			     const u8 *pubkey, const u8 *pubkey_hmac);
+int wfx_hif_sl_send_pub_keys(struct wfx_dev *wdev, const u8 *pubkey, const u8 *pubkey_hmac);
 
 #endif

@@ -70,8 +70,7 @@ static const struct trace_print_flags wfx_reg_print_map[] = {
 	wfx_reg_list,
 };
 
-static const char *get_symbol(unsigned long val,
-			      const struct trace_print_flags *symbol_array)
+static const char *get_symbol(unsigned long val, const struct trace_print_flags *symbol_array)
 {
 	int i;
 
@@ -112,8 +111,7 @@ static int wfx_counters_show(struct seq_file *seq, void *v)
 			return -EIO;
 	}
 
-	seq_printf(seq, "%-24s %12s %12s %12s\n",
-		   "", "global", "iface 0", "iface 1");
+	seq_printf(seq, "%-24s %12s %12s %12s\n", "", "global", "iface 0", "iface 1");
 
 #define PUT_COUNTER(name) \
 	seq_printf(seq, "%-24s %12d %12d %12d\n", #name, \
@@ -198,10 +196,8 @@ static int wfx_rx_stats_show(struct seq_file *seq, void *v)
 	mutex_lock(&wdev->rx_stats_lock);
 	seq_printf(seq, "Timestamp: %dus\n", st->date);
 	seq_printf(seq, "Low power clock: frequency %uHz, external %s\n",
-		   le32_to_cpu(st->pwr_clk_freq),
-		   st->is_ext_pwr_clk ? "yes" : "no");
-	seq_printf(seq,
-		   "Num. of frames: %d, PER (x10e4): %d, Throughput: %dKbps/s\n",
+		   le32_to_cpu(st->pwr_clk_freq), st->is_ext_pwr_clk ? "yes" : "no");
+	seq_printf(seq, "Num. of frames: %d, PER (x10e4): %d, Throughput: %dKbps/s\n",
 		   st->nb_rx_frame, st->per_total, st->throughput);
 	seq_puts(seq, "       Num. of      PER     RSSI      SNR      CFO\n");
 	seq_puts(seq, "        frames  (x10e4)    (dBm)     (dB)    (kHz)\n");
@@ -245,8 +241,7 @@ static int wfx_tx_power_loop_show(struct seq_file *seq, void *v)
 }
 DEFINE_SHOW_ATTRIBUTE(wfx_tx_power_loop);
 
-static ssize_t wfx_send_pds_write(struct file *file,
-				  const char __user *user_buf,
+static ssize_t wfx_send_pds_write(struct file *file, const char __user *user_buf,
 				  size_t count, loff_t *ppos)
 {
 	struct wfx_dev *wdev = file->private_data;
@@ -274,8 +269,7 @@ static const struct file_operations wfx_send_pds_fops = {
 };
 
 #ifdef CONFIG_WFX_SECURE_LINK
-static ssize_t wfx_burn_slk_key_write(struct file *file,
-				      const char __user *user_buf,
+static ssize_t wfx_burn_slk_key_write(struct file *file, const char __user *user_buf,
 				      size_t count, loff_t *ppos)
 {
 	struct wfx_dev *wdev = file->private_data;
@@ -309,8 +303,7 @@ static ssize_t wfx_burn_slk_key_write(struct file *file,
 	}
 	crc32 = crc32(0xffffffff, bin_buf, API_KEY_VALUE_SIZE) ^ 0xffffffff;
 	if (crc32 != *user_crc32) {
-		dev_err(wdev->dev, "incorrect crc32: %08x != %08x\n",
-			crc32, *user_crc32);
+		dev_err(wdev->dev, "incorrect crc32: %08x != %08x\n", crc32, *user_crc32);
 		return -EINVAL;
 	}
 	ret = wfx_hif_sl_set_mac_key(wdev, bin_buf, SL_MAC_KEY_DEST_OTP);
@@ -321,8 +314,7 @@ static ssize_t wfx_burn_slk_key_write(struct file *file,
 	return count;
 }
 #else
-static ssize_t wfx_burn_slk_key_write(struct file *file,
-				      const char __user *user_buf,
+static ssize_t wfx_burn_slk_key_write(struct file *file, const char __user *user_buf,
 				      size_t count, loff_t *ppos)
 {
 	struct wfx_dev *wdev = file->private_data;
@@ -344,8 +336,7 @@ struct dbgfs_hif_msg {
 	int ret;
 };
 
-static ssize_t wfx_send_hif_msg_write(struct file *file,
-				      const char __user *user_buf,
+static ssize_t wfx_send_hif_msg_write(struct file *file, const char __user *user_buf,
 				      size_t count, loff_t *ppos)
 {
 	struct dbgfs_hif_msg *context = file->private_data;
@@ -371,8 +362,7 @@ static ssize_t wfx_send_hif_msg_write(struct file *file,
 		kfree(request);
 		return -EINVAL;
 	}
-	context->ret = wfx_cmd_send(wdev, request, context->reply,
-				    sizeof(context->reply), false);
+	context->ret = wfx_cmd_send(wdev, request, context->reply, sizeof(context->reply), false);
 
 	kfree(request);
 	complete(&context->complete);
@@ -458,13 +448,10 @@ int wfx_debug_init(struct wfx_dev *wdev)
 	d = debugfs_create_dir("wfx", wdev->hw->wiphy->debugfsdir);
 	debugfs_create_file("counters", 0444, d, wdev, &wfx_counters_fops);
 	debugfs_create_file("rx_stats", 0444, d, wdev, &wfx_rx_stats_fops);
-	debugfs_create_file("tx_power_loop", 0444, d, wdev,
-			    &wfx_tx_power_loop_fops);
+	debugfs_create_file("tx_power_loop", 0444, d, wdev, &wfx_tx_power_loop_fops);
 	debugfs_create_file("send_pds", 0200, d, wdev, &wfx_send_pds_fops);
-	debugfs_create_file("burn_slk_key", 0200, d, wdev,
-			    &wfx_burn_slk_key_fops);
-	debugfs_create_file("send_hif_msg", 0600, d, wdev,
-			    &wfx_send_hif_msg_fops);
+	debugfs_create_file("burn_slk_key", 0200, d, wdev, &wfx_burn_slk_key_fops);
+	debugfs_create_file("send_hif_msg", 0600, d, wdev, &wfx_send_hif_msg_fops);
 	debugfs_create_file("ps_timeout", 0600, d, wdev, &wfx_ps_timeout_fops);
 
 	return 0;

@@ -35,8 +35,7 @@ static void wfx_rx_handle_ba(struct wfx_vif *wvif, struct ieee80211_mgmt *mgmt)
 	}
 }
 
-void wfx_rx_cb(struct wfx_vif *wvif,
-	       const struct wfx_hif_ind_rx *arg, struct sk_buff *skb)
+void wfx_rx_cb(struct wfx_vif *wvif, const struct wfx_hif_ind_rx *arg, struct sk_buff *skb)
 {
 	struct ieee80211_rx_status *hdr = IEEE80211_SKB_RXCB(skb);
 	struct ieee80211_hdr *frame = (struct ieee80211_hdr *)skb->data;
@@ -55,8 +54,7 @@ void wfx_rx_cb(struct wfx_vif *wvif,
 	}
 
 	hdr->band = NL80211_BAND_2GHZ;
-	hdr->freq = ieee80211_channel_to_frequency(arg->channel_number,
-						   hdr->band);
+	hdr->freq = ieee80211_channel_to_frequency(arg->channel_number, hdr->band);
 
 	if (arg->rxed_rate >= 14) {
 #if (KERNEL_VERSION(4, 12, 0) > LINUX_VERSION_CODE)

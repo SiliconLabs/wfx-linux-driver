@@ -99,8 +99,7 @@ static const struct ieee80211_supported_band wfx_band_2ghz = {
 	.ht_cap = {
 		/* Receive caps */
 		.cap = IEEE80211_HT_CAP_GRN_FLD | IEEE80211_HT_CAP_SGI_20 |
-		       IEEE80211_HT_CAP_MAX_AMSDU |
-		       (1 << IEEE80211_HT_CAP_RX_STBC_SHIFT),
+		       IEEE80211_HT_CAP_MAX_AMSDU | (1 << IEEE80211_HT_CAP_RX_STBC_SHIFT),
 		.ht_supported = 1,
 		.ampdu_factor = IEEE80211_HT_MAX_AMPDU_16K,
 		.ampdu_density = IEEE80211_HT_MPDU_DENSITY_NONE,
@@ -264,10 +263,8 @@ static void wfx_free_common(void *data)
 	ieee80211_free_hw(wdev->hw);
 }
 
-struct wfx_dev *wfx_init_common(struct device *dev,
-				const struct wfx_platform_data *pdata,
-				const struct wfx_hwbus_ops *hwbus_ops,
-				void *hwbus_priv)
+struct wfx_dev *wfx_init_common(struct device *dev, const struct wfx_platform_data *pdata,
+				const struct wfx_hwbus_ops *hwbus_ops, void *hwbus_priv)
 {
 	struct ieee80211_hw *hw;
 	struct wfx_dev *wdev;
@@ -295,11 +292,8 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	hw->queues = 4;
 	hw->max_rates = 8;
 	hw->max_rate_tries = 8;
-	hw->extra_tx_headroom = sizeof(struct wfx_hif_sl_msg_hdr) +
-				sizeof(struct wfx_hif_msg) +
-				sizeof(struct wfx_hif_req_tx) +
-				4 /* alignment */ + 8 /* TKIP IV */;
-
+	hw->extra_tx_headroom = sizeof(struct wfx_hif_sl_msg_hdr) + sizeof(struct wfx_hif_msg) +
+				sizeof(struct wfx_hif_req_tx) + 4 /* alignment */ + 8 /* TKIP IV */;
 	hw->wiphy->n_vendor_commands = ARRAY_SIZE(wfx_nl80211_vendor_commands);
 	hw->wiphy->vendor_commands = wfx_nl80211_vendor_commands;
 	hw->wiphy->interface_modes = BIT(NL80211_IFTYPE_STATION) |
@@ -319,8 +313,7 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	hw->wiphy->iface_combinations = wfx_iface_combinations;
 	hw->wiphy->bands[NL80211_BAND_2GHZ] = devm_kmalloc(dev, sizeof(wfx_band_2ghz), GFP_KERNEL);
 	/* FIXME: also copy wfx_rates and wfx_2ghz_chantable */
-	memcpy(hw->wiphy->bands[NL80211_BAND_2GHZ], &wfx_band_2ghz,
-	       sizeof(wfx_band_2ghz));
+	memcpy(hw->wiphy->bands[NL80211_BAND_2GHZ], &wfx_band_2ghz, sizeof(wfx_band_2ghz));
 
 	wdev = hw->priv;
 	wdev->hw = hw;
@@ -328,10 +321,8 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	wdev->hwbus_ops = hwbus_ops;
 	wdev->hwbus_priv = hwbus_priv;
 	memcpy(&wdev->pdata, pdata, sizeof(*pdata));
-	of_property_read_string(dev->of_node, "config-file",
-				&wdev->pdata.file_pds);
-	wdev->pdata.gpio_wakeup = devm_gpiod_get_optional(dev, "wakeup",
-							  GPIOD_OUT_LOW);
+	of_property_read_string(dev->of_node, "config-file", &wdev->pdata.file_pds);
+	wdev->pdata.gpio_wakeup = devm_gpiod_get_optional(dev, "wakeup", GPIOD_OUT_LOW);
 	if (IS_ERR(wdev->pdata.gpio_wakeup))
 		return NULL;
 #if (KERNEL_VERSION(4, 19, 0) <= LINUX_VERSION_CODE)
@@ -344,8 +335,7 @@ struct wfx_dev *wfx_init_common(struct device *dev,
 	mutex_init(&wdev->rx_stats_lock);
 	mutex_init(&wdev->tx_power_loop_info_lock);
 	init_completion(&wdev->firmware_ready);
-	INIT_DELAYED_WORK(&wdev->cooling_timeout_work,
-			  wfx_cooling_timeout_work);
+	INIT_DELAYED_WORK(&wdev->cooling_timeout_work, wfx_cooling_timeout_work);
 	skb_queue_head_init(&wdev->tx_pending);
 	init_waitqueue_head(&wdev->tx_dequeue);
 	wfx_init_hif_cmd(&wdev->hif_cmd);
@@ -415,13 +405,14 @@ int wfx_probe(struct wfx_dev *wdev)
 	}
 
 	if (wdev->hw_caps.region_sel_mode) {
-		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[11].flags |= IEEE80211_CHAN_NO_IR;
-		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[12].flags |= IEEE80211_CHAN_NO_IR;
-		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[13].flags |= IEEE80211_CHAN_DISABLED;
+		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[11].flags |=
+			IEEE80211_CHAN_NO_IR;
+		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[12].flags |=
+			IEEE80211_CHAN_NO_IR;
+		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ]->channels[13].flags |=
+			IEEE80211_CHAN_DISABLED;
 	}
-
-	dev_dbg(wdev->dev, "sending configuration file %s\n",
-		wdev->pdata.file_pds);
+	dev_dbg(wdev->dev, "sending configuration file %s\n", wdev->pdata.file_pds);
 	err = wfx_send_pdata_pds(wdev);
 	if (err < 0 && err != -ENOENT)
 		goto bh_unregister;
@@ -459,20 +450,17 @@ int wfx_probe(struct wfx_dev *wdev)
 		}
 #else
 		eth_zero_addr(wdev->addresses[i].addr);
-		err = of_get_mac_address(wdev->dev->of_node,
-					 wdev->addresses[i].addr);
+		err = of_get_mac_address(wdev->dev->of_node, wdev->addresses[i].addr);
 #endif
 		if (!err)
 			wdev->addresses[i].addr[ETH_ALEN - 1] += i;
 		else
-			ether_addr_copy(wdev->addresses[i].addr,
-					wdev->hw_caps.mac_addr[i]);
+			ether_addr_copy(wdev->addresses[i].addr, wdev->hw_caps.mac_addr[i]);
 		if (!is_valid_ether_addr(wdev->addresses[i].addr)) {
 			dev_warn(wdev->dev, "using random MAC address\n");
 			eth_random_addr(wdev->addresses[i].addr);
 		}
-		dev_info(wdev->dev, "MAC address %d: %pM\n", i,
-			 wdev->addresses[i].addr);
+		dev_info(wdev->dev, "MAC address %d: %pM\n", i, wdev->addresses[i].addr);
 	}
 	wdev->hw->wiphy->n_addresses = ARRAY_SIZE(wdev->addresses);
 	wdev->hw->wiphy->addresses = wdev->addresses;

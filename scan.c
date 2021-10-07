@@ -25,8 +25,7 @@ static inline void *skb_put_data(struct sk_buff *skb, const void *data,
 }
 #endif
 
-static void wfx_ieee80211_scan_completed_compat(struct ieee80211_hw *hw,
-						bool aborted)
+static void wfx_ieee80211_scan_completed_compat(struct ieee80211_hw *hw, bool aborted)
 {
 #if (KERNEL_VERSION(4, 8, 0) > LINUX_VERSION_CODE)
 	ieee80211_scan_completed(hw, aborted);
@@ -39,17 +38,14 @@ static void wfx_ieee80211_scan_completed_compat(struct ieee80211_hw *hw,
 #endif
 }
 
-static int update_probe_tmpl(struct wfx_vif *wvif,
-			     struct cfg80211_scan_request *req)
+static int update_probe_tmpl(struct wfx_vif *wvif, struct cfg80211_scan_request *req)
 {
 	struct sk_buff *skb;
 
 #if (KERNEL_VERSION(3, 19, 0) > LINUX_VERSION_CODE)
-	skb = ieee80211_probereq_get(wvif->wdev->hw, wvif->vif,
-				     NULL, 0, req->ie_len);
+	skb = ieee80211_probereq_get(wvif->wdev->hw, wvif->vif, NULL, 0, req->ie_len);
 #else
-	skb = ieee80211_probereq_get(wvif->wdev->hw, wvif->vif->addr,
-				     NULL, 0, req->ie_len);
+	skb = ieee80211_probereq_get(wvif->wdev->hw, wvif->vif->addr, NULL, 0, req->ie_len);
 #endif
 	if (!skb)
 		return -ENOMEM;
@@ -60,8 +56,7 @@ static int update_probe_tmpl(struct wfx_vif *wvif,
 	return 0;
 }
 
-static int send_scan_req(struct wfx_vif *wvif,
-			 struct cfg80211_scan_request *req, int start_idx)
+static int send_scan_req(struct wfx_vif *wvif, struct cfg80211_scan_request *req, int start_idx)
 {
 	int i, ret;
 	struct ieee80211_channel *ch_start, *ch_cur;
