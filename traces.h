@@ -23,8 +23,8 @@
 #define TRACE_DEFINE_ENUM(a)
 #endif
 
-/* The hell below need some explanations. For each symbolic number, we need to
- * define it with TRACE_DEFINE_ENUM() and in a list for __print_symbolic.
+/* The hell below need some explanations. For each symbolic number, we need to define it with
+ * TRACE_DEFINE_ENUM() and in a list for __print_symbolic.
  *
  *   1. Define a new macro that call TRACE_DEFINE_ENUM():
  *
@@ -46,9 +46,8 @@
  *          #undef xxx_name
  *          #define xxx_name(msg) { msg, #msg },
  *
- *   5. list_name can now nearly be used with __print_symbolic() but,
- *      __print_symbolic() dislike last comma of list. So we define a new list
- *      with a dummy element:
+ *   5. list_name can now nearly be used with __print_symbolic() but, __print_symbolic() dislike
+ *      last comma of list. So we define a new list with a dummy element:
  *
  *          #define list_for_print_symbolic list_names { -1, NULL }
  */
