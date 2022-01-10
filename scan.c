@@ -162,3 +162,15 @@ void wfx_scan_complete(struct wfx_vif *wvif, int nb_chan_done)
 	wvif->scan_nb_chan_done = nb_chan_done;
 	complete(&wvif->scan_complete);
 }
+
+int wfx_remain_on_channel(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+			  struct ieee80211_channel *chan, int duration,
+			  enum ieee80211_roc_type type)
+{
+	return 0;
+}
+
+int wfx_cancel_remain_on_channel(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
+{
+	return 0;
+}
