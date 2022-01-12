@@ -121,7 +121,7 @@ Example:
     	};
     };
 
-Note that `#address-size` and `#size` shoud already be defined in node `mmc1`,
+Note that `#address-size` and `#size` should already be defined in node `mmc1`,
 but it is rarely the case.
 
 [4]: https://www.kernel.org/doc/Documentation/devicetree/bindings/mmc/mmc-pwrseq-simple.txt
@@ -131,8 +131,8 @@ but it is rarely the case.
 Some properties are recognized either by SPI or SDIO versions:
 - `wakeup-gpios`: phandle of gpio that will be used to wake-up the chip.
   Without this property, the driver will disable most power saving features.
-- `config-file`: Use an alternative file as PDS. Default is `wf200.pds`. Only
-  necessary for development/debug purpose.
+- `silabs,antenna-config-file`: Use an alternative file as PDS. Default depends
+  of "compatible" string. For "silabs,wf200", the default is 'wf200.pds'.
 - `slk_key`: String representing hexadecimal value of secure link key to
   use (only if driver is compiled with `CONFIG_WFX_SECURE_LINK`). Must contains
   64 hexadecimal digits.
