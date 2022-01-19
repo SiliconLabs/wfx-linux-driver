@@ -1,3 +1,14 @@
+Changes in 2.13
+---------------
+
+  * Implement compatibility with DPP (aka EasyConnect). This feature relies on
+    firmware API 3.10 (introduced in firmware 3.15) (WHIFER_FW-1803,
+    WHIFER_FW-1801)
+  * Since 2.4, the IRQ flags declared in DT were not reported. And so, the
+    trigger mode used was not explicit.
+  * Import cosmetics changes (100 columns coding style, wfx_ prefix on every
+    functions) from the mainstream
+
 Changes in 2.12
 ---------------
 
