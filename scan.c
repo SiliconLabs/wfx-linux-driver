@@ -26,7 +26,7 @@ static inline void *skb_put_data(struct sk_buff *skb, const void *data,
 #endif
 
 static void wfx_ieee80211_scan_completed_compat(struct ieee80211_hw *hw,
-					      bool aborted)
+						bool aborted)
 {
 #if (KERNEL_VERSION(4, 8, 0) > LINUX_VERSION_CODE)
 	ieee80211_scan_completed(hw, aborted);
