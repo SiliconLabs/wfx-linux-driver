@@ -108,10 +108,6 @@ enum hif_api_rate_index {
 };
 
 struct hif_ind_startup {
-	/* As the others, this struct is interpreted as little endian by the
-	 * device. However, this struct is also used by the driver. We prefer to
-	 * declare it in native order and doing byte swap on reception.
-	 */
 	__le32 status;
 	__le16 hardware_id;
 	u8     opn[14];
