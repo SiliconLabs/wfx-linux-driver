@@ -267,7 +267,7 @@ static const struct wfx_hwbus_ops wfx_spi_hwbus_ops = {
 
 static int wfx_spi_probe(struct spi_device *func)
 {
-	const struct wfx_platform_data *pdata;
+	struct wfx_platform_data *pdata;
 	struct wfx_spi_priv *bus;
 	int ret;
 
@@ -276,6 +276,12 @@ static int wfx_spi_probe(struct spi_device *func)
 	ret = spi_setup(func);
 	if (ret)
 		return ret;
+	pdata = (struct wfx_platform_data *)spi_get_device_id(func)->driver_data;
+	if (!pdata) {
+		dev_err(&func->dev, "unable to retrieve driver data (please report)\n");
+		return -ENOENT;
+	}
+
 	/* Trace below is also displayed by spi_setup() if compiled with DEBUG */
 	dev_dbg(&func->dev, "SPI params: CS=%d, mode=%d bits/word=%d speed=%d\n",
 		func->chip_select, func->mode, func->bits_per_word, func->max_speed_hz);
@@ -292,11 +298,6 @@ static int wfx_spi_probe(struct spi_device *func)
 		bus->need_swab = true;
 	spi_set_drvdata(func, bus);
 
-	pdata = (struct wfx_platform_data *)spi_get_device_id(func)->driver_data;
-	if (!pdata) {
-		dev_err(&func->dev, "unable to retrieve driver data (please report)\n");
-		return -ENOENT;
-	}
 	bus->gpio_reset = devm_gpiod_get_optional(&func->dev, "reset", GPIOD_OUT_LOW);
 	if (IS_ERR(bus->gpio_reset))
 		return PTR_ERR(bus->gpio_reset);
