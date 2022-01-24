@@ -294,7 +294,6 @@ int wfx_hif_join(struct wfx_vif *wvif, const struct ieee80211_bss_conf *conf,
 
 	WARN_ON(!conf->beacon_int);
 	WARN_ON(!conf->basic_rates);
-	WARN_ON(!channel);
 	WARN_ON(sizeof(body->ssid) < ssidlen);
 	WARN(!conf->ibss_joined && !ssidlen, "joining an unknown BSS");
 	if (!hif)
