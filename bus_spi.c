@@ -121,14 +121,14 @@ static int wfx_spi_copy_from_io(void *priv, unsigned int addr, void *dst, size_t
 {
 	struct wfx_spi_priv *bus = priv;
 	u16 regaddr = (addr << 12) | (count / 2) | SET_READ;
-	struct spi_message      m;
-	struct spi_transfer     t_addr = {
-		.tx_buf         = &regaddr,
-		.len            = sizeof(regaddr),
+	struct spi_message m;
+	struct spi_transfer t_addr = {
+		.tx_buf = &regaddr,
+		.len = sizeof(regaddr),
 	};
-	struct spi_transfer     t_msg = {
-		.rx_buf         = dst,
-		.len            = count,
+	struct spi_transfer t_msg = {
+		.rx_buf = dst,
+		.len = count,
 	};
 	u16 *dst16 = dst;
 #if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
@@ -177,14 +177,14 @@ static int wfx_spi_copy_to_io(void *priv, unsigned int addr, const void *src, si
 	/* FIXME: use a bounce buffer */
 	u16 *src16 = (void *)src;
 	int ret, i;
-	struct spi_message      m;
-	struct spi_transfer     t_addr = {
-		.tx_buf         = &regaddr,
-		.len            = sizeof(regaddr),
+	struct spi_message m;
+	struct spi_transfer t_addr = {
+		.tx_buf = &regaddr,
+		.len = sizeof(regaddr),
 	};
-	struct spi_transfer     t_msg = {
-		.tx_buf         = src,
-		.len            = count,
+	struct spi_transfer t_msg = {
+		.tx_buf = src,
+		.len = count,
 	};
 
 	WARN(count % 2, "buffer size must be a multiple of 2");
