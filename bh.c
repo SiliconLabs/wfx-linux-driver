@@ -110,10 +110,9 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 	if (hif->encrypted == 0x2) {
 		if (wfx_sl_decode(wdev, (struct wfx_hif_sl_msg *)hif)) {
 			dev_kfree_skb(skb);
-			/* If frame was a confirmation, expect trouble in next
-			 * exchange. However, it is harmless to fail to decode
-			 * an indication frame, so try to continue. Anyway,
-			 * piggyback is probably correct.
+			/* If frame was a confirmation, expect trouble in next exchange. However, it
+			 * is harmless to fail to decode an indication frame, so try to continue.
+			 * Anyway, piggyback is probably correct.
 			 */
 			return piggyback;
 		}
@@ -224,9 +223,8 @@ static void tx_helper(struct wfx_dev *wdev, struct wfx_hif_msg *hif)
 	if (wfx_is_secure_command(wdev, hif->id)) {
 		len = round_up(len - sizeof(hif->len), 16) + sizeof(hif->len) +
 		      sizeof(struct wfx_hif_sl_msg_hdr) + sizeof(struct wfx_hif_sl_tag);
-		/* AES support encryption in-place. However, mac80211 access to
-		 * 802.11 header after frame was sent (to get MAC addresses).
-		 * So, keep origin buffer clear.
+		/* AES support encryption in-place. However, mac80211 access to 802.11 header after
+		 * frame was sent (to get MAC addresses).  So, keep origin buffer clear.
 		 */
 		data = kmalloc(len, GFP_KERNEL);
 		if (!data)

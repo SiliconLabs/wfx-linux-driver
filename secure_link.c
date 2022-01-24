@@ -137,8 +137,8 @@ int wfx_sl_check_pubkey(struct wfx_dev *wdev, const u8 *pubkey_orig, const u8 *m
 	if (ret)
 		goto end;
 
-	/* FIXME: save Qp.Y or (reset it), concat it with ncp_public_key and
-	 * use mbedtls_ecdh_read_public.
+	/* FIXME: save Qp.Y or (reset it), concat it with ncp_public_key and use
+	 * mbedtls_ecdh_read_public.
 	 */
 	memreverse(pubkey, sizeof(pubkey));
 	ret = mbedtls_mpi_read_binary(&wdev->sl.edch_ctxt.Qp.X, pubkey, API_NCP_PUB_KEY_SIZE);

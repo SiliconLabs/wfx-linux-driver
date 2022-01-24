@@ -311,8 +311,8 @@ int wfx_sta_add(struct ieee80211_hw *hw, struct ieee80211_vif *vif, struct ieee8
 	sta_priv->vif_id = wvif->id;
 
 #if (KERNEL_VERSION(3, 20, 0) <= LINUX_VERSION_CODE)
-	/* Kernel < 3.20 may encounter problems to negociate BlockAck with MFP
-	 * enabled. You may backport 64a8cef41 to solve it.
+	/* Kernel < 3.20 may encounter problems to negociate BlockAck with MFP enabled. You may
+	 * backport 64a8cef41 to solve it.
 	 */
 	if (vif->type == NL80211_IFTYPE_STATION)
 		wfx_hif_set_mfp(wvif, sta->mfp, sta->mfp);

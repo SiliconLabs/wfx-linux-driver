@@ -47,9 +47,9 @@ static inline void _ieee80211_hw_set(struct ieee80211_hw *hw, enum ieee80211_hw_
 #endif
 
 #if (KERNEL_VERSION(4, 1, 0) > LINUX_VERSION_CODE)
-/* In kernels < 4.1, if we transate these define with 0, it is sufficient to
- * make cfg80211_get_bss() happy. However, their values in kernel > 4.1 are not
- * 0. So, only use them as parameters to cfg80211_get_bss().
+/* In kernels < 4.1, if we transate these define with 0, it is sufficient to make cfg80211_get_bss()
+ * happy. However, their values in kernel > 4.1 are not 0. So, only use them as parameters to
+ * cfg80211_get_bss().
  */
 #define IEEE80211_BSS_TYPE_ANY 0
 #define IEEE80211_PRIVACY_ANY  0

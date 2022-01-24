@@ -66,11 +66,10 @@ struct wfx_spi_priv {
 };
 
 #if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
-/* Read of control register need a particular attention because it should be
- * done only after an IRQ raise. We can detect if this event happens by reading
- * control register twice (it is safe to read twice since we can garantee that
- * no data acess was done since IRQ raising). In add, this function optimize it
- * by doing only one SPI request.
+/* Read of control register need a particular attention because it should be done only after an IRQ
+ * raise. We can detect if this event happens by reading control register twice (it is safe to read
+ * twice since we can garantee that no data acess was done since IRQ raising). In add, this function
+ * optimize it by doing only one SPI request.
  */
 static int wfx_spi_read_ctrl_reg(struct wfx_spi_priv *bus, u16 *dst)
 {
@@ -95,8 +94,8 @@ static int wfx_spi_read_ctrl_reg(struct wfx_spi_priv *bus, u16 *dst)
 	spi_message_add_tail(&t, &m);
 	for (i = 0, tmp[0] = tmp[1] + 1; tmp[0] != tmp[1] && i < 3; i++) {
 		ret = spi_sync(bus->func, &m);
-		/* Changes of gpio-wakeup can occur during control register
-		 * access. In this case, CTRL_WLAN_READY may differs.
+		/* Changes of gpio-wakeup can occur during control register access. In this case,
+		 * CTRL_WLAN_READY may differs.
 		 */
 		tmp[0] = rx_buf[1] & cpu_to_le16(~CTRL_WLAN_READY);
 		tmp[1] = rx_buf[3] & cpu_to_le16(~CTRL_WLAN_READY);
@@ -140,9 +139,8 @@ static int wfx_spi_copy_from_io(void *priv, unsigned int addr, void *dst, size_t
 	WARN(count % 2, "buffer size must be a multiple of 2");
 
 #if (KERNEL_VERSION(4, 19, 14) > LINUX_VERSION_CODE)
-	/* Some SPI driver (and especially Raspberry one) have race conditions
-	 * during SPI transfers. It impact last byte of transfer. Work around
-	 * bellow try to detect and solve them.
+	/* Some SPI driver (and especially Raspberry one) have race conditions during SPI transfers.
+	 * It impact last byte of transfer. Work around bellow try to detect and solve them.
 	 * See https://github.com/raspberrypi/linux/issues/2200
 	 */
 	if (addr == WFX_REG_IN_OUT_QUEUE)
