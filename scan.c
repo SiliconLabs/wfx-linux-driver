@@ -14,8 +14,7 @@
 #include "hif_tx_mib.h"
 
 #if (KERNEL_VERSION(4, 13, 0) > LINUX_VERSION_CODE)
-static inline void *skb_put_data(struct sk_buff *skb, const void *data,
-				 unsigned int len)
+static inline void *skb_put_data(struct sk_buff *skb, const void *data, unsigned int len)
 {
 	void *tmp = skb_put(skb, len);
 

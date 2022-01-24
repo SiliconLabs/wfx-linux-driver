@@ -119,8 +119,7 @@ static int rx_helper(struct wfx_dev *wdev, size_t read_len, int *is_cnf)
 		}
 		if (!wfx_is_secure_command(wdev, hif->id))
 			dev_warn(wdev->dev, "unexpected encrypted command\n");
-	} else if (wfx_is_secure_command(wdev, hif->id) &&
-		   !wfx_api_older_than(wdev, 3, 4)) {
+	} else if (wfx_is_secure_command(wdev, hif->id) && !wfx_api_older_than(wdev, 3, 4)) {
 		dev_warn(wdev->dev, "drop expected encrypted command\n");
 		dev_kfree_skb(skb);
 		return piggyback;
@@ -224,8 +223,7 @@ static void tx_helper(struct wfx_dev *wdev, struct wfx_hif_msg *hif)
 #ifdef CONFIG_WFX_SECURE_LINK
 	if (wfx_is_secure_command(wdev, hif->id)) {
 		len = round_up(len - sizeof(hif->len), 16) + sizeof(hif->len) +
-			sizeof(struct wfx_hif_sl_msg_hdr) +
-			sizeof(struct wfx_hif_sl_tag);
+		      sizeof(struct wfx_hif_sl_msg_hdr) + sizeof(struct wfx_hif_sl_tag);
 		/* AES support encryption in-place. However, mac80211 access to
 		 * 802.11 header after frame was sent (to get MAC addresses).
 		 * So, keep origin buffer clear.

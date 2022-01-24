@@ -33,8 +33,7 @@
 #endif
 
 #if (KERNEL_VERSION(4, 2, 0) > LINUX_VERSION_CODE)
-static inline void _ieee80211_hw_set(struct ieee80211_hw *hw,
-				     enum ieee80211_hw_flags flg)
+static inline void _ieee80211_hw_set(struct ieee80211_hw *hw, enum ieee80211_hw_flags flg)
 {
 	hw->flags |= flg;
 }

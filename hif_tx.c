@@ -175,8 +175,7 @@ int wfx_hif_reset(struct wfx_vif *wvif, bool reset_stat)
 	return ret;
 }
 
-int wfx_hif_read_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id,
-		     void *val, size_t val_len)
+int wfx_hif_read_mib(struct wfx_dev *wdev, int vif_id, u16 mib_id, void *val, size_t val_len)
 {
 	int ret;
 	struct wfx_hif_msg *hif;
@@ -491,8 +490,7 @@ int wfx_hif_update_ie_beacon(struct wfx_vif *wvif, const u8 *ies, size_t ies_len
 	return ret;
 }
 
-int wfx_hif_pta_settings(struct wfx_dev *wdev,
-			 const struct wfx_hif_req_pta_settings *parms)
+int wfx_hif_pta_settings(struct wfx_dev *wdev, const struct wfx_hif_req_pta_settings *parms)
 {
 	int ret;
 	struct wfx_hif_msg *hif;
@@ -541,8 +539,7 @@ int wfx_hif_burn_prevent_rollback(struct wfx_dev *wdev, u32 magic_word)
 {
 	int ret;
 	struct wfx_hif_msg *hif;
-	struct wfx_hif_req_prevent_rollback *body = wfx_alloc_hif(sizeof(*body),
-							      &hif);
+	struct wfx_hif_req_prevent_rollback *body = wfx_alloc_hif(sizeof(*body), &hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -555,13 +552,11 @@ int wfx_hif_burn_prevent_rollback(struct wfx_dev *wdev, u32 magic_word)
 	return ret;
 }
 
-int wfx_hif_sl_send_pub_keys(struct wfx_dev *wdev,
-			     const u8 *pubkey, const u8 *pubkey_hmac)
+int wfx_hif_sl_send_pub_keys(struct wfx_dev *wdev, const u8 *pubkey, const u8 *pubkey_hmac)
 {
 	int ret;
 	struct wfx_hif_msg *hif;
-	struct wfx_hif_req_sl_exchange_pub_keys *body = wfx_alloc_hif(sizeof(*body),
-								  &hif);
+	struct wfx_hif_req_sl_exchange_pub_keys *body = wfx_alloc_hif(sizeof(*body), &hif);
 
 	if (!hif)
 		return -ENOMEM;
@@ -569,8 +564,7 @@ int wfx_hif_sl_send_pub_keys(struct wfx_dev *wdev,
 	memcpy(body->host_pub_key, pubkey, sizeof(body->host_pub_key));
 	memcpy(body->host_pub_key_mac, pubkey_hmac,
 	       sizeof(body->host_pub_key_mac));
-	wfx_fill_header(hif, -1, HIF_REQ_ID_SL_EXCHANGE_PUB_KEYS,
-			sizeof(*body));
+	wfx_fill_header(hif, -1, HIF_REQ_ID_SL_EXCHANGE_PUB_KEYS, sizeof(*body));
 	ret = wfx_cmd_send(wdev, hif, NULL, 0, false);
 	kfree(hif);
 	/* Compatibility with legacy secure link */
@@ -604,8 +598,7 @@ int wfx_hif_sl_set_mac_key(struct wfx_dev *wdev, const u8 *slk_key, int destinat
 {
 	int ret;
 	struct wfx_hif_msg *hif;
-	struct wfx_hif_req_set_sl_mac_key *body = wfx_alloc_hif(sizeof(*body),
-							    &hif);
+	struct wfx_hif_req_set_sl_mac_key *body = wfx_alloc_hif(sizeof(*body), &hif);
 
 	if (!hif)
 		return -ENOMEM;

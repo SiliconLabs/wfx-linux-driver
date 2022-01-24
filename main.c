@@ -203,8 +203,7 @@ int wfx_send_pds(struct wfx_dev *wdev, u8 *buf, size_t len)
 			buf[i] = 0;
 			dev_dbg(wdev->dev, "send PDS '%s}'\n", buf + start);
 			buf[i] = '}';
-			ret = wfx_hif_configuration(wdev, buf + start,
-						    i - start + 1);
+			ret = wfx_hif_configuration(wdev, buf + start, i - start + 1);
 			if (ret > 0) {
 				dev_err(wdev->dev, "PDS bytes %d to %d: invalid data (unsupported options?)\n",
 					start, i);

@@ -55,21 +55,18 @@ static inline int wfx_sl_decode(struct wfx_dev *wdev, struct wfx_hif_sl_msg *m)
 }
 
 static inline int wfx_sl_encode(struct wfx_dev *wdev,
-				const struct wfx_hif_msg *input,
-				struct wfx_hif_sl_msg *output)
+				const struct wfx_hif_msg *input, struct wfx_hif_sl_msg *output)
 {
 	return -EIO;
 }
 
 static inline int wfx_sl_check_pubkey(struct wfx_dev *wdev,
-				      const u8 *ncp_pubkey,
-				      const u8 *ncp_pubmac)
+				      const u8 *ncp_pubkey, const u8 *ncp_pubmac)
 {
 	return -EIO;
 }
 
-static inline void wfx_sl_fill_pdata(struct device *dev,
-				     struct wfx_platform_data *pdata)
+static inline void wfx_sl_fill_pdata(struct device *dev, struct wfx_platform_data *pdata)
 {
 	if (of_find_property(dev->of_node, "slk_key", NULL))
 		dev_err(dev, "secure link is not supported by this driver, ignoring provided key\n");

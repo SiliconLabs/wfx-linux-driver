@@ -159,7 +159,7 @@ static int wfx_sdio_irq_subscribe(void *priv)
 		flags = IRQF_TRIGGER_HIGH;
 	flags |= IRQF_ONESHOT;
 	ret = devm_request_threaded_irq(&bus->func->dev, bus->of_irq, NULL,
-					 wfx_sdio_irq_handler_ext, flags, "wfx", bus);
+					wfx_sdio_irq_handler_ext, flags, "wfx", bus);
 	if (ret)
 		return ret;
 	sdio_claim_host(bus->func);

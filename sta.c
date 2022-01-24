@@ -22,8 +22,7 @@
 #define HIF_MAX_ARP_IP_ADDRTABLE_ENTRIES 2
 
 #if (KERNEL_VERSION(4, 15, 0) > LINUX_VERSION_CODE)
-static __always_inline void assign_bit(long nr, volatile unsigned long *addr,
-				       bool value)
+static __always_inline void assign_bit(long nr, volatile unsigned long *addr, bool value)
 {
 	if (value)
 		set_bit(nr, addr);
@@ -37,8 +36,7 @@ u32 wfx_rate_mask_to_hw(struct wfx_dev *wdev, u32 rates)
 	int i;
 	u32 ret = 0;
 	/* The device only supports 2GHz */
-	struct ieee80211_supported_band *sband =
-		wdev->hw->wiphy->bands[NL80211_BAND_2GHZ];
+	struct ieee80211_supported_band *sband = wdev->hw->wiphy->bands[NL80211_BAND_2GHZ];
 
 	for (i = 0; i < sband->n_bitrates; i++) {
 		if (rates & BIT(i)) {
@@ -463,8 +461,7 @@ static void wfx_join(struct wfx_vif *wvif)
 	wfx_tx_unlock(wvif->wdev);
 }
 
-static void wfx_join_finalize(struct wfx_vif *wvif,
-			      struct ieee80211_bss_conf *info)
+static void wfx_join_finalize(struct wfx_vif *wvif, struct ieee80211_bss_conf *info)
 {
 	struct ieee80211_sta *sta = NULL;
 	int ampdu_density = 0;
@@ -571,8 +568,8 @@ void wfx_bss_info_changed(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 
 #if (KERNEL_VERSION(4, 11, 0) <= LINUX_VERSION_CODE)
 	if (changed & BSS_CHANGED_KEEP_ALIVE)
-		wfx_hif_keep_alive_period(wvif, info->max_idle_period *
-						USEC_PER_TU / USEC_PER_MSEC);
+		wfx_hif_keep_alive_period(wvif,
+					  info->max_idle_period * USEC_PER_TU / USEC_PER_MSEC);
 #endif
 
 	if (changed & BSS_CHANGED_ERP_CTS_PROT)
@@ -668,14 +665,12 @@ void wfx_suspend_resume_mc(struct wfx_vif *wvif, enum sta_notify_cmd notify_cmd)
 	(KERNEL_VERSION(4, 6, 0) > LINUX_VERSION_CODE && KERNEL_VERSION(4, 5, 0) <= LINUX_VERSION_CODE)
 #if (KERNEL_VERSION(4, 4, 0) > LINUX_VERSION_CODE)
 int wfx_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		     enum ieee80211_ampdu_mlme_action action,
-		     struct ieee80211_sta *sta, u16 tid,
-		     u16 *ssn, u8 buf_size)
+		     enum ieee80211_ampdu_mlme_action action, struct ieee80211_sta *sta,
+		     u16 tid, u16 *ssn, u8 buf_size)
 #else
 int wfx_ampdu_action(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
-		     enum ieee80211_ampdu_mlme_action action,
-		     struct ieee80211_sta *sta, u16 tid, u16 *ssn,
-		     u8 buf_size, bool amsdu)
+		     enum ieee80211_ampdu_mlme_action action, struct ieee80211_sta *sta,
+		     u16 tid, u16 *ssn, u8 buf_size, bool amsdu)
 #endif
 {
 	/* Aggregation is implemented fully in firmware */
