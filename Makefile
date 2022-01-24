@@ -35,17 +35,17 @@ wfx-y := \
 	bh.o \
 	hwio.o \
 	fwio.o \
-	data_rx.o \
-	data_tx.o \
-	main.o \
-	queue.o \
 	hif_tx_mib.o \
 	hif_tx.o \
 	hif_rx.o \
-	key.o \
-	nl80211_vendor.o \
-	sta.o \
+	queue.o \
+	data_tx.o \
+	data_rx.o \
 	scan.o \
+	sta.o \
+	key.o \
+	main.o \
+	nl80211_vendor.o \
 	debug.o
 wfx-$(CONFIG_SPI) += bus_spi.o
 wfx-$(subst m,y,$(CONFIG_MMC)) += bus_sdio.o
