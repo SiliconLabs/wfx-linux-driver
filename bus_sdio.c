@@ -5,6 +5,7 @@
  * Copyright (c) 2017-2020, Silicon Laboratories, Inc.
  * Copyright (c) 2010, ST-Ericsson
  */
+#include <linux/version.h>
 #include <linux/module.h>
 #include <linux/mmc/sdio.h>
 #include <linux/mmc/sdio_func.h>
@@ -13,13 +14,16 @@
 #include <linux/of_device.h>
 #include <linux/of_irq.h>
 #include <linux/irq.h>
-#include <linux/align.h>
 
 #include "bus.h"
 #include "wfx.h"
 #include "hwio.h"
 #include "main.h"
 #include "bh.h"
+
+#if (KERNEL_VERSION(5, 13, 0) <= LINUX_VERSION_CODE)
+#include <linux/align.h>
+#endif
 
 #if (KERNEL_VERSION(4, 2, 0) > LINUX_VERSION_CODE)
 static const void *of_device_get_match_data(const struct device *dev)
