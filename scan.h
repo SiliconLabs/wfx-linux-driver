@@ -23,6 +23,10 @@ void wfx_remain_on_channel_work(struct work_struct *work);
 int wfx_remain_on_channel(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 			  struct ieee80211_channel *chan, int duration,
 			  enum ieee80211_roc_type type);
+#if (KERNEL_VERSION(5, 4, 0) > LINUX_VERSION_CODE)
+int wfx_cancel_remain_on_channel(struct ieee80211_hw *hw);
+#else
 int wfx_cancel_remain_on_channel(struct ieee80211_hw *hw, struct ieee80211_vif *vif);
+#endif
 
 #endif

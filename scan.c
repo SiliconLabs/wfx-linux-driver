@@ -218,6 +218,23 @@ int wfx_remain_on_channel(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
 	return 0;
 }
 
+#if (KERNEL_VERSION(5, 4, 0) > LINUX_VERSION_CODE)
+int wfx_cancel_remain_on_channel(struct ieee80211_hw *hw)
+{
+	struct wfx_dev *wdev = hw->priv;
+	struct wfx_vif *wvif = NULL;
+
+	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
+		if (READ_ONCE(wvif->remain_on_channel_in_progress)) {
+			wfx_hif_stop_scan(wvif);
+			return 0;
+		}
+	}
+
+	dev_info(wvif->wdev->dev, "no remain-on-channel in progress");
+	return 0;
+}
+#else
 int wfx_cancel_remain_on_channel(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 {
 	struct wfx_vif *wvif = (struct wfx_vif *)vif->drv_priv;
@@ -225,3 +242,5 @@ int wfx_cancel_remain_on_channel(struct ieee80211_hw *hw, struct ieee80211_vif *
 	wfx_hif_stop_scan(wvif);
 	return 0;
 }
+#endif
+
