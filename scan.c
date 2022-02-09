@@ -227,6 +227,7 @@ int wfx_cancel_remain_on_channel(struct ieee80211_hw *hw)
 	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
 		if (READ_ONCE(wvif->remain_on_channel_in_progress)) {
 			wfx_hif_stop_scan(wvif);
+			flush_work(&wvif->remain_on_channel_work);
 			return 0;
 		}
 	}
@@ -240,6 +241,7 @@ int wfx_cancel_remain_on_channel(struct ieee80211_hw *hw, struct ieee80211_vif *
 	struct wfx_vif *wvif = (struct wfx_vif *)vif->drv_priv;
 
 	wfx_hif_stop_scan(wvif);
+	flush_work(&wvif->remain_on_channel_work);
 	return 0;
 }
 #endif
