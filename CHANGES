@@ -1,3 +1,9 @@
+Changes in 2.13.1
+-----------------
+
+  * Fix two races in EasyConnect processing
+  * Accept new PDS format used in the kernel upstream
+
 Changes in 2.13
 ---------------
 
