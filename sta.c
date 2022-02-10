@@ -107,9 +107,8 @@ void wfx_configure_filter(struct ieee80211_hw *hw, unsigned int changed_flags,
 			FIF_PROBE_REQ | FIF_PSPOLL;
 
 	mutex_lock(&wdev->conf_mutex);
+	mutex_lock(&wdev->scan_lock);
 	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
-		mutex_lock(&wvif->scan_lock);
-
 		/* Note: FIF_BCN_PRBRESP_PROMISC covers probe response and
 		 * beacons from other BSS
 		 */
@@ -135,9 +134,8 @@ void wfx_configure_filter(struct ieee80211_hw *hw, unsigned int changed_flags,
 		else
 			filter_prbreq = true;
 		wfx_hif_set_rx_filter(wvif, filter_bssid, filter_prbreq);
-
-		mutex_unlock(&wvif->scan_lock);
 	}
+	mutex_unlock(&wdev->scan_lock);
 	mutex_unlock(&wdev->conf_mutex);
 }
 
@@ -622,18 +620,14 @@ int wfx_set_tim(struct ieee80211_hw *hw, struct ieee80211_sta *sta, bool set)
 
 void wfx_suspend_resume_mc(struct wfx_vif *wvif, enum sta_notify_cmd notify_cmd)
 {
-	struct wfx_vif *wvif_it;
-
 	if (notify_cmd != STA_NOTIFY_AWAKE)
 		return;
 
 	/* Device won't be able to honor CAB if a scan is in progress on any interface. Prefer to
 	 * skip this DTIM and wait for the next one.
 	 */
-	wvif_it = NULL;
-	while ((wvif_it = wvif_iterate(wvif->wdev, wvif_it)) != NULL)
-		if (mutex_is_locked(&wvif_it->scan_lock))
-			return;
+	if (mutex_is_locked(&wvif->wdev->scan_lock))
+		return;
 
 	if (!wfx_tx_queues_has_cab(wvif) || wvif->after_dtim_tx_allowed)
 		dev_warn(wvif->wdev->dev, "incorrect sequence (%d CAB in queue)",
@@ -757,7 +751,6 @@ int wfx_add_interface(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 	complete(&wvif->set_pm_mode_complete);
 	INIT_WORK(&wvif->tx_policy_upload_work, wfx_tx_policy_upload_work);
 
-	mutex_init(&wvif->scan_lock);
 	init_completion(&wvif->scan_complete);
 	INIT_WORK(&wvif->scan_work, wfx_hw_scan_work);
 	INIT_WORK(&wvif->remain_on_channel_work, wfx_remain_on_channel_work);

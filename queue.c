@@ -273,10 +273,8 @@ static struct sk_buff *wfx_tx_queues_get_skb(struct wfx_dev *wdev)
 		}
 	}
 
-	wvif = NULL;
-	while ((wvif = wvif_iterate(wdev, wvif)) != NULL)
-		if (mutex_is_locked(&wvif->scan_lock))
-			return NULL;
+	if (mutex_is_locked(&wdev->scan_lock))
+		return NULL;
 
 	wvif = NULL;
 	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
