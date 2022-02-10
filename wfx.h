@@ -143,7 +143,6 @@ struct wfx_vif {
 
 	struct ieee80211_channel   *remain_on_channel_chan;
 	int                        remain_on_channel_duration;
-	bool                    remain_on_channel_in_progress;
 	struct work_struct         remain_on_channel_work;
 };
 
