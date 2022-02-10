@@ -106,8 +106,11 @@ void wfx_configure_filter(struct ieee80211_hw *hw, unsigned int changed_flags,
 	*total_flags &= FIF_BCN_PRBRESP_PROMISC | FIF_ALLMULTI | FIF_OTHER_BSS |
 			FIF_PROBE_REQ | FIF_PSPOLL;
 
+	/* Filters are ignored during the scan. No frames are filtered. */
+	if (mutex_is_locked(&wdev->scan_lock))
+		return;
+
 	mutex_lock(&wdev->conf_mutex);
-	mutex_lock(&wdev->scan_lock);
 	while ((wvif = wvif_iterate(wdev, wvif)) != NULL) {
 		/* Note: FIF_BCN_PRBRESP_PROMISC covers probe response and
 		 * beacons from other BSS
@@ -135,7 +138,6 @@ void wfx_configure_filter(struct ieee80211_hw *hw, unsigned int changed_flags,
 			filter_prbreq = true;
 		wfx_hif_set_rx_filter(wvif, filter_bssid, filter_prbreq);
 	}
-	mutex_unlock(&wdev->scan_lock);
 	mutex_unlock(&wdev->conf_mutex);
 }
 
