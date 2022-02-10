@@ -197,9 +197,9 @@ void wfx_remain_on_channel_work(struct work_struct *work)
 	ieee80211_remain_on_channel_expired(wvif->wdev->hw);
 end:
 	WRITE_ONCE(wvif->remain_on_channel_in_progress, false);
-	wfx_bh_request_tx(wvif->wdev);
 	mutex_unlock(&wvif->scan_lock);
 	mutex_unlock(&wvif->wdev->conf_mutex);
+	wfx_bh_request_tx(wvif->wdev);
 }
 
 int wfx_remain_on_channel(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
