@@ -39,12 +39,13 @@ static void wfx_ieee80211_scan_completed_compat(struct ieee80211_hw *hw, bool ab
 
 static int update_probe_tmpl(struct wfx_vif *wvif, struct cfg80211_scan_request *req)
 {
+	struct ieee80211_vif *vif = wvif_to_vif(wvif);
 	struct sk_buff *skb;
 
 #if (KERNEL_VERSION(3, 19, 0) > LINUX_VERSION_CODE)
-	skb = ieee80211_probereq_get(wvif->wdev->hw, wvif->vif, NULL, 0, req->ie_len);
+	skb = ieee80211_probereq_get(wvif->wdev->hw, vif, NULL, 0, req->ie_len);
 #else
-	skb = ieee80211_probereq_get(wvif->wdev->hw, wvif->vif->addr, NULL, 0, req->ie_len);
+	skb = ieee80211_probereq_get(wvif->wdev->hw, vif->addr, NULL, 0, req->ie_len);
 #endif
 	if (!skb)
 		return -ENOMEM;
@@ -57,8 +58,9 @@ static int update_probe_tmpl(struct wfx_vif *wvif, struct cfg80211_scan_request 
 
 static int send_scan_req(struct wfx_vif *wvif, struct cfg80211_scan_request *req, int start_idx)
 {
-	int i, ret;
+	struct ieee80211_vif *vif = wvif_to_vif(wvif);
 	struct ieee80211_channel *ch_start, *ch_cur;
+	int i, ret;
 
 	for (i = start_idx; i < req->n_channels; i++) {
 		ch_start = req->channels[start_idx];
@@ -95,8 +97,8 @@ static int send_scan_req(struct wfx_vif *wvif, struct cfg80211_scan_request *req
 	} else {
 		ret = wvif->scan_nb_chan_done;
 	}
-	if (req->channels[start_idx]->max_power != wvif->vif->bss_conf.txpower)
-		wfx_hif_set_output_power(wvif, wvif->vif->bss_conf.txpower);
+	if (req->channels[start_idx]->max_power != vif->bss_conf.txpower)
+		wfx_hif_set_output_power(wvif, vif->bss_conf.txpower);
 	wfx_tx_unlock(wvif->wdev);
 	return ret;
 }

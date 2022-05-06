@@ -157,6 +157,7 @@ static int wfx_add_key(struct wfx_vif *wvif, struct ieee80211_sta *sta,
 	struct wfx_dev *wdev = wvif->wdev;
 	int idx = wfx_alloc_key(wvif->wdev);
 	bool pairwise = key->flags & IEEE80211_KEY_FLAG_PAIRWISE;
+	struct ieee80211_vif *vif = wvif_to_vif(wvif);
 
 	WARN(key->flags & IEEE80211_KEY_FLAG_PAIRWISE && !sta, "inconsistent data");
 	ieee80211_get_key_rx_seq(key, 0, &seq);
@@ -175,7 +176,7 @@ static int wfx_add_key(struct wfx_vif *wvif, struct ieee80211_sta *sta,
 			k.type = fill_tkip_pair(&k.key.tkip_pairwise_key, key, sta->addr);
 		else
 			k.type = fill_tkip_group(&k.key.tkip_group_key, key, &seq,
-						 wvif->vif->type);
+						 vif->type);
 	} else if (key->cipher == WLAN_CIPHER_SUITE_CCMP) {
 		if (pairwise)
 			k.type = fill_ccmp_pair(&k.key.aes_pairwise_key, key, sta->addr);
@@ -245,4 +246,3 @@ int wfx_set_key(struct ieee80211_hw *hw, enum set_key_cmd cmd, struct ieee80211_
 	mutex_unlock(&wvif->wdev->conf_mutex);
 	return ret;
 }
-
