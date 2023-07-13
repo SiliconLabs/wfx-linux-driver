@@ -409,7 +409,12 @@ int wfx_start_ap(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 void wfx_stop_ap(struct ieee80211_hw *hw, struct ieee80211_vif *vif)
 {
 	struct wfx_vif *wvif = (struct wfx_vif *)vif->drv_priv;
+	struct wfx_dev *wdev = wvif->wdev;
 
+	wvif =  NULL;
+	while ((wvif = wvif_iterate(wdev, wvif)) != NULL)
+		wfx_update_pm(wvif);
+	wvif = (struct wfx_vif *)vif->drv_priv;
 	wfx_reset(wvif);
 }
 
