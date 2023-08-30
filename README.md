@@ -747,6 +747,17 @@ driver:
   |  5.14    |  2.8.1
   |  5.15    |  2.8.1
   |  5.16    |  2.10.1
+  |  5.17    |  a bit above 2.12
+  |  5.18    |  same than kernel 5.17
+  |  5.19    |  same than kernel 5.17
+  |  6.0     |  same than kernel 5.17
+  |  6.1     |  same than kernel 5.17
+  |  6.2     |  same than kernel 5.17
+  |  6.3     |  same than kernel 5.17
+  |  6.4     |  same than kernel 5.17
+  |  6.5     |  same than kernel 5.17
+  |  6.6     |  same than kernel 5.17
+  |  6.7     |  2.14
 
 Keep in mind that it is not an exact science. This driver adds support for
 secure link and is able to compile with kernel up to 3.18. So the code is
