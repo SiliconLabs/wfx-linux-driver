@@ -1,3 +1,13 @@
+Changes in 2.14
+---------------
+
+  * Improve Tx throughput. The gain can be 20% in certain cases.
+  * When combo is in use, the power_save status in station interface  was not
+    restored when the AP was stopped
+  * Avoid flushing system-wide workqueues
+  * Fix possible underflow if the PDS file was corrupted
+  * Fix complation with gcc 9 and kernel <= 5.0
+
 Changes in 2.13.2
 -----------------
 
