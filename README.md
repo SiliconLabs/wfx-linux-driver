@@ -1,6 +1,16 @@
 Linux driver for Silicon Laboratories WF200
 ===========================================
 
+This driver is included in the mainline Linux kernel since version 5.5. All the
+developments now happen in the Linux kernel.
+
+This repository contains the last improvements and support a wide range of Linux
+kernel (3.18 to 5.17). You may use it if you stuck in a specific version of
+the Linux kernel but want to have the latest developments.
+
+For now, there is no plan to support kernel version > 5.17. We recommend to use
+the upstream driver instead.
+
 Compiling and installing
 ------------------------
 
