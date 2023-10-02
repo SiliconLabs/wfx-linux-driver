@@ -550,7 +550,11 @@ void wfx_release(struct wfx_dev *wdev)
 	destroy_workqueue(wdev->bh_wq);
 }
 
+#if (KERNEL_VERSION(5, 0, 0) > LINUX_VERSION_CODE)
+static int wfx_core_init(void)
+#else
 static int __init wfx_core_init(void)
+#endif
 {
 	int ret = 0;
 
@@ -564,7 +568,11 @@ static int __init wfx_core_init(void)
 }
 module_init(wfx_core_init);
 
+#if (KERNEL_VERSION(5, 0, 0) > LINUX_VERSION_CODE)
+static void wfx_core_exit(void)
+#else
 static void __exit wfx_core_exit(void)
+#endif
 {
 	if (IS_ENABLED(CONFIG_MMC))
 		sdio_unregister_driver(&wfx_sdio_driver);
