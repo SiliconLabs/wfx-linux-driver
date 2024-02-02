@@ -1,3 +1,9 @@
+Changes in 2.14.1
+-----------------
+
+  * Fix memory when AP is started
+  * Fix possible NULL pointer dereference
+
 Changes in 2.14
 ---------------
 
