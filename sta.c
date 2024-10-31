@@ -11,6 +11,7 @@
 
 #include "sta.h"
 #include "wfx.h"
+#include "bus.h"
 #include "fwio.h"
 #include "bh.h"
 #include "key.h"
@@ -863,6 +864,13 @@ int wfx_suspend(struct ieee80211_hw *hw, struct cfg80211_wowlan *wowlan)
 int wfx_resume(struct ieee80211_hw *hw)
 {
 	return 0;
+}
+
+void wfx_set_wakeup(struct ieee80211_hw *hw, bool enabled)
+{
+	struct wfx_dev *wdev = hw->priv;
+
+	wdev->hwbus_ops->set_wakeup(wdev->hwbus_priv, enabled);
 }
 #endif
 
