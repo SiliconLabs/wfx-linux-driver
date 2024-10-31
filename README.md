@@ -152,6 +152,34 @@ in [`Documentation/devicetree/bindings/net/ethernet.txt`][5]
 
 [5]: https://www.kernel.org/doc/Documentation/devicetree/bindings/net/ethernet.txt
 
+### How to setup Wake-on-WLAN?
+
+First, WF200 has to be keep awake while the host is asleep:
+  - with SDIO, the "keep-power-in-suspend" property is usually sufficient.
+  - with SPI, a power management tree need to be declared using regulator
+    devices.
+
+Note depending of the hardware constraints, pinmuxing may have to be different
+while the host is asleep. It is possible to do that by declaring a "sleep"
+`pinctrl` configuration:
+
+    pinctrl-names = "default", "sleep";
+    pinctrl-0 = <&wfx_irq &wfx_gpios>;
+    pinctrl-1 = <&wfx_host_sleep>;
+
+The driver will take care of configuring the IRQ to wake up the host. However,
+if the in-band SDIO IRQ is used, the host SDIO node must contains the
+"wakeup-source" attribute.
+
+Then, `iw` can be used to request to WF200 to wake-up the host on any event
+while the host will suspend:
+
+    iw phy0 wowlan enable any disconnect
+
+For now, user has to specify `any` and `disconnect` events. The device is able
+to manage advanced filters to avoid unwanted host wake-up. However these filters
+are not yet supported by the driver.
+
 ### How to change MAC address?
 
 The wfx driver follows standard rules related to MAC addresses under Linux. You
